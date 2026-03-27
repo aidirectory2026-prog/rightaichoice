@@ -3,6 +3,8 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { signUp, signInWithGoogle } from '@/actions/auth'
+import { GoogleIcon } from '@/components/shared/google-icon'
+import { Logo } from '@/components/shared/logo'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signUp, null)
@@ -10,11 +12,15 @@ export default function SignupPage() {
   if (state?.success) {
     return (
       <div className="space-y-4 text-center">
-        <div className="text-2xl">✉️</div>
+        <div className="mx-auto w-12 h-12 rounded-full bg-emerald-950 flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-emerald-400">
+            <path d="M3 10L8 15L17 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
         <h1 className="text-xl font-semibold text-white">Check your email</h1>
         <p className="text-sm text-zinc-400">{state.success}</p>
         <Link href="/login" className="inline-block text-sm text-zinc-400 hover:text-white transition-colors">
-          ← Back to sign in
+          Back to sign in
         </Link>
       </div>
     )
@@ -22,16 +28,12 @@ export default function SignupPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="space-y-1 text-center">
-        <Link href="/" className="inline-block text-sm font-semibold text-white tracking-tight mb-4">
-          RightAIChoice
-        </Link>
+        <div className="mb-4"><Logo /></div>
         <h1 className="text-xl font-semibold text-white">Create an account</h1>
         <p className="text-sm text-zinc-400">Join the community of AI explorers</p>
       </div>
 
-      {/* Google OAuth */}
       <form action={signInWithGoogle}>
         <button
           type="submit"
@@ -42,14 +44,12 @@ export default function SignupPage() {
         </button>
       </form>
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-zinc-800" />
         <span className="text-xs text-zinc-500">or</span>
         <div className="flex-1 h-px bg-zinc-800" />
       </div>
 
-      {/* Signup Form */}
       <form action={action} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="username" className="block text-sm font-medium text-zinc-300">
@@ -108,7 +108,7 @@ export default function SignupPage() {
           disabled={pending}
           className="w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {pending ? 'Creating account…' : 'Create account'}
+          {pending ? 'Creating account...' : 'Create account'}
         </button>
 
         <p className="text-center text-xs text-zinc-500">
@@ -126,16 +126,5 @@ export default function SignupPage() {
         </Link>
       </p>
     </div>
-  )
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M15.68 8.18c0-.57-.05-1.11-.14-1.64H8v3.1h4.3a3.68 3.68 0 01-1.6 2.41v2h2.58c1.51-1.39 2.4-3.44 2.4-5.87z" fill="#4285F4"/>
-      <path d="M8 16c2.16 0 3.97-.71 5.3-1.93l-2.59-2a4.77 4.77 0 01-7.1-2.5H1v2.07A8 8 0 008 16z" fill="#34A853"/>
-      <path d="M3.61 9.57A4.77 4.77 0 013.61 6.43V4.36H1a8 8 0 000 7.28l2.61-2.07z" fill="#FBBC05"/>
-      <path d="M8 3.18c1.22 0 2.3.42 3.16 1.24l2.37-2.37A8 8 0 001 4.36L3.61 6.43A4.77 4.77 0 018 3.18z" fill="#EA4335"/>
-    </svg>
   )
 }

@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { forgotPassword } from '@/actions/auth'
+import { Logo } from '@/components/shared/logo'
 
 export default function ForgotPasswordPage() {
   const [state, action, pending] = useActionState(forgotPassword, null)
@@ -10,11 +11,15 @@ export default function ForgotPasswordPage() {
   if (state?.success) {
     return (
       <div className="space-y-4 text-center">
-        <div className="text-2xl">✉️</div>
+        <div className="mx-auto w-12 h-12 rounded-full bg-emerald-950 flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-emerald-400">
+            <path d="M3 10L8 15L17 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
         <h1 className="text-xl font-semibold text-white">Check your email</h1>
         <p className="text-sm text-zinc-400">{state.success}</p>
         <Link href="/login" className="inline-block text-sm text-zinc-400 hover:text-white transition-colors">
-          ← Back to sign in
+          Back to sign in
         </Link>
       </div>
     )
@@ -22,11 +27,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="space-y-1 text-center">
-        <Link href="/" className="inline-block text-sm font-semibold text-white tracking-tight mb-4">
-          RightAIChoice
-        </Link>
+        <div className="mb-4"><Logo /></div>
         <h1 className="text-xl font-semibold text-white">Reset your password</h1>
         <p className="text-sm text-zinc-400">Enter your email and we&apos;ll send a reset link.</p>
       </div>
@@ -58,7 +60,7 @@ export default function ForgotPasswordPage() {
           disabled={pending}
           className="w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {pending ? 'Sending…' : 'Send reset link'}
+          {pending ? 'Sending...' : 'Send reset link'}
         </button>
       </form>
 

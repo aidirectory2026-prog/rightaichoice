@@ -40,10 +40,10 @@ export function pricingLabel(type: string): string {
 
 export function pricingColor(type: string): string {
   const colors: Record<string, string> = {
-    free: 'bg-green-100 text-green-700',
-    freemium: 'bg-blue-100 text-blue-700',
-    paid: 'bg-orange-100 text-orange-700',
-    contact: 'bg-purple-100 text-purple-700',
+    free: 'bg-emerald-950 text-emerald-400 border border-emerald-800',
+    freemium: 'bg-blue-950 text-blue-400 border border-blue-800',
+    paid: 'bg-amber-950 text-amber-400 border border-amber-800',
+    contact: 'bg-purple-950 text-purple-400 border border-purple-800',
   }
-  return colors[type] ?? 'bg-gray-100 text-gray-700'
+  return colors[type] ?? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
 }
