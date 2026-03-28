@@ -76,6 +76,32 @@ export async function forgotPassword(_prevState: AuthState, formData: FormData):
   return { success: 'Password reset link sent. Check your email.' }
 }
 
+// ─── Update Password ────────────────────────────────────────────────────────
+
+export async function updatePassword(_prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const supabase = await createClient()
+
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (password !== confirmPassword) {
+    return { error: 'Passwords do not match.' }
+  }
+
+  if (password.length < 6) {
+    return { error: 'Password must be at least 6 characters.' }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/dashboard')
+}
+
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 
 export async function signInWithGoogle(): Promise<void> {

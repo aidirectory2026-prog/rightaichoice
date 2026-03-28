@@ -95,6 +95,29 @@ export interface Answer {
   profile?: Profile
 }
 
+export interface Discussion {
+  id: string
+  tool_id: string
+  user_id: string
+  title: string
+  body: string
+  upvotes: number
+  reply_count: number
+  is_pinned: boolean
+  created_at: string
+  profile?: Profile
+}
+
+export interface DiscussionReply {
+  id: string
+  discussion_id: string
+  user_id: string
+  body: string
+  upvotes: number
+  created_at: string
+  profile?: Profile
+}
+
 // ── Search / Filter types ────────────────────────────────────────────────────
 
 export interface ToolFilters {
@@ -110,19 +133,26 @@ export interface ToolFilters {
 
 // ── AI / Workflow types ───────────────────────────────────────────────────────
 
+// Stored in JSONB — denormalized for fast reads (no join needed)
 export interface WorkflowStep {
   step: number
-  task: string
-  tool: Tool
+  name: string
   description: string
+  tool_slug: string
+  tool_name: string
+  why: string
 }
 
 export interface Workflow {
   id: string
   title: string
   description: string
+  goal: string
   steps: WorkflowStep[]
   user_id: string | null
   upvotes: number
+  is_ai_generated: boolean
+  is_published: boolean
   created_at: string
+  profile?: Profile
 }

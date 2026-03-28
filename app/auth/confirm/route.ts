@@ -1,19 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// Handles email confirmation links (?token_hash=...&type=signup or recovery)
-// Supabase sends users here after they click the email verification link.
+// Handles email confirmation links.
+// Supabase PKCE flow sends ?code=... after verifying the token server-side.
+// Older/non-PKCE flow sends ?token_hash=...&type=signup
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as 'signup' | 'recovery' | 'magiclink' | null
   const next = searchParams.get('next') ?? '/dashboard'
 
-  if (tokenHash && type) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+  const supabase = await createClient()
 
+  // PKCE flow — Supabase already verified the token and gives us a code
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+  }
+
+  // Non-PKCE fallback — verify token_hash directly
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }

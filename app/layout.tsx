@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { CompareProvider } from "@/components/providers/compare-provider";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
+import { CompareTray } from "@/components/compare/compare-tray";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rightaichoice.com"),
   title: {
     default: "RightAIChoice — Find the Best AI Tools",
     template: "%s | RightAIChoice",
@@ -34,6 +38,15 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://rightaichoice.com",
     siteName: "RightAIChoice",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@rightaichoice",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
   },
 };
 
@@ -63,12 +76,17 @@ export default async function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50">
-        <AuthProvider
-          user={user ? { id: user.id, email: user.email ?? "" } : null}
-          profile={profile}
-        >
-          {children}
-        </AuthProvider>
+        <PostHogProvider>
+          <AuthProvider
+            user={user ? { id: user.id, email: user.email ?? "" } : null}
+            profile={profile}
+          >
+            <CompareProvider>
+              {children}
+              <CompareTray />
+            </CompareProvider>
+          </AuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
