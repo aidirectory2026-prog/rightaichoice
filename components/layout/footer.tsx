@@ -31,6 +31,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/best" className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  Best AI Guides
+                </Link>
+              </li>
+              <li>
                 <Link href="/tools?sort=trending" className="text-sm text-zinc-500 hover:text-white transition-colors">
                   Trending
                 </Link>

@@ -26,9 +26,19 @@ export type AIToolResult = {
   tags: string[]
 }
 
+/** Escape characters that have special meaning in Supabase ilike patterns */
+function sanitizeLike(input: string): string {
+  return input
+    .replace(/\\/g, '\\\\')  // backslash first
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/[(),"'`;]/g, '') // strip chars that could break .or() filter syntax
+    .slice(0, 200) // cap length to prevent oversized queries
+}
+
 export async function searchToolsForAI(params: AISearchParams): Promise<AIToolResult[]> {
   const supabase = await createClient()
-  const term = params.query.trim()
+  const term = sanitizeLike(params.query.trim())
 
   // If category filter, get matching tool IDs first
   let categoryToolIds: string[] | null = null

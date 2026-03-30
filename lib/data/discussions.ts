@@ -2,6 +2,22 @@ import { createClient } from '@/lib/supabase/server'
 
 // ── Discussions ─────────────────────────────────────────────────────────────
 
+export async function getRecentDiscussions(limit = 20, offset = 0) {
+  const supabase = await createClient()
+
+  const { data, count } = await supabase
+    .from('discussions')
+    .select(
+      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url)',
+      { count: 'exact' }
+    )
+    .eq('is_flagged', false)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  return { discussions: data ?? [], total: count ?? 0 }
+}
+
 export async function getDiscussionsForTool(
   toolId: string,
   sort: 'newest' | 'popular' = 'newest'

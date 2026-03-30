@@ -1,6 +1,8 @@
+import { z } from 'zod'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { SYSTEM_PROMPT, TOOL_DEFINITIONS } from '@/lib/ai/system-prompt'
 import { searchToolsForAI, type AISearchParams, type AIToolResult } from '@/lib/data/ai-search'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import type Anthropic from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
@@ -8,19 +10,34 @@ export const dynamic = 'force-dynamic'
 const MAX_TOOL_ROUNDS = 3
 const MODEL = 'claude-sonnet-4-6'
 
-type ChatMessage = {
-  role: 'user' | 'assistant'
-  content: string
-}
+const chatSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().min(1).max(10_000),
+      })
+    )
+    .min(1)
+    .max(50),
+})
 
 export async function POST(request: Request) {
+  const rl = rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   try {
     const body = await request.json()
-    const { messages } = body as { messages: ChatMessage[] }
+    const parsed = chatSchema.safeParse(body)
 
-    if (!messages || messages.length === 0) {
-      return Response.json({ error: 'Messages are required' }, { status: 400 })
+    if (!parsed.success) {
+      return Response.json(
+        { error: 'Invalid request', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+
+    const { messages } = parsed.data
 
     const anthropic = getAnthropicClient()
 

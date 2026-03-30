@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
 import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,7 +76,7 @@ export default async function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50">
+      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] md:pb-0">
         <PostHogProvider>
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}
@@ -87,6 +88,7 @@ export default async function RootLayout({
             </CompareProvider>
           </AuthProvider>
         </PostHogProvider>
+        <MobileNav />
       </body>
     </html>
   );

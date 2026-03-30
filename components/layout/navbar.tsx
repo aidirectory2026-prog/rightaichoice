@@ -50,10 +50,16 @@ export function Navbar() {
               Workflows
             </Link>
             <Link
-              href="/ai-chat"
+              href="/plan"
               className="flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
+              AI Planner
+            </Link>
+            <Link
+              href="/ai-chat"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
               AI Chat
             </Link>
           </div>
@@ -140,11 +146,18 @@ export function Navbar() {
             Workflows
           </Link>
           <Link
-            href="/ai-chat"
+            href="/plan"
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 py-2"
           >
             <Sparkles className="h-3.5 w-3.5" />
+            AI Planner
+          </Link>
+          <Link
+            href="/ai-chat"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
             AI Chat
           </Link>
           <div className="border-t border-zinc-800 pt-3 space-y-2">

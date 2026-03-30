@@ -1,5 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 
+export async function getRecentReviews(limit = 20, offset = 0) {
+  const supabase = await createClient()
+
+  const { data, count } = await supabase
+    .from('reviews')
+    .select(
+      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url)',
+      { count: 'exact' }
+    )
+    .eq('is_flagged', false)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  return { reviews: data ?? [], total: count ?? 0 }
+}
+
 export async function getReviewsForTool(toolId: string, sort: 'helpful' | 'newest' = 'helpful') {
   const supabase = await createClient()
 

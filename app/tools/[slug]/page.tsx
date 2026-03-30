@@ -46,6 +46,10 @@ import { QuestionForm } from '@/components/qa/question-form'
 import { QuestionList } from '@/components/qa/question-list'
 import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
+import { ShareButton } from '@/components/shared/share-button'
+
+// Revalidate tool pages every 5 minutes (ISR)
+export const revalidate = 300
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -282,6 +286,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 size="md"
               />
               <SaveToolButton toolId={tool.id} toolName={tool.name} initialSaved={saved} />
+              <ShareButton
+                url={`/tools/${tool.slug}`}
+                title={`${tool.name} — ${tool.tagline}`}
+                text={`Check out ${tool.name} — ${tool.tagline} | Found on RightAIChoice`}
+              />
               <VisitWebsiteButton slug={tool.slug} url={tool.website_url} />
             </div>
           </div>

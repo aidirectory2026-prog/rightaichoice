@@ -3,6 +3,7 @@ import { getAllToolSlugs } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getAllQuestionIds } from '@/lib/data/questions'
 import { getAllWorkflowIds } from '@/lib/data/workflows'
+import { BEST_PAGES } from '@/lib/data/best-pages'
 
 const BASE_URL = 'https://rightaichoice.com'
 
@@ -54,8 +55,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  const bestPageRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/best`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    ...BEST_PAGES.map((p) => ({
+      url: `${BASE_URL}/best/${p.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    })),
+  ]
+
   return [
     ...staticRoutes,
+    ...bestPageRoutes,
     ...toolRoutes,
     ...categoryRoutes,
     ...questionRoutes,

@@ -46,7 +46,7 @@ export async function saveComparison(
     // Increment view count
     await supabase
       .from('tool_comparisons')
-      .update({ view_count: (existing as { view_count?: number }).view_count ?? 0 + 1 })
+      .update({ view_count: ((existing as { view_count?: number }).view_count ?? 0) + 1 })
       .eq('id', existing.id)
     return existing.slug
   }

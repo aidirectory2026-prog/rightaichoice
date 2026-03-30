@@ -1,3 +1,5 @@
+export const revalidate = 120
+
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Navbar } from '@/components/layout/navbar'

@@ -9,6 +9,7 @@ import { WorkflowVoteButton } from '@/components/workflows/workflow-vote-button'
 import { getWorkflowById, hasVotedOnWorkflow } from '@/lib/data/workflows'
 import { createClient } from '@/lib/supabase/server'
 import { timeAgo } from '@/lib/utils'
+import { ShareButton } from '@/components/shared/share-button'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -76,7 +77,15 @@ export default async function WorkflowDetailPage({ params }: Props) {
               )}
             </div>
 
-            <h1 className="text-2xl font-bold text-white">{workflow.title}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold text-white">{workflow.title}</h1>
+              <ShareButton
+                url={`/workflows/${workflow.id}`}
+                title={workflow.title}
+                text={`${workflow.title} — AI workflow on RightAIChoice`}
+                size="sm"
+              />
+            </div>
             <p className="mt-2 text-sm text-zinc-400 leading-relaxed">{workflow.description}</p>
 
             {/* Goal */}

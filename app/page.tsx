@@ -1,5 +1,8 @@
+// Revalidate homepage every 60 seconds (ISR)
+export const revalidate = 60
+
 import Link from 'next/link'
-import { ArrowRight, Wand2 } from 'lucide-react'
+import { ArrowRight, Wand2, Sparkles, ArrowUpRight } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { SearchBar } from '@/components/layout/search-bar'
@@ -58,6 +61,56 @@ export default async function HomePage() {
                   </Link>
                 )
               )}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── AI Project Planner CTA ───────────────────────────── */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-800/60 bg-emerald-950/50">
+                <Sparkles className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">New</span>
+                  <h2 className="text-lg font-bold text-white">AI Project Planner</h2>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  Describe what you want to build or accomplish — <span className="text-zinc-300">&quot;I want to build a CRM&quot;</span>,{' '}
+                  <span className="text-zinc-300">&quot;automate my Instagram&quot;</span>, or{' '}
+                  <span className="text-zinc-300">&quot;start a YouTube channel&quot;</span>.
+                  Our AI breaks it into stages and finds the best tool for every step.
+                </p>
+              </div>
+              <Link
+                href="/plan"
+                className="shrink-0 flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+              >
+                Plan my project
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {/* Example chips */}
+            <div className="mt-5 flex flex-wrap gap-2 pt-5 border-t border-zinc-800">
+              {[
+                'Build a SaaS product',
+                'Create Instagram content',
+                'Launch a podcast',
+                'Build an e-commerce store',
+                'Automate email marketing',
+                'Start a YouTube channel',
+              ].map((example) => (
+                <Link
+                  key={example}
+                  href={`/plan?q=${encodeURIComponent(example)}`}
+                  className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-500 hover:border-emerald-800 hover:text-emerald-400 transition-colors"
+                >
+                  {example}
+                </Link>
+              ))}
             </div>
           </div>
         </section>

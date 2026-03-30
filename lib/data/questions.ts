@@ -34,18 +34,36 @@ export async function getAllQuestionIds(): Promise<{ id: string; updated_at: str
   return data ?? []
 }
 
-export async function getRecentQuestions(limit = 20, offset = 0) {
+export async function getRecentQuestions(
+  limit = 20,
+  offset = 0,
+  filters?: {
+    answered?: 'yes' | 'no' | 'all'
+    sort?: 'newest' | 'popular'
+    toolSlug?: string
+  }
+) {
   const supabase = await createClient()
 
-  const { data, count } = await supabase
+  let query = supabase
     .from('questions')
     .select(
       '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url)',
       { count: 'exact' }
     )
     .eq('is_flagged', false)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
+
+  if (filters?.answered === 'yes') query = query.eq('is_answered', true)
+  if (filters?.answered === 'no') query = query.eq('is_answered', false)
+  if (filters?.toolSlug) query = (query as typeof query).eq('tools.slug', filters.toolSlug)
+
+  if (filters?.sort === 'popular') {
+    query = query.order('upvotes', { ascending: false })
+  } else {
+    query = query.order('created_at', { ascending: false })
+  }
+
+  const { data, count } = await query.range(offset, offset + limit - 1)
 
   return { questions: data ?? [], total: count ?? 0 }
 }

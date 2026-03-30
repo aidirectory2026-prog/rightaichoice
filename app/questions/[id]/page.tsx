@@ -16,6 +16,7 @@ import {
 } from '@/lib/data/questions'
 import { createClient } from '@/lib/supabase/server'
 import { timeAgo } from '@/lib/utils'
+import { ShareButton } from '@/components/shared/share-button'
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -206,6 +207,14 @@ export default async function QuestionDetailPage({ params }: PageProps) {
                     </Link>
                   )}
                   <span>Asked {timeAgo(question.created_at)}</span>
+                  <div className="ml-auto">
+                    <ShareButton
+                      url={`/questions/${question.id}`}
+                      title={question.title}
+                      text={`${question.title} — answered on RightAIChoice`}
+                      size="sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

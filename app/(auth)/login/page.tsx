@@ -1,13 +1,23 @@
 'use client'
 
 import { useActionState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, signInWithGoogle } from '@/actions/auth'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { Logo } from '@/components/shared/logo'
 
+const AUTH_ERRORS: Record<string, string> = {
+  auth_callback_failed: 'Authentication failed. Please try again.',
+  oauth_failed: 'Google sign-in failed. Please try again.',
+  confirmation_failed: 'Email confirmation failed. The link may have expired.',
+}
+
 export default function LoginPage() {
   const [state, action, pending] = useActionState(signIn, null)
+  const searchParams = useSearchParams()
+  const errorParam = searchParams.get('error')
+  const authError = errorParam ? AUTH_ERRORS[errorParam] ?? 'Something went wrong. Please try again.' : null
 
   return (
     <div className="space-y-6">
@@ -16,6 +26,12 @@ export default function LoginPage() {
         <h1 className="text-xl font-semibold text-white">Welcome back</h1>
         <p className="text-sm text-zinc-400">Sign in to your account</p>
       </div>
+
+      {authError && (
+        <p role="alert" className="text-xs text-red-400 bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2 text-center">
+          {authError}
+        </p>
+      )}
 
       <form action={signInWithGoogle}>
         <button

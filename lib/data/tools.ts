@@ -3,6 +3,16 @@ import type { ToolFilters } from '@/types'
 
 const TOOLS_PER_PAGE = 24
 
+/** Escape characters that have special meaning in Supabase ilike patterns */
+function sanitizeLike(input: string): string {
+  return input
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/[(),"'`;]/g, '')
+    .slice(0, 200)
+}
+
 export async function getTools(filters: ToolFilters = {}) {
   const supabase = await createClient()
   const page = filters.page ?? 1
@@ -34,7 +44,7 @@ export async function getTools(filters: ToolFilters = {}) {
 
   // Text search: ilike for short queries, FTS for longer ones
   if (filters.search) {
-    const term = filters.search.trim()
+    const term = sanitizeLike(filters.search.trim())
     if (term.length <= 2) {
       query = query.ilike('name', `%${term}%`)
     } else {
