@@ -121,71 +121,15 @@ export async function toggleDiscussionVote(
   userId: string,
   direction: 'up' | 'down'
 ): Promise<{ newVote: 'up' | 'down' | null }> {
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('discussion_votes')
-    .select('vote')
-    .eq('discussion_id', discussionId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: discussion } = await supabase
-    .from('discussions')
-    .select('upvotes')
-    .eq('id', discussionId)
-    .single()
-
-  if (!discussion) return { newVote: null }
-
-  if (existing?.vote === direction) {
-    // Undo
-    await supabase
-      .from('discussion_votes')
-      .delete()
-      .eq('discussion_id', discussionId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('discussions')
-        .update({ upvotes: Math.max(0, discussion.upvotes - 1) })
-        .eq('id', discussionId)
-    }
-    return { newVote: null }
-  }
-
-  if (existing) {
-    // Switch direction
-    await supabase
-      .from('discussion_votes')
-      .update({ vote: direction })
-      .eq('discussion_id', discussionId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('discussions')
-        .update({ upvotes: discussion.upvotes + 1 })
-        .eq('id', discussionId)
-    } else {
-      await supabase
-        .from('discussions')
-        .update({ upvotes: Math.max(0, discussion.upvotes - 1) })
-        .eq('id', discussionId)
-    }
-    return { newVote: direction }
-  }
-
-  // New vote
-  await supabase
-    .from('discussion_votes')
-    .insert({ discussion_id: discussionId, user_id: userId, vote: direction })
-  if (direction === 'up') {
-    await supabase
-      .from('discussions')
-      .update({ upvotes: discussion.upvotes + 1 })
-      .eq('id', discussionId)
-  }
-  return { newVote: direction }
+  const { toggleVote } = await import('@/lib/data/votes')
+  return toggleVote({
+    voteTable: 'discussion_votes',
+    contentTable: 'discussions',
+    contentIdField: 'discussion_id',
+    contentId: discussionId,
+    userId,
+    direction,
+  })
 }
 
 export async function toggleReplyVote(
@@ -193,66 +137,13 @@ export async function toggleReplyVote(
   userId: string,
   direction: 'up' | 'down'
 ): Promise<{ newVote: 'up' | 'down' | null }> {
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('discussion_reply_votes')
-    .select('vote')
-    .eq('reply_id', replyId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: reply } = await supabase
-    .from('discussion_replies')
-    .select('upvotes')
-    .eq('id', replyId)
-    .single()
-
-  if (!reply) return { newVote: null }
-
-  if (existing?.vote === direction) {
-    await supabase
-      .from('discussion_reply_votes')
-      .delete()
-      .eq('reply_id', replyId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('discussion_replies')
-        .update({ upvotes: Math.max(0, reply.upvotes - 1) })
-        .eq('id', replyId)
-    }
-    return { newVote: null }
-  }
-
-  if (existing) {
-    await supabase
-      .from('discussion_reply_votes')
-      .update({ vote: direction })
-      .eq('reply_id', replyId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('discussion_replies')
-        .update({ upvotes: reply.upvotes + 1 })
-        .eq('id', replyId)
-    } else {
-      await supabase
-        .from('discussion_replies')
-        .update({ upvotes: Math.max(0, reply.upvotes - 1) })
-        .eq('id', replyId)
-    }
-    return { newVote: direction }
-  }
-
-  await supabase
-    .from('discussion_reply_votes')
-    .insert({ reply_id: replyId, user_id: userId, vote: direction })
-  if (direction === 'up') {
-    await supabase
-      .from('discussion_replies')
-      .update({ upvotes: reply.upvotes + 1 })
-      .eq('id', replyId)
-  }
-  return { newVote: direction }
+  const { toggleVote } = await import('@/lib/data/votes')
+  return toggleVote({
+    voteTable: 'discussion_reply_votes',
+    contentTable: 'discussion_replies',
+    contentIdField: 'reply_id',
+    contentId: replyId,
+    userId,
+    direction,
+  })
 }

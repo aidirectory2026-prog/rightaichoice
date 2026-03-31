@@ -19,6 +19,21 @@ type RateLimitEntry = {
 // Separate maps per endpoint so limits don't interfere
 const stores = new Map<string, Map<string, RateLimitEntry>>()
 
+// Periodic cleanup to prevent memory leaks — runs at most once per 60s
+let lastCleanup = 0
+const CLEANUP_INTERVAL = 60_000
+
+function cleanupExpiredEntries() {
+  const now = Date.now()
+  if (now - lastCleanup < CLEANUP_INTERVAL) return
+  lastCleanup = now
+  for (const store of stores.values()) {
+    for (const [key, entry] of store) {
+      if (now > entry.resetAt) store.delete(key)
+    }
+  }
+}
+
 function getStore(endpoint: string): Map<string, RateLimitEntry> {
   if (!stores.has(endpoint)) {
     stores.set(endpoint, new Map())
@@ -57,6 +72,8 @@ export function rateLimit(
   const key = ip
   const now = Date.now()
   const store = getStore(endpoint)
+
+  cleanupExpiredEntries()
 
   const entry = store.get(key)
 

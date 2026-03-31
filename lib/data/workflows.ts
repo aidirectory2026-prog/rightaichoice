@@ -80,16 +80,12 @@ export async function hasVotedOnWorkflow(workflowId: string, userId: string): Pr
 
 async function adjustWorkflowUpvotes(workflowId: string, delta: 1 | -1) {
   const supabase = await createClient()
-  const { data: w } = await supabase
-    .from('workflows')
-    .select('upvotes')
-    .eq('id', workflowId)
-    .single()
-  if (!w) return
-  await supabase
-    .from('workflows')
-    .update({ upvotes: Math.max(0, (w.upvotes ?? 0) + delta) })
-    .eq('id', workflowId)
+  await supabase.rpc('adjust_counter', {
+    target_table: 'workflows',
+    target_id: workflowId,
+    counter_field: 'upvotes',
+    delta,
+  })
 }
 
 export async function getAllWorkflowIds(): Promise<{ id: string; updated_at: string }[]> {

@@ -1,5 +1,6 @@
 import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import type Anthropic from '@anthropic-ai/sdk'
 import type { WorkflowStep } from '@/types'
 
@@ -13,6 +14,9 @@ type GeneratedWorkflow = {
 }
 
 export async function POST(request: Request) {
+  const rl = rateLimit('workflows-generate', request, { limit: 5, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   try {
     const { goal } = (await request.json()) as { goal: string }
     if (!goal?.trim()) {

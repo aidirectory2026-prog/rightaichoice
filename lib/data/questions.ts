@@ -147,71 +147,15 @@ export async function toggleQuestionVote(
   userId: string,
   direction: 'up' | 'down'
 ): Promise<{ newVote: 'up' | 'down' | null }> {
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('question_votes')
-    .select('vote')
-    .eq('question_id', questionId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: question } = await supabase
-    .from('questions')
-    .select('upvotes')
-    .eq('id', questionId)
-    .single()
-
-  if (!question) return { newVote: null }
-
-  if (existing?.vote === direction) {
-    // Undo
-    await supabase
-      .from('question_votes')
-      .delete()
-      .eq('question_id', questionId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('questions')
-        .update({ upvotes: Math.max(0, question.upvotes - 1) })
-        .eq('id', questionId)
-    }
-    return { newVote: null }
-  }
-
-  if (existing) {
-    // Switch direction
-    await supabase
-      .from('question_votes')
-      .update({ vote: direction })
-      .eq('question_id', questionId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('questions')
-        .update({ upvotes: question.upvotes + 1 })
-        .eq('id', questionId)
-    } else {
-      await supabase
-        .from('questions')
-        .update({ upvotes: Math.max(0, question.upvotes - 1) })
-        .eq('id', questionId)
-    }
-    return { newVote: direction }
-  }
-
-  // New vote
-  await supabase
-    .from('question_votes')
-    .insert({ question_id: questionId, user_id: userId, vote: direction })
-  if (direction === 'up') {
-    await supabase
-      .from('questions')
-      .update({ upvotes: question.upvotes + 1 })
-      .eq('id', questionId)
-  }
-  return { newVote: direction }
+  const { toggleVote } = await import('@/lib/data/votes')
+  return toggleVote({
+    voteTable: 'question_votes',
+    contentTable: 'questions',
+    contentIdField: 'question_id',
+    contentId: questionId,
+    userId,
+    direction,
+  })
 }
 
 export async function toggleAnswerVote(
@@ -219,69 +163,13 @@ export async function toggleAnswerVote(
   userId: string,
   direction: 'up' | 'down'
 ): Promise<{ newVote: 'up' | 'down' | null }> {
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('answer_votes')
-    .select('vote')
-    .eq('answer_id', answerId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: answer } = await supabase
-    .from('answers')
-    .select('upvotes')
-    .eq('id', answerId)
-    .single()
-
-  if (!answer) return { newVote: null }
-
-  if (existing?.vote === direction) {
-    // Undo
-    await supabase
-      .from('answer_votes')
-      .delete()
-      .eq('answer_id', answerId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('answers')
-        .update({ upvotes: Math.max(0, answer.upvotes - 1) })
-        .eq('id', answerId)
-    }
-    return { newVote: null }
-  }
-
-  if (existing) {
-    // Switch direction
-    await supabase
-      .from('answer_votes')
-      .update({ vote: direction })
-      .eq('answer_id', answerId)
-      .eq('user_id', userId)
-    if (direction === 'up') {
-      await supabase
-        .from('answers')
-        .update({ upvotes: answer.upvotes + 1 })
-        .eq('id', answerId)
-    } else {
-      await supabase
-        .from('answers')
-        .update({ upvotes: Math.max(0, answer.upvotes - 1) })
-        .eq('id', answerId)
-    }
-    return { newVote: direction }
-  }
-
-  // New vote
-  await supabase
-    .from('answer_votes')
-    .insert({ answer_id: answerId, user_id: userId, vote: direction })
-  if (direction === 'up') {
-    await supabase
-      .from('answers')
-      .update({ upvotes: answer.upvotes + 1 })
-      .eq('id', answerId)
-  }
-  return { newVote: direction }
+  const { toggleVote } = await import('@/lib/data/votes')
+  return toggleVote({
+    voteTable: 'answer_votes',
+    contentTable: 'answers',
+    contentIdField: 'answer_id',
+    contentId: answerId,
+    userId,
+    direction,
+  })
 }

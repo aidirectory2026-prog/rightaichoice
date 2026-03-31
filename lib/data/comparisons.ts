@@ -43,11 +43,13 @@ export async function saveComparison(
     .maybeSingle()
 
   if (existing) {
-    // Increment view count
-    await supabase
-      .from('tool_comparisons')
-      .update({ view_count: ((existing as { view_count?: number }).view_count ?? 0) + 1 })
-      .eq('id', existing.id)
+    // Atomic view count increment
+    await supabase.rpc('adjust_counter', {
+      target_table: 'tool_comparisons',
+      target_id: existing.id,
+      counter_field: 'view_count',
+      delta: 1,
+    })
     return existing.slug
   }
 
@@ -79,12 +81,13 @@ export async function getComparisonBySlug(slug: string) {
 
   if (error) return null
 
-  // Increment view count (fire-and-forget)
-  supabase
-    .from('tool_comparisons')
-    .update({ view_count: (data.view_count ?? 0) + 1 })
-    .eq('id', data.id)
-    .then(() => {})
+  // Atomic view count increment (fire-and-forget)
+  supabase.rpc('adjust_counter', {
+    target_table: 'tool_comparisons',
+    target_id: data.id,
+    counter_field: 'view_count',
+    delta: 1,
+  }).then(() => {})
 
   return data
 }

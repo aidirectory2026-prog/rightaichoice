@@ -81,22 +81,27 @@ export default async function QuestionDetailPage({ params }: PageProps) {
   ])
 
   const acceptedAnswer = answers.find((a: { is_accepted: boolean }) => a.is_accepted)
+
+  // Sanitize user content for safe JSON-LD embedding (prevents </script> injection)
+  const sanitizeForJsonLd = (str: string) =>
+    str.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'QAPage',
-    name: question.title,
-    description: question.body.slice(0, 200),
+    name: sanitizeForJsonLd(question.title),
+    description: sanitizeForJsonLd(question.body.slice(0, 200)),
     mainEntity: {
       '@type': 'Question',
-      name: question.title,
-      text: question.body,
+      name: sanitizeForJsonLd(question.title),
+      text: sanitizeForJsonLd(question.body),
       datePublished: question.created_at,
       answerCount: answers.length,
       upvoteCount: question.upvotes,
       ...(acceptedAnswer && {
         acceptedAnswer: {
           '@type': 'Answer',
-          text: (acceptedAnswer as { body: string }).body,
+          text: sanitizeForJsonLd((acceptedAnswer as { body: string }).body),
           upvoteCount: (acceptedAnswer as { upvotes: number }).upvotes,
           datePublished: (acceptedAnswer as { created_at: string }).created_at,
         },

@@ -67,46 +67,14 @@ export async function toggleReviewVote(
   userId: string,
   direction: 'up' | 'down'
 ): Promise<{ newVote: 'up' | 'down' | null }> {
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('review_votes')
-    .select('vote')
-    .eq('review_id', reviewId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: review } = await supabase
-    .from('reviews')
-    .select('upvotes, downvotes')
-    .eq('id', reviewId)
-    .single()
-
-  if (!review) return { newVote: null }
-
-  if (existing?.vote === direction) {
-    // Undo existing vote
-    await supabase.from('review_votes').delete().eq('review_id', reviewId).eq('user_id', userId)
-    const field = direction === 'up' ? 'upvotes' : 'downvotes'
-    const current = direction === 'up' ? review.upvotes : review.downvotes
-    await supabase.from('reviews').update({ [field]: Math.max(0, current - 1) }).eq('id', reviewId)
-    return { newVote: null }
-  }
-
-  if (existing) {
-    // Switch vote direction
-    await supabase.from('review_votes').update({ vote: direction }).eq('review_id', reviewId).eq('user_id', userId)
-    await supabase.from('reviews').update({
-      upvotes: direction === 'up' ? review.upvotes + 1 : Math.max(0, review.upvotes - 1),
-      downvotes: direction === 'down' ? review.downvotes + 1 : Math.max(0, review.downvotes - 1),
-    }).eq('id', reviewId)
-    return { newVote: direction }
-  }
-
-  // New vote
-  await supabase.from('review_votes').insert({ review_id: reviewId, user_id: userId, vote: direction })
-  const field = direction === 'up' ? 'upvotes' : 'downvotes'
-  const current = direction === 'up' ? review.upvotes : review.downvotes
-  await supabase.from('reviews').update({ [field]: current + 1 }).eq('id', reviewId)
-  return { newVote: direction }
+  const { toggleVote } = await import('@/lib/data/votes')
+  return toggleVote({
+    voteTable: 'review_votes',
+    contentTable: 'reviews',
+    contentIdField: 'review_id',
+    contentId: reviewId,
+    userId,
+    direction,
+    hasDownvotes: true,
+  })
 }

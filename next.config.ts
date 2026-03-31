@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs'
 import type { NextConfig } from "next";
 
 const securityHeaders = [
@@ -14,7 +15,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://cdn.rightaichoice.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://*.posthog.com",
+      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
       "frame-ancestors 'none'",
     ].join('; '),
   },
@@ -48,4 +49,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  disableLogger: true,
+});
