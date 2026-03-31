@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, Wand2, GitBranch } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen } from 'lucide-react'
 
 export function Navbar() {
   const { user, profile } = useAuth()
@@ -18,49 +18,38 @@ export function Navbar() {
           <Logo size="sm" />
           <div className="hidden md:flex items-center gap-6">
             <Link
+              href="/plan"
+              className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Plan Your Stack
+            </Link>
+            <Link
               href="/tools"
               className="text-sm text-zinc-400 hover:text-white transition-colors"
             >
               Browse Tools
             </Link>
             <Link
+              href="/compare"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <GitCompareArrows className="h-3.5 w-3.5" />
+              Compare
+            </Link>
+            <Link
+              href="/best"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <Award className="h-3.5 w-3.5" />
+              Best For...
+            </Link>
+            <Link
               href="/categories"
-              className="text-sm text-zinc-400 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
             >
+              <FolderOpen className="h-3.5 w-3.5" />
               Categories
-            </Link>
-            <Link
-              href="/questions"
-              className="text-sm text-zinc-400 hover:text-white transition-colors"
-            >
-              Q&A
-            </Link>
-            <Link
-              href="/recommend"
-              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
-            >
-              <Wand2 className="h-3.5 w-3.5" />
-              Find My Tool
-            </Link>
-            <Link
-              href="/workflows"
-              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              Workflows
-            </Link>
-            <Link
-              href="/plan"
-              className="flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              AI Planner
-            </Link>
-            <Link
-              href="/ai-chat"
-              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
-            >
-              AI Chat
             </Link>
           </div>
         </div>
@@ -109,6 +98,14 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
           <Link
+            href="/plan"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 py-2"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Plan Your Stack
+          </Link>
+          <Link
             href="/tools"
             onClick={() => setMobileOpen(false)}
             className="block text-sm text-zinc-400 hover:text-white py-2"
@@ -116,49 +113,28 @@ export function Navbar() {
             Browse Tools
           </Link>
           <Link
+            href="/compare"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
+            <GitCompareArrows className="h-3.5 w-3.5" />
+            Compare
+          </Link>
+          <Link
+            href="/best"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
+            <Award className="h-3.5 w-3.5" />
+            Best For...
+          </Link>
+          <Link
             href="/categories"
             onClick={() => setMobileOpen(false)}
-            className="block text-sm text-zinc-400 hover:text-white py-2"
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
           >
+            <FolderOpen className="h-3.5 w-3.5" />
             Categories
-          </Link>
-          <Link
-            href="/questions"
-            onClick={() => setMobileOpen(false)}
-            className="block text-sm text-zinc-400 hover:text-white py-2"
-          >
-            Q&A
-          </Link>
-          <Link
-            href="/recommend"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
-          >
-            <Wand2 className="h-3.5 w-3.5" />
-            Find My Tool
-          </Link>
-          <Link
-            href="/workflows"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
-          >
-            <GitBranch className="h-3.5 w-3.5" />
-            Workflows
-          </Link>
-          <Link
-            href="/plan"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 py-2"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            AI Planner
-          </Link>
-          <Link
-            href="/ai-chat"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
-          >
-            AI Chat
           </Link>
           <div className="border-t border-zinc-800 pt-3 space-y-2">
             {user ? (

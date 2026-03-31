@@ -21,18 +21,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://rightaichoice.com"),
   title: {
-    default: "RightAIChoice — Find the Best AI Tools",
+    default: "RightAIChoice — Build Anything with AI",
     template: "%s | RightAIChoice",
   },
   description:
-    "The decision-making engine for discovering AI tools. Search, compare, and choose the right AI tool with real community insights.",
+    "Tell us your goal. Get the exact AI tool stack with costs, tradeoffs, and alternatives. The decision engine for AI tools.",
   keywords: [
     "AI tools",
-    "AI directory",
-    "artificial intelligence",
-    "find AI tools",
-    "compare AI tools",
-    "best AI tools",
+    "AI stack",
+    "best AI tools for",
+    "AI tool recommendations",
+    "build with AI",
+    "AI project planner",
   ],
   openGraph: {
     type: "website",

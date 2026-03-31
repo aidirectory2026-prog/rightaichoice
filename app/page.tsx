@@ -2,18 +2,48 @@
 export const revalidate = 60
 
 import Link from 'next/link'
-import { ArrowRight, Wand2, Sparkles, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Sparkles, Layers, BarChart3, Zap } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { SearchBar } from '@/components/layout/search-bar'
 import { ToolCard } from '@/components/tools/tool-card'
-import { getFeaturedTools, getTrendingTools } from '@/lib/data/tools'
+import { GoalInput } from '@/components/home/goal-input'
+import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 
+const EXAMPLE_STACKS = [
+  {
+    title: 'Launch a SaaS MVP',
+    description: 'Design, build, and ship a product without a full dev team',
+    href: '/plan?q=Launch+a+SaaS+MVP+without+code',
+    tools: '6–8 tools',
+    cost: 'From $0/mo',
+  },
+  {
+    title: 'Start a YouTube Channel',
+    description: 'Script, record, edit, thumbnail, and grow — all with AI',
+    href: '/plan?q=Start+a+faceless+YouTube+channel',
+    tools: '5–7 tools',
+    cost: 'From $0/mo',
+  },
+  {
+    title: 'Run a Solo Marketing Agency',
+    description: 'Content, ads, SEO, email, and reporting for multiple clients',
+    href: '/plan?q=Run+a+solo+marketing+agency',
+    tools: '7–9 tools',
+    cost: 'From $29/mo',
+  },
+  {
+    title: 'Automate Customer Support',
+    description: 'Chatbots, ticketing, knowledge base, and escalation flows',
+    href: '/plan?q=Automate+customer+support+with+AI',
+    tools: '4–6 tools',
+    cost: 'From $0/mo',
+  },
+]
+
 export default async function HomePage() {
-  const [featured, trending, categories] = await Promise.all([
+  const [featured, categories] = await Promise.all([
     getFeaturedTools(6),
-    getTrendingTools(8),
     getCategories(),
   ])
 
@@ -24,38 +54,37 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* ─── Hero ─────────────────────────────────────────────── */}
         <section className="relative overflow-hidden">
-          {/* Subtle gradient background */}
           <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-zinc-950 to-zinc-950" />
 
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/50 px-4 py-1.5 text-sm text-emerald-400 mb-8">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {featured.length + trending.length}+ AI tools indexed
+              <Sparkles className="h-3.5 w-3.5" />
+              AI-powered decision engine
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
-              Find the <span className="text-emerald-400">right AI tool</span>
+              <span className="text-emerald-400">Build anything</span> with AI.
               <br />
-              for what you want to do
+              We&apos;ll give you the exact stack.
             </h1>
 
             <p className="mt-5 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Search, compare, and choose with confidence.
-              Real community reviews. Structured discovery. No noise.
+              Tell us your goal. Get a complete tool stack with costs, tradeoffs, and alternatives for every stage.
             </p>
 
+            {/* Goal input → planner */}
             <div className="mt-10 max-w-2xl mx-auto">
-              <SearchBar size="lg" />
+              <GoalInput />
             </div>
 
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-600">
-              <span>Popular:</span>
-              {['AI writing', 'code generation', 'image generation', 'video editing', 'automation'].map(
+              <span>Try:</span>
+              {['Build a SaaS product', 'Start a YouTube channel', 'Automate lead generation', 'Launch a podcast'].map(
                 (term) => (
                   <Link
                     key={term}
-                    href={`/tools?search=${encodeURIComponent(term)}`}
-                    className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300 transition-colors"
+                    href={`/plan?q=${encodeURIComponent(term)}`}
+                    className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-500 hover:border-emerald-800/50 hover:text-emerald-400 transition-colors"
                   >
                     {term}
                   </Link>
@@ -65,62 +94,85 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ─── AI Project Planner CTA ───────────────────────────── */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8">
-          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-800/60 bg-emerald-950/50">
-                <Sparkles className="h-5 w-5 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">New</span>
-                  <h2 className="text-lg font-bold text-white">AI Project Planner</h2>
-                </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">
-                  Describe what you want to build or accomplish — <span className="text-zinc-300">&quot;I want to build a CRM&quot;</span>,{' '}
-                  <span className="text-zinc-300">&quot;automate my Instagram&quot;</span>, or{' '}
-                  <span className="text-zinc-300">&quot;start a YouTube channel&quot;</span>.
-                  Our AI breaks it into stages and finds the best tool for every step.
-                </p>
-              </div>
-              <Link
-                href="/plan"
-                className="shrink-0 flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+        {/* ─── How It Works ────────────────────────────────────── */}
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
+          <h2 className="text-center text-xl font-semibold text-white mb-10">How it works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Sparkles,
+                step: '1',
+                title: 'Describe your goal',
+                desc: 'Tell us what you want to build or accomplish in plain language.',
+              },
+              {
+                icon: Layers,
+                step: '2',
+                title: 'Get your stack',
+                desc: 'AI breaks it into stages and recommends the best tool for each step.',
+              },
+              {
+                icon: BarChart3,
+                step: '3',
+                title: 'Compare and choose',
+                desc: 'See costs, alternatives, and tradeoffs — then decide with confidence.',
+              },
+            ].map(({ icon: Icon, step, title, desc }) => (
+              <div
+                key={step}
+                className="relative rounded-xl border border-zinc-800 bg-zinc-900/30 p-6 text-center"
               >
-                Plan my project
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
+                <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-800/50 bg-emerald-950/40">
+                  <Icon className="h-5 w-5 text-emerald-400" />
+                </div>
+                <span className="absolute top-4 right-4 text-xs font-mono text-zinc-600">{step}</span>
+                <h3 className="text-sm font-semibold text-white mb-1.5">{title}</h3>
+                <p className="text-sm text-zinc-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-            {/* Example chips */}
-            <div className="mt-5 flex flex-wrap gap-2 pt-5 border-t border-zinc-800">
-              {[
-                'Build a SaaS product',
-                'Create Instagram content',
-                'Launch a podcast',
-                'Build an e-commerce store',
-                'Automate email marketing',
-                'Start a YouTube channel',
-              ].map((example) => (
-                <Link
-                  key={example}
-                  href={`/plan?q=${encodeURIComponent(example)}`}
-                  className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-500 hover:border-emerald-800 hover:text-emerald-400 transition-colors"
-                >
-                  {example}
-                </Link>
-              ))}
-            </div>
+        {/* ─── Example Stacks ──────────────────────────────────── */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+          <div className="text-center mb-10">
+            <h2 className="text-xl font-semibold text-white">Best AI Stack for...</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Pre-built tool recommendations for popular goals
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {EXAMPLE_STACKS.map((stack) => (
+              <Link
+                key={stack.title}
+                href={stack.href}
+                className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
+              >
+                <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                  {stack.title}
+                </h3>
+                <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed flex-1">
+                  {stack.description}
+                </p>
+                <div className="mt-4 flex items-center justify-between text-xs">
+                  <span className="text-zinc-600">{stack.tools}</span>
+                  <span className="text-emerald-500/70">{stack.cost}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Plan this stack <ArrowUpRight className="h-3 w-3" />
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
         {/* ─── Featured Tools ──────────────────────────────────── */}
         {featured.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-xl font-semibold text-white">Featured Tools</h2>
+                <h2 className="text-xl font-semibold text-white">Popular tools people are choosing</h2>
                 <p className="mt-1 text-sm text-zinc-500">
                   Hand-picked AI tools worth checking out
                 </p>
@@ -168,85 +220,31 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ─── Trending Tools ──────────────────────────────────── */}
-        {trending.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Trending Now</h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Most viewed tools this week
-                </p>
-              </div>
-              <Link
-                href="/tools?sort=trending"
-                className="hidden sm:flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                See more <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {trending.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ─── Recommendations CTA ─────────────────────────────── */}
+        {/* ─── Bottom CTA — Plan Your Stack ────────────────────── */}
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
-          <div className="rounded-2xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/20 to-zinc-950 p-10">
-            <div className="max-w-xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-400">
-                <Wand2 className="h-3 w-3" />
-                Personalized for you
-              </div>
-              <h2 className="text-2xl font-bold text-white">
-                Not sure which tool to pick?
-              </h2>
-              <p className="mt-3 text-zinc-400 leading-relaxed">
-                Answer 3 quick questions about your use case, budget, and skill level.
-                Our AI will rank the best tools with specific reasons why each fits your needs.
-              </p>
-              <div className="mt-6 flex flex-col sm:flex-row items-start gap-3">
-                <Link
-                  href="/recommend"
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
-                >
-                  <Wand2 className="h-4 w-4" />
-                  Find My Tool
-                </Link>
-                <Link
-                  href="/ai-chat"
-                  className="flex items-center gap-2 rounded-xl border border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
-                >
-                  Chat with AI instead
-                </Link>
-              </div>
+          <div className="rounded-2xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/20 to-zinc-950 p-10 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-400">
+              <Zap className="h-3 w-3" />
+              Powered by AI
             </div>
-          </div>
-        </section>
-
-        {/* ─── CTA ─────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 p-10 text-center">
             <h2 className="text-2xl font-bold text-white">
-              Join the community
+              Ready to build?
             </h2>
-            <p className="mt-3 text-zinc-400 max-w-lg mx-auto">
-              Ask questions, share reviews, and help others find the right AI tools.
+            <p className="mt-3 text-zinc-400 max-w-lg mx-auto leading-relaxed">
+              Describe your goal and get a complete AI tool stack in seconds.
+              Costs, tradeoffs, and alternatives — all in one place.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/questions"
-                className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+                href="/plan"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
               >
-                Browse Q&amp;A
+                <Sparkles className="h-4 w-4" />
+                Plan Your Stack
               </Link>
               <Link
                 href="/tools"
-                className="rounded-lg border border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
+                className="rounded-xl border border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
               >
                 Browse All Tools
               </Link>

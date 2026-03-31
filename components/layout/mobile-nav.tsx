@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Layers, MessageSquare, Sparkles, Wand2 } from 'lucide-react'
+import { Home, Layers, Sparkles, Award, GitCompareArrows } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/tools', label: 'Tools', icon: Layers },
-  { href: '/plan', label: 'AI Plan', icon: Sparkles, highlight: true },
-  { href: '/questions', label: 'Q&A', icon: MessageSquare },
-  { href: '/recommend', label: 'Find', icon: Wand2 },
+  { href: '/plan', label: 'Plan Stack', icon: Sparkles, highlight: true },
+  { href: '/best', label: 'Best For', icon: Award },
+  { href: '/compare', label: 'Compare', icon: GitCompareArrows },
 ]
 
 export function MobileNav() {
