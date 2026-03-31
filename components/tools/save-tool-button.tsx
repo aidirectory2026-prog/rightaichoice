@@ -27,9 +27,15 @@ export function SaveToolButton({
       return
     }
 
+    // Optimistic update
+    const prevSaved = saved
+    setSaved(!saved)
+
     startTransition(async () => {
       const result = await toggleSave(toolId)
-      if (!result.error) {
+      if (result.error) {
+        setSaved(prevSaved) // revert on error
+      } else {
         setSaved(result.saved)
         if (result.saved) analytics.toolSaved(toolId, toolName ?? toolId)
         else analytics.toolUnsaved(toolId, toolName ?? toolId)

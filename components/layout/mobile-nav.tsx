@@ -25,7 +25,7 @@ export function MobileNav() {
               key={href}
               href={href}
               className={[
-                'flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors',
+                'flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-[11px] font-medium transition-colors min-h-[44px]',
                 highlight
                   ? isActive
                     ? 'text-emerald-400'

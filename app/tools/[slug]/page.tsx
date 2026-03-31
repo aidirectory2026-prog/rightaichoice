@@ -47,6 +47,7 @@ import { QuestionList } from '@/components/qa/question-list'
 import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
+import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
 
 // Revalidate tool pages every 5 minutes (ISR)
 export const revalidate = 300
@@ -110,14 +111,15 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Fetch community data in parallel — each section is fault-tolerant
   const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows] = await Promise.all([
-    getAlternativeTools(tool.id, categoryIds, 4),
-    user ? isToolSaved(tool.id, user.id) : Promise.resolve(false),
-    getReviewsForTool(tool.id),
-    user ? hasUserReviewed(tool.id, user.id) : Promise.resolve(false),
-    getQuestionsForTool(tool.id),
-    getDiscussionsForTool(tool.id),
-    getWorkflowsForTool(tool.slug),
+    getAlternativeTools(tool.id, categoryIds, 4).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
+    user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
+    getReviewsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getReviewsForTool>>),
+    user ? hasUserReviewed(tool.id, user.id).catch(() => false) : Promise.resolve(false),
+    getQuestionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getQuestionsForTool>>),
+    getDiscussionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getDiscussionsForTool>>),
+    getWorkflowsForTool(tool.slug).catch(() => [] as Awaited<ReturnType<typeof getWorkflowsForTool>>),
   ])
 
   // Get user's votes on reviews, questions, and discussions
@@ -128,7 +130,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   // Fetch replies for each discussion (limit to first 5 discussions shown)
   const shownDiscussions = discussions.slice(0, 5)
   const repliesArrays = await Promise.all(
-    shownDiscussions.map((d: { id: string }) => getRepliesForDiscussion(d.id))
+    shownDiscussions.map((d: { id: string }) => getRepliesForDiscussion(d.id).catch(() => [] as Awaited<ReturnType<typeof getRepliesForDiscussion>>))
   )
   const repliesMap: Record<string, typeof repliesArrays[number]> = {}
   const allReplyIds: string[] = []
@@ -139,10 +141,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
   const emptyVotes: Record<string, 'up' | 'down'> = {}
   const [userVotes, questionVotes, discussionVotes, replyVotes] = await Promise.all([
-    user ? getReviewVotes(reviewIds, user.id) : Promise.resolve(emptyVotes),
-    user ? getQuestionVotes(questionIds, user.id) : Promise.resolve(emptyVotes),
-    user ? getDiscussionVotes(discussionIds, user.id) : Promise.resolve(emptyVotes),
-    user ? getReplyVotes(allReplyIds, user.id) : Promise.resolve(emptyVotes),
+    user ? getReviewVotes(reviewIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
+    user ? getQuestionVotes(questionIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
+    user ? getDiscussionVotes(discussionIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
+    user ? getReplyVotes(allReplyIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
   ])
 
   const skillLabels: Record<string, string> = {
@@ -438,72 +440,78 @@ export default async function ToolDetailPage({ params }: PageProps) {
               )}
 
               {/* ── Reviews Section ──────────────────────────── */}
-              <section id="reviews">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <Star className="h-5 w-5 text-amber-400" />
-                    Reviews ({reviews.length})
-                  </h2>
-                </div>
-
-                <ReviewList reviews={reviews} userVotes={userVotes} />
-
-                {/* Review form — hidden if user already reviewed */}
-                {!alreadyReviewed && (
-                  <div className="mt-6">
-                    <ReviewForm toolId={tool.id} />
+              <SectionErrorBoundary fallbackTitle="Reviews couldn't load right now.">
+                <section id="reviews">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <Star className="h-5 w-5 text-amber-400" />
+                      Reviews ({reviews.length})
+                    </h2>
                   </div>
-                )}
-              </section>
+
+                  <ReviewList reviews={reviews} userVotes={userVotes} />
+
+                  {/* Review form — hidden if user already reviewed */}
+                  {!alreadyReviewed && (
+                    <div className="mt-6">
+                      <ReviewForm toolId={tool.id} />
+                    </div>
+                  )}
+                </section>
+              </SectionErrorBoundary>
 
               {/* ── Q&A Section ──────────────────────────────── */}
-              <section id="questions">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-blue-400" />
-                    Questions ({questions.length})
-                  </h2>
-                  {questions.length > 5 && (
-                    <Link
-                      href={`/questions?tool=${tool.slug}`}
-                      className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                    >
-                      View all
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  )}
-                </div>
+              <SectionErrorBoundary fallbackTitle="Questions couldn't load right now.">
+                <section id="questions">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-blue-400" />
+                      Questions ({questions.length})
+                    </h2>
+                    {questions.length > 5 && (
+                      <Link
+                        href={`/questions?tool=${tool.slug}`}
+                        className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                      >
+                        View all
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    )}
+                  </div>
 
-                <QuestionList
-                  questions={questions.slice(0, 5)}
-                  userVotes={questionVotes}
-                />
+                  <QuestionList
+                    questions={questions.slice(0, 5)}
+                    userVotes={questionVotes}
+                  />
 
-                <div className="mt-6">
-                  <QuestionForm toolId={tool.id} />
-                </div>
-              </section>
+                  <div className="mt-6">
+                    <QuestionForm toolId={tool.id} />
+                  </div>
+                </section>
+              </SectionErrorBoundary>
 
               {/* ── Discussions Section ────────────────────────── */}
-              <section id="discussions">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <MessagesSquare className="h-5 w-5 text-purple-400" />
-                    Discussions ({discussions.length})
-                  </h2>
-                </div>
+              <SectionErrorBoundary fallbackTitle="Discussions couldn't load right now.">
+                <section id="discussions">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <MessagesSquare className="h-5 w-5 text-purple-400" />
+                      Discussions ({discussions.length})
+                    </h2>
+                  </div>
 
-                <DiscussionList
-                  discussions={shownDiscussions}
-                  repliesMap={repliesMap}
-                  discussionVotes={discussionVotes}
-                  replyVotes={replyVotes}
-                />
+                  <DiscussionList
+                    discussions={shownDiscussions}
+                    repliesMap={repliesMap}
+                    discussionVotes={discussionVotes}
+                    replyVotes={replyVotes}
+                  />
 
-                <div className="mt-6">
-                  <DiscussionForm toolId={tool.id} />
-                </div>
-              </section>
+                  <div className="mt-6">
+                    <DiscussionForm toolId={tool.id} />
+                  </div>
+                </section>
+              </SectionErrorBoundary>
 
               {/* Alternatives */}
               {alternatives.length > 0 && (

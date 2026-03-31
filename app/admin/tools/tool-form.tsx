@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useActionState } from 'react'
 import { createTool, updateTool } from '@/actions/tools'
+import { LogoUpload } from '@/components/admin/logo-upload'
 
 type ToolData = {
   id?: string
@@ -38,6 +40,7 @@ export function ToolForm({ tool, categories, tags }: {
   const isEdit = !!tool?.id
   const action = isEdit ? updateTool : createTool
   const [state, formAction, isPending] = useActionState(action, null)
+  const [logoUrl, setLogoUrl] = useState(tool?.logo_url ?? '')
 
   return (
     <form action={formAction} className="space-y-6 max-w-3xl">
@@ -89,25 +92,28 @@ export function ToolForm({ tool, categories, tags }: {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="website_url" className="block text-xs text-zinc-400 mb-1">Website URL *</label>
-            <input
-              id="website_url" name="website_url" type="url" required
-              defaultValue={tool?.website_url ?? ''}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
-              placeholder="https://example.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="logo_url" className="block text-xs text-zinc-400 mb-1">Logo URL</label>
-            <input
-              id="logo_url" name="logo_url" type="url"
-              defaultValue={tool?.logo_url ?? ''}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
-              placeholder="https://example.com/logo.png"
-            />
-          </div>
+        <div>
+          <label htmlFor="website_url" className="block text-xs text-zinc-400 mb-1">Website URL *</label>
+          <input
+            id="website_url" name="website_url" type="url" required
+            defaultValue={tool?.website_url ?? ''}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
+            placeholder="https://example.com"
+          />
+        </div>
+
+        <div>
+          <input type="hidden" name="logo_url" value={logoUrl} />
+          <LogoUpload
+            currentUrl={tool?.logo_url}
+            toolSlug={tool?.slug}
+            onUploaded={setLogoUrl}
+          />
+          {!isEdit && (
+            <p className="mt-1 text-[11px] text-amber-500/80">
+              Create the tool first, then edit it to upload a logo.
+            </p>
+          )}
         </div>
       </fieldset>
 

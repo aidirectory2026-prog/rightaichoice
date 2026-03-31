@@ -35,10 +35,13 @@ type Props = {
 export function QuestionList({ questions, userVotes, showTool = false }: Props) {
   if (questions.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center">
-        <MessageSquare className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
-        <p className="text-sm text-zinc-500">
-          No questions yet. Be the first to ask!
+      <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 p-10 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-950/50 border border-blue-800/30">
+          <MessageSquare className="h-6 w-6 text-blue-400/70" />
+        </div>
+        <p className="text-sm font-medium text-zinc-300">No questions yet</p>
+        <p className="mt-1 text-xs text-zinc-500 max-w-xs mx-auto">
+          Have a question about this tool? Ask the community below.
         </p>
       </div>
     )
