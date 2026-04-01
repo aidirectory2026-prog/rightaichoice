@@ -19,6 +19,9 @@ import {
   MessagesSquare,
   GitBranch,
   TrendingUp,
+  ShieldCheck,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -301,6 +304,74 @@ export default async function ToolDetailPage({ params }: PageProps) {
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left column (2/3) — Description, Features, etc. */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Our Take — Editorial Verdict (most prominent) */}
+              {(tool.editorial_verdict || (tool.best_for && tool.best_for.length > 0)) && (
+                <section className="rounded-xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/10 to-zinc-900/50 p-5">
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                    Our Take on {tool.name}
+                  </h2>
+
+                  <div className="flex flex-wrap gap-x-8 gap-y-3 mb-4">
+                    {tool.best_for && tool.best_for.length > 0 && (
+                      <div>
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 mb-1.5">
+                          <ThumbsUp className="h-3.5 w-3.5" /> Best for
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {tool.best_for.map((segment: string) => (
+                            <span key={segment} className="rounded-full border border-emerald-800/40 bg-emerald-950/30 px-2.5 py-0.5 text-xs text-emerald-300">
+                              {segment}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {tool.not_for && tool.not_for.length > 0 && (
+                      <div>
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 mb-1.5">
+                          <ThumbsDown className="h-3.5 w-3.5" /> Not ideal for
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {tool.not_for.map((segment: string) => (
+                            <span key={segment} className="rounded-full border border-zinc-700 bg-zinc-800/50 px-2.5 py-0.5 text-xs text-zinc-400">
+                              {segment}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {tool.editorial_verdict && (
+                    <p className="text-sm text-zinc-300 leading-relaxed">
+                      {tool.editorial_verdict}
+                    </p>
+                  )}
+
+                  {/* Alternatives link */}
+                  {alternatives.length > 0 && (
+                    <p className="mt-3 text-xs text-zinc-500">
+                      Alternatives to consider:{' '}
+                      {alternatives.slice(0, 3).map((alt, i) => (
+                        <span key={alt.id}>
+                          {i > 0 && ', '}
+                          <Link href={`/tools/${alt.slug}`} className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                            {alt.name}
+                          </Link>
+                        </span>
+                      ))}
+                    </p>
+                  )}
+
+                  {tool.last_verified_at && (
+                    <p className="mt-3 text-xs text-zinc-600">
+                      Last verified: {new Date(tool.last_verified_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                </section>
+              )}
+
               {/* Description */}
               <section>
                 <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
@@ -449,12 +520,21 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     </h2>
                   </div>
 
-                  <ReviewList reviews={reviews} userVotes={userVotes} />
-
-                  {/* Review form — hidden if user already reviewed */}
-                  {!alreadyReviewed && (
-                    <div className="mt-6">
-                      <ReviewForm toolId={tool.id} />
+                  {reviews.length > 0 ? (
+                    <>
+                      <ReviewList reviews={reviews} userVotes={userVotes} />
+                      {!alreadyReviewed && (
+                        <div className="mt-6">
+                          <ReviewForm toolId={tool.id} />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+                      <p className="text-sm text-zinc-500">No reviews yet. Be the first to share your experience.</p>
+                      <div className="mt-3">
+                        <ReviewForm toolId={tool.id} />
+                      </div>
                     </div>
                   )}
                 </section>
@@ -479,14 +559,24 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     )}
                   </div>
 
-                  <QuestionList
-                    questions={questions.slice(0, 5)}
-                    userVotes={questionVotes}
-                  />
-
-                  <div className="mt-6">
-                    <QuestionForm toolId={tool.id} />
-                  </div>
+                  {questions.length > 0 ? (
+                    <>
+                      <QuestionList
+                        questions={questions.slice(0, 5)}
+                        userVotes={questionVotes}
+                      />
+                      <div className="mt-6">
+                        <QuestionForm toolId={tool.id} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+                      <p className="text-sm text-zinc-500">No questions yet. Ask something about {tool.name}.</p>
+                      <div className="mt-3">
+                        <QuestionForm toolId={tool.id} />
+                      </div>
+                    </div>
+                  )}
                 </section>
               </SectionErrorBoundary>
 
@@ -500,16 +590,26 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     </h2>
                   </div>
 
-                  <DiscussionList
-                    discussions={shownDiscussions}
-                    repliesMap={repliesMap}
-                    discussionVotes={discussionVotes}
-                    replyVotes={replyVotes}
-                  />
-
-                  <div className="mt-6">
-                    <DiscussionForm toolId={tool.id} />
-                  </div>
+                  {discussions.length > 0 ? (
+                    <>
+                      <DiscussionList
+                        discussions={shownDiscussions}
+                        repliesMap={repliesMap}
+                        discussionVotes={discussionVotes}
+                        replyVotes={replyVotes}
+                      />
+                      <div className="mt-6">
+                        <DiscussionForm toolId={tool.id} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+                      <p className="text-sm text-zinc-500">No discussions yet. Start a conversation about {tool.name}.</p>
+                      <div className="mt-3">
+                        <DiscussionForm toolId={tool.id} />
+                      </div>
+                    </div>
+                  )}
                 </section>
               </SectionErrorBoundary>
 

@@ -48,6 +48,9 @@ export async function createTool(_prevState: ActionState, formData: FormData): P
     const is_featured = formData.get('is_featured') === 'true'
     const is_sponsored = formData.get('is_sponsored') === 'true'
     const affiliate_url = (formData.get('affiliate_url') as string) || null
+    const best_for = (formData.get('best_for') as string)?.split('\n').map(s => s.trim()).filter(Boolean) ?? []
+    const not_for = (formData.get('not_for') as string)?.split('\n').map(s => s.trim()).filter(Boolean) ?? []
+    const editorial_verdict = (formData.get('editorial_verdict') as string)?.trim() || null
     const categoryIds = formData.getAll('categories') as string[]
     const tagIds = formData.getAll('tags') as string[]
 
@@ -88,6 +91,10 @@ export async function createTool(_prevState: ActionState, formData: FormData): P
         is_featured,
         is_sponsored,
         affiliate_url,
+        best_for,
+        not_for,
+        editorial_verdict,
+        last_verified_at: new Date().toISOString(),
         is_published: true,
       })
       .select('id')
@@ -137,6 +144,10 @@ export async function updateTool(_prevState: ActionState, formData: FormData): P
     const is_featured = formData.get('is_featured') === 'true'
     const is_sponsored = formData.get('is_sponsored') === 'true'
     const affiliate_url = (formData.get('affiliate_url') as string) || null
+    const best_for = (formData.get('best_for') as string)?.split('\n').map(s => s.trim()).filter(Boolean) ?? []
+    const not_for = (formData.get('not_for') as string)?.split('\n').map(s => s.trim()).filter(Boolean) ?? []
+    const editorial_verdict = (formData.get('editorial_verdict') as string)?.trim() || null
+    const mark_verified = formData.get('mark_verified') === 'true'
     const is_published = formData.get('is_published') !== 'false'
     const categoryIds = formData.getAll('categories') as string[]
     const tagIds = formData.getAll('tags') as string[]
@@ -164,7 +175,11 @@ export async function updateTool(_prevState: ActionState, formData: FormData): P
         is_featured,
         is_sponsored,
         affiliate_url,
+        best_for,
+        not_for,
+        editorial_verdict,
         is_published,
+        ...(mark_verified && { last_verified_at: new Date().toISOString() }),
       })
       .eq('id', id)
 

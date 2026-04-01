@@ -25,6 +25,10 @@ type ToolData = {
   is_published?: boolean
   is_sponsored?: boolean
   affiliate_url?: string | null
+  best_for?: string[]
+  not_for?: string[]
+  editorial_verdict?: string | null
+  last_verified_at?: string | null
   categoryIds?: string[]
   tagIds?: string[]
 }
@@ -257,6 +261,58 @@ export function ToolForm({ tool, categories, tags }: {
             />
           </div>
         </div>
+      </fieldset>
+
+      {/* Editorial — "Our Take" */}
+      <fieldset className="space-y-4">
+        <legend className="text-sm font-medium text-zinc-300 mb-2">Editorial — &quot;Our Take&quot;</legend>
+
+        <div>
+          <label htmlFor="best_for" className="block text-xs text-zinc-400 mb-1">Best for (one per line)</label>
+          <textarea
+            id="best_for" name="best_for" rows={3}
+            defaultValue={tool?.best_for?.join('\n') ?? ''}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600 resize-y"
+            placeholder="Solo founders&#10;Content marketers&#10;Beginners"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="not_for" className="block text-xs text-zinc-400 mb-1">Not ideal for (one per line)</label>
+          <textarea
+            id="not_for" name="not_for" rows={2}
+            defaultValue={tool?.not_for?.join('\n') ?? ''}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600 resize-y"
+            placeholder="Enterprise teams needing SSO&#10;Advanced developers"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="editorial_verdict" className="block text-xs text-zinc-400 mb-1">Editorial verdict (2-3 sentences)</label>
+          <textarea
+            id="editorial_verdict" name="editorial_verdict" rows={3}
+            defaultValue={tool?.editorial_verdict ?? ''}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600 resize-y"
+            placeholder="Honest, specific verdict about this tool..."
+          />
+        </div>
+
+        {isEdit && (
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <input
+                type="checkbox" name="mark_verified" value="true"
+                className="rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-600"
+              />
+              Mark as verified now
+            </label>
+            {tool?.last_verified_at && (
+              <span className="text-xs text-zinc-600">
+                Last verified: {new Date(tool.last_verified_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
       </fieldset>
 
       {/* Flags */}
