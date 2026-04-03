@@ -258,6 +258,46 @@ export async function logClick(toolId: string, source: string, userId?: string) 
   })
 }
 
+/** Get tools not verified in the last N days (for admin staleness dashboard) */
+export async function getStaleTools(days = 90) {
+  const supabase = await createClient()
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabase
+    .from('tools')
+    .select('id, name, slug, pricing_type, is_published, last_verified_at, website_url')
+    .eq('is_published', true)
+    .or(`last_verified_at.is.null,last_verified_at.lt.${cutoff}`)
+    .order('last_verified_at', { ascending: true, nullsFirst: true })
+
+  return data ?? []
+}
+
+/** Get freshness stats for admin dashboard */
+export async function getFreshnessStats() {
+  const supabase = await createClient()
+  const now = Date.now()
+  const days30 = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const days90 = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: allTools } = await supabase
+    .from('tools')
+    .select('id, last_verified_at')
+    .eq('is_published', true)
+
+  if (!allTools) return { total: 0, fresh: 0, aging: 0, stale: 0, neverVerified: 0 }
+
+  let fresh = 0, aging = 0, stale = 0, neverVerified = 0
+  for (const t of allTools) {
+    if (!t.last_verified_at) { neverVerified++; continue }
+    if (t.last_verified_at >= days30) fresh++
+    else if (t.last_verified_at >= days90) aging++
+    else stale++
+  }
+
+  return { total: allTools.length, fresh, aging, stale, neverVerified }
+}
+
 export async function getPopularSearches(limit = 8) {
   const supabase = await createClient()
   const { data } = await supabase

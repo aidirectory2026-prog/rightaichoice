@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useTransition } from 'react'
-import { deleteTool, toggleToolPublished } from '@/actions/tools'
+import { deleteTool, toggleToolPublished, markToolVerified } from '@/actions/tools'
 
 export function ToolActions({ id, slug, name, isPublished }: {
   id: string
@@ -21,6 +21,10 @@ export function ToolActions({ id, slug, name, isPublished }: {
     startTransition(() => { toggleToolPublished(id, !isPublished) })
   }
 
+  function handleVerify() {
+    startTransition(() => { markToolVerified(id) })
+  }
+
   return (
     <div className="flex items-center justify-end gap-2">
       <Link
@@ -29,6 +33,13 @@ export function ToolActions({ id, slug, name, isPublished }: {
       >
         Stats
       </Link>
+      <button
+        onClick={handleVerify}
+        disabled={isPending}
+        className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors px-2 py-1 disabled:opacity-50"
+      >
+        Verify
+      </button>
       <Link
         href={`/admin/tools/${id}`}
         className="text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1"

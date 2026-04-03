@@ -241,6 +241,24 @@ export async function toggleToolPublished(id: string, isPublished: boolean): Pro
   }
 }
 
+export async function markToolVerified(id: string): Promise<ActionState> {
+  try {
+    const { supabase } = await requireAdmin()
+
+    const { error } = await supabase
+      .from('tools')
+      .update({ last_verified_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/tools')
+    return { success: 'Tool marked as verified.' }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Something went wrong.' }
+  }
+}
+
 // ── User-facing actions ─────────────────────────────────────────────────────
 
 export async function toggleSave(toolId: string): Promise<{ saved: boolean; error: string | null }> {
