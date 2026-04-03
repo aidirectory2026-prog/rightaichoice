@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ProjectPlanner } from '@/components/ai/project-planner'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'AI Project Planner — RightAIChoice',
@@ -17,6 +18,9 @@ type PageProps = {
 export default async function PlanPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const initialQuery = sp.q ?? ''
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
     <>
@@ -39,7 +43,7 @@ export default async function PlanPage({ searchParams }: PageProps) {
             </p>
           </div>
 
-          <ProjectPlanner initialQuery={initialQuery} />
+          <ProjectPlanner initialQuery={initialQuery} isLoggedIn={!!user} />
 
         </div>
       </main>

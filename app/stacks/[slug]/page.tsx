@@ -4,12 +4,14 @@ export const revalidate = 3600
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Share2, Sparkles } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { StackStageCard } from '@/components/stacks/stack-stage-card'
 import { StackSummary } from '@/components/stacks/stack-summary'
+import { SaveStackButton } from '@/components/stacks/save-stack-button'
+import { ExportStack } from '@/components/stacks/export-stack'
 import { STACKS, getStackBySlug } from '@/lib/data/stacks'
+import { createClient } from '@/lib/supabase/server'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -38,6 +40,9 @@ export default async function StackPage({ params }: Props) {
   const { slug } = await params
   const stack = getStackBySlug(slug)
   if (!stack) notFound()
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // JSON-LD structured data
   const jsonLd = {
@@ -78,6 +83,25 @@ export default async function StackPage({ params }: Props) {
             <p className="mt-3 text-xs text-zinc-600">
               Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              <SaveStackButton
+                title={stack.title}
+                goal={stack.goal}
+                description={stack.description}
+                stages={stack.stages}
+                summary={stack.summary as Record<string, unknown>}
+                source="curated"
+                sourceSlug={slug}
+                isLoggedIn={!!user}
+              />
+              <ExportStack
+                title={stack.title}
+                goal={stack.goal}
+                stages={stack.stages}
+                summary={stack.summary}
+                shareUrl={`/stacks/${slug}`}
+              />
+            </div>
           </div>
         </section>
 
@@ -96,28 +120,6 @@ export default async function StackPage({ params }: Props) {
               <div className="lg:sticky lg:top-20">
                 <StackSummary stack={stack} />
 
-                {/* Share */}
-                <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-                  <p className="text-xs font-medium text-zinc-400 mb-3">Share this stack</p>
-                  <div className="flex gap-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${stack.title} — ${stack.stages.length} tools, ${stack.summary.paidPath} total`)}&url=${encodeURIComponent(`https://rightaichoice.com/stacks/${slug}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
-                    >
-                      X / Twitter
-                    </a>
-                    <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://rightaichoice.com/stacks/${slug}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
-                    >
-                      LinkedIn
-                    </a>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

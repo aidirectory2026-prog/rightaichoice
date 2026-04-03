@@ -13,6 +13,8 @@ import {
   Send,
 } from 'lucide-react'
 import { ShareButton } from '@/components/shared/share-button'
+import { SaveStackButton } from '@/components/stacks/save-stack-button'
+import { ExportStack } from '@/components/stacks/export-stack'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 
 type PlanTool = {
@@ -50,7 +52,7 @@ const EXAMPLE_QUERIES = [
   'Automate my email marketing workflow',
 ]
 
-export function ProjectPlanner({ initialQuery }: { initialQuery?: string }) {
+export function ProjectPlanner({ initialQuery, isLoggedIn = false }: { initialQuery?: string; isLoggedIn?: boolean }) {
   const [query, setQuery] = useState(initialQuery ?? '')
   const [plan, setPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(false)
@@ -193,12 +195,19 @@ export function ProjectPlanner({ initialQuery }: { initialQuery?: string }) {
                 <p className="mt-1.5 text-sm text-zinc-400 leading-relaxed">{plan.summary}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <ShareButton
-                  url={`/plan?q=${encodeURIComponent(query)}`}
+                <SaveStackButton
                   title={plan.title}
-                  text={`My AI tool plan for: ${query} — built with RightAIChoice`}
-                  variant="button"
-                  size="sm"
+                  goal={query}
+                  description={plan.summary}
+                  stages={plan.stages.map((s) => ({
+                    name: s.name,
+                    description: s.description,
+                    bestPick: s.tools[0] ? { name: s.tools[0].name, slug: s.tools[0].slug, reason: s.tools[0].whyThisStage, pricing: s.tools[0].pricing } : { name: '', slug: '', reason: '', pricing: '' },
+                    alternatives: s.tools.slice(1).map((t) => ({ name: t.name, slug: t.slug, reason: t.whyThisStage, pricing: t.pricing })),
+                    costEstimate: '',
+                  }))}
+                  source="planner"
+                  isLoggedIn={isLoggedIn}
                 />
                 <button
                   onClick={handleReset}
@@ -336,6 +345,20 @@ export function ProjectPlanner({ initialQuery }: { initialQuery?: string }) {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Export */}
+          <div className="flex items-center gap-3">
+            <ExportStack
+              title={plan.title}
+              goal={query}
+              stages={plan.stages.map((s) => ({
+                name: s.name,
+                bestPick: { name: s.tools[0]?.name ?? '', pricing: s.tools[0]?.pricing ?? '' },
+                alternatives: s.tools.slice(1).map((t) => ({ name: t.name })),
+              }))}
+              shareUrl={`/plan?q=${encodeURIComponent(query)}`}
+            />
           </div>
 
           {/* Footer CTA */}

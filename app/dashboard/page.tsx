@@ -11,6 +11,10 @@ import {
   ExternalLink,
   Calendar,
   Globe,
+  Layers,
+  Sparkles,
+  Trash2,
+  Eye,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
@@ -27,6 +31,7 @@ import {
   getReputationHistory,
 } from '@/lib/data/profiles'
 import { ApiKeysPanel } from '@/components/dashboard/api-keys-panel'
+import { DeleteStackButton } from '@/components/stacks/delete-stack-button'
 
 export const metadata = { title: 'Dashboard — RightAIChoice' }
 
@@ -38,7 +43,7 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [profile, badges, savedTools, reviews, repHistory, apiKeysRes] = await Promise.all([
+  const [profile, badges, savedTools, reviews, repHistory, apiKeysRes, savedStacksRes] = await Promise.all([
     getProfile(user.id),
     getUserBadges(user.id),
     getUserSavedTools(user.id),
@@ -50,7 +55,15 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('saved_stacks')
+      .select('id, title, goal, source, view_count, created_at, stages')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
   ])
+
+  const savedStacks = (savedStacksRes.data ?? []) as { id: string; title: string; goal: string; source: string; view_count: number; created_at: string; stages: unknown[] }[]
 
   if (!profile) redirect('/login')
 
@@ -159,6 +172,70 @@ export default async function DashboardPage() {
                       className="mt-3 inline-flex text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
                     >
                       Browse tools
+                    </Link>
+                  </div>
+                )}
+              </section>
+
+              {/* Saved Stacks */}
+              <section>
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-purple-400" />
+                  Saved Stacks ({savedStacks.length})
+                </h2>
+                {savedStacks.length > 0 ? (
+                  <div className="space-y-3">
+                    {savedStacks.map((stack) => (
+                      <div
+                        key={stack.id}
+                        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/stacks/saved/${stack.id}`}
+                              className="text-sm font-medium text-white hover:text-emerald-400 transition-colors"
+                            >
+                              {stack.title}
+                            </Link>
+                            <p className="mt-0.5 text-xs text-zinc-500 truncate">
+                              {stack.goal}
+                            </p>
+                            <div className="mt-2 flex items-center gap-3 text-xs text-zinc-600">
+                              <span className="flex items-center gap-1">
+                                {stack.source === 'planner' ? (
+                                  <Sparkles className="h-3 w-3 text-emerald-500" />
+                                ) : (
+                                  <Layers className="h-3 w-3 text-amber-500" />
+                                )}
+                                {stack.source === 'planner' ? 'AI Generated' : 'Curated'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                {stack.view_count}
+                              </span>
+                              <span>
+                                {Array.isArray(stack.stages) ? stack.stages.length : 0} stages
+                              </span>
+                              <span>
+                                {new Date(stack.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <DeleteStackButton id={stack.id} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center">
+                    <Layers className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
+                    <p className="text-sm text-zinc-500">No saved stacks yet.</p>
+                    <Link
+                      href="/plan"
+                      className="mt-3 inline-flex text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                    >
+                      Plan your AI stack
                     </Link>
                   </div>
                 )}
