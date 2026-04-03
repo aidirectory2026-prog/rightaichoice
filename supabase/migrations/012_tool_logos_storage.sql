@@ -22,7 +22,7 @@ create policy "Admins can upload tool logos"
     and exists (
       select 1 from profiles
       where profiles.id = auth.uid()
-        and profiles.role = 'admin'
+        and profiles.is_admin = true
     )
   );
 
@@ -33,7 +33,7 @@ create policy "Admins can update tool logos"
     and exists (
       select 1 from profiles
       where profiles.id = auth.uid()
-        and profiles.role = 'admin'
+        and profiles.is_admin = true
     )
   );
 
@@ -44,6 +44,6 @@ create policy "Admins can delete tool logos"
     and exists (
       select 1 from profiles
       where profiles.id = auth.uid()
-        and profiles.role = 'admin'
+        and profiles.is_admin = true
     )
   );
