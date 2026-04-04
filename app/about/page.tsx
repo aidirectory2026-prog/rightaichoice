@@ -1,11 +1,11 @@
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { Zap, Users, Brain, Shield } from 'lucide-react'
+import { Zap, Users, Brain, Shield, BarChart3, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata = {
   title: 'About — RightAIChoice',
-  description: 'RightAIChoice is the decision-making engine for discovering and choosing AI tools. Built for the AI community.',
+  description: 'RightAIChoice is the decision-making engine for the AI ecosystem. 500+ verified tools, community intelligence, and AI-powered recommendations.',
 }
 
 export default function AboutPage() {
@@ -18,25 +18,69 @@ export default function AboutPage() {
           {/* Hero */}
           <div className="mb-12">
             <h1 className="text-3xl font-bold text-white mb-4">About RightAIChoice</h1>
-            <p className="text-lg text-zinc-400 leading-relaxed">
-              RightAIChoice is a decision-making engine for the AI ecosystem — not just a directory.
-              We built it because choosing the right AI tool is genuinely hard, and most directories
-              give you a list with no real signal.
+            <p className="text-lg text-zinc-400 leading-relaxed mb-4">
+              RightAIChoice is the decision-making engine for the AI ecosystem. We exist to solve one
+              problem: finding the right AI tool for any job should take minutes, not hours of research
+              across scattered blog posts, biased listicles, and paid directories.
+            </p>
+            <p className="text-zinc-400 leading-relaxed">
+              We combine structured data, real community intelligence, and AI-powered analysis into a
+              single platform where every signal serves the user&apos;s decision — not the tool vendor&apos;s
+              marketing budget.
             </p>
           </div>
 
-          {/* The Problem */}
+          {/* Mission */}
           <section className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-4">The Problem We&apos;re Solving</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Our Mission</h2>
             <p className="text-zinc-400 leading-relaxed mb-4">
-              There are thousands of AI tools. New ones ship every day. Marketing copy is everywhere
-              and genuinely useful signal is hard to find. Most discovery platforms are either static
-              lists or paid placements dressed up as recommendations.
+              The AI tools market is growing faster than anyone can track. Thousands of tools exist,
+              new ones launch daily, and the gap between marketing claims and actual capability is often
+              enormous. Most discovery platforms compound this problem — they&apos;re either static lists
+              with no editorial integrity, or pay-to-play directories where rankings follow revenue,
+              not relevance.
             </p>
             <p className="text-zinc-400 leading-relaxed">
-              The result: people pick tools based on hype, get burned, and waste time.
-              We think that&apos;s a solvable problem.
+              RightAIChoice was built to be the antidote: a platform where the quality of information
+              improves with every user interaction, where editorial verdicts are independent and honest,
+              and where AI amplifies community knowledge rather than replacing it. Our commitment is to
+              high-signal, trustworthy discovery — no SEO spam, no fake engagement, no sponsored
+              results disguised as organic rankings.
             </p>
+          </section>
+
+          {/* Data Methodology */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-white mb-4">Our Data Methodology</h2>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                <div className="flex items-start gap-3">
+                  <BarChart3 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-white mb-1">500+ Verified AI Tools</h3>
+                    <p className="text-sm text-zinc-500">
+                      Every tool in our directory undergoes a structured verification process. We analyze the
+                      tool&apos;s website, documentation, pricing pages, and public APIs to build accurate,
+                      comprehensive profiles — not copied marketing copy.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                <div className="flex items-start gap-3">
+                  <RefreshCw className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-white mb-1">Automated Data Freshness</h3>
+                    <p className="text-sm text-zinc-500">
+                      Tool data is refreshed on a rolling 3-day cycle. New AI tools are discovered and added
+                      daily from multiple sources. FAQs are updated every 48 hours based on real user pain points
+                      from Reddit, ProductHunt, G2, and other community sources. Stale data is the enemy of
+                      good decisions — we eliminate it systematically.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* How We&apos;re Different */}
@@ -47,64 +91,99 @@ export default function AboutPage() {
                 <Brain className="h-5 w-5 text-emerald-400 mb-3" />
                 <h3 className="text-sm font-semibold text-white mb-1.5">3-Layer Intelligence</h3>
                 <p className="text-sm text-zinc-500">
-                  Structured discovery, community intelligence, and AI-powered recommendations working together
-                  — not three separate products.
+                  Structured discovery (search, filter, browse), community intelligence (reviews, Q&amp;A,
+                  discussions), and AI-powered analysis (recommendations, workflow generation, natural
+                  language search) — three layers working as one integrated system.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <Users className="h-5 w-5 text-blue-400 mb-3" />
-                <h3 className="text-sm font-semibold text-white mb-1.5">Real Community Signal</h3>
+                <h3 className="text-sm font-semibold text-white mb-1.5">Community-Driven Signal</h3>
                 <p className="text-sm text-zinc-500">
-                  Reviews, Q&amp;A, and discussions from people who actually use these tools — ranked by
-                  credibility, not recency.
+                  Reviews from practitioners who actually use these tools. Questions answered by the community.
+                  Discussions with real technical depth. Every contribution is ranked by credibility and
+                  usefulness, not just recency.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <Zap className="h-5 w-5 text-amber-400 mb-3" />
                 <h3 className="text-sm font-semibold text-white mb-1.5">Intent-First Search</h3>
                 <p className="text-sm text-zinc-500">
-                  Describe what you want to do — not what you think the tool is called.
-                  Our AI maps your intent to the right tools.
+                  Describe what you want to accomplish, not what you think the tool is called. Our AI
+                  understands context — budget, skill level, existing tech stack — and maps your intent
+                  to the right tools with clear reasoning.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <Shield className="h-5 w-5 text-purple-400 mb-3" />
                 <h3 className="text-sm font-semibold text-white mb-1.5">Transparent Monetization</h3>
                 <p className="text-sm text-zinc-500">
-                  Sponsored placements are clearly labeled. Our ranking is not for sale.
-                  We make that guarantee explicit, not buried.
+                  Sponsored placements carry a visible &ldquo;Sponsored&rdquo; badge. Affiliate links are
+                  disclosed. Our ranking algorithm is not influenced by commercial relationships. This
+                  commitment is non-negotiable and foundational to the trust our users place in us.
                 </p>
               </div>
             </div>
           </section>
 
-          {/* What We&apos;re Building */}
+          {/* Editorial Standards */}
           <section className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-4">What We&apos;re Building</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Editorial Standards</h2>
             <p className="text-zinc-400 leading-relaxed mb-4">
-              RightAIChoice is the intelligence layer for the AI ecosystem. The goal: when someone needs
-              an AI tool, they come here first and leave with enough signal to decide confidently —
-              not just a list of links.
+              Every tool page includes an independent editorial verdict — our honest assessment of who
+              should (and shouldn&apos;t) use a given tool. These verdicts are generated through a combination
+              of automated analysis and editorial review, and are never influenced by tool vendors,
+              advertisers, or affiliate relationships.
+            </p>
+            <ul className="space-y-2 list-disc list-inside text-sm text-zinc-400 leading-relaxed">
+              <li><strong className="text-zinc-300">Best For / Not For</strong> — Clear guidance on ideal and non-ideal use cases.</li>
+              <li><strong className="text-zinc-300">Our Views</strong> — Long-form editorial analysis with specific, substantive critique.</li>
+              <li><strong className="text-zinc-300">AI Panel</strong> — On-demand AI analysis that synthesizes community reviews, features, and competitive positioning.</li>
+              <li><strong className="text-zinc-300">FAQs</strong> — Auto-generated from real user pain points surfaced across Reddit, G2, ProductHunt, and community forums.</li>
+            </ul>
+          </section>
+
+          {/* Community Model */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-white mb-4">Community Model</h2>
+            <p className="text-zinc-400 leading-relaxed mb-4">
+              Our community layer is designed to surface expertise, not noise. Contributors earn reputation
+              through the quality of their contributions — reviews that help others decide, answers that solve
+              real problems, workflows that save people time. The reputation system rewards depth over volume
+              and genuine expertise over first-mover advantage.
             </p>
             <p className="text-zinc-400 leading-relaxed">
-              We&apos;re a small, focused team building this in public. Every feature is driven by
-              real user problems — not feature requests, competitor copying, or trend-chasing.
+              We believe the best product decisions come from combining structured data, community wisdom, and
+              AI analysis — each layer strengthening the others. The more people contribute, the better the
+              platform gets for everyone. That&apos;s the flywheel we&apos;re building.
             </p>
+          </section>
+
+          {/* Contact */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-white mb-4">Contact</h2>
+            <div className="space-y-2 text-sm text-zinc-400">
+              <p>General inquiries: <span className="text-zinc-300">hello@rightaichoice.com</span></p>
+              <p>Privacy concerns: <span className="text-zinc-300">privacy@rightaichoice.com</span></p>
+              <p>Security reports: <span className="text-zinc-300">security@rightaichoice.com</span></p>
+              <p>Legal matters: <span className="text-zinc-300">legal@rightaichoice.com</span></p>
+            </div>
           </section>
 
           {/* CTA */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-white">Want to contribute?</p>
+              <p className="text-sm font-semibold text-white">Join the community</p>
               <p className="text-sm text-zinc-500 mt-0.5">
-                Write a review, answer a question, or share a workflow. Every contribution improves the platform for everyone.
+                Write a review, answer a question, or share a workflow. Every contribution strengthens
+                the platform for the entire AI community.
               </p>
             </div>
             <Link
               href="/signup"
               className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
             >
-              Join the community
+              Get started
             </Link>
           </div>
 

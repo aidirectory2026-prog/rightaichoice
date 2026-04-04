@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }
+    console.error('OAuth code exchange failed:', error.message)
   }
 
   // ── Email link verification (signup confirm / password reset) ────────────
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }
+    console.error('Email verification failed:', error.message)
   }
 
   // Something went wrong — send to login with an error hint

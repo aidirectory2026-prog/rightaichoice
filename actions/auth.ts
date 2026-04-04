@@ -119,6 +119,7 @@ export async function signInWithGoogle(): Promise<void> {
   })
 
   if (error || !data.url) {
+    console.error('Google OAuth error:', error?.message ?? 'No redirect URL returned')
     redirect('/login?error=oauth_failed')
   }
 

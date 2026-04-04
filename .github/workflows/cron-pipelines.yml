@@ -1,0 +1,106 @@
+name: Automation Pipelines
+
+on:
+  schedule:
+    # Ingest new tools — daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+    # Refresh tool data — every 3 days at 4:00 AM UTC
+    - cron: '0 4 */3 * *'
+    # Refresh FAQs — every 2 days at 6:00 AM UTC
+    - cron: '0 6 */2 * *'
+    # Generate editorials — Mondays at 5:00 AM UTC
+    - cron: '0 5 * * 1'
+    # Discover tutorials — Tuesdays and Fridays at 7:00 AM UTC
+    - cron: '0 7 * * 2,5'
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Pipeline to run'
+        required: true
+        type: choice
+        options:
+          - ingest-tools
+          - refresh-tools
+          - refresh-faqs
+          - generate-editorials
+          - discover-tutorials
+          - all
+
+env:
+  BASE_URL: https://rightaichoice.com
+
+jobs:
+  ingest-tools:
+    if: >-
+      github.event.schedule == '0 2 * * *' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'ingest-tools' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ingest new AI tools
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/ingest-tools" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then exit 1; fi
+
+  refresh-tools:
+    if: >-
+      github.event.schedule == '0 4 */3 * *' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'refresh-tools' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh tool data
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/refresh-tools" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then exit 1; fi
+
+  refresh-faqs:
+    if: >-
+      github.event.schedule == '0 6 */2 * *' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'refresh-faqs' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh FAQs from social sources
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/refresh-faqs" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then exit 1; fi
+
+  generate-editorials:
+    if: >-
+      github.event.schedule == '0 5 * * 1' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'generate-editorials' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate editorial content
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/generate-editorials" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then exit 1; fi
+
+  discover-tutorials:
+    if: >-
+      github.event.schedule == '0 7 * * 2,5' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'discover-tutorials' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discover YouTube tutorials
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/discover-tutorials" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then exit 1; fi

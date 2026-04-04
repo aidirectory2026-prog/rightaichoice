@@ -3,15 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { toggleSaveTool, logPageView, logClick } from '@/lib/data/tools'
+import { slugify } from '@/lib/utils/slugify'
 
 type ActionState = { error?: string; success?: string } | null
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-}
 
 async function requireAdmin() {
   const supabase = await createClient()

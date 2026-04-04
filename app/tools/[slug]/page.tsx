@@ -31,7 +31,10 @@ import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
 import { PageViewTracker } from '@/components/tools/page-view-tracker'
 import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { AiPanel } from '@/components/tools/ai-panel'
+import { TutorialVideos } from '@/components/tools/tutorial-videos'
+import { FaqSection } from '@/components/tools/faq-section'
 import { getToolBySlug, getAlternativeTools, isToolSaved } from '@/lib/data/tools'
+import { getFaqsForTool } from '@/lib/data/faqs'
 import { getWorkflowsForTool } from '@/lib/data/workflows'
 import { getReviewsForTool, hasUserReviewed, getReviewVotes } from '@/lib/data/reviews'
 import { getQuestionsForTool, getQuestionVotes } from '@/lib/data/questions'
@@ -115,7 +118,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch community data in parallel — each section is fault-tolerant
-  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows] = await Promise.all([
+  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs] = await Promise.all([
     getAlternativeTools(tool.id, categoryIds, 4).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     getReviewsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getReviewsForTool>>),
@@ -123,6 +126,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
     getQuestionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getQuestionsForTool>>),
     getDiscussionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getDiscussionsForTool>>),
     getWorkflowsForTool(tool.slug).catch(() => [] as Awaited<ReturnType<typeof getWorkflowsForTool>>),
+    getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>),
   ])
 
   // Get user's votes on reviews, questions, and discussions
@@ -372,6 +376,26 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
+              {/* Our Views — Long-form editorial */}
+              {tool.our_views && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-cyan-400" />
+                    Our Views
+                  </h2>
+                  <div className="prose prose-invert prose-zinc prose-sm max-w-none">
+                    <p className="text-zinc-400 leading-relaxed whitespace-pre-line">
+                      {tool.our_views}
+                    </p>
+                  </div>
+                  {tool.our_views_generated_at && (
+                    <p className="mt-2 text-xs text-zinc-600">
+                      Last updated: {new Date(tool.our_views_generated_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                </section>
+              )}
+
               {/* Description */}
               <section>
                 <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
@@ -443,6 +467,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </div>
                 </section>
               )}
+
+              {/* ── Tutorial Videos ───────────────────────────── */}
+              <TutorialVideos tutorials={tool.tutorial_videos ?? []} />
 
               {/* ── AI Panel ─────────────────────────────────── */}
               <AiPanel
@@ -612,6 +639,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   )}
                 </section>
               </SectionErrorBoundary>
+
+              {/* ── FAQs ──────────────────────────────────────── */}
+              <FaqSection faqs={faqs} toolName={tool.name} />
 
               {/* Alternatives */}
               {alternatives.length > 0 && (
