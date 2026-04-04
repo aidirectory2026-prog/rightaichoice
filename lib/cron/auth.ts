@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { env } from '@/lib/env'
 
 export function validateCronSecret(request: Request): NextResponse | null {
   const authHeader = request.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
+  const secret = process.env.CRON_SECRET
 
-  if (!env.CRON_SECRET || token !== env.CRON_SECRET) {
+  if (!secret || token !== secret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
