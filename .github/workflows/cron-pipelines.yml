@@ -38,12 +38,15 @@ jobs:
     steps:
       - name: Ingest new AI tools
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/ingest-tools" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          echo "Response code: $response"
-          if [ "$response" != "200" ]; then exit 1; fi
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
 
   refresh-tools:
     if: >-
@@ -53,12 +56,15 @@ jobs:
     steps:
       - name: Refresh tool data
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/refresh-tools" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          echo "Response code: $response"
-          if [ "$response" != "200" ]; then exit 1; fi
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
 
   refresh-faqs:
     if: >-
@@ -68,12 +74,15 @@ jobs:
     steps:
       - name: Refresh FAQs from social sources
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/refresh-faqs" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          echo "Response code: $response"
-          if [ "$response" != "200" ]; then exit 1; fi
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
 
   generate-editorials:
     if: >-
@@ -83,12 +92,15 @@ jobs:
     steps:
       - name: Generate editorial content
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/generate-editorials" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          echo "Response code: $response"
-          if [ "$response" != "200" ]; then exit 1; fi
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
 
   discover-tutorials:
     if: >-
@@ -98,9 +110,12 @@ jobs:
     steps:
       - name: Discover YouTube tutorials
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/discover-tutorials" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          echo "Response code: $response"
-          if [ "$response" != "200" ]; then exit 1; fi
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
