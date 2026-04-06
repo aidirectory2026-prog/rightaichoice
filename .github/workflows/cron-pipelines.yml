@@ -12,6 +12,8 @@ on:
     - cron: '0 5 * * 1'
     # Discover tutorials — Tuesdays and Fridays at 7:00 AM UTC
     - cron: '0 7 * * 2,5'
+    # Calculate viability scores — Wednesdays at 3:00 AM UTC
+    - cron: '0 3 * * 3'
   workflow_dispatch:
     inputs:
       pipeline:
@@ -24,6 +26,7 @@ on:
           - refresh-faqs
           - generate-editorials
           - discover-tutorials
+          - calculate-viability
           - all
 
 env:
@@ -112,6 +115,24 @@ jobs:
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${{ env.BASE_URL }}/api/cron/discover-tutorials" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          body=$(echo "$result" | sed '$d')
+          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
+          echo "Response code: $code"
+          echo "Response body: $body"
+          if [ "$code" != "200" ]; then exit 1; fi
+
+  calculate-viability:
+    if: >-
+      github.event.schedule == '0 3 * * 3' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'calculate-viability' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate viability scores
+        run: |
+          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
+            "${{ env.BASE_URL }}/api/cron/calculate-viability" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
