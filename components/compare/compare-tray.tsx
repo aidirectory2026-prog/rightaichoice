@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { X, Scale, Trash2 } from 'lucide-react'
 import { useCompare } from '@/components/providers/compare-provider'
+import { CompareToolSearch } from '@/components/compare/compare-tool-search'
 
 export function CompareTray() {
   const { items, remove, clear } = useCompare()
@@ -28,6 +29,7 @@ export function CompareTray() {
 
         {/* Tool pills */}
         <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
+          <CompareToolSearch />
           {items.map((item) => (
             <div
               key={item.id}

@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/footer'
 import { ComparisonTable } from '@/components/compare/comparison-table'
 import { getToolsForComparison } from '@/lib/data/comparisons'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
+import { CompareEmptyState } from '@/components/compare/compare-empty-state'
 
 type PageProps = {
   searchParams: Promise<{ tools?: string }>
@@ -41,23 +42,7 @@ export default async function ComparePage({ searchParams }: PageProps) {
       <>
         <Navbar />
         <main className="flex-1">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 text-center">
-            <Scale className="mx-auto h-12 w-12 text-zinc-700 mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Compare AI Tools</h1>
-            <p className="text-zinc-500 mb-6">
-              Select 2 or 3 tools from the{' '}
-              <Link href="/tools" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                directory
-              </Link>{' '}
-              to compare them side by side.
-            </p>
-            <Link
-              href="/tools"
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
-            >
-              Browse Tools
-            </Link>
-          </div>
+          <CompareEmptyState />
         </main>
         <Footer />
       </>
