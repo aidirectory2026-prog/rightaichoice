@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 /**
  * Fetch multiple tools by their slugs with full details for comparison.
@@ -94,9 +95,10 @@ export async function getToolsForComparisonByIds(ids: string[]) {
  * Get all saved comparison slugs for sitemap generation.
  */
 export async function getAllComparisonSlugs() {
-  const supabase = await createClient()
+  // Use admin client (no cookies) — called from generateStaticParams and sitemap at build time
+  const db = getAdminClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('tool_comparisons')
     .select('slug, updated_at')
     .order('view_count', { ascending: false })
