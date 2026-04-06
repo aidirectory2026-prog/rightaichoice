@@ -26,10 +26,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!page) return { title: 'Not Found' }
 
   return {
-    title: `${page.title} (2025) — RightAIChoice`,
+    title: `${page.title} (2026) — RightAIChoice`,
     description: page.description,
     openGraph: {
-      title: `${page.title} 2025`,
+      title: `${page.title} 2026`,
       description: page.description,
       url: `https://rightaichoice.com/best/${slug}`,
     },
@@ -91,7 +91,7 @@ export default async function BestPage({ params }: PageProps) {
               <ShareButton
                 url={`/best/${slug}`}
                 title={config.title}
-                text={`${config.title} (2025) — ranked and compared on RightAIChoice`}
+                text={`${config.title} (2026) — ranked and compared on RightAIChoice`}
                 variant="button"
                 size="sm"
               />

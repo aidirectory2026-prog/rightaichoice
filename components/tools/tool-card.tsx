@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Star } from 'lucide-react'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
+import { ViabilityBadge } from '@/components/tools/viability-badge'
 
 type ToolCardData = {
   id: string
@@ -14,6 +15,7 @@ type ToolCardData = {
   avg_rating: number
   review_count: number
   is_sponsored?: boolean
+  viability_score?: number | null
 }
 
 export function ToolCard({ tool }: { tool: ToolCardData }) {
@@ -62,6 +64,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
           >
             {pricingLabel(tool.pricing_type)}
           </span>
+          <ViabilityBadge score={tool.viability_score ?? null} size="sm" />
           <AddToCompareButton
             tool={{
               id: tool.id,

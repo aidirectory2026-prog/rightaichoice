@@ -3,17 +3,19 @@ import { getAllToolSlugs } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getAllQuestionIds } from '@/lib/data/questions'
 import { getAllWorkflowIds } from '@/lib/data/workflows'
+import { getAllComparisonSlugs } from '@/lib/data/comparisons'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
 
 const BASE_URL = 'https://rightaichoice.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tools, categories, questions, workflows] = await Promise.all([
+  const [tools, categories, questions, workflows, comparisons] = await Promise.all([
     getAllToolSlugs(),
     getCategories(),
     getAllQuestionIds(),
     getAllWorkflowIds(),
+    getAllComparisonSlugs(),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -24,6 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/workflows`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE_URL}/recommend`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/ai-chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/viability`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${BASE_URL}/viability/at-risk`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/viability/safe-bets`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   ]
 
   const toolRoutes: MetadataRoute.Sitemap = tools.map(({ slug, updated_at }) => ({
@@ -76,12 +81,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]
 
+  const comparisonRoutes: MetadataRoute.Sitemap = comparisons.map((c) => ({
+    url: `${BASE_URL}/compare/${c.slug}`,
+    lastModified: c.updated_at ? new Date(c.updated_at) : new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
   return [
     ...staticRoutes,
     ...stackRoutes,
     ...bestPageRoutes,
     ...toolRoutes,
     ...categoryRoutes,
+    ...comparisonRoutes,
     ...questionRoutes,
     ...workflowRoutes,
   ]

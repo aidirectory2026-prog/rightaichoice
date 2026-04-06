@@ -33,6 +33,7 @@ import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
+import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { getToolBySlug, getAlternativeTools, isToolSaved } from '@/lib/data/tools'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { getWorkflowsForTool } from '@/lib/data/workflows'
@@ -279,6 +280,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     <Calendar className="h-4 w-4" />
                     <span>Added {timeAgo(tool.created_at)}</span>
                   </div>
+                  {tool.viability_score != null && (
+                    <ViabilityBadge score={tool.viability_score} size="md" showLabel />
+                  )}
                 </div>
               </div>
             </div>
@@ -393,6 +397,63 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       Last updated: {new Date(tool.our_views_generated_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </p>
                   )}
+                </section>
+              )}
+
+              {/* Viability Score */}
+              {tool.viability_score != null && (
+                <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                      Viability Score
+                    </h2>
+                    <ViabilityBadge score={tool.viability_score} size="lg" showLabel />
+                  </div>
+
+                  <p className="text-sm text-zinc-400 mb-4">
+                    How likely is {tool.name} to still be operational in 12 months? Based on 6 signals
+                    including funding, development activity, and platform risk.
+                  </p>
+
+                  {tool.viability_signals && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {Object.entries(tool.viability_signals as Record<string, number>).map(([key, value]) => (
+                        <div key={key} className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                          <span className="text-[11px] text-zinc-500 block mb-0.5">
+                            {key.replace(/_/g, ' ')}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  value >= 70 ? 'bg-emerald-500' :
+                                  value >= 40 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`}
+                                style={{ width: `${value}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono text-zinc-400">{value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-center justify-between">
+                    {tool.viability_updated_at && (
+                      <p className="text-xs text-zinc-600">
+                        Last calculated: {new Date(tool.viability_updated_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
+                    <Link
+                      href="/viability"
+                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                    >
+                      How we score &rarr;
+                    </Link>
+                  </div>
                 </section>
               )}
 

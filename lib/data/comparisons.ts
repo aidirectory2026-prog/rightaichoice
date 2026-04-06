@@ -68,6 +68,44 @@ export async function saveComparison(
 }
 
 /**
+ * Fetch multiple tools by their UUIDs for a saved comparison.
+ */
+export async function getToolsForComparisonByIds(ids: string[]) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tools')
+    .select(`
+      *,
+      tool_categories(categories(*)),
+      tool_tags(tags(*))
+    `)
+    .in('id', ids)
+    .eq('is_published', true)
+
+  if (error || !data) return []
+
+  // Preserve input order
+  const byId = new Map(data.map((t) => [t.id, t]))
+  return ids.map((id) => byId.get(id)).filter(Boolean)
+}
+
+/**
+ * Get all saved comparison slugs for sitemap generation.
+ */
+export async function getAllComparisonSlugs() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tool_comparisons')
+    .select('slug, updated_at')
+    .order('view_count', { ascending: false })
+
+  if (error || !data) return []
+  return data as { slug: string; updated_at: string }[]
+}
+
+/**
  * Get a saved comparison by slug.
  */
 export async function getComparisonBySlug(slug: string) {
