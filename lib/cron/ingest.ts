@@ -11,11 +11,12 @@ interface IngestResult {
   enriched: number
   inserted: number
   failed: number
+  insertedSlugs: string[]
 }
 
 export async function runIngestion(supabase: SupabaseClient): Promise<IngestResult> {
   const runId = crypto.randomUUID()
-  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, inserted: 0, failed: 0 }
+  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, inserted: 0, failed: 0, insertedSlugs: [] }
 
   // 1. Discover
   const raw = await discoverTools()
@@ -107,6 +108,7 @@ export async function runIngestion(supabase: SupabaseClient): Promise<IngestResu
         })
       } else {
         result.inserted++
+        result.insertedSlugs.push(slug)
         await supabase.from('ingestion_logs').insert({
           run_id: runId,
           source: tool.source,
