@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase } from 'lucide-react'
 
 export function Navbar() {
   const { user, profile } = useAuth()
@@ -43,6 +43,13 @@ export function Navbar() {
             >
               <Award className="h-3.5 w-3.5" />
               Best For...
+            </Link>
+            <Link
+              href="/for"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <Briefcase className="h-3.5 w-3.5" />
+              By Role
             </Link>
             <Link
               href="/categories"
@@ -127,6 +134,14 @@ export function Navbar() {
           >
             <Award className="h-3.5 w-3.5" />
             Best For...
+          </Link>
+          <Link
+            href="/for"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            By Role
           </Link>
           <Link
             href="/categories"

@@ -4,6 +4,7 @@ import { submitToIndexNow } from '@/lib/indexnow'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
+import { ROLE_PAGES } from '@/lib/data/role-pages'
 
 const BASE = 'https://rightaichoice.com'
 
@@ -72,6 +73,10 @@ export async function POST(request: Request) {
 
   // Stack pages (static data)
   urls.push(...STACKS.map((s) => `${BASE}/stacks/${s.slug}`))
+
+  // Role pages (static data)
+  urls.push(`${BASE}/for`)
+  urls.push(...ROLE_PAGES.map((r) => `${BASE}/for/${r.slug}`))
 
   // IndexNow accepts max 10,000 URLs per request — batch if needed
   const batchSize = 10000

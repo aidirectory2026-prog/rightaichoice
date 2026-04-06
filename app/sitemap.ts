@@ -6,6 +6,7 @@ import { getAllWorkflowIds } from '@/lib/data/workflows'
 import { getAllComparisonSlugs } from '@/lib/data/comparisons'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
+import { ROLE_PAGES } from '@/lib/data/role-pages'
 
 const BASE_URL = 'https://rightaichoice.com'
 
@@ -81,6 +82,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]
 
+  const roleRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/for`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    ...ROLE_PAGES.map((r) => ({
+      url: `${BASE_URL}/for/${r.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    })),
+  ]
+
   const comparisonRoutes: MetadataRoute.Sitemap = comparisons.map((c) => ({
     url: `${BASE_URL}/compare/${c.slug}`,
     lastModified: c.updated_at ? new Date(c.updated_at) : new Date(),
@@ -92,6 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...stackRoutes,
     ...bestPageRoutes,
+    ...roleRoutes,
     ...toolRoutes,
     ...categoryRoutes,
     ...comparisonRoutes,
