@@ -6,6 +6,7 @@ import { CompareProvider } from "@/components/providers/compare-provider";
 import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { websiteJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -77,6 +78,7 @@ export default async function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] md:pb-0">
+        <script {...jsonLdScriptProps(websiteJsonLd())} />
         <PostHogProvider>
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}

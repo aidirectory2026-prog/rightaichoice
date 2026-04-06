@@ -9,6 +9,7 @@ import { ShareButton } from '@/components/shared/share-button'
 import { getBestPageBySlug, BEST_PAGES } from '@/lib/data/best-pages'
 import { getTools } from '@/lib/data/tools'
 import { pricingLabel, pricingColor } from '@/lib/utils'
+import { itemListJsonLd, faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 export const revalidate = 3600 // 1 hour
 
@@ -62,8 +63,38 @@ export default async function BestPage({ params }: PageProps) {
   // Limit to top 18
   const topTools = tools.slice(0, 18)
 
+  // Structured data
+  const itemList = itemListJsonLd(
+    config.title,
+    config.description,
+    `/best/${slug}`,
+    topTools.map((t) => ({
+      name: t.name,
+      url: `/tools/${t.slug}`,
+      ...(t.logo_url && { image: t.logo_url }),
+    })),
+  )
+
+  const faq = faqPageJsonLd([
+    {
+      question: `What are the ${config.title.toLowerCase()} in 2026?`,
+      answer: `The top-rated options include ${topTools.slice(0, 3).map((t) => t.name).join(', ')}. Rankings are based on real user reviews, features, and pricing on RightAIChoice.`,
+    },
+    {
+      question: `Are there free options for ${config.title.toLowerCase().replace('best ai tools for ', '').replace('best free ai tools', 'AI tools')}?`,
+      answer: `Yes — many tools on this list offer free tiers or trials. Check each tool's pricing badge for details. Filter by "Free" on our tools page for a complete list.`,
+    },
+  ])
+
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: 'Home', url: '/' },
+    { name: 'Best AI Tools', url: '/best' },
+    { name: config.title, url: `/best/${slug}` },
+  ])
+
   return (
     <>
+      <script {...jsonLdScriptProps([itemList, faq, breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">

@@ -11,6 +11,7 @@ import {
   getToolsForComparisonByIds,
   getAllComparisonSlugs,
 } from '@/lib/data/comparisons'
+import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -78,8 +79,30 @@ export default async function ComparisonSlugPage({ params }: Props) {
   const toolNames = tools.map((t: { name: string }) => t.name)
   const toolSlugs = tools.map((t: { slug: string }) => t.slug)
 
+  const faq = faqPageJsonLd([
+    {
+      question: `Which is better, ${toolNames[0]} or ${toolNames[1]}?`,
+      answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case. ${toolNames[0]} has a rating of ${(tools[0] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 and ${toolNames[1]} has a rating of ${(tools[1] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 based on real user reviews.`,
+    },
+    {
+      question: `What are the main differences between ${toolNames[0]} and ${toolNames[1]}?`,
+      answer: `The key differences include pricing model, feature set, platform support, and skill level requirements. Review the full comparison on RightAIChoice for a detailed breakdown.`,
+    },
+    {
+      question: `Is there a free version of ${toolNames[0]} or ${toolNames[1]}?`,
+      answer: `Check the pricing section in the comparison for the latest pricing details on both tools, including free tiers, trial options, and paid plans.`,
+    },
+  ])
+
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: 'Home', url: '/' },
+    { name: 'Compare', url: '/compare' },
+    { name: toolNames.join(' vs '), url: `/compare/${slug}` },
+  ])
+
   return (
     <>
+      <script {...jsonLdScriptProps([faq, breadcrumbs])} />
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">

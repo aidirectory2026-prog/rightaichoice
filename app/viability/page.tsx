@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { createClient } from '@/lib/supabase/server'
+import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 
 export const revalidate = 3600
 
@@ -95,7 +96,13 @@ export default async function ViabilityPage() {
       <Navbar />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+          jsonLd,
+          breadcrumbJsonLd([
+            { name: 'Home', url: 'https://rightaichoice.com' },
+            { name: 'Viability Scores', url: 'https://rightaichoice.com/viability' },
+          ]),
+        ]) }}
       />
 
       <main className="flex-1">

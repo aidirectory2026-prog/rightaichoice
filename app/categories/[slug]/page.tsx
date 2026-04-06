@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { getCategoryBySlug } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
+import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -75,7 +76,14 @@ export default async function CategoryPage({ params }: PageProps) {
       <Navbar />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+          jsonLd,
+          breadcrumbJsonLd([
+            { name: 'Home', url: 'https://rightaichoice.com' },
+            { name: 'Categories', url: 'https://rightaichoice.com/categories' },
+            { name: category.name, url: `https://rightaichoice.com/categories/${slug}` },
+          ]),
+        ]) }}
       />
 
       <main className="flex-1">

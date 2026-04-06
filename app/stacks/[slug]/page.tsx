@@ -12,6 +12,7 @@ import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { STACKS, getStackBySlug } from '@/lib/data/stacks'
 import { createClient } from '@/lib/supabase/server'
+import { howToJsonLd, itemListJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -45,19 +46,35 @@ export default async function StackPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // JSON-LD structured data
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: stack.title,
-    description: stack.description,
-    url: `https://rightaichoice.com/stacks/${slug}`,
-    publisher: {
-      '@type': 'Organization',
-      name: 'RightAIChoice',
-      url: 'https://rightaichoice.com',
-    },
-    dateModified: new Date().toISOString(),
-  }
+  const howTo = howToJsonLd(
+    stack.title,
+    stack.description,
+    `/stacks/${slug}`,
+    stack.stages.map((stage) => ({
+      name: stage.name,
+      text: `${stage.description} — Best pick: ${stage.bestPick.name} (${stage.bestPick.pricing}). Alternatives: ${stage.alternatives.map((a) => a.name).join(', ')}.`,
+      url: `/tools/${stage.bestPick.slug}`,
+    })),
+  )
+
+  const allTools = stack.stages.flatMap((s) => [
+    s.bestPick,
+    ...s.alternatives,
+  ])
+  const toolList = itemListJsonLd(
+    `Tools in ${stack.title}`,
+    `All AI tools recommended for the ${stack.goal} stack`,
+    `/stacks/${slug}`,
+    allTools.map((t) => ({ name: t.name, url: `/tools/${t.slug}` })),
+  )
+
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: 'Home', url: '/' },
+    { name: 'AI Stacks', url: '/stacks' },
+    { name: stack.title, url: `/stacks/${slug}` },
+  ])
+
+  const jsonLd = [howTo, toolList, breadcrumbs]
 
   return (
     <>
@@ -126,10 +143,7 @@ export default async function StackPage({ params }: Props) {
         </section>
 
         {/* JSON-LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <script {...jsonLdScriptProps(jsonLd)} />
       </main>
 
       <Footer />

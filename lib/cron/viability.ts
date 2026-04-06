@@ -139,22 +139,24 @@ export async function calculateViabilityBatch(batchSize = 50): Promise<{
       const signals = calculateSignals(tool as ToolRow)
       const score = computeViabilityScore(signals)
 
-      const { error: updateError } = await db
+      // viability columns added via migration 026 — not in generated Supabase types yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (db as any)
         .from('tools')
         .update({
           viability_score: score,
           viability_signals: signals,
           viability_updated_at: new Date().toISOString(),
         })
-        .eq('id', tool.id)
+        .eq('id', (tool as ToolRow).id)
 
       if (updateError) {
-        errors.push(`${tool.slug}: ${updateError.message}`)
+        errors.push(`${(tool as ToolRow).slug}: ${updateError.message}`)
       } else {
         processed++
       }
     } catch (err) {
-      errors.push(`${tool.slug}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      errors.push(`${(tool as ToolRow).slug}: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

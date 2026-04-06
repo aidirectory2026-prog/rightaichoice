@@ -55,6 +55,7 @@ import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
+import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 
 // Revalidate tool pages every 5 minutes (ISR)
 export const revalidate = 300
@@ -204,7 +205,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
       <PageViewTracker path={`/tools/${slug}`} toolId={tool.id} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+          jsonLd,
+          breadcrumbJsonLd([
+            { name: 'Home', url: 'https://rightaichoice.com' },
+            { name: 'Tools', url: 'https://rightaichoice.com/tools' },
+            { name: tool.name, url: `https://rightaichoice.com/tools/${slug}` },
+          ]),
+        ]) }}
       />
 
       <main className="flex-1">
