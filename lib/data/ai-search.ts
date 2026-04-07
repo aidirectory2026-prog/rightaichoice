@@ -62,10 +62,23 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     .eq('is_published', true)
 
   // Text search across name, tagline, description
+  // Split into keywords and match any word for better recall
   if (term) {
-    query = query.or(
-      `name.ilike.%${term}%,tagline.ilike.%${term}%,description.ilike.%${term}%`
-    )
+    const keywords = term
+      .split(/\s+/)
+      .map(sanitizeLike)
+      .filter((w) => w.length >= 2)
+      .slice(0, 5) // cap to 5 keywords
+
+    if (keywords.length > 0) {
+      // Build OR conditions: match any keyword in name, tagline, or description
+      const conditions = keywords.flatMap((kw) => [
+        `name.ilike.%${kw}%`,
+        `tagline.ilike.%${kw}%`,
+        `description.ilike.%${kw}%`,
+      ])
+      query = query.or(conditions.join(','))
+    }
   }
 
   if (categoryToolIds) {

@@ -7,59 +7,37 @@ export const dynamic = 'force-dynamic'
 
 const MODEL = 'claude-sonnet-4-6'
 
+type PlanTool = {
+  slug: string
+  name: string
+  tagline: string
+  pricing: string
+  rating: number
+  reviewCount: number
+  whyThisStage: string
+}
+
 type PlanStage = {
   id: string
   name: string
   description: string
   why: string
-  tools: {
-    slug: string
-    name: string
-    tagline: string
-    pricing: string
-    rating: number
-    reviewCount: number
-    whyThisStage: string
-  }[]
-}
-
-type PlanResult = {
-  title: string
-  summary: string
-  stages: PlanStage[]
+  tools: PlanTool[]
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert AI project planner for RightAIChoice.
 
 When a user describes a goal, project, or workflow they want to build or accomplish, you:
-1. Break it down into logical stages/departments (3–8 stages depending on complexity)
+1. Break it down into logical stages/departments (3–6 stages depending on complexity)
 2. For each stage, provide a clear name, description, and why it matters
-3. For each stage, call search_tools to find the best AI tools
-
-Your job is to think like a startup operator or product manager breaking down a project into its component parts.
+3. For each stage, provide 2-3 short search keywords that would match AI tool names or categories (NOT long phrases — use terms like "video editor", "writing", "design", "automation")
 
 ## Stage Decomposition Rules
 - Be practical and specific (not generic)
 - Each stage must be a distinct phase of work
 - Name stages clearly: use action + noun format (e.g., "UI Design", "Content Creation", "Automation Setup")
 - Stages should flow logically from first to last
-
-## Examples of good decomposition:
-
-"Build a CRM tool":
-→ Product Naming & Branding, UI/UX Design, Frontend Development, Backend & Database, Testing & QA, Deployment & DevOps, Marketing & Launch
-
-"Create and automate Instagram content":
-→ Content Strategy, Text & Caption Writing, Image/Video Generation, Video Editing, Scheduling & Automation, Analytics & Growth
-
-"Start a YouTube channel":
-→ Content Research & Planning, Script Writing, Video Recording, Video Editing, Thumbnail Design, SEO & Publishing, Analytics & Optimization
-
-"Build an e-commerce store":
-→ Store Design, Product Photography, Copywriting, Payment & Backend, Marketing Automation, Customer Support, Analytics
-
-"Write and publish a book":
-→ Idea Development, Research, Writing & Drafting, Editing & Proofreading, Cover Design, Publishing, Marketing
+- Keep searchQuery to 1-3 simple words that match tool names/categories
 
 ## Response Format
 You MUST respond with ONLY valid JSON in this exact structure:
@@ -72,7 +50,7 @@ You MUST respond with ONLY valid JSON in this exact structure:
       "name": "Stage Name",
       "description": "What happens in this stage",
       "why": "Why this stage is important",
-      "searchQuery": "keywords to search for tools in this stage",
+      "searchQuery": "simple keyword",
       "searchCategory": "optional category slug"
     }
   ]
@@ -103,10 +81,10 @@ export async function POST(request: Request) {
 
     const anthropic = getAnthropicClient()
 
-    // Step 1: Get Claude to decompose the goal into stages
+    // Step 1: Get Claude to decompose the goal into stages (1 API call)
     const planResponse = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 2000,
+      max_tokens: 1500,
       system: PLANNER_SYSTEM_PROMPT,
       messages: [
         {
@@ -121,81 +99,117 @@ export async function POST(request: Request) {
       .map((b) => (b as { type: 'text'; text: string }).text)
       .join('')
 
-    type RawStage = PlanStage & { searchQuery?: string; searchCategory?: string }
+    type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string }
     type RawPlan = { title: string; summary: string; stages: RawStage[] }
 
     let plan: RawPlan
 
     try {
-      // Strip markdown code fences if present
       const cleaned = planText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
       plan = JSON.parse(cleaned) as RawPlan
     } catch {
-      return Response.json({ error: 'Failed to parse plan' }, { status: 500 })
+      return Response.json({ error: 'Failed to generate plan. Please try again.' }, { status: 500 })
     }
 
-    // Step 2: For each stage, search for tools in parallel
-    const stagesWithTools: PlanStage[] = await Promise.all(
+    // Step 2: Search tools for ALL stages in parallel (no Claude calls — just DB queries)
+    const stagesWithTools = await Promise.all(
       plan.stages.map(async (stage) => {
         const results = await searchToolsForAI({
           query: stage.searchQuery ?? stage.name,
           ...(stage.searchCategory ? { category: stage.searchCategory } : {}),
         })
 
-        // Take top 3 results
         const topTools = results.slice(0, 3)
-
-        // Ask Claude for a brief "why this tool for this stage" for each top tool
-        const toolsWithReasons = await Promise.all(
-          topTools.map(async (tool) => {
-            // Short reasoning from the stage context
-            const whyResponse = await anthropic.messages.create({
-              model: MODEL,
-              max_tokens: 80,
-              messages: [
-                {
-                  role: 'user',
-                  content: `In one sentence (max 20 words), why is ${tool.name} (${tool.tagline}) ideal for the "${stage.name}" stage when ${query}?`,
-                },
-              ],
-            })
-            const why = whyResponse.content
-              .filter((b) => b.type === 'text')
-              .map((b) => (b as { type: 'text'; text: string }).text)
-              .join('')
-              .trim()
-              .replace(/^["']|["']$/g, '')
-
-            return {
-              slug: tool.slug,
-              name: tool.name,
-              tagline: tool.tagline,
-              pricing: tool.pricing_type,
-              rating: tool.avg_rating,
-              reviewCount: tool.review_count,
-              whyThisStage: why,
-            }
-          })
-        )
 
         return {
           id: stage.id,
           name: stage.name,
           description: stage.description,
           why: stage.why,
-          tools: toolsWithReasons,
+          toolResults: topTools,
         }
       })
     )
 
+    // Step 3: One single Claude call to generate "why" for all tools at once
+    const toolSummaryInput = stagesWithTools
+      .filter((s) => s.toolResults.length > 0)
+      .map(
+        (s) =>
+          `Stage "${s.name}" (${s.description}):\n${s.toolResults.map((t) => `  - ${t.name}: ${t.tagline}`).join('\n')}`
+      )
+      .join('\n\n')
+
+    let reasons: Record<string, string> = {}
+
+    if (toolSummaryInput) {
+      try {
+        const reasonResponse = await anthropic.messages.create({
+          model: MODEL,
+          max_tokens: 1500,
+          messages: [
+            {
+              role: 'user',
+              content: `For the project "${query}", I have these tools matched to stages. Give a one-sentence reason (max 15 words) why each tool fits its stage.
+
+${toolSummaryInput}
+
+Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`,
+            },
+          ],
+        })
+
+        const reasonText = reasonResponse.content
+          .filter((b) => b.type === 'text')
+          .map((b) => (b as { type: 'text'; text: string }).text)
+          .join('')
+
+        try {
+          const cleaned = reasonText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+          reasons = JSON.parse(cleaned)
+        } catch {
+          // Continue without reasons — not critical
+        }
+      } catch {
+        // Continue without reasons — not critical
+      }
+    }
+
+    // Step 4: Assemble final response
+    const finalStages: PlanStage[] = stagesWithTools.map((stage) => ({
+      id: stage.id,
+      name: stage.name,
+      description: stage.description,
+      why: stage.why,
+      tools: stage.toolResults.map((tool) => ({
+        slug: tool.slug,
+        name: tool.name,
+        tagline: tool.tagline,
+        pricing: tool.pricing_type,
+        rating: tool.avg_rating,
+        reviewCount: tool.review_count,
+        whyThisStage: reasons[tool.name] ?? '',
+      })),
+    }))
+
     return Response.json({
       title: plan.title,
       summary: plan.summary,
-      stages: stagesWithTools,
+      stages: finalStages,
     })
   } catch (error) {
     console.error('Plan API error:', error)
+    // Friendly error messages — never expose raw API errors
     const message = error instanceof Error ? error.message : 'Unexpected error'
-    return Response.json({ error: message }, { status: 500 })
+    if (message.includes('credit balance') || message.includes('billing')) {
+      return Response.json(
+        { error: 'AI service temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+    return Response.json(
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 }
+    )
   }
 }
