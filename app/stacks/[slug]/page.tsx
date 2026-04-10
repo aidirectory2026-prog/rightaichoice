@@ -25,6 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const stack = getStackBySlug(slug)
   if (!stack) return {}
 
+  const ogImage = `/api/og/stack?type=curated&slug=${slug}`
+
   return {
     title: stack.title,
     description: stack.description,
@@ -33,6 +35,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: stack.description,
       type: 'article',
       url: `https://rightaichoice.com/stacks/${slug}`,
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: stack.title,
+      description: stack.description,
+      images: [ogImage],
     },
   }
 }

@@ -45,6 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!data) return { title: 'Stack Not Found' }
 
+  const ogImage = `/api/og/stack?type=saved&id=${id}`
+
   return {
     title: data.title,
     description: data.description || `AI tool stack for: ${data.goal}`,
@@ -53,11 +55,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: data.description || `AI tool stack for: ${data.goal}`,
       type: 'article',
       url: `https://rightaichoice.com/stacks/saved/${id}`,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: data.title,
       description: data.description || `AI tool stack for: ${data.goal}`,
+      images: [ogImage],
     },
   }
 }
