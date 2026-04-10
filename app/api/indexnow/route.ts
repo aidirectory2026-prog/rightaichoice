@@ -5,6 +5,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
 import { ROLE_PAGES } from '@/lib/data/role-pages'
+import { getAllPosts } from '@/lib/data/blog'
 
 const BASE = 'https://rightaichoice.com'
 
@@ -77,6 +78,10 @@ export async function POST(request: Request) {
   // Role pages (static data)
   urls.push(`${BASE}/for`)
   urls.push(...ROLE_PAGES.map((r) => `${BASE}/for/${r.slug}`))
+
+  // Blog post URLs (file-based)
+  urls.push(`${BASE}/blog`)
+  urls.push(...getAllPosts().map((p) => `${BASE}/blog/${p.slug}`))
 
   // IndexNow accepts max 10,000 URLs per request — batch if needed
   const batchSize = 10000

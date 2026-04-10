@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen } from 'lucide-react'
 
 export function Navbar() {
   const { user, profile } = useAuth()
@@ -57,6 +57,13 @@ export function Navbar() {
             >
               <FolderOpen className="h-3.5 w-3.5" />
               Categories
+            </Link>
+            <Link
+              href="/blog"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Blog
             </Link>
           </div>
         </div>
@@ -150,6 +157,14 @@ export function Navbar() {
           >
             <FolderOpen className="h-3.5 w-3.5" />
             Categories
+          </Link>
+          <Link
+            href="/blog"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Blog
           </Link>
           <div className="border-t border-zinc-800 pt-3 space-y-2">
             {user ? (

@@ -7,6 +7,7 @@ import { getAllComparisonSlugs } from '@/lib/data/comparisons'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
 import { ROLE_PAGES } from '@/lib/data/role-pages'
+import { getAllPosts } from '@/lib/data/blog'
 
 const BASE_URL = 'https://rightaichoice.com'
 
@@ -99,11 +100,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  const blogPosts = getAllPosts()
+  const blogRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    ...blogPosts.map((post) => ({
+      url: `${BASE_URL}/blog/${post.slug}`,
+      lastModified: new Date(post.publishedAt),
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    })),
+  ]
+
   return [
     ...staticRoutes,
     ...stackRoutes,
     ...bestPageRoutes,
     ...roleRoutes,
+    ...blogRoutes,
     ...toolRoutes,
     ...categoryRoutes,
     ...comparisonRoutes,
