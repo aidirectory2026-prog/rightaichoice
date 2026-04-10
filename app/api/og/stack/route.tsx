@@ -1,30 +1,26 @@
 import { ImageResponse } from 'next/og'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getStackBySlug } from '@/lib/data/stacks'
 
-const geistRegular = readFile(
-  join(process.cwd(), 'node_modules/next/dist/compiled/@vercel/og/Geist-Regular.ttf')
-)
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type StackData = {
   title: string
-  goal: string
   tools: string[]
   costSummary: string | null
 }
 
 async function getSavedStack(id: string): Promise<StackData | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('saved_stacks')
     .select('title, goal, stages, summary')
     .eq('id', id)
     .eq('is_public', true)
     .single()
 
+  if (error) console.error('[og/stack] supabase error:', error.message)
   if (!data) return null
 
   const stages = Array.isArray(data.stages) ? data.stages : []
@@ -36,7 +32,6 @@ async function getSavedStack(id: string): Promise<StackData | null> {
 
   return {
     title: data.title,
-    goal: data.goal,
     tools,
     costSummary: summary?.paidPath ?? null,
   }
@@ -48,14 +43,13 @@ function getCuratedStack(slug: string): StackData | null {
 
   return {
     title: stack.title,
-    goal: stack.goal,
     tools: stack.stages.map((s) => s.bestPick.name),
     costSummary: stack.summary.paidPath,
   }
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl
+  const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
   const id = searchParams.get('id')
   const slug = searchParams.get('slug')
@@ -63,15 +57,18 @@ export async function GET(request: NextRequest) {
   let stack: StackData | null = null
 
   if (type === 'saved' && id) {
-    stack = await getSavedStack(id)
+    if (UUID_RE.test(id)) {
+      stack = await getSavedStack(id)
+    }
   } else if (type === 'curated' && slug) {
     stack = getCuratedStack(slug)
   }
 
-  const fontData = await geistRegular
+  const fontData = await fetch(
+    new URL('/fonts/Geist-Regular.ttf', request.nextUrl.origin)
+  ).then((r) => r.arrayBuffer())
 
   const title = stack?.title ?? 'Build Anything with AI'
-  const goal = stack?.goal ?? 'Discover the right AI tools for your workflow'
   const tools = stack?.tools ?? []
   const costSummary = stack?.costSummary ?? null
 
@@ -126,8 +123,6 @@ export async function GET(request: NextRequest) {
               textAlign: 'center',
               lineHeight: 1.2,
               maxWidth: 900,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
             }}
           >
             {title.length > 70 ? title.slice(0, 67) + '...' : title}
@@ -210,7 +205,7 @@ export async function GET(request: NextRequest) {
         },
       ],
       headers: {
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400',
       },
     }
   )
