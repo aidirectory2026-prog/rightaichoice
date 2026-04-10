@@ -269,6 +269,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {tool.tagline}
                 </p>
 
+                {/* Submitted by */}
+                {tool.submitter && (
+                  <div className="mt-2 flex items-center gap-1.5 text-sm">
+                    <span className="text-zinc-500">Submitted by</span>
+                    <Link
+                      href={`/u/${tool.submitter.username}`}
+                      className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                      <span>@{tool.submitter.username}</span>
+                      <span title="Tool Creator">🔧</span>
+                    </Link>
+                  </div>
+                )}
+
                 {/* Quick stats row */}
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-zinc-500">
                   {tool.avg_rating > 0 && (

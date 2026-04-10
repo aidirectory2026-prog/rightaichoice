@@ -12,7 +12,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
 
   let query = supabase
     .from('tools')
-    .select('id, name, slug, pricing_type, is_published, is_featured, is_sponsored, avg_rating, review_count, view_count, created_at, last_verified_at')
+    .select('id, name, slug, pricing_type, is_published, is_featured, is_sponsored, avg_rating, review_count, view_count, created_at, last_verified_at, submitted_by')
     .order('created_at', { ascending: false })
 
   // Staleness filters
@@ -31,6 +31,18 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
 
   if (error) {
     return <p className="text-red-400">Failed to load tools: {error.message}</p>
+  }
+
+  // Fetch which submitters have the tool_creator badge
+  const submitterIds = (tools ?? []).map(t => t.submitted_by).filter(Boolean) as string[]
+  const badgeHolders = new Set<string>()
+  if (submitterIds.length > 0) {
+    const { data: badges } = await supabase
+      .from('user_badges')
+      .select('user_id')
+      .in('user_id', submitterIds)
+      .eq('badge', 'tool_creator')
+    badges?.forEach(b => badgeHolders.add(b.user_id))
   }
 
   // Compute freshness stats from full list
@@ -178,7 +190,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <ToolActions id={tool.id} slug={tool.slug} name={tool.name} isPublished={tool.is_published} />
+                    <ToolActions id={tool.id} slug={tool.slug} name={tool.name} isPublished={tool.is_published} submittedBy={tool.submitted_by} hasBadge={tool.submitted_by ? badgeHolders.has(tool.submitted_by) : false} />
                   </td>
                 </tr>
               )

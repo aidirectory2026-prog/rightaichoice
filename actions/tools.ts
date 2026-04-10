@@ -228,6 +228,24 @@ export async function toggleToolPublished(id: string, isPublished: boolean): Pro
 
     if (error) return { error: error.message }
 
+    // Auto-award tool_creator badge when publishing a tool with a submitter
+    if (isPublished) {
+      const { data: tool } = await supabase
+        .from('tools')
+        .select('submitted_by')
+        .eq('id', id)
+        .single()
+
+      if (tool?.submitted_by) {
+        await supabase
+          .from('user_badges')
+          .upsert(
+            { user_id: tool.submitted_by, badge: 'tool_creator' },
+            { onConflict: 'user_id,badge' }
+          )
+      }
+    }
+
     revalidatePath('/admin/tools')
     return { success: isPublished ? 'Tool published.' : 'Tool unpublished.' }
   } catch (e) {
@@ -248,6 +266,45 @@ export async function markToolVerified(id: string): Promise<ActionState> {
 
     revalidatePath('/admin/tools')
     return { success: 'Tool marked as verified.' }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Something went wrong.' }
+  }
+}
+
+export async function awardToolCreatorBadge(userId: string): Promise<ActionState> {
+  try {
+    const { supabase } = await requireAdmin()
+
+    const { error } = await supabase
+      .from('user_badges')
+      .upsert(
+        { user_id: userId, badge: 'tool_creator' },
+        { onConflict: 'user_id,badge' }
+      )
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/tools')
+    return { success: 'Tool Creator badge awarded.' }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Something went wrong.' }
+  }
+}
+
+export async function revokeToolCreatorBadge(userId: string): Promise<ActionState> {
+  try {
+    const { supabase } = await requireAdmin()
+
+    const { error } = await supabase
+      .from('user_badges')
+      .delete()
+      .eq('user_id', userId)
+      .eq('badge', 'tool_creator')
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/tools')
+    return { success: 'Tool Creator badge revoked.' }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Something went wrong.' }
   }

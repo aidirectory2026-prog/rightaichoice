@@ -94,7 +94,8 @@ export async function getToolBySlug(slug: string) {
     .select(`
       *,
       tool_categories(categories(*)),
-      tool_tags(tags(*))
+      tool_tags(tags(*)),
+      submitter:profiles!submitted_by(id, username, full_name, avatar_url)
     `)
     .eq('slug', slug)
     .eq('is_published', true)

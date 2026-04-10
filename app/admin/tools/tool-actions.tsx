@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { useTransition } from 'react'
-import { deleteTool, toggleToolPublished, markToolVerified } from '@/actions/tools'
+import { deleteTool, toggleToolPublished, markToolVerified, awardToolCreatorBadge, revokeToolCreatorBadge } from '@/actions/tools'
 
-export function ToolActions({ id, slug, name, isPublished }: {
+export function ToolActions({ id, slug, name, isPublished, submittedBy, hasBadge }: {
   id: string
   slug: string
   name: string
   isPublished: boolean
+  submittedBy?: string | null
+  hasBadge?: boolean
 }) {
   const [isPending, startTransition] = useTransition()
 
@@ -23,6 +25,17 @@ export function ToolActions({ id, slug, name, isPublished }: {
 
   function handleVerify() {
     startTransition(() => { markToolVerified(id) })
+  }
+
+  function handleBadgeToggle() {
+    if (!submittedBy) return
+    startTransition(() => {
+      if (hasBadge) {
+        revokeToolCreatorBadge(submittedBy)
+      } else {
+        awardToolCreatorBadge(submittedBy)
+      }
+    })
   }
 
   return (
@@ -40,6 +53,17 @@ export function ToolActions({ id, slug, name, isPublished }: {
       >
         Verify
       </button>
+      {submittedBy && (
+        <button
+          onClick={handleBadgeToggle}
+          disabled={isPending}
+          className={`text-xs transition-colors px-2 py-1 disabled:opacity-50 ${
+            hasBadge ? 'text-cyan-400 hover:text-cyan-300' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          {hasBadge ? 'Revoke Badge' : 'Award Badge'}
+        </button>
+      )}
       <Link
         href={`/admin/tools/${id}`}
         className="text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1"

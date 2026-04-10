@@ -21,6 +21,11 @@ const badgeConfig: Record<string, { label: string; color: string; emoji: string 
     color: 'bg-emerald-950 text-emerald-400 border-emerald-800',
     emoji: '🚀',
   },
+  tool_creator: {
+    label: 'Tool Creator',
+    color: 'bg-cyan-950 text-cyan-400 border-cyan-800',
+    emoji: '🔧',
+  },
 }
 
 type Badge = { badge: string; awarded_at: string }
