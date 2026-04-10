@@ -94,15 +94,27 @@ export async function getToolBySlug(slug: string) {
     .select(`
       *,
       tool_categories(categories(*)),
-      tool_tags(tags(*)),
-      submitter:profiles!submitted_by(id, username, full_name, avatar_url)
+      tool_tags(tags(*))
     `)
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
 
   if (error) return null
-  return data
+
+  // Fetch submitter profile separately — submitted_by FK targets auth.users,
+  // not profiles, so PostgREST cannot resolve a direct join.
+  let submitter = null
+  if (data.submitted_by) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .eq('id', data.submitted_by)
+      .single()
+    submitter = profile
+  }
+
+  return { ...data, submitter }
 }
 
 export async function getFeaturedTools(limit = 6) {
