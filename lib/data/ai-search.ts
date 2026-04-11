@@ -100,31 +100,57 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
   query = query.order('avg_rating', { ascending: false }).limit(10)
 
   const { data, error } = await query
-  if (error || !data) return []
+  if (error) return []
 
-  return data.map((tool) => {
-    const cats = (tool.tool_categories as unknown as { categories: { name: string } }[])
-      ?.map((tc) => tc.categories?.name)
-      .filter(Boolean) ?? []
-    const tags = (tool.tool_tags as unknown as { tags: { name: string } }[])
-      ?.map((tt) => tt.tags?.name)
-      .filter(Boolean) ?? []
+  // Fallback: if keyword search returned nothing, try broader category-only search
+  if ((!data || data.length === 0) && !categoryToolIds) {
+    const fallbackQuery = supabase
+      .from('tools')
+      .select(`
+        id, name, slug, tagline, description, pricing_type, skill_level,
+        has_api, platforms, avg_rating, review_count, website_url,
+        tool_categories(categories(name)),
+        tool_tags(tags(name))
+      `)
+      .eq('is_published', true)
+      .order('avg_rating', { ascending: false })
+      .limit(6)
 
-    return {
-      id: tool.id,
-      name: tool.name,
-      slug: tool.slug,
-      tagline: tool.tagline,
-      description: tool.description,
-      pricing_type: tool.pricing_type,
-      skill_level: tool.skill_level,
-      has_api: tool.has_api,
-      platforms: tool.platforms,
-      avg_rating: tool.avg_rating,
-      review_count: tool.review_count,
-      website_url: tool.website_url,
-      categories: cats,
-      tags,
+    const { data: fallbackData } = await fallbackQuery
+    if (fallbackData && fallbackData.length > 0) {
+      return fallbackData.map(mapTool)
     }
-  })
+    return []
+  }
+
+  if (!data) return []
+
+  return data.map(mapTool)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTool(tool: any): AIToolResult {
+  const cats = (tool.tool_categories as unknown as { categories: { name: string } }[])
+    ?.map((tc) => tc.categories?.name)
+    .filter(Boolean) ?? []
+  const tags = (tool.tool_tags as unknown as { tags: { name: string } }[])
+    ?.map((tt) => tt.tags?.name)
+    .filter(Boolean) ?? []
+
+  return {
+    id: tool.id,
+    name: tool.name,
+    slug: tool.slug,
+    tagline: tool.tagline,
+    description: tool.description,
+    pricing_type: tool.pricing_type,
+    skill_level: tool.skill_level,
+    has_api: tool.has_api,
+    platforms: tool.platforms,
+    avg_rating: tool.avg_rating,
+    review_count: tool.review_count,
+    website_url: tool.website_url,
+    categories: cats,
+    tags,
+  }
 }
