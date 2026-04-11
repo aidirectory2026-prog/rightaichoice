@@ -201,7 +201,7 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
     console.error('Plan API error:', error)
     // Friendly error messages — never expose raw API errors
     const message = error instanceof Error ? error.message : 'Unexpected error'
-    if (message.includes('credit balance') || message.includes('billing')) {
+    if (message.includes('credit balance') || message.includes('billing') || message.includes('authentication') || message.includes('401')) {
       return Response.json(
         { error: 'AI service temporarily unavailable. Please try again later.' },
         { status: 503 }
