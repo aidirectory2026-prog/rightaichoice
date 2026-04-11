@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Sparkles,
@@ -173,6 +173,16 @@ export function ProjectPlanner({
     setActiveStage(null)
     setTimeout(() => inputRef.current?.focus(), 50)
   }
+
+  // Auto-submit when arriving with a query from the homepage CTA
+  const didAutoSubmit = useRef(false)
+  useEffect(() => {
+    if (initialQuery && !didAutoSubmit.current) {
+      didAutoSubmit.current = true
+      handleSubmit(initialQuery)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const currentStage = plan?.stages.find((s) => s.id === activeStage)
 

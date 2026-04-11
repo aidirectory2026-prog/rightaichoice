@@ -41,6 +41,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
   const term = sanitizeLike(params.query.trim())
 
   // If category filter, get matching tool IDs first
+  // If category doesn't match any tools, skip it and rely on keyword search instead
   let categoryToolIds: string[] | null = null
   if (params.category) {
     const { data: catData } = await supabase
@@ -48,7 +49,9 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
       .select('tool_id, categories!inner(slug)')
       .eq('categories.slug', params.category)
     categoryToolIds = catData?.map((row) => row.tool_id) ?? []
-    if (categoryToolIds.length === 0) return []
+    if (categoryToolIds.length === 0) {
+      categoryToolIds = null // Don't filter by category — fall through to keyword search
+    }
   }
 
   let query = supabase
