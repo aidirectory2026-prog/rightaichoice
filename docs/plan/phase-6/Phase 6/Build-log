@@ -1,0 +1,139 @@
+# Phase 6 — Build Log
+
+**Goal:** Personalization layer for "Find My Stack" — per-tool AI Reports with scraped sentiment (Reddit, X, Quora, G2), 5 pros / 5 cons, pricing analysis, community buzz, learning curve, integration fit, and plan-page enrichment (sentiment badges + quick verdicts).
+
+**Design decisions:**
+- (D) Light enrichment on plan page + deep-dive report page
+- (C) Hybrid scrape-on-first-request, cached with 7-day TTL
+- (B) AI-synthesized insights (not verbatim quotes)
+- All 10 report sections
+
+---
+
+## Step 6.1 — Database schema
+**Status:** ✅ Completed
+**Jira:** KAN-7
+**File:** `supabase/migrations/035_tool_sentiment_cache.sql`
+
+Created `tool_sentiment_cache` table with columns for all 10 report sections (ai_verdict, pros, cons, sentiment_score, sentiment_breakdown, themes, best_for, not_for, pricing_analysis, community_buzz, learning_curve, integration_insights), raw scraped data (raw_reddit, raw_twitter, raw_quora, raw_g2), metadata (mention_count, sources_scraped, status, scraped_at, synthesized_at, expires_at). UNIQUE(tool_id), indexes on tool_id / expires_at / status, RLS policies (public read, service-role write).
+
+Migration was run manually in Supabase SQL Editor (confirmed by user).
+
+---
+
+## Step 6.2 — Scraping layer
+**Status:** ✅ Completed
+**Jira:** KAN-8
+**Files:**
+- `lib/scrapers/types.ts` — `ScrapedPost`, `ScrapeResult`, `AllScrapeResults`
+- `lib/scrapers/reddit.ts` — public JSON API, target subreddits, dedupe by URL, cap 30 posts
+- `lib/scrapers/twitter.ts` — Apify actor `sovereigntaylor/twitter-scraper` (free, 92% success)
+- `lib/scrapers/quora.ts` — Apify actor `crawlerbros/quora-search-scraper`
+- `lib/scrapers/g2.ts` — Apify actor `focused_vanguard/g2-reviews-scraper`
+- `lib/scrapers/index.ts` — `scrapeAllSources(toolName)` orchestrator running all 4 in parallel
+
+Each scraper degrades gracefully — a failing source returns an empty result with an `error` field rather than crashing the pipeline. `AllScrapeResults` carries `totalPosts`, `sourcesSucceeded`, and `sourcesFailed`.
+
+---
+
+## Step 6.3 — AI synthesis
+**Status:** ✅ Completed
+**Jira:** KAN-9
+**File:** `lib/ai/synthesize-report.ts`
+
+Single Claude Sonnet 4.6 call that takes tool context + `AllScrapeResults` and returns a typed `SynthesizedReport` covering all 10 sections. Prompt instructs the model to weight real scraped posts heavily when present and fall back to general knowledge when a source is empty. Retries once on JSON parse failure. Pros/cons capped at 5 items each in post-processing.
+
+---
+
+## Step 6.4 — Report API routes
+**Status:** ✅ Completed
+**Jira:** KAN-10
+**Files:**
+- `app/api/tools/[slug]/report/route.ts` — `GET`: returns `{ status: "ready", report }` | `{ status: "not_generated" }` | `{ status: "generating" }`
+- `app/api/tools/[slug]/report/generate/route.ts` — `POST`: scrape → synthesize → upsert cache; `maxDuration = 120`, rate-limited 3/min
+- `app/api/tools/[slug]/report/status/route.ts` — `GET`: polling endpoint for in-progress generations
+
+Admin (service-role) client is used for writes; anon client is used for reads. Failures mark the cache row as `status: 'failed'` so the client can show a retry affordance.
+
+---
+
+## Step 6.5 — Report page UI
+**Status:** ✅ Completed
+**Jira:** KAN-11
+**Files:**
+- `app/tools/[slug]/report/page.tsx` — server component, SEO metadata, fetches tool, renders `ReportClient`
+- `components/report/report-client.tsx` — client state machine: loading → generating → ready/failed
+
+State machine auto-triggers generation if no cached report exists, polls `/status` every 3s (2-minute timeout), shows animated progress steps, then renders all 10 sections via a reusable `Section` wrapper:
+
+1. AI Verdict (hero)
+2. Pros / Cons grid (5 each)
+3. Market sentiment bars (positive / neutral / negative breakdown)
+4. Theme cards
+5. Best For / Not For tags
+6. Pricing analysis + hidden costs
+7. Alternatives link (to tool page)
+8. Community buzz + trend
+9. Learning curve cards
+10. Integration fit cards
+
+Footer CTA links back to the tool page and the plan flow.
+
+---
+
+## Step 6.6 — Plan page enrichment
+**Status:** ✅ Completed
+**Jira:** KAN-12
+**Files:**
+- `app/api/plan/route.ts` — after assembling matched tools, looks up `tool_sentiment_cache` (non-blocking) and enriches each tool with `sentimentScore` and `quickVerdict` (first sentence of `ai_verdict`)
+- `components/ai/project-planner.tsx` — `PlanTool` type extended with `sentimentScore` and `quickVerdict`; card UI shows sentiment badge, quick verdict line, and "See full report →" link to `/tools/[slug]/report`
+
+Also fixed the **homepage CTA auto-submit bug** in the same component — added `useEffect` + `useRef` guard so that arriving at `/plan?q=...` from the homepage now auto-runs `handleSubmit()` instead of leaving the query pre-filled and idle.
+
+And fixed **`lib/data/ai-search.ts`** so that when a category search returns no matches, `categoryToolIds` is set to `null` and the request falls through to keyword search instead of returning an empty array.
+
+---
+
+## Step 6.7 — Cron for top 100 tools
+**Status:** ✅ Completed
+**Jira:** KAN-13
+**File:** `app/api/cron/scrape-sentiment/route.ts`
+
+Authenticated via `CRON_SECRET`. Fetches top 100 published tools by `view_count`, filters to those needing scraping (no cache / expired / failed — skips rows currently in `generating`), processes in batches of 5 via `Promise.all`, `maxDuration = 300`. Each tool's pipeline marks-generating → scrape → synthesize → mark-ready, with failures writing `status: 'failed'`. Returns a summary of processed/failed + first 10 error messages.
+
+---
+
+## Step 6.8 — Testing & polish
+**Status:** ✅ Completed
+**Jira:** KAN-14
+
+### Type check & build
+- `npx tsc --noEmit` → 0 errors
+- `npx next build` → ✅ compiled successfully, all routes emitted, including:
+  - `ƒ /tools/[slug]/report`
+  - `ƒ /api/tools/[slug]/report`
+  - `ƒ /api/tools/[slug]/report/generate`
+  - `ƒ /api/tools/[slug]/report/status`
+  - `ƒ /api/cron/scrape-sentiment`
+  - `ƒ /api/plan` (enriched)
+
+### Build-time fixes
+During `next build` the untyped Supabase admin client produced `never`-type errors on the new `tool_sentiment_cache` table (it isn't in any generated `Database` types). Fixed by casting the admin/supabase clients to `any` inside the cron and generate routes so the `.upsert()` / `.select()` calls type-check. Also coerced nullable `CronTool` fields (`skill_level`, `features`, `integrations`, `platforms`) to the non-null shape `synthesizeReport` expects when batching the cron.
+
+### Known runtime prerequisites
+- `APIFY_API_TOKEN` env var must be set for Twitter / Quora / G2 scrapers
+- `CRON_SECRET` env var must be set for the cron endpoint
+- `ANTHROPIC_API_KEY` already configured (used by existing `/api/plan`)
+
+### Flow validated
+- Homepage CTA → `/plan?q=...` now auto-submits (bug from last session fixed)
+- Category search falling back to keyword search when a category has no matches
+- Plan tool cards render sentiment badge + quick verdict + "See full report →" link when cache exists
+- Report page polling state machine handles all four states (loading / generating / ready / failed)
+
+---
+
+## Next steps (post-Phase 6)
+- Monitor cron runs after first deploy; confirm Apify actor success rates match advertised %s
+- Consider surfacing "X new users talking about this on Reddit this week" as a growth signal once enough scraped data accumulates
+- Possible future addition: per-user saved reports and diff-over-time

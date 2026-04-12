@@ -35,6 +35,8 @@ type PlanTool = {
   rating: number
   reviewCount: number
   whyThisStage: string
+  sentimentScore?: string | null
+  quickVerdict?: string | null
 }
 
 type PlanStage = {
@@ -633,7 +635,22 @@ export function ProjectPlanner({
                                 </p>
                               )}
 
-                              <div className="mt-3 flex items-center gap-4">
+                              {tool.quickVerdict && (
+                                <p className="mt-2 text-xs text-zinc-400 italic">
+                                  {tool.quickVerdict}
+                                </p>
+                              )}
+
+                              <div className="mt-3 flex items-center gap-4 flex-wrap">
+                                {tool.sentimentScore && (
+                                  <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 capitalize ${
+                                    tool.sentimentScore === 'positive' ? 'bg-emerald-950/50 border border-emerald-800/40 text-emerald-400' :
+                                    tool.sentimentScore === 'negative' ? 'bg-red-950/50 border border-red-800/40 text-red-400' :
+                                    'bg-amber-950/50 border border-amber-800/40 text-amber-400'
+                                  }`}>
+                                    {tool.sentimentScore}
+                                  </span>
+                                )}
                                 {tool.rating > 0 && (
                                   <div className="flex items-center gap-1 text-sm">
                                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -651,6 +668,13 @@ export function ProjectPlanner({
                                   View details <ArrowRight className="h-3 w-3" />
                                 </span>
                               </div>
+                              <Link
+                                href={`/tools/${tool.slug}/report`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-2 inline-flex items-center gap-1 text-[11px] text-teal-500 hover:text-teal-400 transition-colors"
+                              >
+                                See full report <ArrowRight className="h-2.5 w-2.5" />
+                              </Link>
                             </div>
                           </Link>
                         ))}

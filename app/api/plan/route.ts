@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { searchToolsForAI } from '@/lib/data/ai-search'
+import { createClient } from '@/lib/supabase/server'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
     const { query } = parsed.data
 
     const anthropic = getAnthropicClient()
+    const supabase = await createClient()
 
     // Step 1: Get Claude to decompose the goal into stages (1 API call)
     const planResponse = await anthropic.messages.create({
@@ -175,7 +177,29 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
       }
     }
 
-    // Step 4: Assemble final response
+    // Step 4: Look up cached sentiment for matched tools (non-blocking)
+    const allToolIds = stagesWithTools.flatMap((s) => s.toolResults.map((t) => t.id))
+    let sentimentMap: Record<string, { sentiment_score: string; ai_verdict: string }> = {}
+
+    if (allToolIds.length > 0) {
+      try {
+        const { data: sentimentData } = await supabase
+          .from('tool_sentiment_cache')
+          .select('tool_id, sentiment_score, ai_verdict')
+          .in('tool_id', allToolIds)
+          .eq('status', 'ready')
+
+        if (sentimentData) {
+          sentimentMap = Object.fromEntries(
+            sentimentData.map((s: { tool_id: string; sentiment_score: string; ai_verdict: string }) => [s.tool_id, { sentiment_score: s.sentiment_score, ai_verdict: s.ai_verdict }])
+          )
+        }
+      } catch {
+        // Non-critical — continue without sentiment
+      }
+    }
+
+    // Step 5: Assemble final response
     const finalStages: PlanStage[] = stagesWithTools.map((stage) => ({
       id: stage.id,
       name: stage.name,
@@ -189,6 +213,10 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
         rating: tool.avg_rating,
         reviewCount: tool.review_count,
         whyThisStage: reasons[tool.name] ?? '',
+        sentimentScore: sentimentMap[tool.id]?.sentiment_score ?? null,
+        quickVerdict: sentimentMap[tool.id]?.ai_verdict
+          ? sentimentMap[tool.id].ai_verdict.split('.')[0] + '.'
+          : null,
       })),
     }))
 
