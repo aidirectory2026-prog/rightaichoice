@@ -81,53 +81,74 @@ type Insight = { id: number; name: string; short_id?: string }
 type Dashboard = { id: number; name: string }
 type Cohort = { id: number; name: string }
 
-function trend(events: Array<{ id: string; math?: string; properties?: unknown[] }>, opts: {
-  breakdown?: string
-  breakdown_type?: 'event' | 'person'
-  interval?: 'day' | 'week' | 'month'
-  display?: string
-} = {}) {
-  return {
-    insight: 'TRENDS',
-    events: events.map((e, i) => ({
-      id: e.id,
+// PostHog query-node format (HogQL-based). Replaces the deprecated
+// "filters" field that's no longer accepted on newer accounts.
+// https://posthog.com/docs/api/queries
+
+function trend(
+  events: Array<{ id: string; math?: string }>,
+  opts: {
+    breakdown?: string
+    breakdown_type?: 'event' | 'person'
+    interval?: 'day' | 'week' | 'month'
+    display?: string
+  } = {}
+) {
+  const source: Record<string, unknown> = {
+    kind: 'TrendsQuery',
+    series: events.map((e) => ({
+      kind: 'EventsNode',
+      event: e.id,
       name: e.id,
-      type: 'events',
-      order: i,
-      math: e.math ?? 'total',
-      properties: e.properties ?? [],
+      math: e.math ?? 'total_count',
     })),
-    breakdown: opts.breakdown,
-    breakdown_type: opts.breakdown_type ?? 'event',
     interval: opts.interval ?? 'day',
-    display: opts.display ?? 'ActionsLineGraph',
-    date_from: '-30d',
+    dateRange: { date_from: '-30d' },
+    trendsFilter: {
+      display: opts.display ?? 'ActionsLineGraph',
+    },
   }
+  if (opts.breakdown) {
+    source.breakdownFilter = {
+      breakdown: opts.breakdown,
+      breakdown_type: opts.breakdown_type ?? 'event',
+    }
+  }
+  return { kind: 'InsightVizNode', source }
 }
 
-function funnel(steps: Array<{ id: string; properties?: unknown[] }>) {
+function funnel(steps: Array<{ id: string }>) {
   return {
-    insight: 'FUNNELS',
-    events: steps.map((s, i) => ({
-      id: s.id,
-      name: s.id,
-      type: 'events',
-      order: i,
-      properties: s.properties ?? [],
-    })),
-    funnel_viz_type: 'steps',
-    date_from: '-30d',
+    kind: 'InsightVizNode',
+    source: {
+      kind: 'FunnelsQuery',
+      series: steps.map((s) => ({
+        kind: 'EventsNode',
+        event: s.id,
+        name: s.id,
+      })),
+      dateRange: { date_from: '-30d' },
+      funnelsFilter: {
+        funnelVizType: 'steps',
+      },
+    },
   }
 }
 
 function retention(target: string, returning: string) {
   return {
-    insight: 'RETENTION',
-    target_entity: { id: target, name: target, type: 'events' },
-    returning_entity: { id: returning, name: returning, type: 'events' },
-    period: 'Week',
-    retention_type: 'retention_first_time',
-    date_from: '-60d',
+    kind: 'InsightVizNode',
+    source: {
+      kind: 'RetentionQuery',
+      dateRange: { date_from: '-60d' },
+      retentionFilter: {
+        retentionType: 'retention_first_time',
+        period: 'Week',
+        totalIntervals: 8,
+        targetEntity: { id: target, name: target, type: 'events' },
+        returningEntity: { id: returning, name: returning, type: 'events' },
+      },
+    },
   }
 }
 
@@ -138,7 +159,7 @@ function retention(target: string, returning: string) {
 async function ensureInsight(
   name: string,
   description: string,
-  filters: unknown
+  query: unknown
 ): Promise<Insight> {
   const existing = await findByName<Insight>('/insights/', name)
   if (existing) {
@@ -148,7 +169,7 @@ async function ensureInsight(
   const created = await api<Insight>('POST', '/insights/', {
     name,
     description,
-    filters,
+    query,
     saved: true,
   })
   console.log(`  ✓ insight created: ${name}`)
