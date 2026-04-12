@@ -1,7 +1,10 @@
 import { getAnthropicClient } from './anthropic'
 import type { AllScrapeResults } from '@/lib/scrapers'
 
-const MODEL = 'claude-sonnet-4-6'
+// Haiku 4.5 — ~3x faster than Sonnet for structured JSON extraction from
+// provided context. This is the single biggest latency win on report
+// generation. Task is synthesis from given data, not creative reasoning.
+const MODEL = 'claude-haiku-4-5-20251001'
 
 export type SynthesizedReport = {
   ai_verdict: string
@@ -57,13 +60,12 @@ function buildScrapeContext(results: AllScrapeResults): string {
     }
 
     const postTexts = result.posts
-      .slice(0, 15)
+      .slice(0, 10)
       .map((p, i) => {
         const parts = [
           `[${i + 1}]`,
-          p.title ? `Title: ${p.title}` : '',
-          `Content: ${p.body.slice(0, 500)}`,
-          p.score !== undefined ? `Score: ${p.score}` : '',
+          p.title ? `T: ${p.title}` : '',
+          `C: ${p.body.slice(0, 300)}`,
         ].filter(Boolean)
         return parts.join(' | ')
       })

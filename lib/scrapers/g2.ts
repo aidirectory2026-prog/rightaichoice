@@ -19,7 +19,7 @@ export async function scrapeG2(toolName: string, g2Slug?: string): Promise<Scrap
 
   try {
     const runRes = await fetch(
-      `https://api.apify.com/v2/acts/${encodeURIComponent(ACTOR_ID)}/runs?token=${APIFY_TOKEN}&waitForFinish=120`,
+      `https://api.apify.com/v2/acts/${encodeURIComponent(ACTOR_ID)}/runs?token=${APIFY_TOKEN}&waitForFinish=45`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
