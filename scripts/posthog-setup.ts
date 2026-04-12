@@ -96,12 +96,15 @@ function trend(
 ) {
   const source: Record<string, unknown> = {
     kind: 'TrendsQuery',
-    series: events.map((e) => ({
-      kind: 'EventsNode',
-      event: e.id,
-      name: e.id,
-      math: e.math ?? 'total_count',
-    })),
+    series: events.map((e) => {
+      const node: Record<string, unknown> = {
+        kind: 'EventsNode',
+        event: e.id,
+        name: e.id,
+      }
+      if (e.math) node.math = e.math
+      return node
+    }),
     interval: opts.interval ?? 'day',
     dateRange: { date_from: '-30d' },
     trendsFilter: {
