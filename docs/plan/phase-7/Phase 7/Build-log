@@ -1,0 +1,122 @@
+# Phase 7 — Build Log
+
+**Goal:** Conviction layer. Make every tool page feel full, personalize Find My Stack, and frame each plan card as "yes, this is your pick."
+
+**Design decisions (locked via brainstorm on 2026-04-12):**
+- A: Sentiment block on tool page, placed after "Our Views"; auto-generate on tools with ≥10 views, CTA fallback otherwise
+- B: 6-field intake modal appearing after query submit; fields = skill, budget, team, industry, goal type, existing tools; localStorage persistence
+- C: Match score (deterministic) + batched Claude call for "why for you" rationale (zero net new API calls)
+
+See [`../plan.md`](../plan.md) for the full spec.
+
+---
+
+## Step 7.A.1 + 7.A.2 — Sentiment block on tool page
+**Status:** ✅ Completed
+**Jira:** KAN-15 / KAN-16 (pending MCP reconnect)
+**Files:**
+- **New:** `components/tools/sentiment-block-render.tsx` — pure render function (no server imports), exports `SentimentBlockRender` + `SentimentRenderData` type
+- **New:** `components/tools/sentiment-block.tsx` — server component, fetches `tool_sentiment_cache` via `createClient`, renders cached data or hands off to client
+- **New:** `components/tools/sentiment-block-client.tsx` — client island, handles auto-generate / polling / failed / idle-CTA states
+- **Edit:** `app/tools/[slug]/page.tsx` — inserted `<SentimentBlock>` right after the "Our Views" section, wrapped in `SectionErrorBoundary`, passes `toolId`, `toolSlug`, `toolName`, `viewCount`
+
+**Behavior:**
+1. If fresh cache exists → render server-side, zero client JS needed
+2. If cache missing AND `view_count >= 10` → client island auto-triggers `/api/tools/[slug]/report/generate`, shows animated "Gathering community sentiment…" strip, polls `/status` every 4s for up to 150s
+3. If cache missing AND `view_count < 10` → CTA card "What people are saying about {tool} — Generate"
+4. If cache `failed` → silent retry button
+5. Contents: sentiment breakdown bar (positive/neutral/negative), source chips, 5 pros / 5 cons, top 3 themes, learning curve chip, hidden costs warning, CTA to full report
+
+**Build fix during implementation:** initial `sentiment-block.tsx` exported both the server component AND the pure render function. The client component imported the render function from that file, dragging `next/headers` into the client bundle and failing the build. Split the render function into its own file (`sentiment-block-render.tsx`) so both server and client can safely import it.
+
+---
+
+## Step 7.B.1 — User profile types + localStorage helpers
+**Status:** ✅ Completed
+**Jira:** KAN-17
+**File:** `lib/plan/user-profile.ts`
+
+Defines `UserProfile` type (6 fields), label maps (`SKILL_LABELS`, `BUDGET_LABELS`, `TEAM_LABELS`, `INDUSTRY_LABELS`, `GOAL_LABELS`), `BUDGET_MAX` lookup for scoring, and `loadProfile` / `saveProfile` / `clearProfile` helpers that use `localStorage.riac_user_profile`. Also exports `profileSummary(profile)` → "Intermediate · Under $50/mo · Just me" string used in the edit chip.
+
+---
+
+## Step 7.B.2 — Intake modal + planner integration
+**Status:** ✅ Completed
+**Jira:** KAN-18
+**Files:**
+- **New:** `components/ai/intake-modal.tsx` — modal with chip-row selectors for 5 radio fields + free-text input for existing tools. Has Submit + "Skip & use defaults" buttons. Reusable `Field` + generic `ChipRow<T>` helpers inside.
+- **Edit:** `components/ai/project-planner.tsx`
+  - Loads saved profile on mount
+  - `handleSubmit` defers to intake modal if no profile exists (stores pending query in `pendingQueryRef`), otherwise calls new `runPlan()` directly
+  - `handleIntakeSubmit` saves profile and resumes pending query; `handleIntakeSkip` runs pending query with `null` profile
+  - Profile chip rendered above the query input showing "Personalized for: Intermediate · Under $50/mo · Just me · Edit" (click to re-open modal)
+
+---
+
+## Step 7.B.3 — /api/plan profile acceptance + prompt enrichment
+**Status:** ✅ Completed
+**Jira:** KAN-19
+**File:** `app/api/plan/route.ts`
+
+- Zod schema extended with optional `profile` field, strict enums matching `UserProfile`
+- New `profileToPromptContext(profile)` helper formats the profile as a prompt block
+- **Stage decomposition prompt** (Step 1 Claude call): when profile exists, appended the context + instructions like "If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages." Lets Claude pick different stages for beginners vs experts.
+- **Why-for-you prompt** (Step 3 Claude call): when profile exists, uses a personalized prompt that asks for 20-word reasons referencing the user's actual constraints ("Free tier handles your solo content needs, and its simple UI matches your beginner level.") instead of generic stage fit.
+- Same token budget — zero net new API calls.
+
+---
+
+## Step 7.C.1 — Match score function
+**Status:** ✅ Completed
+**Jira:** KAN-20
+**File:** `lib/plan/match-score.ts`
+
+Pure function `computeMatchScore(tool, profile)` → `{score, reasons, warnings, budgetFit, integrationMatches, replaces}`. Deterministic, explainable, no API cost.
+
+**Scoring formula (max 100):**
+- +30 budget fits (free/freemium tier or tool price ≤ budget)
+- +20 skill level matches (≤ user rank) / +10 if one rank above / 0 if steeper
+- +15 integrations overlap with user's existing tools
+- +15 tool not already in user's existing tools
+- +10 industry keywords match tool's `best_for` array
+- +10 positive community sentiment
+- warnings pushed for over-budget, steep skill gap, already-owned, negative sentiment
+
+Also exports `matchLabel(score)` → `{label, color}` — 80+ Strong match (emerald), 60+ Good fit (cyan), 40+ Decent fit (amber), <40 Limited fit (zinc).
+
+---
+
+## Step 7.C.2 — Plan card conviction UI
+**Status:** ✅ Completed
+**Jira:** KAN-21
+**Files:**
+- **Edit:** `app/api/plan/route.ts` — Step 5 now computes `computeMatchScore` per matched tool, re-sorts tools within each stage by match score (so Best Pick = highest match), includes `matchScore`, `matchReasons`, `matchWarnings`, `budgetFit`, `integrationMatches`, `whyForYou` in response
+- **Edit:** `lib/data/ai-search.ts` — extended `AIToolResult` with `integrations` and `best_for`; selected them in the Supabase query; mapped in `mapTool()`
+- **Edit:** `components/ai/project-planner.tsx` — `PlanTool` type extended; tool card now renders:
+  - Match score badge (% · label, colored by `matchLabel`)
+  - Budget fit chip (Within budget / Over your budget)
+  - Integration callouts ("Works with Notion", "Works with Figma")
+  - Personalized "Why this is your pick" paragraph (replaces generic `whyThisStage` when profile is set)
+  - Match warnings ("Slightly steeper learning curve", "You already use this tool")
+  - All existing badges (sentiment, rating, quick verdict) retained
+
+---
+
+## Step 7.D — Testing, type check, build
+**Status:** ✅ Completed
+**Jira:** KAN-22
+
+- `npx tsc --noEmit` → 0 errors
+- `npx next build` → ✅ compiled successfully
+- All routes still emit: `/tools/[slug]`, `/tools/[slug]/report`, `/api/plan`, `/api/tools/[slug]/report/*`, `/api/cron/scrape-sentiment`
+- Zod deprecation notice on `parsed.error.flatten()` — non-blocking, pre-existing pattern elsewhere in the codebase, leaving as-is
+
+### Known runtime behavior
+- First visit to any tool page with view_count ≥ 10 will kick off a 60–90 sec scrape + synthesis to populate cache. Subsequent visits are instant.
+- Intake modal appears on first query submit per browser; saved profile persists via `localStorage.riac_user_profile`.
+- Without profile, `/api/plan` behaves exactly as pre-Phase-7 (no match scores, generic `whyThisStage`).
+
+---
+
+## Jira status
+Atlassian MCP is currently disconnected — Phase 7 tickets KAN-15 through KAN-22 to be created and moved to Done once the MCP reconnects. Mapping is documented in `docs/plan/phase-7/plan.md`.

@@ -3,6 +3,15 @@ import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { searchToolsForAI } from '@/lib/data/ai-search'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
+import type { UserProfile } from '@/lib/plan/user-profile'
+import {
+  SKILL_LABELS,
+  BUDGET_LABELS,
+  TEAM_LABELS,
+  INDUSTRY_LABELS,
+  GOAL_LABELS,
+} from '@/lib/plan/user-profile'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +25,14 @@ type PlanTool = {
   rating: number
   reviewCount: number
   whyThisStage: string
+  matchScore?: number
+  matchReasons?: string[]
+  matchWarnings?: string[]
+  budgetFit?: 'fits' | 'over' | 'unknown'
+  integrationMatches?: string[]
+  whyForYou?: string
+  sentimentScore?: string | null
+  quickVerdict?: string | null
 }
 
 type PlanStage = {
@@ -59,9 +76,32 @@ You MUST respond with ONLY valid JSON in this exact structure:
 
 IMPORTANT: Return ONLY the JSON. No markdown, no explanation outside the JSON.`
 
+const profileSchema = z
+  .object({
+    skill: z.enum(['beginner', 'intermediate', 'expert']),
+    budget: z.enum(['free', 'under_50', '50_200', 'over_200', 'no_limit']),
+    team: z.enum(['solo', '2_5', '6_20', '20_plus']),
+    industry: z.enum(['marketing', 'dev', 'design', 'sales', 'education', 'content', 'other']),
+    goalType: z.enum(['build', 'automate', 'learn', 'create', 'research']),
+    existingTools: z.array(z.string()).default([]),
+  })
+  .optional()
+  .nullable()
+
 const planSchema = z.object({
   query: z.string().trim().min(3, 'Query must be at least 3 characters').max(500),
+  profile: profileSchema,
 })
+
+function profileToPromptContext(profile: UserProfile): string {
+  return `User profile:
+- Skill level: ${SKILL_LABELS[profile.skill]}
+- Monthly budget: ${BUDGET_LABELS[profile.budget]}
+- Team size: ${TEAM_LABELS[profile.team]}
+- Role/Industry: ${INDUSTRY_LABELS[profile.industry]}
+- Primary goal: ${GOAL_LABELS[profile.goalType]}
+- Already uses: ${profile.existingTools.length > 0 ? profile.existingTools.join(', ') : 'none specified'}`
+}
 
 export async function POST(request: Request) {
   const rl = rateLimit('plan', request, { limit: 5, windowMs: 60_000 })
@@ -78,10 +118,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const { query } = parsed.data
+    const { query, profile } = parsed.data
 
     const anthropic = getAnthropicClient()
     const supabase = await createClient()
+
+    const profileContext = profile ? profileToPromptContext(profile) : ''
 
     // Step 1: Get Claude to decompose the goal into stages (1 API call)
     const planResponse = await anthropic.messages.create({
@@ -91,7 +133,9 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'user',
-          content: `Create a detailed AI tool plan for: "${query.trim()}"`,
+          content: profile
+            ? `Create a detailed AI tool plan for: "${query.trim()}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
+            : `Create a detailed AI tool plan for: "${query.trim()}"`,
         },
       ],
     })
@@ -133,12 +177,12 @@ export async function POST(request: Request) {
       })
     )
 
-    // Step 3: One single Claude call to generate "why" for all tools at once
+    // Step 3: One single Claude call to generate personalized "why for you" reasons
     const toolSummaryInput = stagesWithTools
       .filter((s) => s.toolResults.length > 0)
       .map(
         (s) =>
-          `Stage "${s.name}" (${s.description}):\n${s.toolResults.map((t) => `  - ${t.name}: ${t.tagline}`).join('\n')}`
+          `Stage "${s.name}" (${s.description}):\n${s.toolResults.map((t) => `  - ${t.name}: ${t.tagline} [${t.pricing_type}, ${t.skill_level}]`).join('\n')}`
       )
       .join('\n\n')
 
@@ -146,19 +190,24 @@ export async function POST(request: Request) {
 
     if (toolSummaryInput) {
       try {
-        const reasonResponse = await anthropic.messages.create({
-          model: MODEL,
-          max_tokens: 1500,
-          messages: [
-            {
-              role: 'user',
-              content: `For the project "${query}", I have these tools matched to stages. Give a one-sentence reason (max 15 words) why each tool fits its stage.
+        const promptBody = profile
+          ? `For the project "${query}", I have these tools matched to stages. Give each tool a personalized one-sentence reason (max 20 words) explaining why it fits THIS specific user based on their profile below. Reference their actual constraints (skill, budget, team, existing tools) when relevant.
+
+${profileContext}
 
 ${toolSummaryInput}
 
-Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`,
-            },
-          ],
+Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Free tier handles your solo content needs, and its simple UI matches your beginner level.", "Canva": "Works with your existing Notion setup and stays within your $50 budget."}`
+          : `For the project "${query}", I have these tools matched to stages. Give a one-sentence reason (max 15 words) why each tool fits its stage.
+
+${toolSummaryInput}
+
+Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`
+
+        const reasonResponse = await anthropic.messages.create({
+          model: MODEL,
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: promptBody }],
         })
 
         const reasonText = reasonResponse.content
@@ -199,26 +248,69 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
       }
     }
 
-    // Step 5: Assemble final response
-    const finalStages: PlanStage[] = stagesWithTools.map((stage) => ({
-      id: stage.id,
-      name: stage.name,
-      description: stage.description,
-      why: stage.why,
-      tools: stage.toolResults.map((tool) => ({
-        slug: tool.slug,
-        name: tool.name,
-        tagline: tool.tagline,
-        pricing: tool.pricing_type,
-        rating: tool.avg_rating,
-        reviewCount: tool.review_count,
-        whyThisStage: reasons[tool.name] ?? '',
-        sentimentScore: sentimentMap[tool.id]?.sentiment_score ?? null,
-        quickVerdict: sentimentMap[tool.id]?.ai_verdict
+    // Step 5: Assemble final response — compute match scores if profile is present
+    const finalStages: PlanStage[] = stagesWithTools.map((stage) => {
+      // Build tool list with match scores first, then sort so best match is ranked first
+      const toolsWithScores = stage.toolResults.map((tool) => {
+        const sentimentScore = sentimentMap[tool.id]?.sentiment_score ?? null
+        const quickVerdict = sentimentMap[tool.id]?.ai_verdict
           ? sentimentMap[tool.id].ai_verdict.split('.')[0] + '.'
-          : null,
-      })),
-    }))
+          : null
+
+        let match: MatchScore | null = null
+        if (profile) {
+          match = computeMatchScore(
+            {
+              name: tool.name,
+              pricing_type: tool.pricing_type,
+              skill_level: tool.skill_level,
+              best_for: tool.best_for,
+              integrations: tool.integrations,
+              sentimentScore,
+            },
+            profile
+          )
+        }
+
+        const reason = reasons[tool.name] ?? ''
+        return {
+          slug: tool.slug,
+          name: tool.name,
+          tagline: tool.tagline,
+          pricing: tool.pricing_type,
+          rating: tool.avg_rating,
+          reviewCount: tool.review_count,
+          whyThisStage: reason,
+          whyForYou: profile ? reason : undefined,
+          sentimentScore,
+          quickVerdict,
+          matchScore: match?.score,
+          matchReasons: match?.reasons,
+          matchWarnings: match?.warnings,
+          budgetFit: match?.budgetFit,
+          integrationMatches: match?.integrationMatches,
+          _score: match?.score ?? 0,
+        }
+      })
+
+      // Re-rank by match score when profile is present (best match becomes Best Pick)
+      if (profile) {
+        toolsWithScores.sort((a, b) => b._score - a._score)
+      }
+
+      const tools: PlanTool[] = toolsWithScores.map(({ _score, ...t }) => {
+        void _score
+        return t
+      })
+
+      return {
+        id: stage.id,
+        name: stage.name,
+        description: stage.description,
+        why: stage.why,
+        tools,
+      }
+    })
 
     return Response.json({
       title: plan.title,

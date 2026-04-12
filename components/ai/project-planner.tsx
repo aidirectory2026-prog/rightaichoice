@@ -26,6 +26,10 @@ import {
 import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { pricingLabel, pricingColor } from '@/lib/utils'
+import { IntakeModal } from '@/components/ai/intake-modal'
+import { loadProfile, saveProfile, profileSummary, type UserProfile } from '@/lib/plan/user-profile'
+import { matchLabel } from '@/lib/plan/match-score'
+import { Settings2, CheckCircle, AlertCircle, Gauge } from 'lucide-react'
 
 type PlanTool = {
   slug: string
@@ -37,6 +41,12 @@ type PlanTool = {
   whyThisStage: string
   sentimentScore?: string | null
   quickVerdict?: string | null
+  matchScore?: number
+  matchReasons?: string[]
+  matchWarnings?: string[]
+  budgetFit?: 'fits' | 'over' | 'unknown'
+  integrationMatches?: string[]
+  whyForYou?: string
 }
 
 type PlanStage = {
@@ -94,8 +104,17 @@ export function ProjectPlanner({
   const [error, setError] = useState('')
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [loadingStep, setLoadingStep] = useState(0)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [showIntake, setShowIntake] = useState(false)
+  const pendingQueryRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const loadingInterval = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+
+  // Load saved profile on mount
+  useEffect(() => {
+    const saved = loadProfile()
+    if (saved) setProfile(saved)
+  }, [])
 
   // Computed stats from the plan
   const planStats = useMemo(() => {
@@ -130,6 +149,19 @@ export function ProjectPlanner({
     const searchQuery = (q ?? query).trim()
     if (!searchQuery || loading) return
 
+    // If no profile saved yet, show intake modal first and defer the run
+    const savedProfile = profile ?? loadProfile()
+    if (!savedProfile) {
+      setQuery(searchQuery)
+      pendingQueryRef.current = searchQuery
+      setShowIntake(true)
+      return
+    }
+
+    await runPlan(searchQuery, savedProfile)
+  }
+
+  async function runPlan(searchQuery: string, userProfile: UserProfile | null) {
     setQuery(searchQuery)
     setLoading(true)
     setError('')
@@ -147,7 +179,7 @@ export function ProjectPlanner({
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ query: searchQuery, profile: userProfile }),
       })
       const data = await res.json()
 
@@ -176,6 +208,26 @@ export function ProjectPlanner({
     setTimeout(() => inputRef.current?.focus(), 50)
   }
 
+  function handleIntakeSubmit(newProfile: UserProfile) {
+    setProfile(newProfile)
+    saveProfile(newProfile)
+    setShowIntake(false)
+    const pending = pendingQueryRef.current
+    pendingQueryRef.current = null
+    if (pending) {
+      void runPlan(pending, newProfile)
+    }
+  }
+
+  function handleIntakeSkip() {
+    setShowIntake(false)
+    const pending = pendingQueryRef.current
+    pendingQueryRef.current = null
+    if (pending) {
+      void runPlan(pending, null)
+    }
+  }
+
   // Auto-submit when arriving with a query from the homepage CTA
   const didAutoSubmit = useRef(false)
   useEffect(() => {
@@ -190,9 +242,40 @@ export function ProjectPlanner({
 
   return (
     <div className="w-full">
+      {/* Intake modal */}
+      {showIntake && (
+        <IntakeModal
+          initial={profile}
+          onSubmit={handleIntakeSubmit}
+          onSkip={handleIntakeSkip}
+          onClose={() => {
+            setShowIntake(false)
+            pendingQueryRef.current = null
+          }}
+        />
+      )}
+
       {/* ─── Input State ─── */}
       {!plan && !loading && (
         <div className="space-y-10">
+          {/* Profile chip — shown when user has a saved profile */}
+          {profile && (
+            <div className="flex items-center justify-between rounded-xl border border-emerald-900/30 bg-emerald-950/10 px-4 py-2.5">
+              <div className="flex items-center gap-2 text-xs">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="text-zinc-400">Personalized for:</span>
+                <span className="text-emerald-300 font-medium">{profileSummary(profile)}</span>
+              </div>
+              <button
+                onClick={() => setShowIntake(true)}
+                className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-emerald-400 transition-colors"
+              >
+                <Settings2 className="h-3 w-3" />
+                Edit
+              </button>
+            </div>
+          )}
+
           {/* Search input */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/20 via-teal-600/15 to-cyan-600/20 rounded-2xl blur-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
@@ -629,10 +712,66 @@ export function ProjectPlanner({
                                 {tool.tagline}
                               </p>
 
-                              {tool.whyThisStage && (
+                              {/* Match score + budget chip row */}
+                              {(tool.matchScore != null || tool.budgetFit) && (
+                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                  {tool.matchScore != null && (() => {
+                                    const { label, color } = matchLabel(tool.matchScore)
+                                    return (
+                                      <span
+                                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                          color === 'emerald' ? 'border-emerald-700/50 bg-emerald-950/50 text-emerald-300' :
+                                          color === 'cyan' ? 'border-cyan-700/50 bg-cyan-950/50 text-cyan-300' :
+                                          color === 'amber' ? 'border-amber-700/50 bg-amber-950/50 text-amber-300' :
+                                          'border-zinc-700 bg-zinc-900/50 text-zinc-400'
+                                        }`}
+                                      >
+                                        <Gauge className="h-2.5 w-2.5" />
+                                        {tool.matchScore}% · {label}
+                                      </span>
+                                    )
+                                  })()}
+                                  {tool.budgetFit === 'fits' && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-800/40 bg-emerald-950/30 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                                      <CheckCircle className="h-2.5 w-2.5" />
+                                      Within budget
+                                    </span>
+                                  )}
+                                  {tool.budgetFit === 'over' && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-800/40 bg-amber-950/30 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                                      <AlertCircle className="h-2.5 w-2.5" />
+                                      Over your budget
+                                    </span>
+                                  )}
+                                  {tool.integrationMatches && tool.integrationMatches.slice(0, 2).map((m) => (
+                                    <span
+                                      key={m}
+                                      className="inline-flex items-center gap-1 rounded-full border border-cyan-800/40 bg-cyan-950/30 px-2 py-0.5 text-[10px] font-medium text-cyan-300"
+                                    >
+                                      <CheckCircle className="h-2.5 w-2.5" />
+                                      Works with {m}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Why for YOU — personalized Claude-generated rationale */}
+                              {(tool.whyForYou || tool.whyThisStage) && (
                                 <p className="mt-2 text-sm text-zinc-300 leading-relaxed bg-zinc-800/20 rounded-lg px-3 py-2 border-l-2 border-emerald-700/50">
-                                  {tool.whyThisStage}
+                                  {tool.whyForYou || tool.whyThisStage}
                                 </p>
+                              )}
+
+                              {/* Match warnings */}
+                              {tool.matchWarnings && tool.matchWarnings.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {tool.matchWarnings.map((w, wi) => (
+                                    <p key={wi} className="text-[11px] text-amber-400/80 flex items-start gap-1">
+                                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                      {w}
+                                    </p>
+                                  ))}
+                                </div>
                               )}
 
                               {tool.quickVerdict && (

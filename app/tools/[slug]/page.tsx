@@ -33,6 +33,7 @@ import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
+import { SentimentBlock } from '@/components/tools/sentiment-block'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { getToolBySlug, getAlternativeTools, isToolSaved } from '@/lib/data/tools'
 import { getFaqsForTool } from '@/lib/data/faqs'
@@ -421,6 +422,16 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   )}
                 </section>
               )}
+
+              {/* ── Community & Market Signals (Phase 6 data inline) ─ */}
+              <SectionErrorBoundary fallbackTitle="Community signals couldn't load right now.">
+                <SentimentBlock
+                  toolId={tool.id}
+                  toolSlug={tool.slug}
+                  toolName={tool.name}
+                  viewCount={tool.view_count ?? 0}
+                />
+              </SectionErrorBoundary>
 
               {/* Viability Score */}
               {tool.viability_score != null && (

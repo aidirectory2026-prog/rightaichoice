@@ -24,6 +24,8 @@ export type AIToolResult = {
   website_url: string
   categories: string[]
   tags: string[]
+  integrations: string[]
+  best_for: string[]
 }
 
 /** Escape characters that have special meaning in Supabase ilike patterns */
@@ -59,6 +61,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     .select(`
       id, name, slug, tagline, description, pricing_type, skill_level,
       has_api, platforms, avg_rating, review_count, website_url,
+      integrations, best_for,
       tool_categories(categories(name)),
       tool_tags(tags(name))
     `)
@@ -155,5 +158,7 @@ function mapTool(tool: any): AIToolResult {
     website_url: tool.website_url,
     categories: cats,
     tags,
+    integrations: tool.integrations ?? [],
+    best_for: tool.best_for ?? [],
   }
 }
