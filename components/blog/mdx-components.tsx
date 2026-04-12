@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { TrackedBlogLink } from '@/components/blog/tracked-blog-link'
 
 export function Callout({ type = 'info', children }: { type?: 'info' | 'warning' | 'tip'; children: React.ReactNode }) {
   const styles = {
@@ -87,9 +88,7 @@ export const mdxComponents = {
   li: (props: React.HTMLAttributes<HTMLLIElement>) => (
     <li className="text-base leading-relaxed" {...props} />
   ),
-  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition-colors" {...props} />
-  ),
+  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <TrackedBlogLink {...props} />,
   blockquote: (props: React.HTMLAttributes<HTMLQuoteElement>) => (
     <blockquote className="my-6 border-l-2 border-zinc-700 pl-4 italic text-zinc-400" {...props} />
   ),

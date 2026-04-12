@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 export function GoalInput() {
   const router = useRouter()
@@ -12,6 +13,8 @@ export function GoalInput() {
     e.preventDefault()
     const trimmed = goal.trim()
     if (!trimmed) return
+    analytics.heroCtaClicked('plan_my_stack', 'homepage_goal_input')
+    analytics.searchQuerySubmitted(trimmed, 0, 'homepage_goal_input')
     router.push(`/plan?q=${encodeURIComponent(trimmed)}`)
   }
 

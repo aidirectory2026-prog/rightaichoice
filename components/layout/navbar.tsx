@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 export function Navbar() {
   const { user, profile } = useAuth()
@@ -19,6 +20,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             <Link
               href="/plan"
+              onClick={() => analytics.navCtaClicked('plan_your_stack', 'navbar_desktop')}
               className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -89,6 +91,7 @@ export function Navbar() {
               </Link>
               <Link
                 href="/signup"
+                onClick={() => analytics.signupStarted('navbar_desktop')}
                 className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
               >
                 <UserPlus className="h-4 w-4" />
@@ -113,7 +116,10 @@ export function Navbar() {
         <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
           <Link
             href="/plan"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => {
+              analytics.navCtaClicked('plan_your_stack', 'navbar_mobile')
+              setMobileOpen(false)
+            }}
             className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 py-2"
           >
             <Sparkles className="h-3.5 w-3.5" />

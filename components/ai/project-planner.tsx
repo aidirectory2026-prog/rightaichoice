@@ -28,6 +28,7 @@ import { ExportStack } from '@/components/stacks/export-stack'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { IntakeModal } from '@/components/ai/intake-modal'
 import { loadProfile, saveProfile, profileSummary, type UserProfile } from '@/lib/plan/user-profile'
+import { analytics } from '@/lib/analytics'
 import { matchLabel } from '@/lib/plan/match-score'
 import { Settings2, CheckCircle, AlertCircle, Gauge } from 'lucide-react'
 
@@ -149,6 +150,8 @@ export function ProjectPlanner({
     const searchQuery = (q ?? query).trim()
     if (!searchQuery || loading) return
 
+    analytics.planStarted('plan_page')
+
     // If no profile saved yet, show intake modal first and defer the run
     const savedProfile = profile ?? loadProfile()
     if (!savedProfile) {
@@ -192,6 +195,8 @@ export function ProjectPlanner({
       if (data.stages?.length > 0) {
         setActiveStage(data.stages[0].id)
       }
+      const toolCount = data.stages?.flatMap((s: { tools?: unknown[] }) => s.tools ?? []).length ?? 0
+      analytics.planCompleted(searchQuery.slice(0, 100), toolCount)
     } catch {
       setError('Network error. Please try again.')
     } finally {
