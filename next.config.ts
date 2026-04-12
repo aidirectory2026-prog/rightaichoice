@@ -13,7 +13,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://cdn.rightaichoice.com https://img.youtube.com https://i.ytimg.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://cdn.rightaichoice.com https://cdn.futurepedia.io https://img.youtube.com https://i.ytimg.com",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
       "frame-ancestors 'none'",
@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'cdn.rightaichoice.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.futurepedia.io',
       },
       {
         protocol: 'https',
