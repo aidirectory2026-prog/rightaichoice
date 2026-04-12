@@ -102,7 +102,7 @@ export function SentimentBlockClient({ slug, toolName, autoGenerate, initialStat
               Gathering community sentiment for {toolName}…
             </div>
             <div className="text-xs text-zinc-500 mt-0.5">
-              Scraping Reddit · X · Quora · G2 and synthesizing — usually ~60–90 seconds.
+              Analyzing community signals — usually about a minute. We cache it after.
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ export function SentimentBlockClient({ slug, toolName, autoGenerate, initialStat
           <div>
             <div className="text-sm font-semibold text-white">What people are saying about {toolName}</div>
             <div className="text-xs text-zinc-500 mt-0.5">
-              See synthesized pros/cons, sentiment, themes and hidden costs from Reddit, X, Quora & G2.
+              Synthesized pros/cons, sentiment, themes, and hidden costs from real users across the web.
             </div>
           </div>
         </div>

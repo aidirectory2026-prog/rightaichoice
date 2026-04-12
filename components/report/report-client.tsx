@@ -59,11 +59,9 @@ type Report = {
 type Status = 'loading' | 'generating' | 'ready' | 'failed' | 'not_generated'
 
 const GENERATION_STEPS = [
-  'Checking for cached report...',
-  'Scraping Reddit, X, Quora & G2...',
-  'Analyzing community sentiment...',
-  'Synthesizing insights with AI...',
-  'Preparing your report...',
+  'Gathering community signals',
+  'Analyzing sentiment & themes',
+  'Finalizing your report',
 ]
 
 export function ReportClient({
@@ -109,7 +107,7 @@ export function ReportClient({
     setGenStep(0)
     const stepInterval = setInterval(() => {
       setGenStep((s) => Math.min(s + 1, GENERATION_STEPS.length - 1))
-    }, 3000)
+    }, 18000)
 
     try {
       const res = await fetch(`/api/tools/${slug}/report/generate`, { method: 'POST' })
@@ -142,7 +140,7 @@ export function ReportClient({
     setGenStep(1)
     const stepInterval = setInterval(() => {
       setGenStep((s) => Math.min(s + 1, GENERATION_STEPS.length - 1))
-    }, 4000)
+    }, 18000)
 
     const pollInterval = setInterval(async () => {
       try {
@@ -209,8 +207,9 @@ export function ReportClient({
           )}
 
           <p className="text-sm text-zinc-500">
-            Generating deep-dive report for <span className="text-zinc-300 font-medium">{toolName}</span>
+            Building your deep-dive on <span className="text-zinc-300 font-medium">{toolName}</span>
           </p>
+          <p className="text-xs text-zinc-600">This usually takes about a minute — we only do this once and cache it.</p>
         </div>
       </div>
     )

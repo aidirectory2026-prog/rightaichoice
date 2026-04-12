@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${tool.name} Report — Honest Review & Sentiment | RightAIChoice`,
-    description: `In-depth analysis of ${tool.name}: 5 pros, 5 cons, market sentiment from Reddit, X, Quora & G2, pricing breakdown, alternatives, and more.`,
+    description: `In-depth analysis of ${tool.name}: 5 pros, 5 cons, market sentiment, pricing breakdown, alternatives, and more.`,
   }
 }
 
