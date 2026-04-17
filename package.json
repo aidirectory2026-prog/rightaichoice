@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "posthog:setup": "tsx scripts/posthog-setup.ts"
+    "mixpanel:verify": "tsx --env-file=.env.local scripts/mixpanel/verify.ts",
+    "mixpanel:lexicon:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts --dry-run",
+    "mixpanel:lexicon": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -19,9 +21,9 @@
     "clsx": "^2.1.1",
     "gray-matter": "^4.0.3",
     "lucide-react": "^1.7.0",
+    "mixpanel-browser": "^2.78.0",
     "next": "16.2.1",
     "next-mdx-remote": "^6.0.0",
-    "posthog-js": "^1.364.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shadcn": "^4.1.1",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/mixpanel-browser": "^2.60.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -7,7 +7,15 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
-  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_MIXPANEL_TOKEN: z.string().optional(),
+  NEXT_PUBLIC_MIXPANEL_API_HOST: z.string().url().optional(),
+  NEXT_PUBLIC_MIXPANEL_PROXY_PATH: z.string().optional(),
+  MIXPANEL_PROJECT_ID: z.string().optional(),
+  MIXPANEL_REGION: z.enum(['us', 'eu']).optional(),
+  MIXPANEL_API_HOST: z.string().url().optional(),
+  MIXPANEL_DATA_API_HOST: z.string().url().optional(),
+  MIXPANEL_SERVICE_ACCOUNT_USERNAME: z.string().optional(),
+  MIXPANEL_SERVICE_ACCOUNT_SECRET: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
 })
 

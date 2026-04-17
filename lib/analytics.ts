@@ -1,24 +1,111 @@
 /**
- * Thin analytics wrapper.
- * All calls are no-ops if NEXT_PUBLIC_POSTHOG_KEY is not set.
- * Only call from client components.
+ * Thin analytics wrapper backed by Mixpanel.
+ * All calls are no-ops if NEXT_PUBLIC_MIXPANEL_TOKEN is not set.
+ * Only call from client components (server actions use lib/mixpanel-server.ts).
  *
  * RULE: Every tracked interaction goes through a method here — never call
- * posthog.capture() directly from a feature component. Keeps the event
- * schema auditable. See docs/marketing/10-tracking-implementation.md.
+ * mixpanel.track() directly from a feature component. Keeps the event
+ * schema auditable. See docs/marketing/tracking-mechanisms-and-goals.md.
  */
 
-type EventProperties = Record<string, string | number | boolean | null | undefined>
+type EventProperties = Record<string, string | number | boolean | null | undefined | string[]>
 
 function capture(event: string, properties?: EventProperties) {
   if (typeof window === 'undefined') return
-  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return
-  import('posthog-js').then(({ default: posthog }) => {
-    posthog.capture(event, properties)
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    mixpanel.track(event, properties)
   })
 }
 
+function identifyInternal(userId: string, traits?: EventProperties) {
+  if (typeof window === 'undefined') return
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    mixpanel.identify(userId)
+    if (traits) mixpanel.people.set(traits)
+  })
+}
+
+function registerSuperPropertiesInternal(props: EventProperties) {
+  if (typeof window === 'undefined') return
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    mixpanel.register(props)
+  })
+}
+
+function setGroupInternal(groupKey: string, groupId: string, traits?: EventProperties) {
+  if (typeof window === 'undefined') return
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    mixpanel.set_group(groupKey, groupId)
+    if (traits) mixpanel.get_group(groupKey, groupId).set(traits)
+  })
+}
+
+function resetInternal() {
+  if (typeof window === 'undefined') return
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    mixpanel.reset()
+  })
+}
+
+/**
+ * Expose the Mixpanel distinct_id for linking to other tools (Sentry,
+ * server-side tracking). Returns null until the SDK is initialized.
+ */
+export function getMixpanelDistinctId(): string | null {
+  if (typeof window === 'undefined') return null
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return null
+  try {
+    const mp = (window as unknown as { mixpanel?: { get_distinct_id?: () => string } }).mixpanel
+    return mp?.get_distinct_id?.() ?? null
+  } catch {
+    return null
+  }
+}
+
 export const analytics = {
+  // ──────────────────────────────────────────────────────────────
+  // Identity + profile (must run on login/signup so anon → known is stitched)
+  // ──────────────────────────────────────────────────────────────
+  identify(
+    userId: string,
+    traits?: {
+      email?: string
+      plan?: string
+      signup_source?: string
+      signup_at?: string
+      role?: string
+    },
+  ) {
+    identifyInternal(userId, traits)
+  },
+  /**
+   * Super properties are attached to every subsequent event. Use this for
+   * user-scoped slices you'll always break down by: plan, role, experiment.
+   */
+  registerSuperProperties(props: {
+    user_plan?: string
+    user_role?: string
+    is_admin?: boolean
+    experiment_bucket?: string
+  }) {
+    registerSuperPropertiesInternal(props as EventProperties)
+  },
+  /**
+   * Group Analytics — Mixpanel free tier allows one group key. We use
+   * "user_plan" so charts can be sliced by Free / Pro / etc.
+   */
+  setPlanGroup(plan: string, traits?: { seats?: number; started_at?: string }) {
+    setGroupInternal('user_plan', plan, traits as EventProperties | undefined)
+  },
+  reset() {
+    resetInternal()
+  },
+
   // ──────────────────────────────────────────────────────────────
   // Tool interactions (core decision actions)
   // ──────────────────────────────────────────────────────────────
@@ -32,9 +119,11 @@ export const analytics = {
     capture('tool_page_viewed', { tool_id: toolId, tool_slug: toolSlug })
   },
   toolVisitClicked(toolId: string, toolSlug: string, source: string) {
-    // Fires on "Visit Website" button. The server-side /api/tools/[slug]/visit
-    // handles the affiliate redirect + server log; this captures client-side
-    // attribution (which page referred the click).
+    // Fires on "Visit Website" button. Server-side route /api/tools/[slug]/visit
+    // handles the affiliate redirect + server log; this captures the client-side
+    // attribution (which page referred the click). Paired server event is
+    // "tool_visit_clicked_server" from lib/mixpanel-server.ts — revenue-critical
+    // events fire both client + server so ad-blockers can't kill them.
     capture('tool_visit_clicked', { tool_id: toolId, tool_slug: toolSlug, source })
   },
 
@@ -148,9 +237,6 @@ export const analytics = {
   // Navigation & top-level CTAs
   // ──────────────────────────────────────────────────────────────
   navCtaClicked(cta: string, source: string) {
-    // For persistent nav / header / footer CTAs. Use `cta` to identify which
-    // ("plan_your_stack", "sign_up", "browse_tools") and `source` for context
-    // ("navbar_desktop", "navbar_mobile", "footer").
     capture('nav_cta_clicked', { cta, source })
   },
   heroCtaClicked(cta: string, variant: string) {
@@ -196,5 +282,75 @@ export const analytics = {
       tool_slug: toolSlug,
       position,
     })
+  },
+  /** Fires when search returns zero results — content-gap detector. */
+  searchNoResults(query: string, source: string) {
+    capture('search_no_results', { query: query.slice(0, 100), source })
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // Discovery / browse
+  // ──────────────────────────────────────────────────────────────
+  filterApplied(filterType: string, value: string, source: string) {
+    capture('filter_applied', { filter_type: filterType, value, source })
+  },
+  /** Fires when applied filter set returns zero tools — inventory gap. */
+  filterNoResults(filters: string, source: string) {
+    capture('filter_no_results', { filters, source })
+  },
+  categoryViewed(slug: string) {
+    capture('category_viewed', { slug })
+  },
+  collectionViewed(slug: string) {
+    capture('collection_viewed', { slug })
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // Strategic / high-level events (activation, monetization, discovery)
+  // ──────────────────────────────────────────────────────────────
+  activationMilestone(milestone: string, value?: number) {
+    // e.g. "first_tool_saved", "three_tools_compared", "first_plan_completed"
+    // North-star activation signal — fires once per milestone per user.
+    capture('activation_milestone', { milestone, value })
+  },
+  onboardingStepCompleted(step: string, stepIndex: number) {
+    capture('onboarding_step_completed', { step, step_index: stepIndex })
+  },
+  onboardingCompleted(path: string) {
+    capture('onboarding_completed', { path })
+  },
+  pricingViewed(source: string) {
+    capture('pricing_viewed', { source })
+  },
+  upgradeClicked(plan: string, source: string) {
+    capture('upgrade_clicked', { plan, source })
+  },
+  emptySearch(query: string, source: string) {
+    capture('empty_search', { query: query.slice(0, 100), source })
+  },
+  scrollDepthReached(path: string, depth: 25 | 50 | 75 | 100) {
+    capture('scroll_depth_reached', { path, depth })
+  },
+  /**
+   * Time-on-page beacon. Fire once on unmount/pagehide with bucketed seconds.
+   * Useful for content-quality grading alongside scroll_depth_reached.
+   */
+  timeOnPage(path: string, seconds: number) {
+    const bucket =
+      seconds < 5 ? '<5s' : seconds < 15 ? '5-15s' : seconds < 30 ? '15-30s' : seconds < 60 ? '30-60s' : seconds < 180 ? '1-3min' : '>3min'
+    capture('time_on_page', { path, seconds: Math.floor(seconds), bucket })
+  },
+  newsletterSubscribed(source: string) {
+    capture('newsletter_subscribed', { source })
+  },
+  externalLinkClicked(url: string, entity: string, entityId: string) {
+    capture('external_link_clicked', { url, entity, entity_id: entityId })
+  },
+  errorEncountered(boundary: string, message: string) {
+    capture('error_encountered', { boundary, message: message.slice(0, 200) })
+  },
+  /** Generic client-side perf marker — e.g. "ai_chat_first_token", "plan_llm_response". */
+  perfMark(marker: string, duration_ms: number, context?: string) {
+    capture('perf_mark', { marker, duration_ms, context: context ?? '' })
   },
 }
