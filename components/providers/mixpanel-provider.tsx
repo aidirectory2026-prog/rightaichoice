@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import mixpanel from 'mixpanel-browser'
+import { analytics } from '@/lib/analytics'
 
 const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
 // Proxy path defeats ad-blockers (uBlock, Brave shields, etc.). When set to
@@ -114,6 +115,67 @@ function PageViewCapture() {
   return null
 }
 
+// Scroll depth + time-on-page beacon. Resets on each pathname change so each
+// page gets its own depth/time measurement. Fires at 25/50/75/100% depth
+// exactly once per page, and a single `time_on_page` on unload.
+function EngagementCapture() {
+  const pathname = usePathname()
+  const firedDepthsRef = useRef<Set<number>>(new Set())
+  const mountedAtRef = useRef<number>(Date.now())
+
+  useEffect(() => {
+    firedDepthsRef.current = new Set()
+    mountedAtRef.current = Date.now()
+
+    function computeDepth(): number {
+      const doc = document.documentElement
+      const scrollable = doc.scrollHeight - doc.clientHeight
+      if (scrollable <= 0) return 100
+      const pct = (window.scrollY / scrollable) * 100
+      return Math.min(100, Math.max(0, pct))
+    }
+
+    function onScroll() {
+      const pct = computeDepth()
+      for (const threshold of [25, 50, 75, 100] as const) {
+        if (pct >= threshold && !firedDepthsRef.current.has(threshold)) {
+          firedDepthsRef.current.add(threshold)
+          analytics.scrollDepthReached(pathname, threshold)
+        }
+      }
+    }
+
+    function emitTimeOnPage() {
+      const seconds = Math.floor((Date.now() - mountedAtRef.current) / 1000)
+      if (seconds < 1) return
+      analytics.timeOnPage(pathname, seconds)
+    }
+
+    // Passive listener — never blocks scroll performance.
+    window.addEventListener('scroll', onScroll, { passive: true })
+    // pagehide is more reliable than beforeunload on mobile Safari.
+    window.addEventListener('pagehide', emitTimeOnPage)
+    // visibilitychange hidden → tab-switch / minimize counts as session exit.
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') emitTimeOnPage()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    // Fire once on mount in case the page is already short enough to be 100%.
+    onScroll()
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('pagehide', emitTimeOnPage)
+      document.removeEventListener('visibilitychange', onVisibility)
+      // Emit on unmount (route change) so SPA navigation still records time.
+      emitTimeOnPage()
+    }
+  }, [pathname])
+
+  return null
+}
+
 export function MixpanelProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     initMixpanelOnce()
@@ -124,6 +186,7 @@ export function MixpanelProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       <PageViewCapture />
+      <EngagementCapture />
       {children}
     </>
   )

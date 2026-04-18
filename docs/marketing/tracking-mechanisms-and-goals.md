@@ -61,7 +61,7 @@ Run commands:
 - **Project ID:** `4014921`.
 - **Project token (public):** set via `NEXT_PUBLIC_MIXPANEL_TOKEN`.
 - **Service account (write access):** `rightaichoice-claude-provisioner.0644ad.mp-service-account`. Rotate every 90 days. Never commit the secret.
-- **Reverse proxy:** `/mp/*` on our domain forwards to `api-eu.mixpanel.com`. Set `NEXT_PUBLIC_MIXPANEL_PROXY_PATH=/mp` in production to route via proxy (recovers ~20–40% of events from ad-blockers). Local dev leaves this unset so the SDK hits Mixpanel directly.
+- **Reverse proxy:** `/mp/*` on our domain forwards to `api-eu.mixpanel.com`. `NEXT_PUBLIC_MIXPANEL_PROXY_PATH=/mp` is **enabled in all environments (local + production)** so uBlock/Brave shields can't silently drop events — previously unset, which caused ~20–40% event loss and was the reason tracking appeared broken during manual QA. Set the same var on Vercel (Project → Settings → Environment Variables) for production.
 - **Identity stitching:** `analytics.identify(userId, traits)` runs from `auth-provider.tsx` on every mount where a user is present. This collapses anonymous and known sessions into one user.
 - **Super properties:** `app`, `app_version`, `env`, `viewport`, `first_touch_utm_*`, `last_touch_utm_*`, `first_touch_referrer`, `first_touch_landing`, `user_plan`, `is_admin`. Attached to every event.
 - **Group Analytics:** one group key — `user_plan`. Enables per-plan breakdown on every report.
@@ -401,10 +401,12 @@ Event categories (same as `scripts/mixpanel/config/events.ts`): identity, tool, 
 - **Consumers:** WAU/MAU; funnel starts; retention.
 
 #### Event: `scroll_depth_reached`
-- **Source:** client; trigger: IntersectionObserver on marker elements at 25/50/75/100%; payload `path`, `depth`. Content quality.
+- **Source:** client; wired in `components/providers/mixpanel-provider.tsx` → `EngagementCapture`. A passive `scroll` listener computes depth as `scrollY / (scrollHeight - clientHeight)` and fires the event at 25/50/75/100% exactly once per page (depths reset on every pathname change). Payload `path`, `depth`.
+- **Consumers:** Content-quality board; correlates with `tool_visit_clicked` to grade page effectiveness.
 
 #### Event: `time_on_page`
-- **Source:** client; trigger: `pagehide` listener; payload `path`, `seconds`, `bucket`. Engagement quality.
+- **Source:** client; wired in `components/providers/mixpanel-provider.tsx` → `EngagementCapture`. Fires on `pagehide`, `visibilitychange → hidden`, and on route change (unmount). Payload `path`, `seconds`, `bucket` (`<5s`, `5-15s`, `15-30s`, `30-60s`, `1-3min`, `>3min`).
+- **Consumers:** Engagement board; filter bucket ≥ `30-60s` for the "engaged page view" proxy metric.
 
 ---
 
@@ -523,3 +525,15 @@ Upgrade to Growth (~$25/mo for 100k tracked users) when **any** of:
 - You need Feature Flags / Experiments inside Mixpanel (we don't today).
 
 Everything in this doc — tracking, Boards, Funnels, Goals, Cohorts, Retention — works identically on free and paid. Only the provisioning surface differs.
+
+---
+
+## 13. Changelog
+
+Append-only. Newest at top. Every analytics change must land a line here.
+
+- **2026-04-18 — Tracking fix + engagement beacons.**
+  - Root cause of "events not appearing in Mixpanel during QA": `NEXT_PUBLIC_MIXPANEL_PROXY_PATH` was unset, so the SDK hit `api-eu.mixpanel.com` directly and Brave/uBlock silently dropped requests. Enabled `/mp` proxy path in `.env.local`. **Action required on production:** set `NEXT_PUBLIC_MIXPANEL_PROXY_PATH=/mp` in Vercel env vars (all environments) and redeploy.
+  - `scroll_depth_reached` and `time_on_page` were defined in `lib/analytics.ts` but never called. Added `EngagementCapture` to `components/providers/mixpanel-provider.tsx` — emits scroll-depth at 25/50/75/100% once per page and time-on-page on `pagehide` / `visibilitychange:hidden` / route-change.
+  - Re-ran `npm run mixpanel:lexicon` — 60/60 event descriptions now live in Mixpanel UI.
+  - Follow-up QA: hard-refresh any page with adblocker on → Mixpanel Live View should show `page_viewed`, `scroll_depth_reached (25)`, `tool_saved`, `time_on_page` within ~10s (batch flush interval).
