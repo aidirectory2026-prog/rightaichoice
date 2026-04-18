@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
-import { PostHogProvider } from "@/components/providers/posthog-provider";
+import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { websiteJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
@@ -79,7 +79,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] md:pb-0">
         <script {...jsonLdScriptProps(websiteJsonLd())} />
-        <PostHogProvider>
+        <MixpanelProvider>
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}
             profile={profile}
@@ -89,7 +89,7 @@ export default async function RootLayout({
               <CompareTray />
             </CompareProvider>
           </AuthProvider>
-        </PostHogProvider>
+        </MixpanelProvider>
         <MobileNav />
       </body>
     </html>
