@@ -16,7 +16,12 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-const MODEL = 'claude-sonnet-4-6'
+// Model ladder: Sonnet for stage decomposition (needs reasoning + structure),
+// Haiku for the per-tool "why this fits you" reasons (simple text mapping —
+// Haiku is ~3-5× faster and ~12× cheaper for this task). See Step 39 in
+// Phase6(polish-depth-scale)/plan.md.
+const MODEL_DECOMPOSITION = 'claude-sonnet-4-6'
+const MODEL_REASONS = 'claude-haiku-4-5-20251001'
 
 type PlanTool = {
   slug: string
@@ -133,15 +138,27 @@ export async function POST(request: Request) {
 
     const { query, profile } = parsed.data
 
+    // Phase timings — Step 39 (Phase 6). We log each sub-call duration so the
+    // actual latency hot-node shows up in Vercel logs + the client-side
+    // plan_perf Mixpanel event. No guessing; optimization decisions follow data.
+    const t0 = performance.now()
+    const timings: Record<string, number> = {}
+    const mark = (phase: string, start: number) => {
+      timings[phase] = Math.round(performance.now() - start)
+    }
+
     const anthropic = getAnthropicClient()
     const supabase = await createClient()
 
     const profileContext = profile ? profileToPromptContext(profile) : ''
+    const tRefine = performance.now()
     const refined = refinePrompt(query)
+    mark('refine_ms', tRefine)
 
     // Step 1: Get Claude to decompose the goal into stages (1 API call)
+    const tDecomposition = performance.now()
     const planResponse = await anthropic.messages.create({
-      model: MODEL,
+      model: MODEL_DECOMPOSITION,
       max_tokens: 1500,
       system: PLANNER_SYSTEM_PROMPT,
       messages: [
@@ -153,6 +170,7 @@ export async function POST(request: Request) {
         },
       ],
     })
+    mark('decomposition_ms', tDecomposition)
 
     const planText = planResponse.content
       .filter((b) => b.type === 'text')
@@ -173,6 +191,7 @@ export async function POST(request: Request) {
 
     // Step 2: Search tools for ALL stages in parallel (no Claude calls — just DB queries)
     // searchStageTools guarantees at least one tool per stage via a 4-tier cascade.
+    const tSearch = performance.now()
     const stagesWithTools = await Promise.all(
       plan.stages.map(async (stage) => {
         const { results, tier } = await searchStageTools({
@@ -193,8 +212,10 @@ export async function POST(request: Request) {
         }
       })
     )
+    mark('search_ms', tSearch)
 
     // Step 3: One single Claude call to generate personalized "why for you" reasons
+    const tReasons = performance.now()
     const toolSummaryInput = stagesWithTools
       .filter((s) => s.toolResults.length > 0)
       .map(
@@ -222,7 +243,7 @@ ${toolSummaryInput}
 Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`
 
         const reasonResponse = await anthropic.messages.create({
-          model: MODEL,
+          model: MODEL_REASONS,
           max_tokens: 1500,
           messages: [{ role: 'user', content: promptBody }],
         })
@@ -242,8 +263,10 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
         // Continue without reasons — not critical
       }
     }
+    mark('reasons_ms', tReasons)
 
     // Step 4: Look up cached sentiment for matched tools (non-blocking)
+    const tSentiment = performance.now()
     const allToolIds = stagesWithTools.flatMap((s) => s.toolResults.map((t) => t.id))
     let sentimentMap: Record<string, { sentiment_score: string; ai_verdict: string }> = {}
 
@@ -264,8 +287,10 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
         // Non-critical — continue without sentiment
       }
     }
+    mark('sentiment_ms', tSentiment)
 
     // Step 5: Assemble final response — compute match scores if profile is present
+    const tScoring = performance.now()
     const finalStages: PlanStage[] = stagesWithTools.map((stage) => {
       // Build tool list with match scores first, then sort so best match is ranked first
       const toolsWithScores = stage.toolResults.map((tool) => {
@@ -330,10 +355,19 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
       }
     })
 
+    mark('scoring_ms', tScoring)
+    timings.total_ms = Math.round(performance.now() - t0)
+    timings.stage_count = finalStages.length
+
+    // Vercel log — shows up in observability for p50/p95 tracking even before
+    // the client forwards plan_perf to Mixpanel.
+    console.log('[plan_perf]', JSON.stringify(timings))
+
     return Response.json({
       title: plan.title,
       summary: plan.summary,
       stages: finalStages,
+      _timings: timings,
     })
   } catch (error) {
     console.error('Plan API error:', error)

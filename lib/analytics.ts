@@ -164,6 +164,9 @@ export const analytics = {
   planMatchTier(stageId: string, tier: 'keyword' | 'category_fallback' | 'emergency') {
     capture('plan_match_tier', { stage_id: stageId, tier })
   },
+  planPerf(timings: Record<string, number>) {
+    capture('plan_perf', timings)
+  },
 
   // ──────────────────────────────────────────────────────────────
   // Workflow builder

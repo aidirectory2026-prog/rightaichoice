@@ -217,6 +217,12 @@ Event categories (same as `scripts/mixpanel/config/events.ts`): identity, tool, 
 - **Payload:** `stage_id`, `tier` (`keyword` | `category_fallback` | `emergency`).
 - **Consumers:** quality dashboard for the /plan flow. `keyword` = exact keyword+category hit; `category_fallback` = Sonnet-picked category was too narrow, dropped it; `emergency` = nothing matched, showed top-rated as closest fit. If the `emergency` share creeps above ~10%, the search cascade or the catalog coverage needs attention.
 
+#### Event: `plan_perf`
+- **Source:** client (forwarded from `/api/plan` response body `_timings`).
+- **Trigger:** fired once per successful plan generation.
+- **Payload:** `refine_ms`, `decomposition_ms`, `search_ms`, `reasons_ms`, `sentiment_ms`, `scoring_ms`, `total_ms`, `stage_count`. All integer milliseconds.
+- **Consumers:** latency dashboard for Step 39 target (`p50 ≤ 2s, p95 ≤ 5s`). Each phase is measured separately so the hot-node shows up immediately without needing server profiling. Server also logs `[plan_perf] {...}` to Vercel observability for a second source.
+
 #### Event: `recommendation_requested`
 - **Source:** client
 - **Trigger:** `/recommend` form submit (single-shot alternative to wizard).

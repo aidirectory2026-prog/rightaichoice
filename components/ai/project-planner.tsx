@@ -202,6 +202,7 @@ export function ProjectPlanner({
       for (const stage of (data.stages ?? []) as Array<{ id: string; matchTier?: MatchTier }>) {
         if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
       }
+      if (data._timings) analytics.planPerf(data._timings as Record<string, number>)
     } catch {
       setError('Network error. Please try again.')
     } finally {
