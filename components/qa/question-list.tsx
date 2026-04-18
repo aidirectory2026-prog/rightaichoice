@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { MessageSquare, CheckCircle2 } from 'lucide-react'
 import { QuestionVoteButton } from './question-vote-button'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { timeAgo } from '@/lib/utils'
 
 type QuestionData = {
@@ -23,6 +23,7 @@ type QuestionData = {
     name: string
     slug: string
     logo_url: string | null
+    website_url?: string | null
   } | null
 }
 
@@ -93,19 +94,12 @@ export function QuestionList({ questions, userVotes, showTool = false }: Props) 
                       href={`/tools/${tool.slug}`}
                       className="flex items-center gap-1.5 hover:text-zinc-400 transition-colors"
                     >
-                      {tool.logo_url ? (
-                        <Image
-                          src={tool.logo_url}
-                          alt={tool.name}
-                          width={14}
-                          height={14}
-                          className="rounded"
-                        />
-                      ) : (
-                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-zinc-800 text-[8px] font-bold text-zinc-500">
-                          {tool.name.charAt(0)}
-                        </span>
-                      )}
+                      <ToolLogo
+                        tool={tool}
+                        size={14}
+                        className="flex h-3.5 w-3.5 items-center justify-center rounded bg-zinc-800 overflow-hidden"
+                        fallbackClassName="text-[8px] font-bold text-zinc-500"
+                      />
                       {tool.name}
                     </Link>
                   )}

@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Star } from 'lucide-react'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 type ToolCardData = {
   id: string
@@ -11,6 +11,7 @@ type ToolCardData = {
   slug: string
   tagline: string
   logo_url: string | null
+  website_url?: string | null
   pricing_type: string
   avg_rating: number
   review_count: number
@@ -31,21 +32,12 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
       )}
       {/* Header: Logo + Name */}
       <div className="flex items-start gap-3.5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zinc-800 overflow-hidden">
-          {tool.logo_url ? (
-            <Image
-              src={tool.logo_url}
-              alt={tool.name}
-              width={44}
-              height={44}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-lg font-bold text-zinc-500">
-              {tool.name.charAt(0)}
-            </span>
-          )}
-        </div>
+        <ToolLogo
+          tool={tool}
+          size={44}
+          className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-800 overflow-hidden"
+          fallbackClassName="text-lg font-bold text-zinc-500"
+        />
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors truncate">
             {tool.name}

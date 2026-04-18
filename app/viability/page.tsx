@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ShieldCheck, ShieldAlert, ShieldX, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { createClient } from '@/lib/supabase/server'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 
@@ -28,14 +28,14 @@ async function getViabilityLeaderboard() {
   const [safest, riskiest] = await Promise.all([
     supabase
       .from('tools')
-      .select('id, name, slug, logo_url, viability_score, pricing_type')
+      .select('id, name, slug, logo_url, website_url, viability_score, pricing_type')
       .eq('is_published', true)
       .not('viability_score', 'is', null)
       .order('viability_score', { ascending: false })
       .limit(10),
     supabase
       .from('tools')
-      .select('id, name, slug, logo_url, viability_score, pricing_type')
+      .select('id, name, slug, logo_url, website_url, viability_score, pricing_type')
       .eq('is_published', true)
       .not('viability_score', 'is', null)
       .order('viability_score', { ascending: true })
@@ -212,13 +212,12 @@ export default async function ViabilityPage() {
                       <span className="text-xs font-mono text-zinc-600 w-5">
                         {i + 1}.
                       </span>
-                      <div className="h-8 w-8 shrink-0 rounded-lg bg-zinc-800 overflow-hidden flex items-center justify-center">
-                        {tool.logo_url ? (
-                          <Image src={tool.logo_url} alt={tool.name} width={32} height={32} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-xs font-bold text-zinc-500">{tool.name[0]}</span>
-                        )}
-                      </div>
+                      <ToolLogo
+                        tool={tool}
+                        size={32}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 overflow-hidden"
+                        fallbackClassName="text-xs font-bold text-zinc-500"
+                      />
                       <span className="flex-1 text-sm font-medium text-white truncate">
                         {tool.name}
                       </span>
@@ -256,13 +255,12 @@ export default async function ViabilityPage() {
                       <span className="text-xs font-mono text-zinc-600 w-5">
                         {i + 1}.
                       </span>
-                      <div className="h-8 w-8 shrink-0 rounded-lg bg-zinc-800 overflow-hidden flex items-center justify-center">
-                        {tool.logo_url ? (
-                          <Image src={tool.logo_url} alt={tool.name} width={32} height={32} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-xs font-bold text-zinc-500">{tool.name[0]}</span>
-                        )}
-                      </div>
+                      <ToolLogo
+                        tool={tool}
+                        size={32}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 overflow-hidden"
+                        fallbackClassName="text-xs font-bold text-zinc-500"
+                      />
                       <span className="flex-1 text-sm font-medium text-white truncate">
                         {tool.name}
                       </span>

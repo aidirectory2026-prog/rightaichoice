@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   Star,
   Check,
@@ -8,6 +7,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { pricingLabel, pricingColor, formatNumber } from '@/lib/utils'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 type ComparedTool = {
   id: string
@@ -66,21 +66,12 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
             key={tool.id}
             className="flex flex-col items-center text-center rounded-xl border border-zinc-800 bg-zinc-900/50 p-6"
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800 overflow-hidden border border-zinc-700 mb-3">
-              {tool.logo_url ? (
-                <Image
-                  src={tool.logo_url}
-                  alt={tool.name}
-                  width={64}
-                  height={64}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-2xl font-bold text-zinc-500">
-                  {tool.name.charAt(0)}
-                </span>
-              )}
-            </div>
+            <ToolLogo
+              tool={tool}
+              size={64}
+              className="flex items-center justify-center rounded-2xl bg-zinc-800 overflow-hidden border border-zinc-700 mb-3"
+              fallbackClassName="text-2xl font-bold text-zinc-500"
+            />
             <Link
               href={`/tools/${tool.slug}`}
               className="text-lg font-semibold text-white hover:text-emerald-400 transition-colors"

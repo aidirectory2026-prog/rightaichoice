@@ -48,7 +48,7 @@ export async function getRecentQuestions(
   let query = supabase
     .from('questions')
     .select(
-      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url)',
+      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url, website_url)',
       { count: 'exact' }
     )
     .eq('is_flagged', false)
@@ -74,7 +74,7 @@ export async function getQuestionById(questionId: string) {
   const { data } = await supabase
     .from('questions')
     .select(
-      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url)'
+      '*, profiles(id, username, avatar_url, reputation), tools!inner(id, name, slug, logo_url, website_url)'
     )
     .eq('id', questionId)
     .eq('is_flagged', false)

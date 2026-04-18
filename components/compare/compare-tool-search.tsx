@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
 import { Search, Plus, Loader2 } from 'lucide-react'
 import { useCompare, type CompareItem } from '@/components/providers/compare-provider'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 type SearchResult = {
   id: string
   name: string
   slug: string
   logo_url: string | null
+  website_url?: string | null
 }
 
 export function CompareToolSearch() {
@@ -116,21 +117,12 @@ export function CompareToolSearch() {
                     : 'hover:bg-zinc-800 cursor-pointer'
                 }`}
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-800 overflow-hidden shrink-0">
-                  {tool.logo_url ? (
-                    <Image
-                      src={tool.logo_url}
-                      alt={tool.name}
-                      width={24}
-                      height={24}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-[9px] font-bold text-zinc-400">
-                      {tool.name.charAt(0)}
-                    </span>
-                  )}
-                </div>
+                <ToolLogo
+                  tool={tool}
+                  size={24}
+                  className="flex shrink-0 items-center justify-center rounded bg-zinc-800 overflow-hidden"
+                  fallbackClassName="text-[9px] font-bold text-zinc-400"
+                />
                 <span className="text-sm text-zinc-300 truncate">{tool.name}</span>
                 {alreadyAdded ? (
                   <span className="ml-auto text-[10px] text-zinc-600">Added</span>

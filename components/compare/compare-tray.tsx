@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { X, Scale, Trash2 } from 'lucide-react'
 import { useCompare } from '@/components/providers/compare-provider'
 import { CompareToolSearch } from '@/components/compare/compare-tool-search'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 export function CompareTray() {
   const { items, remove, clear } = useCompare()
@@ -35,21 +35,12 @@ export function CompareTray() {
               key={item.id}
               className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 shrink-0"
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-700 overflow-hidden">
-                {item.logo_url ? (
-                  <Image
-                    src={item.logo_url}
-                    alt={item.name}
-                    width={20}
-                    height={20}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-[8px] font-bold text-zinc-400">
-                    {item.name.charAt(0)}
-                  </span>
-                )}
-              </div>
+              <ToolLogo
+                tool={item}
+                size={20}
+                className="flex items-center justify-center rounded bg-zinc-700 overflow-hidden"
+                fallbackClassName="text-[8px] font-bold text-zinc-400"
+              />
               <span className="text-sm text-zinc-300 font-medium">
                 {item.name}
               </span>

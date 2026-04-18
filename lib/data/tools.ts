@@ -122,7 +122,7 @@ export async function getFeaturedTools(limit = 6) {
 
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, logo_url, pricing_type, avg_rating, review_count, is_sponsored')
+    .select('id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, is_sponsored')
     .eq('is_published', true)
     .eq('is_featured', true)
     .order('view_count', { ascending: false })
@@ -136,7 +136,7 @@ export async function getTrendingTools(limit = 8) {
 
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, logo_url, pricing_type, avg_rating, review_count, is_sponsored')
+    .select('id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, is_sponsored')
     .eq('is_published', true)
     .order('view_count', { ascending: false })
     .limit(limit)
@@ -163,7 +163,7 @@ export async function searchTools(query: string) {
   const [toolsRes, catsRes, tagsRes] = await Promise.all([
     supabase
       .from('tools')
-      .select('id, name, slug, tagline, logo_url, pricing_type')
+      .select('id, name, slug, tagline, logo_url, website_url, pricing_type')
       .eq('is_published', true)
       .or(`name.ilike.%${term}%,tagline.ilike.%${term}%`)
       .order('view_count', { ascending: false })
@@ -214,7 +214,7 @@ export async function getAlternativeTools(toolId: string, categoryIds: string[],
 
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, logo_url, pricing_type, avg_rating, review_count')
+    .select('id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count')
     .eq('is_published', true)
     .in('id', uniqueIds)
     .order('view_count', { ascending: false })

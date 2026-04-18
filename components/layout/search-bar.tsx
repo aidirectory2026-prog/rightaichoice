@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Search, ArrowRight, Tag, FolderOpen } from 'lucide-react'
 import { autocompleteSearch } from '@/actions/search'
-import Image from 'next/image'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 type SearchResult = {
-  tools: { id: string; name: string; slug: string; tagline: string; logo_url: string | null; pricing_type: string }[]
+  tools: { id: string; name: string; slug: string; tagline: string; logo_url: string | null; website_url?: string | null; pricing_type: string }[]
   categories: { id: string; name: string; slug: string; icon: string | null }[]
   tags: { id: string; name: string; slug: string }[]
 }
@@ -157,13 +157,12 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
                         : 'text-zinc-300 hover:bg-zinc-800/50'
                     }`}
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-800 overflow-hidden">
-                      {tool.logo_url ? (
-                        <Image src={tool.logo_url} alt="" width={32} height={32} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-xs font-bold text-zinc-500">{tool.name.charAt(0)}</span>
-                      )}
-                    </div>
+                    <ToolLogo
+                      tool={tool}
+                      size={32}
+                      className="flex shrink-0 items-center justify-center rounded-md bg-zinc-800 overflow-hidden"
+                      fallbackClassName="text-xs font-bold text-zinc-500"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{tool.name}</p>
                       <p className="text-xs text-zinc-500 truncate">{tool.tagline}</p>

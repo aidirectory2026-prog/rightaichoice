@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 /**
  * GET /api/tools/search?q=<query>
  * Lightweight tool search for the compare tray.
- * Returns id, name, slug, logo_url — max 6 results.
+ * Returns id, name, slug, logo_url, website_url — max 6 results.
+ * website_url lets the client render a favicon fallback when logo_url is missing/bad.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, logo_url')
+    .select('id, name, slug, logo_url, website_url')
     .eq('is_published', true)
     .or(`name.ilike.%${q}%,tagline.ilike.%${q}%`)
     .order('view_count', { ascending: false })

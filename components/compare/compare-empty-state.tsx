@@ -2,15 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { Scale, Search, Plus, X, Loader2 } from 'lucide-react'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 type SelectedTool = {
   id: string
   slug: string
   name: string
   logo_url: string | null
+  website_url?: string | null
 }
 
 type SearchResult = SelectedTool
@@ -94,13 +95,12 @@ export function CompareEmptyState() {
             <div key={tool.id} className="flex items-center">
               {i > 0 && <span className="text-zinc-600 font-bold mx-2">vs</span>}
               <div className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-700 overflow-hidden">
-                  {tool.logo_url ? (
-                    <Image src={tool.logo_url} alt={tool.name} width={24} height={24} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[9px] font-bold text-zinc-400">{tool.name.charAt(0)}</span>
-                  )}
-                </div>
+                <ToolLogo
+                  tool={tool}
+                  size={24}
+                  className="flex h-6 w-6 items-center justify-center rounded bg-zinc-700 overflow-hidden"
+                  fallbackClassName="text-[9px] font-bold text-zinc-400"
+                />
                 <span className="text-sm font-medium text-zinc-300">{tool.name}</span>
                 <button onClick={() => removeTool(tool.id)} className="text-zinc-600 hover:text-zinc-300 transition-colors">
                   <X className="h-3.5 w-3.5" />
@@ -142,13 +142,12 @@ export function CompareEmptyState() {
                       alreadySelected ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-800'
                     }`}
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded bg-zinc-800 overflow-hidden shrink-0">
-                      {tool.logo_url ? (
-                        <Image src={tool.logo_url} alt={tool.name} width={28} height={28} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-[10px] font-bold text-zinc-400">{tool.name.charAt(0)}</span>
-                      )}
-                    </div>
+                    <ToolLogo
+                      tool={tool}
+                      size={28}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-zinc-800 overflow-hidden"
+                      fallbackClassName="text-[10px] font-bold text-zinc-400"
+                    />
                     <span className="text-sm text-zinc-300">{tool.name}</span>
                     {alreadySelected ? (
                       <span className="ml-auto text-[10px] text-zinc-600">Selected</span>

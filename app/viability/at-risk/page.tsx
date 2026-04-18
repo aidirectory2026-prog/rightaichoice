@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ShieldX, ArrowLeft } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 
@@ -26,7 +26,7 @@ async function getAtRiskTools() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, logo_url, viability_score, viability_signals, pricing_type')
+    .select('id, name, slug, tagline, logo_url, website_url, viability_score, viability_signals, pricing_type')
     .eq('is_published', true)
     .not('viability_score', 'is', null)
     .lt('viability_score', 40)
@@ -89,13 +89,12 @@ export default async function AtRiskPage() {
                     {index + 1}.
                   </span>
 
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-zinc-800 overflow-hidden flex items-center justify-center border border-zinc-700">
-                    {tool.logo_url ? (
-                      <Image src={tool.logo_url} alt={tool.name} width={40} height={40} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold text-zinc-500">{tool.name[0]}</span>
-                    )}
-                  </div>
+                  <ToolLogo
+                    tool={tool}
+                    size={40}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-800 overflow-hidden border border-zinc-700"
+                    fallbackClassName="text-sm font-bold text-zinc-500"
+                  />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">

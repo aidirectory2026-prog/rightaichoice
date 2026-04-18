@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ChevronRight, MessageSquare, CheckCircle2 } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { AnswerList } from '@/components/qa/answer-list'
 import { AnswerForm } from '@/components/qa/answer-form'
 import { QuestionVoteButton } from '@/components/qa/question-vote-button'
@@ -60,6 +61,7 @@ export default async function QuestionDetailPage({ params }: PageProps) {
     name: string
     slug: string
     logo_url: string | null
+    website_url: string | null
   }
 
   const supabase = await createClient()
@@ -166,19 +168,12 @@ export default async function QuestionDetailPage({ params }: PageProps) {
                   href={`/tools/${tool.slug}`}
                   className="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-600 transition-colors mt-2 mb-4"
                 >
-                  {tool.logo_url ? (
-                    <Image
-                      src={tool.logo_url}
-                      alt={tool.name}
-                      width={14}
-                      height={14}
-                      className="rounded"
-                    />
-                  ) : (
-                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-zinc-800 text-[8px] font-bold text-zinc-500">
-                      {tool.name.charAt(0)}
-                    </span>
-                  )}
+                  <ToolLogo
+                    tool={tool}
+                    size={14}
+                    className="flex h-3.5 w-3.5 items-center justify-center rounded bg-zinc-800 overflow-hidden"
+                    fallbackClassName="text-[8px] font-bold text-zinc-500"
+                  />
                   {tool.name}
                 </Link>
 

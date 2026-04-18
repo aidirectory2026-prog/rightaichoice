@@ -5,6 +5,7 @@ import { ArrowLeft, Star, ExternalLink, Users, Briefcase } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { ShareButton } from '@/components/shared/share-button'
 import { getRolePageBySlug, ROLE_PAGES } from '@/lib/data/role-pages'
 import { createClient } from '@/lib/supabase/server'
@@ -180,15 +181,12 @@ export default async function RolePage({ params }: PageProps) {
                       </div>
 
                       {/* Logo */}
-                      <div className="shrink-0 h-12 w-12 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
-                        {tool.logo_url ? (
-                          <img src={tool.logo_url} alt={tool.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-lg font-bold text-zinc-400">
-                            {tool.name[0]}
-                          </span>
-                        )}
-                      </div>
+                      <ToolLogo
+                        tool={tool}
+                        size={48}
+                        className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 overflow-hidden"
+                        fallbackClassName="text-lg font-bold text-zinc-400"
+                      />
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">

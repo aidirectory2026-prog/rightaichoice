@@ -35,6 +35,7 @@ import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentBlock } from '@/components/tools/sentiment-block'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
+import { ToolLogo } from '@/components/tools/tool-logo'
 import { getToolBySlug, getAlternativeTools, isToolSaved } from '@/lib/data/tools'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { getWorkflowsForTool } from '@/lib/data/workflows'
@@ -242,21 +243,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             {/* Left: Logo + Info */}
             <div className="flex items-start gap-5">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-zinc-800 overflow-hidden border border-zinc-700">
-                {tool.logo_url ? (
-                  <Image
-                    src={tool.logo_url}
-                    alt={tool.name}
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-3xl font-bold text-zinc-500">
-                    {tool.name.charAt(0)}
-                  </span>
-                )}
-              </div>
+              <ToolLogo
+                tool={tool}
+                size={80}
+                className="flex shrink-0 items-center justify-center rounded-2xl bg-zinc-800 overflow-hidden border border-zinc-700"
+              />
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold text-white">{tool.name}</h1>
