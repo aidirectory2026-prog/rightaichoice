@@ -7,6 +7,8 @@ export type AISearchParams = {
   platform?: string
   has_api?: boolean
   category?: string
+  /** When true, skip the internal top-rated fallback if keyword search returns 0 hits. */
+  disableFallback?: boolean
 }
 
 export type AIToolResult = {
@@ -109,7 +111,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
   if (error) return []
 
   // Fallback: if keyword search returned nothing, try broader category-only search
-  if ((!data || data.length === 0) && !categoryToolIds) {
+  if ((!data || data.length === 0) && !categoryToolIds && !params.disableFallback) {
     const fallbackQuery = supabase
       .from('tools')
       .select(`

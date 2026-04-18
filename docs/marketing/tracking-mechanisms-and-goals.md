@@ -211,6 +211,12 @@ Event categories (same as `scripts/mixpanel/config/events.ts`): identity, tool, 
 - **Payload:** `last_step`.
 - **Consumers:** funnel leak dashboard. Prioritise UX fixes on the most-common `last_step`.
 
+#### Event: `plan_match_tier`
+- **Source:** client
+- **Trigger:** fired once per stage immediately after `/api/plan` returns a plan.
+- **Payload:** `stage_id`, `tier` (`keyword` | `category_fallback` | `emergency`).
+- **Consumers:** quality dashboard for the /plan flow. `keyword` = exact keyword+category hit; `category_fallback` = Sonnet-picked category was too narrow, dropped it; `emergency` = nothing matched, showed top-rated as closest fit. If the `emergency` share creeps above ~10%, the search cascade or the catalog coverage needs attention.
+
 #### Event: `recommendation_requested`
 - **Source:** client
 - **Trigger:** `/recommend` form submit (single-shot alternative to wizard).

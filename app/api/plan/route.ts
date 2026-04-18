@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
-import { searchToolsForAI } from '@/lib/data/ai-search'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
+import { refinePrompt } from '@/lib/plan/refine-prompt'
+import { searchStageTools, type MatchTier } from '@/lib/plan/stage-search'
 import type { UserProfile } from '@/lib/plan/user-profile'
 import {
   SKILL_LABELS,
@@ -41,6 +42,7 @@ type PlanStage = {
   description: string
   why: string
   tools: PlanTool[]
+  matchTier: MatchTier
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert AI project planner for RightAIChoice.
@@ -49,6 +51,17 @@ When a user describes a goal, project, or workflow they want to build or accompl
 1. Break it down into logical stages/departments (3–6 stages depending on complexity)
 2. For each stage, provide a clear name, description, and why it matters
 3. For each stage, provide 2-3 short search keywords that would match AI tool names or categories (NOT long phrases — use terms like "video editor", "writing", "design", "automation")
+
+## Input Tolerance (CRITICAL)
+Always produce a plan. Never refuse, never ask for clarification, never output an
+empty stages array. Users may send:
+- Typos, slang, or fragmentary sentences ("make yt vid")
+- Non-English or mixed-language input — translate in your head, then plan in English
+- Metaphors or vague goals ("blow up my brand", "make money from AI") — pick the
+  most common concrete interpretation and plan for that
+- Single-word prompts ("podcast", "app") — treat as "start a <word>"
+Infer the best-guess intent and decompose anyway. Your searchQuery/searchCategory
+values MUST be English keywords matching real tool categories.
 
 ## Stage Decomposition Rules
 - Be practical and specific (not generic)
@@ -124,6 +137,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     const profileContext = profile ? profileToPromptContext(profile) : ''
+    const refined = refinePrompt(query)
 
     // Step 1: Get Claude to decompose the goal into stages (1 API call)
     const planResponse = await anthropic.messages.create({
@@ -134,8 +148,8 @@ export async function POST(request: Request) {
         {
           role: 'user',
           content: profile
-            ? `Create a detailed AI tool plan for: "${query.trim()}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
-            : `Create a detailed AI tool plan for: "${query.trim()}"`,
+            ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
+            : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
         },
       ],
     })
@@ -158,11 +172,13 @@ export async function POST(request: Request) {
     }
 
     // Step 2: Search tools for ALL stages in parallel (no Claude calls — just DB queries)
+    // searchStageTools guarantees at least one tool per stage via a 4-tier cascade.
     const stagesWithTools = await Promise.all(
       plan.stages.map(async (stage) => {
-        const results = await searchToolsForAI({
-          query: stage.searchQuery ?? stage.name,
-          ...(stage.searchCategory ? { category: stage.searchCategory } : {}),
+        const { results, tier } = await searchStageTools({
+          searchQuery: stage.searchQuery ?? stage.name,
+          ...(stage.searchCategory ? { searchCategory: stage.searchCategory } : {}),
+          fallbackKeywords: refined.intentKeywords,
         })
 
         const topTools = results.slice(0, 3)
@@ -173,6 +189,7 @@ export async function POST(request: Request) {
           description: stage.description,
           why: stage.why,
           toolResults: topTools,
+          matchTier: tier,
         }
       })
     )
@@ -309,6 +326,7 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
         description: stage.description,
         why: stage.why,
         tools,
+        matchTier: stage.matchTier,
       }
     })
 

@@ -9,7 +9,6 @@ import {
   Loader2,
   RefreshCw,
   Zap,
-  ExternalLink,
   Trophy,
   BarChart3,
   Clock,
@@ -50,12 +49,15 @@ type PlanTool = {
   whyForYou?: string
 }
 
+type MatchTier = 'keyword' | 'category_fallback' | 'emergency'
+
 type PlanStage = {
   id: string
   name: string
   description: string
   why: string
   tools: PlanTool[]
+  matchTier?: MatchTier
 }
 
 type Plan = {
@@ -197,6 +199,9 @@ export function ProjectPlanner({
       }
       const toolCount = data.stages?.flatMap((s: { tools?: unknown[] }) => s.tools ?? []).length ?? 0
       analytics.planCompleted(searchQuery.slice(0, 100), toolCount)
+      for (const stage of (data.stages ?? []) as Array<{ id: string; matchTier?: MatchTier }>) {
+        if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
+      }
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -648,25 +653,13 @@ export function ProjectPlanner({
 
                   {/* Tools */}
                   <div className="p-6">
-                    {currentStage.tools.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 p-8 text-center">
-                        <Package className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-                        <p className="text-sm text-zinc-500 font-medium">
-                          No matching tools found for this stage
-                        </p>
-                        <Link
-                          href="/tools"
-                          className="inline-flex items-center gap-1.5 mt-3 text-xs text-emerald-500 hover:text-emerald-400 transition-colors"
-                        >
-                          Browse all tools
-                          <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      </div>
-                    ) : (
+                    {currentStage.tools.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                            Recommended tools
+                            {currentStage.matchTier && currentStage.matchTier !== 'keyword'
+                              ? 'Closest fit'
+                              : 'Recommended tools'}
                           </h4>
                           <span className="text-xs text-zinc-600">
                             {currentStage.tools.length} matched

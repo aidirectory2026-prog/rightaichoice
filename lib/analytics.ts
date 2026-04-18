@@ -161,6 +161,9 @@ export const analytics = {
   planAbandoned(lastStep: string) {
     capture('plan_abandoned', { last_step: lastStep })
   },
+  planMatchTier(stageId: string, tier: 'keyword' | 'category_fallback' | 'emergency') {
+    capture('plan_match_tier', { stage_id: stageId, tier })
+  },
 
   // ──────────────────────────────────────────────────────────────
   // Workflow builder
