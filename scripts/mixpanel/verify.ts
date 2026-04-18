@@ -2,6 +2,7 @@
  * Smoke test — verifies service-account auth and ingestion both work.
  * Run: tsx scripts/mixpanel/verify.ts
  */
+export {}
 
 const PROJECT_ID = process.env.MIXPANEL_PROJECT_ID
 const USERNAME = process.env.MIXPANEL_SERVICE_ACCOUNT_USERNAME
