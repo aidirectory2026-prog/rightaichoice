@@ -22,6 +22,10 @@ import {
   ShieldCheck,
   ThumbsUp,
   ThumbsDown,
+  AlertTriangle,
+  Cpu,
+  ListChecks,
+  ExternalLink,
 } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -57,7 +61,7 @@ import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
-import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 
 // Revalidate tool pages every 5 minutes (ISR)
 export const revalidate = 300
@@ -214,6 +218,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             { name: 'Tools', url: 'https://rightaichoice.com/tools' },
             { name: tool.name, url: `https://rightaichoice.com/tools/${slug}` },
           ]),
+          ...(faqs.length > 0 ? [faqPageJsonLd(faqs.map((f) => ({ question: f.question, answer: f.answer })))] : []),
         ]) }}
       />
 
@@ -532,12 +537,66 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Tags / Use Cases */}
+              {/* Use Cases — concrete, curated (from tool.use_cases) */}
+              {Array.isArray(tool.use_cases) && tool.use_cases.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <ListChecks className="h-5 w-5 text-purple-400" />
+                    Use Cases
+                  </h2>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {tool.use_cases.map((uc: string, i: number) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
+                      >
+                        <ArrowRight className="h-4 w-4 shrink-0 text-purple-400 mt-0.5" />
+                        {uc}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Models — underlying LLMs / AI models (from tool.models) */}
+              {Array.isArray(tool.models) && tool.models.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Cpu className="h-5 w-5 text-cyan-400" />
+                    Models Under the Hood
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {tool.models.map((m: string, i: number) => (
+                      <span
+                        key={i}
+                        className="rounded-lg border border-cyan-900/40 bg-cyan-950/20 px-3 py-1.5 text-sm font-mono text-cyan-300"
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Limitations — honest constraints (from tool.limitations) */}
+              {tool.limitations && (
+                <section className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-5">
+                  <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-400" />
+                    Limitations
+                  </h2>
+                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+                    {tool.limitations}
+                  </p>
+                </section>
+              )}
+
+              {/* Topics (tool tags) — kept separate from the real Use Cases section */}
               {tags.length > 0 && (
                 <section>
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <Tag className="h-5 w-5 text-purple-400" />
-                    Use Cases
+                    Topics
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag: { id: string; name: string; slug: string }) => (
@@ -550,6 +609,35 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
+                </section>
+              )}
+
+              {/* Written Tutorials — curated URLs (from tool.tutorial_urls). TutorialVideos handles YouTube separately. */}
+              {Array.isArray(tool.tutorial_urls) && tool.tutorial_urls.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-blue-400" />
+                    Tutorials & Guides
+                  </h2>
+                  <ul className="space-y-2">
+                    {tool.tutorial_urls.map((url: string, i: number) => {
+                      let host = url
+                      try { host = new URL(url).hostname.replace(/^www\./, '') } catch {}
+                      return (
+                        <li key={i}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
+                          >
+                            <span className="truncate">{host}</span>
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                          </a>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 </section>
               )}
 
@@ -874,6 +962,39 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       label="Changelog"
                     />
                   )}
+                  {(() => {
+                    const cl = (tool.community_links ?? {}) as {
+                      g2_url?: string | null
+                      g2_rating?: number | null
+                      producthunt_url?: string | null
+                      reddit_threads?: string[] | null
+                    }
+                    return (
+                      <>
+                        {cl.g2_url && (
+                          <ResourceLink
+                            href={cl.g2_url}
+                            icon={<Star className="h-4 w-4" />}
+                            label={cl.g2_rating ? `G2 (${cl.g2_rating.toFixed(1)}★)` : 'G2 reviews'}
+                          />
+                        )}
+                        {cl.producthunt_url && (
+                          <ResourceLink
+                            href={cl.producthunt_url}
+                            icon={<TrendingUp className="h-4 w-4" />}
+                            label="Product Hunt"
+                          />
+                        )}
+                        {Array.isArray(cl.reddit_threads) && cl.reddit_threads[0] && (
+                          <ResourceLink
+                            href={cl.reddit_threads[0]}
+                            icon={<MessagesSquare className="h-4 w-4" />}
+                            label={cl.reddit_threads.length > 1 ? `Reddit (${cl.reddit_threads.length} threads)` : 'Reddit thread'}
+                          />
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
               </div>
 
