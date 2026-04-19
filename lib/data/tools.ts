@@ -154,6 +154,27 @@ export async function getAllToolSlugs(): Promise<{ slug: string; updated_at: str
   return data ?? []
 }
 
+// Step 40 Slice 5 — for a list of free-text integration names, return a
+// map of lowercased name → slug for tools that exist in our catalog.
+// Lets the tool page render integration chips as internal links where
+// possible (and plain text where not), boosting crawlable internal links
+// without breaking for integrations we don't yet have pages for.
+export async function getIntegrationLinks(names: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  const trimmed = names.map((n) => n.trim()).filter(Boolean)
+  if (trimmed.length === 0) return out
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select('name, slug')
+    .eq('is_published', true)
+    .in('name', trimmed)
+  for (const row of (data ?? []) as { name: string; slug: string }[]) {
+    out.set(row.name.toLowerCase(), row.slug)
+  }
+  return out
+}
+
 export async function searchTools(query: string) {
   const supabase = await createClient()
   const term = query.trim()

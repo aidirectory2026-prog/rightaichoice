@@ -36,11 +36,12 @@ import { PageViewTracker } from '@/components/tools/page-view-tracker'
 import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
+import { ToolFeed } from '@/components/tools/tool-feed'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentBlock } from '@/components/tools/sentiment-block'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
-import { getToolBySlug, getAlternativeTools, isToolSaved } from '@/lib/data/tools'
+import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { getWorkflowsForTool } from '@/lib/data/workflows'
 import { getReviewsForTool, hasUserReviewed, getReviewVotes } from '@/lib/data/reviews'
@@ -62,6 +63,7 @@ import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
+import { findUseCaseLink } from '@/lib/use-case-link'
 
 // Revalidate tool pages every 5 minutes (ISR)
 export const revalidate = 300
@@ -126,7 +128,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch community data in parallel — each section is fault-tolerant
-  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs] = await Promise.all([
+  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks] = await Promise.all([
     getAlternativeTools(tool.id, categoryIds, 4).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     getReviewsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getReviewsForTool>>),
@@ -135,6 +137,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
     getDiscussionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getDiscussionsForTool>>),
     getWorkflowsForTool(tool.slug).catch(() => [] as Awaited<ReturnType<typeof getWorkflowsForTool>>),
     getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>),
+    getIntegrationLinks(tool.integrations ?? []).catch(() => new Map<string, string>()),
   ])
 
   // Get user's votes on reviews, questions, and discussions
@@ -376,15 +379,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     </p>
                   )}
 
-                  {/* Alternatives link */}
+                  {/* Alternatives link — links directly to /compare so users
+                      land on a head-to-head page (fewer clicks, higher intent). */}
                   {alternatives.length > 0 && (
                     <p className="mt-3 text-xs text-zinc-500">
-                      Alternatives to consider:{' '}
+                      Compare with:{' '}
                       {alternatives.slice(0, 3).map((alt, i) => (
                         <span key={alt.id}>
                           {i > 0 && ', '}
-                          <Link href={`/tools/${alt.slug}`} className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                            {alt.name}
+                          <Link
+                            href={`/compare?tools=${tool.slug},${alt.slug}`}
+                            className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                          >
+                            {tool.name} vs {alt.name}
                           </Link>
                         </span>
                       ))}
@@ -517,7 +524,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Integrations */}
+              {/* Integrations — link to the integration's tool page when we have one */}
               {tool.integrations && tool.integrations.length > 0 && (
                 <section>
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -525,14 +532,29 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     Integrations
                   </h2>
                   <div className="flex flex-wrap gap-2">
-                    {tool.integrations.map((integration: string, i: number) => (
-                      <span
-                        key={i}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400"
-                      >
-                        {integration}
-                      </span>
-                    ))}
+                    {tool.integrations.map((integration: string, i: number) => {
+                      const slug = integrationLinks.get(integration.toLowerCase())
+                      const baseClass = 'rounded-lg border px-3 py-1.5 text-sm transition-colors'
+                      if (slug) {
+                        return (
+                          <Link
+                            key={i}
+                            href={`/tools/${slug}`}
+                            className={`${baseClass} border-emerald-800/60 bg-emerald-900/20 text-emerald-300 hover:border-emerald-600 hover:text-emerald-200`}
+                          >
+                            {integration}
+                          </Link>
+                        )
+                      }
+                      return (
+                        <span
+                          key={i}
+                          className={`${baseClass} border-zinc-800 bg-zinc-900/50 text-zinc-400`}
+                        >
+                          {integration}
+                        </span>
+                      )
+                    })}
                   </div>
                 </section>
               )}
@@ -545,15 +567,32 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     Use Cases
                   </h2>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {tool.use_cases.map((uc: string, i: number) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
-                      >
-                        <ArrowRight className="h-4 w-4 shrink-0 text-purple-400 mt-0.5" />
-                        {uc}
-                      </li>
-                    ))}
+                    {tool.use_cases.map((uc: string, i: number) => {
+                      const href = findUseCaseLink(uc)
+                      const inner = (
+                        <>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-purple-400 mt-0.5" />
+                          {uc}
+                        </>
+                      )
+                      const base = 'flex items-start gap-2.5 rounded-lg border bg-zinc-900/50 px-4 py-3 text-sm transition-colors'
+                      return (
+                        <li key={i}>
+                          {href ? (
+                            <Link
+                              href={href}
+                              className={`${base} border-purple-900/40 text-zinc-200 hover:border-purple-600 hover:text-white`}
+                            >
+                              {inner}
+                            </Link>
+                          ) : (
+                            <span className={`${base} border-zinc-800 text-zinc-300`}>
+                              {inner}
+                            </span>
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 </section>
               )}
@@ -643,6 +682,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* ── Tutorial Videos ───────────────────────────── */}
               <TutorialVideos tutorials={tool.tutorial_videos ?? []} />
+
+              {/* ── Recent changes (RSS/Atom from changelog_url) ── */}
+              {tool.changelog_url && (
+                <SectionErrorBoundary fallbackTitle="Recent changes couldn't load.">
+                  <ToolFeed feedUrl={tool.changelog_url} />
+                </SectionErrorBoundary>
+              )}
 
               {/* ── AI Panel ─────────────────────────────────── */}
               <AiPanel
