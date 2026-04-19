@@ -3,12 +3,14 @@ import { slugify } from '@/lib/utils/slugify'
 import { discoverTools } from './discover'
 import { dedup } from './dedup'
 import { enrichTool } from './enrich'
+import { loadCurateContext, curateCandidate } from './curate'
 
 interface IngestResult {
   runId: string
   discovered: number
   deduplicated: number
   enriched: number
+  gated: number
   inserted: number
   failed: number
   insertedSlugs: string[]
@@ -16,7 +18,9 @@ interface IngestResult {
 
 export async function runIngestion(supabase: SupabaseClient): Promise<IngestResult> {
   const runId = crypto.randomUUID()
-  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, inserted: 0, failed: 0, insertedSlugs: [] }
+  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, gated: 0, inserted: 0, failed: 0, insertedSlugs: [] }
+
+  const curateCtx = await loadCurateContext(supabase)
 
   // 1. Discover
   const raw = await discoverTools()
@@ -74,8 +78,27 @@ export async function runIngestion(supabase: SupabaseClient): Promise<IngestResu
 
       result.enriched++
 
-      // 4. Insert into tools table
-      const slug = slugify(tool.name)
+      // 4. Curation gate — Step 41 quality requirement
+      const decision = curateCandidate(
+        { name: tool.name, websiteUrl: tool.url, enriched },
+        curateCtx,
+      )
+      if (!decision.pass) {
+        result.gated++
+        await supabase.from('ingestion_logs').insert({
+          run_id: runId,
+          source: tool.source,
+          tool_name: tool.name,
+          tool_slug: decision.slug,
+          status: 'gated',
+          error_message: decision.reasons.join(','),
+        })
+        continue
+      }
+
+      // 5. Insert into tools table
+      const slug = decision.slug
+      curateCtx.existingSlugs.add(slug) // protect later iterations in this run
       const { error: insertError } = await supabase.from('tools').insert({
         name: tool.name,
         slug,
