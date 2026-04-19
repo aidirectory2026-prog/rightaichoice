@@ -11,11 +11,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://cdn.rightaichoice.com https://cdn.futurepedia.io https://img.youtube.com https://i.ytimg.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://www.google.com https://*.gstatic.com https://cdn.rightaichoice.com https://cdn.futurepedia.io https://img.youtube.com https://i.ytimg.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.mixpanel.com https://api-js.mixpanel.com https://api-eu.mixpanel.com https://*.sentry.io https://*.ingest.sentry.io",
       "frame-ancestors 'none'",
     ].join('; '),
   },
@@ -56,6 +56,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'i.ytimg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        pathname: '/s2/favicons/**',
       },
     ],
   },
