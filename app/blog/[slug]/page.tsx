@@ -155,7 +155,11 @@ export default async function BlogPostPage({ params }: PageProps) {
 
           {/* MDX content */}
           <div className="prose-custom">
-            <MDXRemote source={content} components={mdxComponents} />
+            <MDXRemote
+              source={content}
+              components={mdxComponents}
+              options={{ mdxOptions: {}, blockJS: false, blockDangerousJS: true }}
+            />
           </div>
 
           {/* FAQs (if provided in frontmatter — also drives FAQPage schema) */}
