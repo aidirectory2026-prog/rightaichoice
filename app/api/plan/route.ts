@@ -1,6 +1,8 @@
+import { createHash } from 'crypto'
 import { z } from 'zod'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
 import { refinePrompt } from '@/lib/plan/refine-prompt'
@@ -111,6 +113,26 @@ const planSchema = z.object({
   profile: profileSchema,
 })
 
+// Cache key = sha256 of normalized goal + canonical profile signature.
+// Same prompt + same profile → same cache entry. Different profiles get their
+// own entries so match scores stay correct.
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+
+function makeCacheKey(normalizedGoal: string, profile: UserProfile | null | undefined): string {
+  const profileSig = profile
+    ? JSON.stringify({
+        skill: profile.skill,
+        budget: profile.budget,
+        team: profile.team,
+        industry: profile.industry,
+        goalType: profile.goalType,
+        existingTools: [...profile.existingTools].sort(),
+      })
+    : 'anonymous'
+  const raw = `${normalizedGoal.trim().toLowerCase()}::${profileSig}`
+  return createHash('sha256').update(raw).digest('hex')
+}
+
 function profileToPromptContext(profile: UserProfile): string {
   return `User profile:
 - Skill level: ${SKILL_LABELS[profile.skill]}
@@ -172,6 +194,80 @@ export async function POST(request: Request) {
           const tRefine = performance.now()
           const refined = refinePrompt(query)
           mark('refine_ms', tRefine)
+
+          // ── Cache lookup (24h TTL) ──
+          // Uses admin client because plan_cache has RLS locked to service role.
+          // Cast because the admin client isn't generic-typed against our schema.
+          const cacheKey = makeCacheKey(refined.normalizedGoal, profile)
+          const admin = getAdminClient() as unknown as {
+            from: (table: string) => {
+              select: (cols: string) => {
+                eq: (col: string, val: string) => {
+                  maybeSingle: () => Promise<{
+                    data: { payload: unknown; created_at: string } | null
+                    error: unknown
+                  }>
+                }
+              }
+              upsert: (
+                values: Record<string, unknown>,
+                opts?: { onConflict?: string }
+              ) => Promise<{ error: unknown }>
+            }
+          }
+          const tCache = performance.now()
+          let cacheHit = false
+          try {
+            const { data: cached } = await admin
+              .from('plan_cache')
+              .select('payload, created_at')
+              .eq('cache_key', cacheKey)
+              .maybeSingle()
+            if (cached) {
+              const age = Date.now() - new Date(cached.created_at).getTime()
+              if (age < CACHE_TTL_MS) {
+                const payload = cached.payload as {
+                  title: string
+                  summary: string
+                  stages: PlanStage[]
+                }
+                // Emit outline + enriched instantly from cache. Client hides
+                // WaitingState as soon as `outline` arrives, so this is a
+                // sub-200ms round trip for repeat queries.
+                const outlineStages: PlanStage[] = payload.stages.map((s) => ({
+                  ...s,
+                  tools: s.tools.map((t) => ({
+                    slug: t.slug,
+                    name: t.name,
+                    tagline: t.tagline,
+                    pricing: t.pricing,
+                    rating: t.rating,
+                    reviewCount: t.reviewCount,
+                    whyThisStage: '',
+                  })),
+                }))
+                write({
+                  type: 'outline',
+                  title: payload.title,
+                  summary: payload.summary,
+                  stages: outlineStages,
+                })
+                write({ type: 'enriched', stages: payload.stages })
+                mark('cache_lookup_ms', tCache)
+                timings.cache_hit = 1
+                timings.total_ms = Math.round(performance.now() - t0)
+                write({ type: 'done', _timings: timings })
+                console.log('[plan_perf]', JSON.stringify(timings))
+                controller.close()
+                cacheHit = true
+              }
+            }
+          } catch {
+            // Cache miss on error — fall through to full pipeline.
+          }
+          if (cacheHit) return
+          mark('cache_lookup_ms', tCache)
+          timings.cache_hit = 0
 
           // Speculative DB warm-up — fire a cheap query in parallel with Sonnet
           // so the Supabase connection pool is hot when searchStageTools hits it.
@@ -406,6 +502,18 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
           write({ type: 'done', _timings: timings })
           console.log('[plan_perf]', JSON.stringify(timings))
           controller.close()
+
+          // ── Cache write (fire-and-forget, post-stream) ──
+          // Runs after the response is flushed so cache I/O doesn't
+          // extend user-visible latency.
+          void admin.from('plan_cache').upsert(
+            {
+              cache_key: cacheKey,
+              payload: { title: plan.title, summary: plan.summary, stages: finalStages },
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'cache_key' }
+          )
         } catch (err) {
           console.error('Plan API error:', err)
           const message = err instanceof Error ? err.message : 'Unexpected error'
