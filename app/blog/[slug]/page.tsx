@@ -52,19 +52,51 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'BlogPosting',
     headline: meta.title,
     description: meta.description,
     datePublished: meta.publishedAt,
-    author: { '@type': 'Person', name: meta.author },
+    dateModified: meta.updatedAt ?? meta.publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: meta.author,
+      url: 'https://rightaichoice.com',
+    },
     publisher: {
       '@type': 'Organization',
       name: 'RightAIChoice',
       url: 'https://rightaichoice.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://rightaichoice.com/icon.png',
+      },
     },
     mainEntityOfPage: `https://rightaichoice.com/blog/${slug}`,
     ...(meta.image && { image: meta.image }),
   }
+
+  const faqJsonLd =
+    meta.faqs && meta.faqs.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: meta.faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }
+      : null
+
+  const jsonLdBlocks: Record<string, unknown>[] = [
+    articleJsonLd,
+    breadcrumbJsonLd([
+      { name: 'Home', url: 'https://rightaichoice.com' },
+      { name: 'Blog', url: 'https://rightaichoice.com/blog' },
+      { name: meta.title, url: `https://rightaichoice.com/blog/${slug}` },
+    ]),
+  ]
+  if (faqJsonLd) jsonLdBlocks.push(faqJsonLd)
 
   return (
     <>
@@ -72,14 +104,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify([
-            articleJsonLd,
-            breadcrumbJsonLd([
-              { name: 'Home', url: 'https://rightaichoice.com' },
-              { name: 'Blog', url: 'https://rightaichoice.com/blog' },
-              { name: meta.title, url: `https://rightaichoice.com/blog/${slug}` },
-            ]),
-          ]),
+          __html: JSON.stringify(jsonLdBlocks),
         }}
       />
 
@@ -132,6 +157,27 @@ export default async function BlogPostPage({ params }: PageProps) {
           <div className="prose-custom">
             <MDXRemote source={content} components={mdxComponents} />
           </div>
+
+          {/* FAQs (if provided in frontmatter — also drives FAQPage schema) */}
+          {meta.faqs && meta.faqs.length > 0 && (
+            <section className="mt-12 border-t border-zinc-800 pt-10">
+              <h2 className="text-2xl font-bold text-white mb-6">Frequently asked questions</h2>
+              <div className="space-y-4">
+                {meta.faqs.map((f, i) => (
+                  <details
+                    key={i}
+                    className="group rounded-lg border border-zinc-800 bg-zinc-900/30 p-4 open:bg-zinc-900/50"
+                  >
+                    <summary className="cursor-pointer list-none flex items-start justify-between gap-4 text-base font-semibold text-white">
+                      <span>{f.q}</span>
+                      <span className="text-zinc-500 group-open:rotate-180 transition-transform shrink-0">▾</span>
+                    </summary>
+                    <p className="mt-3 text-zinc-300 leading-relaxed text-sm">{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Tool links */}
           {meta.tools.length > 0 && (

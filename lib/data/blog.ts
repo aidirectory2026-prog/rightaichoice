@@ -4,15 +4,19 @@ import matter from 'gray-matter'
 
 const BLOG_DIR = path.join(process.cwd(), 'content/blog')
 
+export type BlogFaq = { q: string; a: string }
+
 export type BlogPostMeta = {
   slug: string
   title: string
   description: string
   publishedAt: string
+  updatedAt?: string
   author: string
   categories: string[]
   tools: string[]
   image?: string
+  faqs?: BlogFaq[]
 }
 
 export function getAllPosts(): BlogPostMeta[] {
@@ -30,10 +34,12 @@ export function getAllPosts(): BlogPostMeta[] {
       title: data.title ?? slug,
       description: data.description ?? '',
       publishedAt: data.publishedAt ?? '',
+      updatedAt: data.updatedAt,
       author: data.author ?? 'RightAIChoice',
       categories: data.categories ?? [],
       tools: data.tools ?? [],
       image: data.image,
+      faqs: data.faqs,
     } satisfies BlogPostMeta
   })
 
@@ -56,10 +62,12 @@ export function getPostBySlug(slug: string): { meta: BlogPostMeta; content: stri
       title: data.title ?? slug,
       description: data.description ?? '',
       publishedAt: data.publishedAt ?? '',
+      updatedAt: data.updatedAt,
       author: data.author ?? 'RightAIChoice',
       categories: data.categories ?? [],
       tools: data.tools ?? [],
       image: data.image,
+      faqs: data.faqs,
     },
     content,
   }
