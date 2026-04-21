@@ -13,6 +13,7 @@ import { Sparkles, Zap, Layers, TrendingUp, CheckCircle2, Loader2 } from 'lucide
  */
 
 const TARGET_SECONDS = 10
+const SLOW_THRESHOLD_SECONDS = 15
 
 const TEASERS: Array<{ icon: typeof Sparkles; title: string; body: string }> = [
   {
@@ -68,6 +69,7 @@ export function PlanWaitingState({ query }: { query: string }) {
 
   const remaining = Math.max(0, TARGET_SECONDS - elapsed)
   const overTime = elapsed > TARGET_SECONDS
+  const isSlow = elapsed >= SLOW_THRESHOLD_SECONDS
   const progressPct = Math.min(98, (elapsed / TARGET_SECONDS) * 100)
 
   // Which "stage" label to show as current — scales with elapsed time
@@ -85,16 +87,28 @@ export function PlanWaitingState({ query }: { query: string }) {
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center space-y-8">
         {/* Headline + timer row */}
         <div className="w-full text-center">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-800/40 bg-emerald-950/30 px-3 py-1 text-xs text-emerald-300">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-            Crafting your stack
-          </div>
+          {isSlow ? (
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-800/40 bg-amber-950/30 px-3 py-1 text-xs text-amber-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              Taking a bit longer than usual
+            </div>
+          ) : (
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-800/40 bg-emerald-950/30 px-3 py-1 text-xs text-emerald-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Crafting your stack
+            </div>
+          )}
 
           <h2 className="text-balance text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Analyzing 1,500+ AI tools to build your exact stack
+            {isSlow
+              ? 'Still working — we pick quality over speed'
+              : 'Analyzing 1,500+ AI tools to build your exact stack'}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
             For <span className="font-medium text-zinc-300">&ldquo;{query}&rdquo;</span>
@@ -104,8 +118,14 @@ export function PlanWaitingState({ query }: { query: string }) {
         {/* Countdown + progress bar */}
         <div className="w-full space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-emerald-300">
-              {overTime ? 'Almost there…' : `~${remaining}s remaining`}
+            <span
+              className={`font-medium ${isSlow ? 'text-amber-300' : 'text-emerald-300'}`}
+            >
+              {isSlow
+                ? 'Double-checking a few picks'
+                : overTime
+                  ? 'Almost there…'
+                  : `~${remaining}s remaining`}
             </span>
             <span className="text-zinc-500">
               {STAGES[currentStage]}
@@ -120,10 +140,20 @@ export function PlanWaitingState({ query }: { query: string }) {
             aria-label="Plan generation progress"
           >
             <div
-              className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 transition-[width] duration-700 ease-out"
+              className={`h-full transition-[width] duration-700 ease-out ${
+                isSlow
+                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400'
+                  : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400'
+              }`}
               style={{ width: `${progressPct}%` }}
             />
           </div>
+          {isSlow && (
+            <p className="pt-1 text-center text-[11px] text-zinc-500">
+              Your prompt is a bit unusual — we&rsquo;re matching it against the full catalog.
+              Hang tight, a stack is coming.
+            </p>
+          )}
         </div>
 
         {/* Rotating teaser card */}
