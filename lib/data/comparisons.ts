@@ -108,6 +108,56 @@ export async function getAllComparisonSlugs() {
 }
 
 /**
+ * Fetch editorial comparisons that feature a given tool (by id).
+ * Used on /tools/[slug] pages to surface head-to-head editorial content.
+ */
+export async function getEditorialComparisonsForTool(toolId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tool_comparisons')
+    .select('slug, tool_ids, verdict, view_count')
+    .eq('is_editorial', true)
+    .contains('tool_ids', [toolId])
+    .order('published_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as { slug: string; tool_ids: string[]; verdict: string | null; view_count: number }[]
+}
+
+/**
+ * Fetch top editorial comparisons for the homepage hero rail.
+ */
+export async function getFeaturedEditorialComparisons(limit = 6) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tool_comparisons')
+    .select('slug, tool_ids, verdict, view_count, published_at')
+    .eq('is_editorial', true)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) return []
+
+  const allIds = Array.from(new Set(data.flatMap((c) => c.tool_ids as string[])))
+  if (allIds.length === 0) return []
+
+  const { data: tools } = await supabase
+    .from('tools')
+    .select('id, slug, name')
+    .in('id', allIds)
+
+  const nameById = new Map((tools ?? []).map((t) => [t.id, t.name as string]))
+
+  return data.map((c) => ({
+    slug: c.slug as string,
+    verdict: (c.verdict as string | null) ?? '',
+    toolNames: (c.tool_ids as string[]).map((id) => nameById.get(id)).filter(Boolean) as string[],
+  }))
+}
+
+/**
  * Get a saved comparison by slug.
  */
 export async function getComparisonBySlug(slug: string) {

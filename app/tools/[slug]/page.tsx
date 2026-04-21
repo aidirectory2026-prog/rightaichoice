@@ -26,6 +26,7 @@ import {
   Cpu,
   ListChecks,
   ExternalLink,
+  BarChart3,
 } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -42,6 +43,7 @@ import { SentimentBlock } from '@/components/tools/sentiment-block'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
+import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { getWorkflowsForTool } from '@/lib/data/workflows'
 import { getReviewsForTool, hasUserReviewed, getReviewVotes } from '@/lib/data/reviews'
@@ -128,7 +130,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch community data in parallel — each section is fault-tolerant
-  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks] = await Promise.all([
+  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks, editorialCompares] = await Promise.all([
     getAlternativeTools(tool.id, categoryIds, 4).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     getReviewsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getReviewsForTool>>),
@@ -138,6 +140,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
     getWorkflowsForTool(tool.slug).catch(() => [] as Awaited<ReturnType<typeof getWorkflowsForTool>>),
     getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>),
     getIntegrationLinks(tool.integrations ?? []).catch(() => new Map<string, string>()),
+    getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
   ])
 
   // Get user's votes on reviews, questions, and discussions
@@ -861,6 +864,40 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* ── FAQs ──────────────────────────────────────── */}
               <FaqSection faqs={faqs} toolName={tool.name} />
+
+              {/* Featured in Head-to-Head Comparisons — editorial only */}
+              {editorialCompares.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-emerald-400" />
+                    Featured Head-to-Head Comparisons
+                  </h2>
+                  <div className="space-y-3">
+                    {editorialCompares.map((c) => {
+                      const title = c.slug
+                        .split('-vs-')
+                        .map((s) => s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+                        .join(' vs ')
+                      return (
+                        <Link
+                          key={c.slug}
+                          href={`/compare/${c.slug}`}
+                          className="block rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:border-emerald-800/50 hover:bg-zinc-800/40 transition-colors group"
+                        >
+                          <p className="text-sm font-medium text-white group-hover:text-emerald-400 transition-colors">
+                            {title}
+                          </p>
+                          {c.verdict && (
+                            <p className="mt-1 text-xs text-zinc-500 leading-relaxed line-clamp-2">
+                              {c.verdict}
+                            </p>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </section>
+              )}
 
               {/* Alternatives */}
               {alternatives.length > 0 && (

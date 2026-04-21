@@ -9,6 +9,7 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
+import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
 
 const EXAMPLE_STACKS = [
   {
@@ -42,9 +43,10 @@ const EXAMPLE_STACKS = [
 ]
 
 export default async function HomePage() {
-  const [featured, categories] = await Promise.all([
+  const [featured, categories, editorialCompares] = await Promise.all([
     getFeaturedTools(6),
     getCategories(),
+    getFeaturedEditorialComparisons(6).catch(() => [] as Awaited<ReturnType<typeof getFeaturedEditorialComparisons>>),
   ])
 
   return (
@@ -188,6 +190,42 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {featured.map((tool) => (
                 <ToolCard key={tool.id} tool={tool} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Editorial Head-to-Head Comparisons ──────────────── */}
+        {editorialCompares.length > 0 && (
+          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Head-to-head comparisons</h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Deeply-researched editorial verdicts on the questions people actually Google
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {editorialCompares.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/compare/${c.slug}`}
+                  className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
+                >
+                  <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                    {c.toolNames.join(' vs ')}
+                  </h3>
+                  {c.verdict && (
+                    <p className="mt-2 text-xs text-zinc-500 leading-relaxed line-clamp-3">
+                      {c.verdict}
+                    </p>
+                  )}
+                  <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Read the verdict <ArrowUpRight className="h-3 w-3" />
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
