@@ -68,7 +68,7 @@ export default async function ComparePage({ searchParams }: PageProps) {
                   In-depth editorial comparisons
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Deeply-researched head-to-heads with TL;DR tables, benchmarks, and verdicts
+                  Deeply-researched head-to-heads with at-a-glance tables, benchmarks, and verdicts
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

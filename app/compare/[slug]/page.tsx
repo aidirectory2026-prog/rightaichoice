@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Scale, ArrowLeft } from 'lucide-react'
+import { MDXRemote } from 'next-mdx-remote/rsc'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ComparisonTable } from '@/components/compare/comparison-table'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
+import { mdxComponents } from '@/components/blog/mdx-components'
 import {
   getComparisonBySlug,
   getToolsForComparisonByIds,
@@ -178,10 +180,10 @@ export default async function ComparisonSlugPage({ params }: Props) {
             </div>
           </div>
 
-          {/* TL;DR — hero snippet bait, editorial pages only */}
+          {/* At a glance — hero snippet bait, editorial pages only */}
           {editorial.is_editorial && Array.isArray(editorial.tldr) && editorial.tldr.length > 0 && (
             <section className="mb-10 rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-5">
-              <h2 className="text-sm font-semibold text-emerald-300 mb-3">TL;DR</h2>
+              <h2 className="text-sm font-semibold text-emerald-300 mb-3">At a glance</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -223,8 +225,12 @@ export default async function ComparisonSlugPage({ params }: Props) {
           {editorial.is_editorial && editorial.feature_analysis && (
             <section className="mt-12 border-t border-zinc-800 pt-10">
               <h2 className="text-lg font-semibold text-white mb-4">Feature-by-feature</h2>
-              <div className="prose prose-invert prose-zinc prose-sm max-w-none whitespace-pre-line">
-                {editorial.feature_analysis}
+              <div className="prose-custom">
+                <MDXRemote
+                  source={editorial.feature_analysis}
+                  components={mdxComponents}
+                  options={{ mdxOptions: {}, blockJS: true, blockDangerousJS: true }}
+                />
               </div>
             </section>
           )}
@@ -233,8 +239,12 @@ export default async function ComparisonSlugPage({ params }: Props) {
           {editorial.is_editorial && editorial.pricing_analysis && (
             <section className="mt-12 border-t border-zinc-800 pt-10">
               <h2 className="text-lg font-semibold text-white mb-4">Pricing compared</h2>
-              <div className="prose prose-invert prose-zinc prose-sm max-w-none whitespace-pre-line">
-                {editorial.pricing_analysis}
+              <div className="prose-custom">
+                <MDXRemote
+                  source={editorial.pricing_analysis}
+                  components={mdxComponents}
+                  options={{ mdxOptions: {}, blockJS: true, blockDangerousJS: true }}
+                />
               </div>
             </section>
           )}
