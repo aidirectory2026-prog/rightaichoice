@@ -101,10 +101,15 @@ export default async function ComparisonSlugPage({ params }: Props) {
   const toolSlugs = tools.map((t: { slug: string }) => t.slug)
   const editorial = comparison as EditorialComparison
 
+  const fmtRating = (r: unknown): string => {
+    const n = typeof r === 'number' ? r : parseFloat(String(r ?? ''))
+    return Number.isFinite(n) && n > 0 ? n.toFixed(1) : 'N/A'
+  }
+
   const genericFaqs: FaqRow[] = [
     {
       question: `Which is better, ${toolNames[0]} or ${toolNames[1]}?`,
-      answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case. ${toolNames[0]} has a rating of ${(tools[0] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 and ${toolNames[1]} has a rating of ${(tools[1] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 based on real user reviews.`,
+      answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case. ${toolNames[0]} has a rating of ${fmtRating((tools[0] as { avg_rating: unknown }).avg_rating)}/5 and ${toolNames[1]} has a rating of ${fmtRating((tools[1] as { avg_rating: unknown }).avg_rating)}/5 based on real user reviews.`,
     },
     {
       question: `What are the main differences between ${toolNames[0]} and ${toolNames[1]}?`,
