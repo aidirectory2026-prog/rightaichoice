@@ -11,7 +11,28 @@ import {
   getToolsForComparisonByIds,
   getAllComparisonSlugs,
 } from '@/lib/data/comparisons'
-import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd } from '@/lib/seo/json-ld'
+
+type TldrRow = { dimension: string; values: Record<string, string> }
+type UseCaseRow = { persona: string; recommendedSlug: string; reasoning: string }
+type BenchmarkRow = {
+  dimension: string
+  values: Record<string, { score: string; unit?: string; source?: string }>
+}
+type FaqRow = { question: string; answer: string }
+
+type EditorialComparison = {
+  tldr?: TldrRow[] | null
+  verdict?: string | null
+  feature_analysis?: string | null
+  pricing_analysis?: string | null
+  use_cases?: UseCaseRow[] | null
+  benchmarks?: BenchmarkRow[] | null
+  faqs?: FaqRow[] | null
+  is_editorial?: boolean | null
+  published_at?: string | null
+  last_reviewed_at?: string | null
+}
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -78,8 +99,9 @@ export default async function ComparisonSlugPage({ params }: Props) {
 
   const toolNames = tools.map((t: { name: string }) => t.name)
   const toolSlugs = tools.map((t: { slug: string }) => t.slug)
+  const editorial = comparison as EditorialComparison
 
-  const faq = faqPageJsonLd([
+  const genericFaqs: FaqRow[] = [
     {
       question: `Which is better, ${toolNames[0]} or ${toolNames[1]}?`,
       answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case. ${toolNames[0]} has a rating of ${(tools[0] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 and ${toolNames[1]} has a rating of ${(tools[1] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 based on real user reviews.`,
@@ -92,17 +114,35 @@ export default async function ComparisonSlugPage({ params }: Props) {
       question: `Is there a free version of ${toolNames[0]} or ${toolNames[1]}?`,
       answer: `Check the pricing section in the comparison for the latest pricing details on both tools, including free tiers, trial options, and paid plans.`,
     },
-  ])
+  ]
+  const displayedFaqs: FaqRow[] =
+    Array.isArray(editorial.faqs) && editorial.faqs.length > 0 ? editorial.faqs : genericFaqs
 
+  const faq = faqPageJsonLd(displayedFaqs)
   const breadcrumbs = breadcrumbJsonLd([
     { name: 'Home', url: '/' },
     { name: 'Compare', url: '/compare' },
     { name: toolNames.join(' vs '), url: `/compare/${slug}` },
   ])
 
+  const jsonLdBlocks: Record<string, unknown>[] = [faq, breadcrumbs]
+  if (editorial.is_editorial) {
+    jsonLdBlocks.push(
+      articleJsonLd({
+        headline: `${toolNames.join(' vs ')} — AI Tool Comparison`,
+        description: `In-depth side-by-side comparison of ${toolNames.join(' and ')}.`,
+        url: `/compare/${slug}`,
+        datePublished: editorial.published_at ?? new Date().toISOString(),
+        dateModified: editorial.last_reviewed_at ?? editorial.published_at ?? new Date().toISOString(),
+      }),
+    )
+  }
+
+  const toolBySlug = new Map(tools.map((t: { slug: string; name: string }) => [t.slug, t]))
+
   return (
     <>
-      <script {...jsonLdScriptProps([faq, breadcrumbs])} />
+      <script {...jsonLdScriptProps(jsonLdBlocks)} />
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -132,41 +172,151 @@ export default async function ComparisonSlugPage({ params }: Props) {
             </div>
           </div>
 
+          {/* TL;DR — hero snippet bait, editorial pages only */}
+          {editorial.is_editorial && Array.isArray(editorial.tldr) && editorial.tldr.length > 0 && (
+            <section className="mb-10 rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-5">
+              <h2 className="text-sm font-semibold text-emerald-300 mb-3">TL;DR</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-emerald-900/40">
+                      <th className="text-left py-2 pr-4 font-medium text-zinc-400">Dimension</th>
+                      {toolSlugs.map((s: string) => (
+                        <th key={s} className="text-left py-2 pr-4 font-medium text-white">
+                          {(toolBySlug.get(s) as { name: string } | undefined)?.name ?? s}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {editorial.tldr.map((row, i) => (
+                      <tr key={i} className="border-b border-emerald-900/20 last:border-0">
+                        <td className="py-2 pr-4 text-zinc-400">{row.dimension}</td>
+                        {toolSlugs.map((s: string) => (
+                          <td key={s} className="py-2 pr-4 text-zinc-200">
+                            {row.values?.[s] ?? '—'}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {editorial.verdict && (
+                <p className="mt-4 text-sm text-zinc-300 italic border-l-2 border-emerald-600 pl-3">
+                  {editorial.verdict}
+                </p>
+              )}
+            </section>
+          )}
+
           {/* Comparison Table */}
           <ComparisonTable tools={tools} />
 
+          {/* Feature analysis — editorial long-form */}
+          {editorial.is_editorial && editorial.feature_analysis && (
+            <section className="mt-12 border-t border-zinc-800 pt-10">
+              <h2 className="text-lg font-semibold text-white mb-4">Feature-by-feature</h2>
+              <div className="prose prose-invert prose-zinc prose-sm max-w-none whitespace-pre-line">
+                {editorial.feature_analysis}
+              </div>
+            </section>
+          )}
+
+          {/* Pricing analysis */}
+          {editorial.is_editorial && editorial.pricing_analysis && (
+            <section className="mt-12 border-t border-zinc-800 pt-10">
+              <h2 className="text-lg font-semibold text-white mb-4">Pricing compared</h2>
+              <div className="prose prose-invert prose-zinc prose-sm max-w-none whitespace-pre-line">
+                {editorial.pricing_analysis}
+              </div>
+            </section>
+          )}
+
+          {/* Use-case matrix */}
+          {editorial.is_editorial && Array.isArray(editorial.use_cases) && editorial.use_cases.length > 0 && (
+            <section className="mt-12 border-t border-zinc-800 pt-10">
+              <h2 className="text-lg font-semibold text-white mb-4">Who should pick which</h2>
+              <ul className="space-y-3">
+                {editorial.use_cases.map((uc, i) => {
+                  const rec = toolBySlug.get(uc.recommendedSlug) as { name: string } | undefined
+                  return (
+                    <li key={i} className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                      <div className="text-sm font-medium text-white">{uc.persona}</div>
+                      <div className="mt-1 text-xs text-emerald-400">
+                        Pick: <span className="font-semibold">{rec?.name ?? uc.recommendedSlug}</span>
+                      </div>
+                      <p className="mt-1 text-sm text-zinc-400">{uc.reasoning}</p>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+
+          {/* Benchmarks */}
+          {editorial.is_editorial && Array.isArray(editorial.benchmarks) && editorial.benchmarks.length > 0 && (
+            <section className="mt-12 border-t border-zinc-800 pt-10">
+              <h2 className="text-lg font-semibold text-white mb-4">Benchmarks</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-800">
+                      <th className="text-left py-2 pr-4 font-medium text-zinc-400">Metric</th>
+                      {toolSlugs.map((s: string) => (
+                        <th key={s} className="text-left py-2 pr-4 font-medium text-white">
+                          {(toolBySlug.get(s) as { name: string } | undefined)?.name ?? s}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {editorial.benchmarks.map((row, i) => (
+                      <tr key={i} className="border-b border-zinc-900 last:border-0">
+                        <td className="py-2 pr-4 text-zinc-400">{row.dimension}</td>
+                        {toolSlugs.map((s: string) => {
+                          const v = row.values?.[s]
+                          return (
+                            <td key={s} className="py-2 pr-4 text-zinc-200">
+                              {v ? `${v.score}${v.unit ? ' ' + v.unit : ''}` : '—'}
+                              {v?.source && (
+                                <span className="block text-[10px] text-zinc-600">{v.source}</span>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
           {/* FAQ section for SEO / LLM citations */}
           <section className="mt-12 border-t border-zinc-800 pt-10">
-            <h2 className="text-lg font-semibold text-white mb-6">
-              Frequently Asked Questions
-            </h2>
+            <h2 className="text-lg font-semibold text-white mb-6">Frequently Asked Questions</h2>
             <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-white mb-1">
-                  Which is better, {toolNames[0]} or {toolNames[1]}?
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  The best choice between {toolNames[0]} and {toolNames[1]} depends on your specific use case. Use the comparison table above to evaluate features, pricing, and ratings side by side. {toolNames[0]} has a rating of {(tools[0] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 and {toolNames[1]} has a rating of {(tools[1] as { avg_rating: number }).avg_rating?.toFixed(1) ?? 'N/A'}/5 based on real user reviews.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-white mb-1">
-                  What are the main differences between {toolNames[0]} and {toolNames[1]}?
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  The key differences include pricing model, feature set, platform support, and skill level requirements. Review the full comparison table above for a detailed breakdown of every dimension.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-white mb-1">
-                  Is there a free version of {toolNames[0]} or {toolNames[1]}?
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Check the pricing section in the comparison table above for the latest pricing details on both tools, including free tiers, trial options, and paid plans.
-                </p>
-              </div>
+              {displayedFaqs.map((f, i) => (
+                <div key={i}>
+                  <h3 className="text-sm font-medium text-white mb-1">{f.question}</h3>
+                  <p className="text-sm text-zinc-400 whitespace-pre-line">{f.answer}</p>
+                </div>
+              ))}
             </div>
           </section>
+
+          {/* Last-reviewed note for editorial pages */}
+          {editorial.is_editorial && editorial.last_reviewed_at && (
+            <p className="mt-10 text-xs text-zinc-600">
+              Last reviewed:{' '}
+              {new Date(editorial.last_reviewed_at).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+          )}
         </div>
       </main>
       <Footer />

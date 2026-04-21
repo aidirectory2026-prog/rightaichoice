@@ -124,6 +124,32 @@ export function howToJsonLd(
   }
 }
 
+// ── Article (editorial compare / blog pages) ──────────────────────
+
+type ArticleInput = {
+  headline: string
+  description: string
+  url: string
+  datePublished: string
+  dateModified: string
+  image?: string
+}
+
+export function articleJsonLd(input: ArticleInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: input.headline,
+    description: input.description,
+    url: input.url.startsWith('http') ? input.url : `${BASE_URL}${input.url}`,
+    datePublished: input.datePublished,
+    dateModified: input.dateModified,
+    author: PUBLISHER,
+    publisher: PUBLISHER,
+    ...(input.image && { image: input.image }),
+  }
+}
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 /** Escape HTML entities to prevent script injection in JSON-LD */
