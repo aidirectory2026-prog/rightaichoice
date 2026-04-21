@@ -138,236 +138,274 @@ export async function POST(request: Request) {
 
     const { query, profile } = parsed.data
 
-    // Phase timings — Step 39 (Phase 6). We log each sub-call duration so the
-    // actual latency hot-node shows up in Vercel logs + the client-side
-    // plan_perf Mixpanel event. No guessing; optimization decisions follow data.
-    const t0 = performance.now()
-    const timings: Record<string, number> = {}
-    const mark = (phase: string, start: number) => {
-      timings[phase] = Math.round(performance.now() - start)
-    }
-
-    const anthropic = getAnthropicClient()
-    const supabase = await createClient()
-
-    const profileContext = profile ? profileToPromptContext(profile) : ''
-    const tRefine = performance.now()
-    const refined = refinePrompt(query)
-    mark('refine_ms', tRefine)
-
-    // Step 1: Get Claude to decompose the goal into stages (1 API call)
-    const tDecomposition = performance.now()
-    const planResponse = await anthropic.messages.create({
-      model: MODEL_DECOMPOSITION,
-      max_tokens: 1500,
-      system: PLANNER_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: profile
-            ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
-            : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
-        },
-      ],
-    })
-    mark('decomposition_ms', tDecomposition)
-
-    const planText = planResponse.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { type: 'text'; text: string }).text)
-      .join('')
-
-    type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string }
-    type RawPlan = { title: string; summary: string; stages: RawStage[] }
-
-    let plan: RawPlan
-
-    try {
-      const cleaned = planText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-      plan = JSON.parse(cleaned) as RawPlan
-    } catch {
-      return Response.json({ error: 'Failed to generate plan. Please try again.' }, { status: 500 })
-    }
-
-    // Step 2: Search tools for ALL stages in parallel (no Claude calls — just DB queries)
-    // searchStageTools guarantees at least one tool per stage via a 4-tier cascade.
-    const tSearch = performance.now()
-    const stagesWithTools = await Promise.all(
-      plan.stages.map(async (stage) => {
-        const { results, tier } = await searchStageTools({
-          searchQuery: stage.searchQuery ?? stage.name,
-          ...(stage.searchCategory ? { searchCategory: stage.searchCategory } : {}),
-          fallbackKeywords: refined.intentKeywords,
-        })
-
-        const topTools = results.slice(0, 3)
-
-        return {
-          id: stage.id,
-          name: stage.name,
-          description: stage.description,
-          why: stage.why,
-          toolResults: topTools,
-          matchTier: tier,
+    // Stream NDJSON (one JSON object per line). Events in order:
+    //   {type: 'outline',  title, summary, stages:[...tools w/o reasons/sentiment/match]}
+    //   {type: 'enriched', stages:[...same stages w/ reasons + sentiment + match]}
+    //   {type: 'done',     _timings}
+    //   {type: 'error',    status, message}  -- on failure, stream closes after
+    //
+    // Emitting `outline` as soon as tool search finishes means the user sees
+    // the plan structure ~3-5s sooner than before (reasons + sentiment +
+    // scoring were previously blocking the whole response).
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        const write = (obj: unknown) => {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
         }
-      })
-    )
-    mark('search_ms', tSearch)
+        const closeWithError = (status: number, message: string) => {
+          write({ type: 'error', status, message })
+          controller.close()
+        }
 
-    // Step 3: One single Claude call to generate personalized "why for you" reasons
-    const tReasons = performance.now()
-    const toolSummaryInput = stagesWithTools
-      .filter((s) => s.toolResults.length > 0)
-      .map(
-        (s) =>
-          `Stage "${s.name}" (${s.description}):\n${s.toolResults.map((t) => `  - ${t.name}: ${t.tagline} [${t.pricing_type}, ${t.skill_level}]`).join('\n')}`
-      )
-      .join('\n\n')
+        const t0 = performance.now()
+        const timings: Record<string, number> = {}
+        const mark = (phase: string, start: number) => {
+          timings[phase] = Math.round(performance.now() - start)
+        }
 
-    let reasons: Record<string, string> = {}
+        try {
+          const anthropic = getAnthropicClient()
+          const supabase = await createClient()
 
-    if (toolSummaryInput) {
-      try {
-        const promptBody = profile
-          ? `For the project "${query}", I have these tools matched to stages. Give each tool a personalized one-sentence reason (max 20 words) explaining why it fits THIS specific user based on their profile below. Reference their actual constraints (skill, budget, team, existing tools) when relevant.
+          const profileContext = profile ? profileToPromptContext(profile) : ''
+          const tRefine = performance.now()
+          const refined = refinePrompt(query)
+          mark('refine_ms', tRefine)
+
+          // Step 1: Decompose goal into stages (Sonnet)
+          const tDecomposition = performance.now()
+          const planResponse = await anthropic.messages.create({
+            model: MODEL_DECOMPOSITION,
+            max_tokens: 1500,
+            system: PLANNER_SYSTEM_PROMPT,
+            messages: [
+              {
+                role: 'user',
+                content: profile
+                  ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
+                  : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
+              },
+            ],
+          })
+          mark('decomposition_ms', tDecomposition)
+
+          const planText = planResponse.content
+            .filter((b) => b.type === 'text')
+            .map((b) => (b as { type: 'text'; text: string }).text)
+            .join('')
+
+          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string }
+          type RawPlan = { title: string; summary: string; stages: RawStage[] }
+
+          let plan: RawPlan
+          try {
+            const cleaned = planText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+            plan = JSON.parse(cleaned) as RawPlan
+          } catch {
+            closeWithError(500, 'Failed to generate plan. Please try again.')
+            return
+          }
+
+          // Step 2: Parallel DB search per stage (no Claude)
+          const tSearch = performance.now()
+          const stagesWithTools = await Promise.all(
+            plan.stages.map(async (stage) => {
+              const { results, tier } = await searchStageTools({
+                searchQuery: stage.searchQuery ?? stage.name,
+                ...(stage.searchCategory ? { searchCategory: stage.searchCategory } : {}),
+                fallbackKeywords: refined.intentKeywords,
+              })
+              return {
+                id: stage.id,
+                name: stage.name,
+                description: stage.description,
+                why: stage.why,
+                toolResults: results.slice(0, 3),
+                matchTier: tier,
+              }
+            })
+          )
+          mark('search_ms', tSearch)
+
+          // ── Emit outline now: structure + tools without reasons/sentiment/match ──
+          const outlineStages: PlanStage[] = stagesWithTools.map((stage) => ({
+            id: stage.id,
+            name: stage.name,
+            description: stage.description,
+            why: stage.why,
+            matchTier: stage.matchTier,
+            tools: stage.toolResults.map((tool) => ({
+              slug: tool.slug,
+              name: tool.name,
+              tagline: tool.tagline,
+              pricing: tool.pricing_type,
+              rating: tool.avg_rating,
+              reviewCount: tool.review_count,
+              whyThisStage: '',
+            })),
+          }))
+          write({ type: 'outline', title: plan.title, summary: plan.summary, stages: outlineStages })
+          timings.outline_ms = Math.round(performance.now() - t0)
+
+          // Step 3: Haiku reasons — run in parallel with sentiment lookup
+          const tReasons = performance.now()
+          const tSentiment = performance.now()
+          const toolSummaryInput = stagesWithTools
+            .filter((s) => s.toolResults.length > 0)
+            .map(
+              (s) =>
+                `Stage "${s.name}" (${s.description}):\n${s.toolResults.map((t) => `  - ${t.name}: ${t.tagline} [${t.pricing_type}, ${t.skill_level}]`).join('\n')}`
+            )
+            .join('\n\n')
+
+          const reasonsPromise: Promise<Record<string, string>> = (async () => {
+            if (!toolSummaryInput) return {}
+            try {
+              const promptBody = profile
+                ? `For the project "${query}", I have these tools matched to stages. Give each tool a personalized one-sentence reason (max 20 words) explaining why it fits THIS specific user based on their profile below. Reference their actual constraints (skill, budget, team, existing tools) when relevant.
 
 ${profileContext}
 
 ${toolSummaryInput}
 
 Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Free tier handles your solo content needs, and its simple UI matches your beginner level.", "Canva": "Works with your existing Notion setup and stays within your $50 budget."}`
-          : `For the project "${query}", I have these tools matched to stages. Give a one-sentence reason (max 15 words) why each tool fits its stage.
+                : `For the project "${query}", I have these tools matched to stages. Give a one-sentence reason (max 15 words) why each tool fits its stage.
 
 ${toolSummaryInput}
 
 Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`
 
-        const reasonResponse = await anthropic.messages.create({
-          model: MODEL_REASONS,
-          max_tokens: 1500,
-          messages: [{ role: 'user', content: promptBody }],
-        })
+              const reasonResponse = await anthropic.messages.create({
+                model: MODEL_REASONS,
+                max_tokens: 1500,
+                messages: [{ role: 'user', content: promptBody }],
+              })
+              const reasonText = reasonResponse.content
+                .filter((b) => b.type === 'text')
+                .map((b) => (b as { type: 'text'; text: string }).text)
+                .join('')
+              const cleaned = reasonText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+              return JSON.parse(cleaned) as Record<string, string>
+            } catch {
+              return {}
+            }
+          })()
 
-        const reasonText = reasonResponse.content
-          .filter((b) => b.type === 'text')
-          .map((b) => (b as { type: 'text'; text: string }).text)
-          .join('')
+          // Step 4: Sentiment lookup — parallel with Haiku
+          const allToolIds = stagesWithTools.flatMap((s) => s.toolResults.map((t) => t.id))
+          const sentimentPromise: Promise<Record<string, { sentiment_score: string; ai_verdict: string }>> = (async () => {
+            if (allToolIds.length === 0) return {}
+            try {
+              const { data } = await supabase
+                .from('tool_sentiment_cache')
+                .select('tool_id, sentiment_score, ai_verdict')
+                .in('tool_id', allToolIds)
+                .eq('status', 'ready')
+              if (!data) return {}
+              return Object.fromEntries(
+                data.map((s: { tool_id: string; sentiment_score: string; ai_verdict: string }) => [
+                  s.tool_id,
+                  { sentiment_score: s.sentiment_score, ai_verdict: s.ai_verdict },
+                ])
+              )
+            } catch {
+              return {}
+            }
+          })()
 
-        try {
-          const cleaned = reasonText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-          reasons = JSON.parse(cleaned)
-        } catch {
-          // Continue without reasons — not critical
+          const [reasons, sentimentMap] = await Promise.all([reasonsPromise, sentimentPromise])
+          mark('reasons_ms', tReasons)
+          mark('sentiment_ms', tSentiment)
+
+          // Step 5: Final enrichment — reasons + sentiment + match score
+          const tScoring = performance.now()
+          const finalStages: PlanStage[] = stagesWithTools.map((stage) => {
+            const toolsWithScores = stage.toolResults.map((tool) => {
+              const sentimentScore = sentimentMap[tool.id]?.sentiment_score ?? null
+              const quickVerdict = sentimentMap[tool.id]?.ai_verdict
+                ? sentimentMap[tool.id].ai_verdict.split('.')[0] + '.'
+                : null
+
+              let match: MatchScore | null = null
+              if (profile) {
+                match = computeMatchScore(
+                  {
+                    name: tool.name,
+                    pricing_type: tool.pricing_type,
+                    skill_level: tool.skill_level,
+                    best_for: tool.best_for,
+                    integrations: tool.integrations,
+                    sentimentScore,
+                  },
+                  profile
+                )
+              }
+
+              const reason = reasons[tool.name] ?? ''
+              return {
+                slug: tool.slug,
+                name: tool.name,
+                tagline: tool.tagline,
+                pricing: tool.pricing_type,
+                rating: tool.avg_rating,
+                reviewCount: tool.review_count,
+                whyThisStage: reason,
+                whyForYou: profile ? reason : undefined,
+                sentimentScore,
+                quickVerdict,
+                matchScore: match?.score,
+                matchReasons: match?.reasons,
+                matchWarnings: match?.warnings,
+                budgetFit: match?.budgetFit,
+                integrationMatches: match?.integrationMatches,
+                _score: match?.score ?? 0,
+              }
+            })
+
+            if (profile) {
+              toolsWithScores.sort((a, b) => b._score - a._score)
+            }
+            const tools: PlanTool[] = toolsWithScores.map(({ _score, ...t }) => {
+              void _score
+              return t
+            })
+            return {
+              id: stage.id,
+              name: stage.name,
+              description: stage.description,
+              why: stage.why,
+              tools,
+              matchTier: stage.matchTier,
+            }
+          })
+
+          mark('scoring_ms', tScoring)
+          timings.total_ms = Math.round(performance.now() - t0)
+          timings.stage_count = finalStages.length
+
+          write({ type: 'enriched', stages: finalStages })
+          write({ type: 'done', _timings: timings })
+          console.log('[plan_perf]', JSON.stringify(timings))
+          controller.close()
+        } catch (err) {
+          console.error('Plan API error:', err)
+          const message = err instanceof Error ? err.message : 'Unexpected error'
+          if (message.includes('credit balance') || message.includes('billing') || message.includes('authentication') || message.includes('401')) {
+            closeWithError(503, 'AI service temporarily unavailable. Please try again later.')
+          } else {
+            closeWithError(500, 'Something went wrong. Please try again.')
+          }
         }
-      } catch {
-        // Continue without reasons — not critical
-      }
-    }
-    mark('reasons_ms', tReasons)
-
-    // Step 4: Look up cached sentiment for matched tools (non-blocking)
-    const tSentiment = performance.now()
-    const allToolIds = stagesWithTools.flatMap((s) => s.toolResults.map((t) => t.id))
-    let sentimentMap: Record<string, { sentiment_score: string; ai_verdict: string }> = {}
-
-    if (allToolIds.length > 0) {
-      try {
-        const { data: sentimentData } = await supabase
-          .from('tool_sentiment_cache')
-          .select('tool_id, sentiment_score, ai_verdict')
-          .in('tool_id', allToolIds)
-          .eq('status', 'ready')
-
-        if (sentimentData) {
-          sentimentMap = Object.fromEntries(
-            sentimentData.map((s: { tool_id: string; sentiment_score: string; ai_verdict: string }) => [s.tool_id, { sentiment_score: s.sentiment_score, ai_verdict: s.ai_verdict }])
-          )
-        }
-      } catch {
-        // Non-critical — continue without sentiment
-      }
-    }
-    mark('sentiment_ms', tSentiment)
-
-    // Step 5: Assemble final response — compute match scores if profile is present
-    const tScoring = performance.now()
-    const finalStages: PlanStage[] = stagesWithTools.map((stage) => {
-      // Build tool list with match scores first, then sort so best match is ranked first
-      const toolsWithScores = stage.toolResults.map((tool) => {
-        const sentimentScore = sentimentMap[tool.id]?.sentiment_score ?? null
-        const quickVerdict = sentimentMap[tool.id]?.ai_verdict
-          ? sentimentMap[tool.id].ai_verdict.split('.')[0] + '.'
-          : null
-
-        let match: MatchScore | null = null
-        if (profile) {
-          match = computeMatchScore(
-            {
-              name: tool.name,
-              pricing_type: tool.pricing_type,
-              skill_level: tool.skill_level,
-              best_for: tool.best_for,
-              integrations: tool.integrations,
-              sentimentScore,
-            },
-            profile
-          )
-        }
-
-        const reason = reasons[tool.name] ?? ''
-        return {
-          slug: tool.slug,
-          name: tool.name,
-          tagline: tool.tagline,
-          pricing: tool.pricing_type,
-          rating: tool.avg_rating,
-          reviewCount: tool.review_count,
-          whyThisStage: reason,
-          whyForYou: profile ? reason : undefined,
-          sentimentScore,
-          quickVerdict,
-          matchScore: match?.score,
-          matchReasons: match?.reasons,
-          matchWarnings: match?.warnings,
-          budgetFit: match?.budgetFit,
-          integrationMatches: match?.integrationMatches,
-          _score: match?.score ?? 0,
-        }
-      })
-
-      // Re-rank by match score when profile is present (best match becomes Best Pick)
-      if (profile) {
-        toolsWithScores.sort((a, b) => b._score - a._score)
-      }
-
-      const tools: PlanTool[] = toolsWithScores.map(({ _score, ...t }) => {
-        void _score
-        return t
-      })
-
-      return {
-        id: stage.id,
-        name: stage.name,
-        description: stage.description,
-        why: stage.why,
-        tools,
-        matchTier: stage.matchTier,
-      }
+      },
     })
 
-    mark('scoring_ms', tScoring)
-    timings.total_ms = Math.round(performance.now() - t0)
-    timings.stage_count = finalStages.length
-
-    // Vercel log — shows up in observability for p50/p95 tracking even before
-    // the client forwards plan_perf to Mixpanel.
-    console.log('[plan_perf]', JSON.stringify(timings))
-
-    return Response.json({
-      title: plan.title,
-      summary: plan.summary,
-      stages: finalStages,
-      _timings: timings,
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'application/x-ndjson; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Accel-Buffering': 'no',
+      },
     })
   } catch (error) {
     console.error('Plan API error:', error)

@@ -167,23 +167,78 @@ export function ProjectPlanner({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: searchQuery, profile: userProfile }),
       })
-      const data = await res.json()
 
+      // Non-stream early failures (400 validation, 429 rate limit) still come
+      // back as JSON. Stream path always returns 200.
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Something went wrong. Try again.')
+        setLoading(false)
         return
       }
 
-      setPlan(data)
-      if (data.stages?.length > 0) {
-        setActiveStage(data.stages[0].id)
+      if (!res.body) {
+        setError('Stream not supported. Please try again.')
+        setLoading(false)
+        return
       }
-      const toolCount = data.stages?.flatMap((s: { tools?: unknown[] }) => s.tools ?? []).length ?? 0
-      analytics.planCompleted(searchQuery.slice(0, 100), toolCount)
-      for (const stage of (data.stages ?? []) as Array<{ id: string; matchTier?: MatchTier }>) {
-        if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      type StreamEvent =
+        | { type: 'outline'; title: string; summary: string; stages: PlanStage[] }
+        | { type: 'enriched'; stages: PlanStage[] }
+        | { type: 'done'; _timings?: Record<string, number> }
+        | { type: 'error'; status?: number; message: string }
+
+      const handleEvent = (evt: StreamEvent) => {
+        if (evt.type === 'outline') {
+          const nextPlan: Plan = { title: evt.title, summary: evt.summary, stages: evt.stages }
+          setPlan(nextPlan)
+          if (evt.stages.length > 0) setActiveStage(evt.stages[0].id)
+          setLoading(false) // flip from WaitingState to Plan view as soon as structure is known
+        } else if (evt.type === 'enriched') {
+          setPlan((prev) => (prev ? { ...prev, stages: evt.stages } : prev))
+          const toolCount = evt.stages.flatMap((s) => s.tools ?? []).length
+          analytics.planCompleted(searchQuery.slice(0, 100), toolCount)
+          for (const stage of evt.stages) {
+            if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
+          }
+        } else if (evt.type === 'done') {
+          if (evt._timings) analytics.planPerf(evt._timings)
+        } else if (evt.type === 'error') {
+          setError(evt.message ?? 'Something went wrong. Try again.')
+          setLoading(false)
+        }
       }
-      if (data._timings) analytics.planPerf(data._timings as Record<string, number>)
+
+      while (true) {
+        const { value, done: streamDone } = await reader.read()
+        if (streamDone) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          try {
+            handleEvent(JSON.parse(trimmed) as StreamEvent)
+          } catch {
+            // skip malformed line
+          }
+        }
+      }
+      // flush any remainder
+      const tail = buffer.trim()
+      if (tail) {
+        try {
+          handleEvent(JSON.parse(tail) as StreamEvent)
+        } catch {
+          /* noop */
+        }
+      }
     } catch {
       setError('Network error. Please try again.')
     } finally {
