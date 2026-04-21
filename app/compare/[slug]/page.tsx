@@ -9,7 +9,6 @@ import { ComparePageActions } from '@/components/compare/compare-page-actions'
 import {
   getComparisonBySlug,
   getToolsForComparisonByIds,
-  getAllComparisonSlugs,
 } from '@/lib/data/comparisons'
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd } from '@/lib/seo/json-ld'
 
@@ -36,18 +35,18 @@ type EditorialComparison = {
 
 type Props = { params: Promise<{ slug: string }> }
 
-export async function generateStaticParams() {
-  const comparisons = await getAllComparisonSlugs()
-  return comparisons.map((c) => ({ slug: c.slug }))
-}
+// Root layout reads auth cookies, so every page is implicitly dynamic.
+// Force this route dynamic to match — keeping generateStaticParams would
+// trigger DYNAMIC_SERVER_USAGE at request time.
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const comparison = await getComparisonBySlug(slug)
   if (!comparison) return { title: 'Comparison Not Found' }
 
-  const tools = await getToolsForComparisonByIds(comparison.tool_ids)
-  const names = tools.map((t: { name: string }) => t.name)
+  const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
+  const names = tools.map((t) => (t as { name: string }).name)
   const title = `${names.join(' vs ')} — AI Tool Comparison`
   const description = `In-depth side-by-side comparison of ${names.join(' and ')}. Compare features, pricing, ratings, and more to make the right AI tool choice.`
 
@@ -71,7 +70,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
 
   if (!comparison) notFound()
 
-  const tools = await getToolsForComparisonByIds(comparison.tool_ids)
+  const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
 
   if (tools.length < 2) {
     return (
@@ -97,8 +96,8 @@ export default async function ComparisonSlugPage({ params }: Props) {
     )
   }
 
-  const toolNames = tools.map((t: { name: string }) => t.name)
-  const toolSlugs = tools.map((t: { slug: string }) => t.slug)
+  const toolNames = tools.map((t) => (t as { name: string }).name)
+  const toolSlugs = tools.map((t) => (t as { slug: string }).slug)
   const editorial = comparison as EditorialComparison
 
   const fmtRating = (r: unknown): string => {
@@ -143,7 +142,9 @@ export default async function ComparisonSlugPage({ params }: Props) {
     )
   }
 
-  const toolBySlug = new Map(tools.map((t: { slug: string; name: string }) => [t.slug, t]))
+  const toolBySlug = new Map(
+    tools.map((t) => [(t as { slug: string }).slug, t as { slug: string; name: string }]),
+  )
 
   return (
     <>
@@ -171,7 +172,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
               </div>
               <ComparePageActions
                 toolSlugs={toolSlugs}
-                toolIds={tools.map((t: { id: string }) => t.id)}
+                toolIds={tools.map((t) => (t as { id: string }).id)}
                 savedSlug={slug}
               />
             </div>
@@ -216,7 +217,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
           )}
 
           {/* Comparison Table */}
-          <ComparisonTable tools={tools} />
+          <ComparisonTable tools={tools as unknown as Parameters<typeof ComparisonTable>[0]['tools']} />
 
           {/* Feature analysis — editorial long-form */}
           {editorial.is_editorial && editorial.feature_analysis && (

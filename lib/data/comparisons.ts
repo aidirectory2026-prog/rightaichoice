@@ -20,7 +20,6 @@ export async function getToolsForComparison(slugs: string[]) {
 
   if (error || !data) return []
 
-  // Preserve input order
   const bySlug = new Map(data.map((t) => [t.slug, t]))
   return slugs.map((s) => bySlug.get(s)).filter(Boolean)
 }
@@ -70,11 +69,13 @@ export async function saveComparison(
 
 /**
  * Fetch multiple tools by their UUIDs for a saved comparison.
+ * Uses admin client (no cookies) so the SSG /compare/[slug] route
+ * can pre-render at build time without hitting DYNAMIC_SERVER_USAGE.
  */
-export async function getToolsForComparisonByIds(ids: string[]) {
-  const supabase = await createClient()
+export async function getToolsForComparisonByIds(ids: string[]): Promise<Record<string, unknown>[]> {
+  const db = getAdminClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('tools')
     .select(`
       *,
@@ -87,8 +88,9 @@ export async function getToolsForComparisonByIds(ids: string[]) {
   if (error || !data) return []
 
   // Preserve input order
-  const byId = new Map(data.map((t) => [t.id, t]))
-  return ids.map((id) => byId.get(id)).filter(Boolean)
+  const rows = data as Record<string, unknown>[]
+  const byId = new Map(rows.map((t) => [t.id as string, t]))
+  return ids.map((id) => byId.get(id)).filter(Boolean) as Record<string, unknown>[]
 }
 
 /**
@@ -159,25 +161,42 @@ export async function getFeaturedEditorialComparisons(limit = 6) {
 
 /**
  * Get a saved comparison by slug.
+ * Uses admin client (no cookies) so the SSG /compare/[slug] route
+ * can pre-render at build time without hitting DYNAMIC_SERVER_USAGE.
  */
-export async function getComparisonBySlug(slug: string) {
-  const supabase = await createClient()
+export async function getComparisonBySlug(
+  slug: string,
+): Promise<Record<string, unknown> | null> {
+  const db = getAdminClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('tool_comparisons')
     .select('*')
     .eq('slug', slug)
     .single()
 
-  if (error) return null
+  if (error || !data) return null
 
-  // Atomic view count increment (fire-and-forget)
-  supabase.rpc('adjust_counter', {
-    target_table: 'tool_comparisons',
-    target_id: data.id,
-    counter_field: 'view_count',
-    delta: 1,
-  }).then(() => {})
+  const row = data as Record<string, unknown>
 
-  return data
+  // Atomic view count increment (fire-and-forget, swallow all errors).
+  // Runs in the background after the response is returned; awaiting would
+  // block render, and the admin-client rpc builder can throw synchronously
+  // if chained incorrectly, so wrap in try/catch + PromiseLike-safe await.
+  ;(async () => {
+    try {
+      await (db as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<unknown>
+      }).rpc('adjust_counter', {
+        target_table: 'tool_comparisons',
+        target_id: row.id as string,
+        counter_field: 'view_count',
+        delta: 1,
+      })
+    } catch {
+      // swallow — view-count bumps are best-effort
+    }
+  })()
+
+  return row
 }
