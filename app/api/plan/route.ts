@@ -173,12 +173,28 @@ export async function POST(request: Request) {
           const refined = refinePrompt(query)
           mark('refine_ms', tRefine)
 
-          // Step 1: Decompose goal into stages (Sonnet)
+          // Speculative DB warm-up — fire a cheap query in parallel with Sonnet
+          // so the Supabase connection pool is hot when searchStageTools hits it.
+          // Fire-and-forget; its result is ignored, its side effect is the warm
+          // connection. Saves ~50-100ms on cold invocations.
+          void supabase.from('tools').select('id').limit(1)
+
+          // Step 1: Decompose goal into stages (Sonnet).
+          // System prompt is cached via Anthropic prompt caching (ephemeral,
+          // 5-min TTL) — subsequent calls within the window skip re-processing
+          // the 1.3K-token system block. max_tokens tightened (1500 → 900)
+          // since JSON output is ~600 tokens; smaller cap = faster stream.
           const tDecomposition = performance.now()
           const planResponse = await anthropic.messages.create({
             model: MODEL_DECOMPOSITION,
-            max_tokens: 1500,
-            system: PLANNER_SYSTEM_PROMPT,
+            max_tokens: 900,
+            system: [
+              {
+                type: 'text',
+                text: PLANNER_SYSTEM_PROMPT,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
             messages: [
               {
                 role: 'user',
@@ -278,7 +294,9 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
 
               const reasonResponse = await anthropic.messages.create({
                 model: MODEL_REASONS,
-                max_tokens: 1500,
+                // Reasons are short (~15-20 words × up to ~10 tools = ~400 tokens).
+                // Tighter cap keeps latency tied to actual output length.
+                max_tokens: 800,
                 messages: [{ role: 'user', content: promptBody }],
               })
               const reasonText = reasonResponse.content
