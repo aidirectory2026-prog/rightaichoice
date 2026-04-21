@@ -6,7 +6,6 @@ import {
   Sparkles,
   ArrowRight,
   Star,
-  Loader2,
   RefreshCw,
   Zap,
   Trophy,
@@ -19,13 +18,12 @@ import {
   ChevronRight,
   Lightbulb,
   Target,
-  CheckCircle2,
-  CircleDot,
 } from 'lucide-react'
 import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { IntakeModal } from '@/components/ai/intake-modal'
+import { PlanWaitingState } from '@/components/ai/plan-waiting-state'
 import { loadProfile, saveProfile, profileSummary, type UserProfile } from '@/lib/plan/user-profile'
 import { analytics } from '@/lib/analytics'
 import { matchLabel } from '@/lib/plan/match-score'
@@ -77,14 +75,6 @@ const EXAMPLE_QUERIES = [
   { label: 'Email marketing', query: 'Automate my email marketing workflow', icon: Clock },
 ]
 
-const LOADING_STEPS = [
-  'Understanding your goal...',
-  'Breaking down into stages...',
-  'Finding the best AI tools...',
-  'Matching tools to stages...',
-  'Generating recommendations...',
-]
-
 const RELATED_PLANS = [
   { label: 'Build a SaaS product', query: 'Build a SaaS product from idea to launch' },
   { label: 'Automate social media', query: 'Automate my social media content creation' },
@@ -106,12 +96,10 @@ export function ProjectPlanner({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeStage, setActiveStage] = useState<string | null>(null)
-  const [loadingStep, setLoadingStep] = useState(0)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showIntake, setShowIntake] = useState(false)
   const pendingQueryRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const loadingInterval = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   // Load saved profile on mount
   useEffect(() => {
@@ -172,13 +160,6 @@ export function ProjectPlanner({
     setError('')
     setPlan(null)
     setActiveStage(null)
-    setLoadingStep(0)
-
-    let step = 0
-    loadingInterval.current = setInterval(() => {
-      step = Math.min(step + 1, LOADING_STEPS.length - 1)
-      setLoadingStep(step)
-    }, 1800)
 
     try {
       const res = await fetch('/api/plan', {
@@ -207,7 +188,6 @@ export function ProjectPlanner({
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)
-      clearInterval(loadingInterval.current)
     }
   }
 
@@ -349,49 +329,7 @@ export function ProjectPlanner({
       )}
 
       {/* ─── Loading State ─── */}
-      {loading && (
-        <div className="py-16">
-          <div className="flex flex-col items-center justify-center space-y-8">
-            {/* Animated spinner */}
-            <div className="relative h-20 w-20">
-              <div className="absolute inset-0 rounded-full border-2 border-emerald-900/30" />
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-400 animate-spin" />
-              <div className="absolute inset-2 rounded-full border-2 border-transparent border-t-teal-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-              <div className="absolute inset-4 rounded-full border border-transparent border-t-cyan-400/50 animate-spin" style={{ animationDuration: '2.5s' }} />
-              <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-emerald-400" />
-            </div>
-
-            {/* Progress steps */}
-            <div className="space-y-3 text-center">
-              {LOADING_STEPS.map((step, i) => (
-                <div
-                  key={step}
-                  className={`flex items-center justify-center gap-2.5 text-sm transition-all duration-500 ${
-                    i < loadingStep
-                      ? 'text-emerald-600'
-                      : i === loadingStep
-                        ? 'text-white font-medium'
-                        : 'text-zinc-700'
-                  }`}
-                >
-                  {i < loadingStep ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  ) : i === loadingStep ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
-                  ) : (
-                    <CircleDot className="h-4 w-4 text-zinc-800" />
-                  )}
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            <p className="text-sm text-zinc-500">
-              Analyzing <span className="text-zinc-300 font-medium">&ldquo;{query}&rdquo;</span>
-            </p>
-          </div>
-        </div>
-      )}
+      {loading && <PlanWaitingState query={query} />}
 
       {/* ─── Plan Result — Dashboard Layout ─── */}
       {plan && !loading && (
