@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
+import { Reveal } from '@/components/ui/reveal'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
@@ -103,7 +104,7 @@ export default async function HomePage() {
         </section>
 
         {/* ─── How It Works ────────────────────────────────────── */}
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
+        <Reveal as="section" className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="text-center text-xl font-semibold text-white mb-10">How it works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
@@ -125,9 +126,10 @@ export default async function HomePage() {
                 title: 'Compare and choose',
                 desc: 'See costs, alternatives, and tradeoffs — then decide with confidence.',
               },
-            ].map(({ icon: Icon, step, title, desc }) => (
-              <div
+            ].map(({ icon: Icon, step, title, desc }, i) => (
+              <Reveal
                 key={step}
+                delayMs={i * 90}
                 className="relative rounded-xl border border-zinc-800 bg-zinc-900/30 p-6 text-center"
               >
                 <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-800/50 bg-emerald-950/40">
@@ -136,13 +138,13 @@ export default async function HomePage() {
                 <span className="absolute top-4 right-4 text-xs font-mono text-zinc-600">{step}</span>
                 <h3 className="text-sm font-semibold text-white mb-1.5">{title}</h3>
                 <p className="text-sm text-zinc-500 leading-relaxed">{desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
-        </section>
+        </Reveal>
 
         {/* ─── Example Stacks ──────────────────────────────────── */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+        <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
           <div className="text-center mb-10">
             <h2 className="text-xl font-semibold text-white">Best AI Stack for...</h2>
             <p className="mt-1 text-sm text-zinc-500">
@@ -173,11 +175,11 @@ export default async function HomePage() {
               </Link>
             ))}
           </div>
-        </section>
+        </Reveal>
 
         {/* ─── Featured Tools ──────────────────────────────────── */}
         {featured.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+          <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-white">Popular tools people are choosing</h2>
@@ -198,12 +200,12 @@ export default async function HomePage() {
                 <ToolCard key={tool.id} tool={tool} />
               ))}
             </div>
-          </section>
+          </Reveal>
         )}
 
         {/* ─── Editorial Head-to-Head Comparisons ──────────────── */}
         {editorialCompares.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+          <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-white">Head-to-head comparisons</h2>
@@ -234,12 +236,12 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          </section>
+          </Reveal>
         )}
 
         {/* ─── Categories ──────────────────────────────────────── */}
         {categories.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+          <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
             <div className="text-center mb-10">
               <h2 className="text-xl font-semibold text-white">Browse by Category</h2>
               <p className="mt-1 text-sm text-zinc-500">
@@ -261,11 +263,11 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          </section>
+          </Reveal>
         )}
 
         {/* ─── Bottom CTA — Plan Your Stack ────────────────────── */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
+        <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
           <div className="rounded-2xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/20 to-zinc-950 p-10 text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-400">
               <Zap className="h-3 w-3" />
@@ -294,7 +296,7 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-        </section>
+        </Reveal>
       </main>
 
       <Footer />
