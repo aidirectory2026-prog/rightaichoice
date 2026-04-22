@@ -8,7 +8,7 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
 import { Reveal } from '@/components/ui/reveal'
-import { ToolConstellation } from '@/components/home/tool-constellation'
+import { StackAssembly } from '@/components/home/stack-assembly'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
@@ -104,14 +104,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ─── Tool Constellation (3D) ─────────────────────────── */}
-        {categories.length > 0 && (
-          <section className="hidden lg:block relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
-              <ToolConstellation categories={categories} />
-            </div>
-          </section>
-        )}
+        {/* ─── Stack Assembly Demo ─────────────────────────────── */}
+        <section className="relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
+            <StackAssembly />
+          </div>
+        </section>
 
         {/* ─── How It Works ────────────────────────────────────── */}
         <Reveal as="section" className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
