@@ -23,7 +23,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 hover:bg-zinc-900 transition-all duration-200"
+      className="rai-lift group relative flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 hover:bg-zinc-900"
     >
       {tool.is_sponsored && (
         <span className="absolute top-3 right-3 text-[10px] font-medium text-zinc-500 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">

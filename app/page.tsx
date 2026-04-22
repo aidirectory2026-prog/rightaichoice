@@ -165,7 +165,7 @@ export default async function HomePage() {
               <Link
                 key={stack.title}
                 href={stack.href}
-                className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
+                className="rai-lift rai-arrow-nudge group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60"
               >
                 <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
                   {stack.title}
@@ -178,7 +178,7 @@ export default async function HomePage() {
                   <span className="text-emerald-500/70">{stack.cost}</span>
                 </div>
                 <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Plan this stack <ArrowUpRight className="h-3 w-3" />
+                  Plan this stack <ArrowUpRight data-arrow className="h-3 w-3" />
                 </div>
               </Link>
             ))}
@@ -197,9 +197,9 @@ export default async function HomePage() {
               </div>
               <Link
                 href="/tools"
-                className="hidden sm:flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="rai-arrow-nudge hidden sm:flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                View all <ArrowRight className="h-4 w-4" />
+                View all <ArrowRight data-arrow className="h-4 w-4" />
               </Link>
             </div>
 
@@ -228,7 +228,7 @@ export default async function HomePage() {
                 <Link
                   key={c.slug}
                   href={`/compare/${c.slug}`}
-                  className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
+                  className="rai-lift rai-arrow-nudge group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60"
                 >
                   <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
                     {c.toolNames.join(' vs ')}
@@ -239,7 +239,7 @@ export default async function HomePage() {
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Read the verdict <ArrowUpRight className="h-3 w-3" />
+                    Read the verdict <ArrowUpRight data-arrow className="h-3 w-3" />
                   </div>
                 </Link>
               ))}
@@ -262,7 +262,7 @@ export default async function HomePage() {
                 <Link
                   key={cat.id}
                   href={`/tools?category=${cat.slug}`}
-                  className="group flex flex-col items-center rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-zinc-700 hover:bg-zinc-900/60 transition-all duration-200 text-center"
+                  className="rai-lift group flex flex-col items-center rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-zinc-700 hover:bg-zinc-900/60 text-center"
                 >
                   <span className="text-2xl mb-2">{cat.icon ?? '🔧'}</span>
                   <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">
