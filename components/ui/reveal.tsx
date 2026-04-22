@@ -25,20 +25,29 @@ export function Reveal({ children, delayMs = 0, className = '', as = 'div' }: Re
       setVisible(true)
       return
     }
+    let reveal: ReturnType<typeof setTimeout> | null = null
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setVisible(true)
+            // brief delay so browser paints the initial (opacity:0) frame
+            // before transitioning — guarantees the user sees the motion.
+            reveal = setTimeout(() => setVisible(true), 120)
             io.disconnect()
             break
           }
         }
       },
-      { threshold: 0.05, rootMargin: '0px 0px 160px 0px' }
+      { threshold: 0.12, rootMargin: '0px 0px -80px 0px' }
     )
     io.observe(node)
-    return () => io.disconnect()
+    // Safety net: never leave sections stuck at opacity:0.
+    const fallback = setTimeout(() => setVisible(true), 4000)
+    return () => {
+      io.disconnect()
+      if (reveal) clearTimeout(reveal)
+      clearTimeout(fallback)
+    }
   }, [])
 
   const style = delayMs ? { transitionDelay: `${delayMs}ms` } : undefined
