@@ -2,7 +2,7 @@
 export const revalidate = 60
 
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, Sparkles, Layers, BarChart3, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Sparkles, Layers, BarChart3, Zap, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
@@ -57,6 +57,8 @@ export default async function HomePage() {
         {/* ─── Hero ─────────────────────────────────────────────── */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-zinc-950 to-zinc-950" />
+          <div className="hero-aurora-a" aria-hidden="true" />
+          <div className="hero-aurora-b" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/50 px-4 py-1.5 text-sm text-emerald-400 mb-8">
@@ -65,7 +67,7 @@ export default async function HomePage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
-              <span className="text-emerald-400">Build anything</span> with AI.
+              <span className="hero-shimmer">Build anything</span> with AI.
               <br />
               We&apos;ll give you the exact stack.
             </h1>
@@ -92,6 +94,10 @@ export default async function HomePage() {
                   </Link>
                 )
               )}
+            </div>
+
+            <div className="mt-10 flex justify-center" aria-hidden="true">
+              <ChevronDown className="hero-scroll-hint h-5 w-5 text-zinc-600" />
             </div>
           </div>
         </section>
