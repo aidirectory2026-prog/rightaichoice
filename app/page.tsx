@@ -56,13 +56,13 @@ export default async function HomePage() {
 
       <main className="flex-1">
         {/* ─── Hero ─────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-zinc-950 to-zinc-950" />
+        <section className="relative overflow-hidden bg-zinc-950">
           <div className="hero-aurora-a" aria-hidden="true" />
           <div className="hero-aurora-b" aria-hidden="true" />
+          <div className="hero-aurora-c" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/50 px-4 py-1.5 text-sm text-emerald-400 mb-8">
+            <div className="hero-pill-glow inline-flex items-center gap-2 rounded-full border border-emerald-800/50 bg-emerald-950/50 px-4 py-1.5 text-sm text-emerald-400 mb-8">
               <Sparkles className="h-3.5 w-3.5" />
               AI-powered decision engine
             </div>
@@ -98,7 +98,7 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-10 flex justify-center" aria-hidden="true">
-              <ChevronDown className="hero-scroll-hint h-5 w-5 text-zinc-600" />
+              <ChevronDown className="hero-scroll-hint h-7 w-7 text-emerald-400" />
             </div>
           </div>
         </section>
