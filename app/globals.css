@@ -513,9 +513,11 @@
   transform: translateX(4px);
 }
 
-/* CTA shimmer: diagonal white sweep on hover. Element needs position:relative + overflow:hidden. */
+/* CTA shimmer: diagonal white sweep on hover.
+   Host must establish a positioning context (position: relative | absolute | fixed | sticky) —
+   most interactive elements already do. overflow:hidden is applied here so the sweep is clipped.
+   Press-feel uses filter + inset shadow so we never clobber the host's transform (e.g. centering translates). */
 .rai-cta-shimmer {
-  position: relative;
   overflow: hidden;
   isolation: isolate;
 }
@@ -543,8 +545,9 @@
   z-index: 1;
 }
 .rai-cta-shimmer:active {
-  transform: scale(0.97);
-  transition: transform 90ms ease;
+  filter: brightness(0.92);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: filter 90ms ease, box-shadow 90ms ease;
 }
 
 /* Input focus halo: soft emerald glow around the input on focus */
@@ -571,5 +574,5 @@
   .rai-lift:hover { transform: none; }
   .rai-arrow-nudge:hover [data-arrow] { transform: none; }
   .rai-cta-shimmer:hover::before { transform: translateX(-130%); }
-  .rai-cta-shimmer:active { transform: none; }
+  .rai-cta-shimmer:active { filter: none; box-shadow: none; }
 }
