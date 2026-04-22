@@ -105,20 +105,13 @@ export default async function HomePage() {
         </section>
 
         {/* ─── Tool Constellation (3D) ─────────────────────────── */}
-        <section className="hidden lg:block relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-20 text-center">
-            <h2 className="text-2xl font-semibold text-white">
-              One source of truth. Every category.
-            </h2>
-            <p className="mt-3 text-sm text-zinc-500 max-w-xl mx-auto">
-              From writing to video to analytics — we map the entire AI field so you can
-              build the exact stack for your goal.
-            </p>
-            <div className="mt-10">
-              <ToolConstellation />
+        {categories.length > 0 && (
+          <section className="hidden lg:block relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
+              <ToolConstellation categories={categories} />
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ─── How It Works ────────────────────────────────────── */}
         <Reveal as="section" className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
