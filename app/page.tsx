@@ -129,7 +129,7 @@ export default async function HomePage() {
             ].map(({ icon: Icon, step, title, desc }, i) => (
               <Reveal
                 key={step}
-                delayMs={i * 90}
+                delayMs={i * 200}
                 className="relative rounded-xl border border-zinc-800 bg-zinc-900/30 p-6 text-center"
               >
                 <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-800/50 bg-emerald-950/40">

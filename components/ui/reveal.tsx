@@ -35,7 +35,7 @@ export function Reveal({ children, delayMs = 0, className = '', as = 'div' }: Re
           }
         }
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px 160px 0px' }
     )
     io.observe(node)
     return () => io.disconnect()
