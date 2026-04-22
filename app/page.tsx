@@ -8,6 +8,7 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
 import { Reveal } from '@/components/ui/reveal'
+import { ToolConstellation } from '@/components/home/tool-constellation'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
@@ -99,6 +100,22 @@ export default async function HomePage() {
 
             <div className="mt-10 flex justify-center" aria-hidden="true">
               <ChevronDown className="hero-scroll-hint h-7 w-7 text-emerald-400" />
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Tool Constellation (3D) ─────────────────────────── */}
+        <section className="hidden lg:block relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-20 text-center">
+            <h2 className="text-2xl font-semibold text-white">
+              One source of truth. Every category.
+            </h2>
+            <p className="mt-3 text-sm text-zinc-500 max-w-xl mx-auto">
+              From writing to video to analytics — we map the entire AI field so you can
+              build the exact stack for your goal.
+            </p>
+            <div className="mt-10">
+              <ToolConstellation />
             </div>
           </div>
         </section>

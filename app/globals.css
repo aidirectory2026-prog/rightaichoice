@@ -271,3 +271,107 @@
     transition: none;
   }
 }
+
+/* ── Tool Constellation (Step 45 Slice 3) ───────────────────────
+   Pure-CSS 3D orbit of AI-category tiles. Zero JS.
+   Renders behind `ToolConstellation` server component.
+*/
+.constellation-stage {
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 760px;
+  height: 380px;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  pointer-events: none;
+}
+.constellation-glow {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 420px;
+  height: 420px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(52, 211, 153, 0.22) 0%,
+    rgba(52, 211, 153, 0.08) 35%,
+    rgba(52, 211, 153, 0) 70%
+  );
+  filter: blur(30px);
+  animation: constellation-glow-pulse 6s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+.constellation-ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: constellation-spin 28s linear infinite;
+  will-change: transform;
+}
+.constellation-node {
+  --angle: calc((360deg / var(--n)) * var(--i));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 88px;
+  height: 88px;
+  margin-top: -44px;
+  margin-left: -44px;
+  transform: rotateY(var(--angle)) translateZ(300px);
+  transform-style: preserve-3d;
+}
+.constellation-node-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(24, 24, 27, 0.95) 0%,
+    rgba(9, 9, 11, 0.9) 100%
+  );
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 0 24px rgba(52, 211, 153, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.constellation-icon {
+  width: 28px;
+  height: 28px;
+  color: rgb(52, 211, 153);
+}
+.constellation-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(161, 161, 170);
+}
+
+@keyframes constellation-spin {
+  from { transform: rotateY(0deg) rotateX(14deg); }
+  to   { transform: rotateY(360deg) rotateX(14deg); }
+}
+@keyframes constellation-glow-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constellation-ring,
+  .constellation-glow {
+    animation: none;
+  }
+}
