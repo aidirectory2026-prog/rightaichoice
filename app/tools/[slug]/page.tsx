@@ -313,7 +313,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             {/* Right: Action buttons */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:shrink-0">
               <AddToCompareButton
                 tool={{
                   id: tool.id,
