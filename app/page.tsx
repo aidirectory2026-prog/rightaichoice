@@ -2,16 +2,29 @@
 export const revalidate = 60
 
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, Sparkles, Layers, BarChart3, Zap, ChevronDown } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Sparkles,
+  Layers,
+  BarChart3,
+  Zap,
+  ChevronDown,
+  Flame,
+  Scale,
+  LayoutGrid,
+} from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
 import { Reveal } from '@/components/ui/reveal'
 import { StackAssembly } from '@/components/home/stack-assembly'
+import { SectionHeader } from '@/components/home/section-header'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
+import { categoryIconFor } from '@/lib/icons/category-icon'
 
 const EXAMPLE_STACKS = [
   {
@@ -153,12 +166,13 @@ export default async function HomePage() {
 
         {/* ─── Example Stacks ──────────────────────────────────── */}
         <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
-          <div className="text-center mb-10">
-            <h2 className="text-xl font-semibold text-white">Best AI Stack for...</h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              Pre-built tool recommendations for popular goals
-            </p>
-          </div>
+          <SectionHeader
+            icon={Layers}
+            tint="emerald"
+            title="Best AI Stack for..."
+            subtitle="Pre-built tool recommendations for popular goals"
+            className="mb-10"
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {EXAMPLE_STACKS.map((stack) => (
@@ -189,12 +203,13 @@ export default async function HomePage() {
         {featured.length > 0 && (
           <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
             <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Popular tools people are choosing</h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Hand-picked AI tools worth checking out
-                </p>
-              </div>
+              <SectionHeader
+                icon={Flame}
+                tint="amber"
+                title="Popular tools people are choosing"
+                subtitle="Hand-picked AI tools worth checking out"
+                align="left"
+              />
               <Link
                 href="/tools"
                 className="rai-arrow-nudge hidden sm:flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
@@ -214,13 +229,14 @@ export default async function HomePage() {
         {/* ─── Editorial Head-to-Head Comparisons ──────────────── */}
         {editorialCompares.length > 0 && (
           <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Head-to-head comparisons</h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Deeply-researched editorial verdicts on the questions people actually Google
-                </p>
-              </div>
+            <div className="mb-8">
+              <SectionHeader
+                icon={Scale}
+                tint="violet"
+                title="Head-to-head comparisons"
+                subtitle="Deeply-researched editorial verdicts on the questions people actually Google"
+                align="left"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -250,26 +266,35 @@ export default async function HomePage() {
         {/* ─── Categories ──────────────────────────────────────── */}
         {categories.length > 0 && (
           <Reveal as="section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 border-t border-zinc-800/50">
-            <div className="text-center mb-10">
-              <h2 className="text-xl font-semibold text-white">Browse by Category</h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                Find AI tools organized by what they do
-              </p>
-            </div>
+            <SectionHeader
+              icon={LayoutGrid}
+              tint="sky"
+              title="Browse by Category"
+              subtitle="Find AI tools organized by what they do"
+              className="mb-10"
+            />
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/tools?category=${cat.slug}`}
-                  className="rai-lift group flex flex-col items-center rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-zinc-700 hover:bg-zinc-900/60 text-center"
-                >
-                  <span className="text-2xl mb-2">{cat.icon ?? '🔧'}</span>
-                  <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">
-                    {cat.name}
-                  </span>
-                </Link>
-              ))}
+              {categories.map((cat) => {
+                const Icon = categoryIconFor(cat.slug)
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/tools?category=${cat.slug}`}
+                    className="rai-lift group flex flex-col items-center rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-emerald-800/40 hover:bg-zinc-900/60 text-center"
+                  >
+                    <span className="mb-2.5 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/60 group-hover:border-emerald-800/50 group-hover:bg-emerald-950/30 transition-colors">
+                      <Icon
+                        className="h-4 w-4 text-zinc-400 group-hover:text-emerald-300 transition-colors"
+                        strokeWidth={1.75}
+                      />
+                    </span>
+                    <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">
+                      {cat.name}
+                    </span>
+                  </Link>
+                )
+              })}
             </div>
           </Reveal>
         )}
