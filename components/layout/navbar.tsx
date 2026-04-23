@@ -17,7 +17,7 @@ export function Navbar() {
         {/* Left: Logo + nav links */}
         <div className="flex items-center gap-8">
           <Logo size="sm" />
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-6">
             <Link
               href="/plan"
               onClick={() => analytics.navCtaClicked('plan_your_stack', 'navbar_desktop')}
@@ -71,7 +71,7 @@ export function Navbar() {
         </div>
 
         {/* Right: Auth actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           {user ? (
             <Link
               href="/dashboard"
@@ -104,7 +104,7 @@ export function Navbar() {
         {/* Mobile menu button */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 text-zinc-400 hover:text-white"
+          className="lg:hidden inline-flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-white"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -113,7 +113,7 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
+        <div className="lg:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
           <Link
             href="/plan"
             onClick={() => {
