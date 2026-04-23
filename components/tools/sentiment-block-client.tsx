@@ -153,7 +153,7 @@ export function SentimentBlockClient({ slug, toolName, autoGenerate, initialStat
           Generate <ArrowRight className="h-3 w-3" />
         </button>
       </div>
-      <div className="mt-3 text-[11px] text-zinc-600">
+      <div className="mt-3 text-xs text-zinc-600">
         Or jump directly to the{' '}
         <Link href={`/tools/${slug}/report`} className="text-emerald-400 hover:text-emerald-300">
           full report page

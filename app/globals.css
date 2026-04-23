@@ -392,7 +392,7 @@
 .stack-assembly-card-amber   { border-color: rgba(251, 191, 36, 0.32); }
 
 .stack-assembly-stage {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

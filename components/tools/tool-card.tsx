@@ -74,7 +74,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
             <span>({tool.review_count})</span>
           </div>
         ) : (
-          <span className="text-[11px] text-zinc-600">No reviews yet</span>
+          <span className="text-xs text-zinc-600">No reviews yet</span>
         )}
       </div>
     </Link>

@@ -49,7 +49,7 @@ export function SentimentBlockRender({
       <div className="mb-5">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-zinc-500">Market sentiment</span>
-          <div className="flex items-center gap-2 text-[11px] text-zinc-600">
+          <div className="flex items-center gap-2 text-xs text-zinc-600">
             {(data.sources_scraped ?? []).map((s) => (
               <span key={s} className="rounded-full border border-zinc-800 px-2 py-0.5 capitalize">
                 {s}
@@ -62,7 +62,7 @@ export function SentimentBlockRender({
           <div className="bg-zinc-600" style={{ width: `${(breakdown.neutral / total) * 100}%` }} title={`${breakdown.neutral} neutral`} />
           <div className="bg-red-500" style={{ width: `${(breakdown.negative / total) * 100}%` }} title={`${breakdown.negative} negative`} />
         </div>
-        <div className="mt-1.5 flex items-center justify-between text-[11px] text-zinc-500">
+        <div className="mt-1.5 flex items-center justify-between text-xs text-zinc-500">
           <span className="text-emerald-400">{Math.round((breakdown.positive / total) * 100)}% positive</span>
           <span>{Math.round((breakdown.neutral / total) * 100)}% neutral</span>
           <span className="text-red-400">{Math.round((breakdown.negative / total) * 100)}% negative</span>
@@ -115,7 +115,7 @@ export function SentimentBlockRender({
             {themes.map((t, i) => (
               <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
                 <div className="text-xs font-medium text-white mb-1">{t.title}</div>
-                <div className="text-[11px] text-zinc-500 leading-relaxed line-clamp-3">{t.description}</div>
+                <div className="text-xs text-zinc-500 leading-relaxed line-clamp-3">{t.description}</div>
               </div>
             ))}
           </div>
@@ -145,7 +145,7 @@ export function SentimentBlockRender({
           </div>
           <ul className="space-y-1">
             {hiddenCosts.map((c, i) => (
-              <li key={i} className="text-[11px] text-zinc-400">• {c}</li>
+              <li key={i} className="text-xs text-zinc-400">• {c}</li>
             ))}
           </ul>
         </div>

@@ -296,7 +296,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
                             <td key={s} className="py-2 pr-4 text-zinc-200">
                               {v ? `${v.score}${v.unit ? ' ' + v.unit : ''}` : '—'}
                               {v?.source && (
-                                <span className="block text-[10px] text-zinc-600">{v.source}</span>
+                                <span className="block text-xs text-zinc-600">{v.source}</span>
                               )}
                             </td>
                           )

@@ -20,7 +20,7 @@ export function StackStageCard({ stage, index }: { stage: StackStage; index: num
       {/* Best pick */}
       <div className="rounded-lg border border-emerald-800/30 bg-emerald-950/20 p-4 mb-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 rounded px-1.5 py-0.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 rounded px-1.5 py-0.5">
             Best Pick
           </span>
           <Link
@@ -35,7 +35,7 @@ export function StackStageCard({ stage, index }: { stage: StackStage; index: num
         {stage.bestPick.tags && stage.bestPick.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2.5">
             {stage.bestPick.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+              <span key={tag} className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                 {tag}
               </span>
             ))}
@@ -46,7 +46,7 @@ export function StackStageCard({ stage, index }: { stage: StackStage; index: num
       {/* Alternatives */}
       {stage.alternatives.length > 0 && (
         <div className="space-y-2">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Alternatives</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Alternatives</span>
           {stage.alternatives.map((alt) => (
             <div key={alt.slug} className="flex items-start gap-3 rounded-lg bg-zinc-900/50 p-3">
               <Link
