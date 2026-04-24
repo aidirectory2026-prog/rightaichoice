@@ -2,6 +2,7 @@
 
 import { Scale, Check } from 'lucide-react'
 import { useCompare, type CompareItem } from '@/components/providers/compare-provider'
+import { analytics } from '@/lib/analytics'
 
 export function AddToCompareButton({
   tool,
@@ -10,7 +11,7 @@ export function AddToCompareButton({
   tool: CompareItem
   size?: 'sm' | 'md'
 }) {
-  const { add, remove, isInCompare, isFull } = useCompare()
+  const { add, remove, isInCompare, isFull, items } = useCompare()
   const active = isInCompare(tool.id)
 
   const handleClick = (e: React.MouseEvent) => {
@@ -18,8 +19,10 @@ export function AddToCompareButton({
     e.stopPropagation()
     if (active) {
       remove(tool.id)
+      analytics.compareToolRemoved(tool.slug ?? tool.id, Math.max(items.length - 1, 0))
     } else {
       add(tool)
+      analytics.compareToolAdded(tool.slug ?? tool.id, items.length + 1)
     }
   }
 
@@ -27,8 +30,8 @@ export function AddToCompareButton({
 
   const base =
     size === 'sm'
-      ? 'h-7 px-2 text-[11px] gap-1 rounded-md'
-      : 'h-8 px-3 text-xs gap-1.5 rounded-lg'
+      ? 'min-h-[36px] px-2.5 text-xs gap-1 rounded-md'
+      : 'min-h-[40px] px-3 text-xs gap-1.5 rounded-lg'
 
   return (
     <button

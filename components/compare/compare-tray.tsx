@@ -66,7 +66,7 @@ export function CompareTray() {
           <button
             onClick={handleCompare}
             disabled={items.length < 2}
-            className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 min-h-[40px] text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Compare Now
           </button>

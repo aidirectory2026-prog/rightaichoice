@@ -148,7 +148,7 @@ export function SentimentBlockClient({ slug, toolName, autoGenerate, initialStat
         </div>
         <button
           onClick={() => void kickOff()}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-800/40 bg-emerald-950/30 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:border-emerald-600 transition-colors"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-800/40 bg-emerald-950/30 px-3 min-h-[40px] text-xs font-medium text-emerald-300 hover:border-emerald-600 transition-colors"
         >
           Generate <ArrowRight className="h-3 w-3" />
         </button>

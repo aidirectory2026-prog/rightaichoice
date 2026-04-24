@@ -103,7 +103,7 @@ export default async function HomePage() {
                   <Link
                     key={term}
                     href={`/plan?q=${encodeURIComponent(term)}`}
-                    className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-500 hover:border-emerald-800/50 hover:text-emerald-400 transition-colors"
+                    className="inline-flex items-center min-h-[36px] rounded-full border border-zinc-800 px-3 py-1.5 text-zinc-500 hover:border-emerald-800/50 hover:text-emerald-400 transition-colors"
                   >
                     {term}
                   </Link>
