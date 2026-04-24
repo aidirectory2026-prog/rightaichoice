@@ -119,7 +119,7 @@ export default async function SavedStackPage({ params }: Props) {
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
             <Link
               href="/stacks"
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="inline-flex items-center min-h-[44px] px-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               &larr; All Stacks
             </Link>

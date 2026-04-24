@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Share2, X, Check, Copy, MessageCircle } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 type ShareButtonProps = {
   url: string
@@ -9,6 +10,8 @@ type ShareButtonProps = {
   text?: string
   size?: 'sm' | 'md'
   variant?: 'icon' | 'button'
+  entity?: string
+  entityId?: string
 }
 
 type Platform = {
@@ -72,7 +75,7 @@ const PLATFORMS: Platform[] = [
   },
 ]
 
-export function ShareButton({ url, title, text = '', size = 'md', variant = 'icon' }: ShareButtonProps) {
+export function ShareButton({ url, title, text = '', size = 'md', variant = 'icon', entity = 'page', entityId = '' }: ShareButtonProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -94,11 +97,13 @@ export function ShareButton({ url, title, text = '', size = 'md', variant = 'ico
   async function handleCopy() {
     await navigator.clipboard.writeText(fullUrl)
     setCopied(true)
+    analytics.shareClicked(entity, entityId || fullUrl, 'copy_link')
     setTimeout(() => setCopied(false), 2000)
   }
 
   function handlePlatformShare(platform: Platform) {
     const shareUrl = platform.getUrl(fullUrl, title, shareText)
+    analytics.shareClicked(entity, entityId || fullUrl, platform.name.toLowerCase().replace(/[^a-z]/g, '_'))
     window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500')
     setOpen(false)
   }
@@ -117,7 +122,8 @@ export function ShareButton({ url, title, text = '', size = 'md', variant = 'ico
         <button
           onClick={() => setOpen(!open)}
           title="Share"
-          className="flex items-center justify-center rounded-lg border border-zinc-700 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+          aria-label="Share"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
         >
           <Share2 className={size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
         </button>
