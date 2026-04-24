@@ -210,11 +210,11 @@ export default async function SavedStackPage({ params }: Props) {
                   {/* Best pick */}
                   <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-4 mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-400">
+                      <span className="text-xs font-medium uppercase tracking-wider text-emerald-400">
                         Best Pick
                       </span>
                       {stage.costEstimate && (
-                        <span className="text-[10px] text-zinc-500">{stage.costEstimate}</span>
+                        <span className="text-xs text-zinc-500">{stage.costEstimate}</span>
                       )}
                     </div>
                     <Link
@@ -230,7 +230,7 @@ export default async function SavedStackPage({ params }: Props) {
                     {stage.bestPick.tags && stage.bestPick.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {stage.bestPick.tags.map((tag) => (
-                          <span key={tag} className="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">
+                          <span key={tag} className="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">
                             {tag}
                           </span>
                         ))}
@@ -241,7 +241,7 @@ export default async function SavedStackPage({ params }: Props) {
                   {/* Alternatives */}
                   {stage.alternatives && stage.alternatives.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
                         Alternatives
                       </span>
                       {stage.alternatives.map((alt) => (
@@ -272,25 +272,25 @@ export default async function SavedStackPage({ params }: Props) {
                   <div className="space-y-3">
                     {stack.summary.freePath && (
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Free Path</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Free Path</p>
                         <p className="text-sm font-medium text-white">{stack.summary.freePath}</p>
                       </div>
                     )}
                     {stack.summary.paidPath && (
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Paid Path</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Paid Path</p>
                         <p className="text-sm font-medium text-white">{stack.summary.paidPath}</p>
                       </div>
                     )}
                     {stack.summary.skillLevel && (
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Skill Level</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Skill Level</p>
                         <p className="text-sm font-medium text-white">{stack.summary.skillLevel}</p>
                       </div>
                     )}
                     {stack.summary.setupTime && (
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Setup Time</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Setup Time</p>
                         <p className="text-sm font-medium text-white">{stack.summary.setupTime}</p>
                       </div>
                     )}

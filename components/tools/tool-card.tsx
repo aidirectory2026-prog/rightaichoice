@@ -26,7 +26,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
       className="rai-lift group relative flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 hover:bg-zinc-900"
     >
       {tool.is_sponsored && (
-        <span className="absolute top-3 right-3 text-[10px] font-medium text-zinc-500 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">
+        <span className="absolute top-3 right-3 text-xs font-medium text-zinc-500 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">
           Sponsored
         </span>
       )}
@@ -52,7 +52,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ${pricingColor(tool.pricing_type)}`}
+            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${pricingColor(tool.pricing_type)}`}
           >
             {pricingLabel(tool.pricing_type)}
           </span>

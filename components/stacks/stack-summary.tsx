@@ -15,7 +15,7 @@ export function StackSummary({ stack }: { stack: StackConfig }) {
             <DollarSign className="h-4 w-4 text-emerald-400" />
           </div>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Free Path</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Free Path</p>
             <p className="text-sm font-medium text-white">{summary.freePath}</p>
           </div>
         </div>
@@ -24,7 +24,7 @@ export function StackSummary({ stack }: { stack: StackConfig }) {
             <DollarSign className="h-4 w-4 text-amber-400" />
           </div>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Paid Path</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Paid Path</p>
             <p className="text-sm font-medium text-white">{summary.paidPath}</p>
           </div>
         </div>
@@ -33,7 +33,7 @@ export function StackSummary({ stack }: { stack: StackConfig }) {
             <Gauge className="h-4 w-4 text-blue-400" />
           </div>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Skill Level</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Skill Level</p>
             <p className="text-sm font-medium text-white">{summary.skillLevel}</p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function StackSummary({ stack }: { stack: StackConfig }) {
             <Clock className="h-4 w-4 text-purple-400" />
           </div>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Setup Time</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Setup Time</p>
             <p className="text-sm font-medium text-white">{summary.setupTime}</p>
           </div>
         </div>
