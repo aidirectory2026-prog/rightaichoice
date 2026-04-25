@@ -5,7 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 export const dynamic = 'force-dynamic'
 
 const recommendSchema = z.object({
-  use_case: z.string().trim().min(3, 'Use case must be at least 3 characters').max(500),
+  use_case: z.string().trim().min(1, 'Use case is required').max(5000, 'Use case is too long'),
   pricing_type: z.enum(['free', 'freemium', 'paid', 'enterprise']).optional(),
   skill_level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
 })

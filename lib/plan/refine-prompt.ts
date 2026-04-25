@@ -2,13 +2,17 @@
  * Lightweight prompt refinement for the /plan flow.
  *
  * Pure TypeScript — no LLM call. Sonnet 4.6 already tolerates typos, ESL,
- * metaphor, and most non-English queries via its system prompt, so the
- * extra Haiku hop proposed in Phase 6 plan.md would have cost latency
- * (Step 39) without meaningful quality lift. This layer handles the
- * mechanical parts: trim/collapse whitespace, cap length, and extract a
- * small set of intent keywords for the search cascade's final fallback
- * tier.
+ * metaphor, and most non-English queries via its system prompt.
+ *
+ * Step 48 (Slice 1): the normalized goal is preserved at full length up to
+ * 5000 chars so Sonnet sees the user's actual intent on long prompts. The
+ * keyword extraction window stays at the first 500 chars on purpose —
+ * tier-3 fallback retrieval works on a small set of strong keywords, and
+ * scanning thousands of chars dilutes signal with conversational noise.
  */
+
+const MAX_GOAL_LENGTH = 5000
+const KEYWORD_WINDOW = 500
 
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'the', 'for', 'with', 'to', 'from', 'of', 'in', 'on',
@@ -27,9 +31,10 @@ export type RefinedPrompt = {
 }
 
 export function refinePrompt(raw: string): RefinedPrompt {
-  const normalizedGoal = raw.trim().replace(/\s+/g, ' ').slice(0, 500)
+  const normalizedGoal = raw.trim().replace(/\s+/g, ' ').slice(0, MAX_GOAL_LENGTH)
+  const keywordSource = normalizedGoal.slice(0, KEYWORD_WINDOW)
 
-  const tokens = normalizedGoal
+  const tokens = keywordSource
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
     .split(/\s+/)

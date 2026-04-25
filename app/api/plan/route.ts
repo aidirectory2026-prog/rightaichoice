@@ -109,7 +109,7 @@ const profileSchema = z
   .nullable()
 
 const planSchema = z.object({
-  query: z.string().trim().min(3, 'Query must be at least 3 characters').max(500),
+  query: z.string().trim().min(1, 'Query is required').max(5000, 'Query is too long'),
   profile: profileSchema,
 })
 
