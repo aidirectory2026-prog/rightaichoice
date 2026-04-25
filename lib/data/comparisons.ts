@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { fetchAllPages } from '@/lib/data/_pagination'
 
 /**
  * Fetch multiple tools by their slugs with full details for comparison.
@@ -100,13 +101,13 @@ export async function getAllComparisonSlugs() {
   // Use admin client (no cookies) — called from generateStaticParams and sitemap at build time
   const db = getAdminClient()
 
-  const { data, error } = await db
-    .from('tool_comparisons')
-    .select('slug, updated_at')
-    .order('view_count', { ascending: false })
-
-  if (error || !data) return []
-  return data as { slug: string; updated_at: string }[]
+  return fetchAllPages<{ slug: string; updated_at: string }>((from, to) =>
+    db
+      .from('tool_comparisons')
+      .select('slug, updated_at')
+      .order('view_count', { ascending: false })
+      .range(from, to)
+  )
 }
 
 /**

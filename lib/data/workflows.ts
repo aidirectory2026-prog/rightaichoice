@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { fetchAllPages } from '@/lib/data/_pagination'
 import type { Workflow, WorkflowStep } from '@/types'
 
 export async function getWorkflows(limit = 12) {
@@ -90,12 +91,14 @@ async function adjustWorkflowUpvotes(workflowId: string, delta: 1 | -1) {
 
 export async function getAllWorkflowIds(): Promise<{ id: string; updated_at: string }[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('workflows')
-    .select('id, updated_at')
-    .eq('is_published', true)
-    .order('updated_at', { ascending: false })
-  return data ?? []
+  return fetchAllPages<{ id: string; updated_at: string }>((from, to) =>
+    supabase
+      .from('workflows')
+      .select('id, updated_at')
+      .eq('is_published', true)
+      .order('updated_at', { ascending: false })
+      .range(from, to)
+  )
 }
 
 export async function getWorkflowsForTool(toolSlug: string, limit = 4): Promise<Workflow[]> {

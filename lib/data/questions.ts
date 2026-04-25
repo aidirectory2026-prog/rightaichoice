@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { fetchAllPages } from '@/lib/data/_pagination'
 
 // ── Questions ────────────────────────────────────────────────────────────────
 
@@ -26,12 +27,14 @@ export async function getQuestionsForTool(
 
 export async function getAllQuestionIds(): Promise<{ id: string; updated_at: string }[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('questions')
-    .select('id, updated_at')
-    .eq('is_flagged', false)
-    .order('updated_at', { ascending: false })
-  return data ?? []
+  return fetchAllPages<{ id: string; updated_at: string }>((from, to) =>
+    supabase
+      .from('questions')
+      .select('id, updated_at')
+      .eq('is_flagged', false)
+      .order('updated_at', { ascending: false })
+      .range(from, to)
+  )
 }
 
 export async function getRecentQuestions(

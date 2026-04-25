@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { fetchAllPages } from '@/lib/data/_pagination'
 import type { ToolFilters } from '@/types'
 
 const TOOLS_PER_PAGE = 24
@@ -146,12 +147,14 @@ export async function getTrendingTools(limit = 8) {
 
 export async function getAllToolSlugs(): Promise<{ slug: string; updated_at: string }[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('tools')
-    .select('slug, updated_at')
-    .eq('is_published', true)
-    .order('updated_at', { ascending: false })
-  return data ?? []
+  return fetchAllPages<{ slug: string; updated_at: string }>((from, to) =>
+    supabase
+      .from('tools')
+      .select('slug, updated_at')
+      .eq('is_published', true)
+      .order('updated_at', { ascending: false })
+      .range(from, to)
+  )
 }
 
 // Step 40 Slice 5 — for a list of free-text integration names, return a
