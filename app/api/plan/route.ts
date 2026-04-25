@@ -7,6 +7,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
 import { refinePrompt } from '@/lib/plan/refine-prompt'
 import { searchStageTools, type MatchTier } from '@/lib/plan/stage-search'
+import { runQualityGate, broadenRetrieval, shouldRunQualityGate } from '@/lib/plan/quality-gate'
 import type { UserProfile } from '@/lib/plan/user-profile'
 import {
   SKILL_LABELS,
@@ -439,7 +440,7 @@ export async function POST(request: Request) {
 
           // Step 2: Parallel DB search per stage (no Claude)
           const tSearch = performance.now()
-          const stagesWithTools = await Promise.all(
+          let stagesWithTools = await Promise.all(
             plan.stages.map(async (stage) => {
               const { results, tier } = await searchStageTools({
                 searchQuery: stage.searchQuery ?? stage.name,
@@ -451,6 +452,7 @@ export async function POST(request: Request) {
                 name: stage.name,
                 description: stage.description,
                 why: stage.why,
+                searchQuery: stage.searchQuery ?? stage.name,
                 toolResults: results.slice(0, 3),
                 matchTier: tier,
                 capabilities: stage.capabilities,
@@ -459,6 +461,35 @@ export async function POST(request: Request) {
             })
           )
           mark('search_ms', tSearch)
+
+          // Step 2b: Quality gate (Step 48.6).
+          // Only fires when at least one stage has weak retrieval — well-formed
+          // traffic skips this entirely. On fail, broaden retrieval (drop
+          // category, lean on intent keywords) and accept the retried result.
+          // Hard latency cap: ~3.5s worst case; ~500ms in the pass case.
+          timings.gate_ran = 0
+          timings.gate_passed = 1
+          timings.regenerated = 0
+          if (shouldRunQualityGate(stagesWithTools)) {
+            timings.gate_ran = 1
+            const tGate = performance.now()
+            const verdict = await runQualityGate({
+              anthropic,
+              query: refined.normalizedGoal,
+              stages: stagesWithTools,
+            })
+            mark('gate_ms', tGate)
+            if (!verdict.pass) {
+              timings.gate_passed = 0
+              const tRetry = performance.now()
+              stagesWithTools = await broadenRetrieval({
+                stages: stagesWithTools,
+                intentKeywords: refined.intentKeywords,
+              })
+              mark('gate_retry_ms', tRetry)
+              timings.regenerated = 1
+            }
+          }
 
           // ── Emit outline now: structure + tools without reasons/sentiment/match ──
           const outlineStages: PlanStage[] = stagesWithTools.map((stage) => ({
