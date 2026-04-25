@@ -649,13 +649,46 @@ export function ProjectPlanner({
                   <div className="p-6">
                     {currentStage.tools.length > 0 && (
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                            {currentStage.matchTier && currentStage.matchTier !== 'keyword'
-                              ? 'Closest fit'
-                              : 'Recommended tools'}
-                          </h4>
-                          <span className="text-xs text-zinc-600">
+                        <div className="flex items-center justify-between mb-1 gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                              Recommended tools
+                            </h4>
+                            {currentStage.matchTier && (
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                  currentStage.matchTier === 'keyword'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-900/40'
+                                    : currentStage.matchTier === 'category_fallback'
+                                      ? 'bg-amber-950/40 text-amber-300 border border-amber-900/40'
+                                      : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                                }`}
+                                title={
+                                  currentStage.matchTier === 'keyword'
+                                    ? 'Strong match for what you asked.'
+                                    : currentStage.matchTier === 'category_fallback'
+                                      ? 'Best guess based on your goal — refine for tighter results.'
+                                      : 'Broad fit — these are the closest tools we have. Try refining your prompt for better matches.'
+                                }
+                              >
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${
+                                    currentStage.matchTier === 'keyword'
+                                      ? 'bg-emerald-400'
+                                      : currentStage.matchTier === 'category_fallback'
+                                        ? 'bg-amber-400'
+                                        : 'bg-zinc-500'
+                                  }`}
+                                />
+                                {currentStage.matchTier === 'keyword'
+                                  ? 'High match'
+                                  : currentStage.matchTier === 'category_fallback'
+                                    ? 'Best guess'
+                                    : 'Broad fit'}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-zinc-600 shrink-0">
                             {currentStage.tools.length} matched
                           </span>
                         </div>
