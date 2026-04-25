@@ -77,7 +77,7 @@ export default async function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] md:pb-0">
+      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] lg:pb-0">
         <script {...jsonLdScriptProps(websiteJsonLd())} />
         <MixpanelProvider>
           <AuthProvider

@@ -94,7 +94,7 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
               href={tool.website_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 min-h-[40px] text-xs text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
             >
               <Globe className="h-3.5 w-3.5" />
               Visit Website
@@ -296,11 +296,16 @@ function CompareRow({
 }) {
   const count = children.length
   return (
-    <div className="grid border-b border-zinc-800 last:border-b-0" style={{ gridTemplateColumns: `180px repeat(${count}, minmax(0, 1fr))` }}>
-      <div className="flex items-center px-4 py-3 bg-zinc-900/80">
+    <div
+      className="grid border-b border-zinc-800 last:border-b-0"
+      style={{
+        gridTemplateColumns: `clamp(96px, 24vw, 180px) repeat(${count}, minmax(0, 1fr))`,
+      }}
+    >
+      <div className="flex items-center px-3 sm:px-4 py-3 bg-zinc-900/80">
         <span
           className={`${
-            labelSmall ? 'text-xs text-zinc-500' : 'text-sm font-medium text-zinc-400'
+            labelSmall ? 'text-xs text-zinc-500' : 'text-xs sm:text-sm font-medium text-zinc-400'
           }`}
         >
           {label}
@@ -309,7 +314,7 @@ function CompareRow({
       {children.map((child, i) => (
         <div
           key={i}
-          className="flex items-center px-4 py-3 border-l border-zinc-800"
+          className="flex items-center px-3 sm:px-4 py-3 border-l border-zinc-800"
         >
           {child}
         </div>

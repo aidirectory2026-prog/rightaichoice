@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Link2, Loader2, Check } from 'lucide-react'
 import { ShareButton } from '@/components/shared/share-button'
 import { saveComparisonAction } from '@/actions/comparisons'
+import { analytics } from '@/lib/analytics'
 
 export function ComparePageActions({
   toolSlugs,
@@ -34,6 +35,7 @@ export function ComparePageActions({
 
     if (slug && !error) {
       setSaved(true)
+      analytics.compareShareClicked(toolSlugs)
       router.push(`/compare/${slug}`)
     }
 
@@ -47,7 +49,7 @@ export function ComparePageActions({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 min-h-[40px] text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -59,7 +61,7 @@ export function ComparePageActions({
       )}
 
       {saved && (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-800 bg-emerald-950/40 px-3 py-2 text-sm font-medium text-emerald-400">
+        <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-800 bg-emerald-950/40 px-3 min-h-[40px] text-sm font-medium text-emerald-400">
           <Check className="h-3.5 w-3.5" />
           Saved
         </span>

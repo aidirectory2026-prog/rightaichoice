@@ -90,7 +90,7 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
         <select
           value={currentSort}
           onChange={(e) => updateParam('sort', e.target.value)}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white focus:border-emerald-600 focus:outline-none"
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 min-h-[40px] text-sm text-white focus:border-emerald-600 focus:outline-none"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -137,7 +137,7 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
         {/* Has API toggle */}
         <button
           onClick={() => updateParam('has_api', hasApi ? '' : 'true')}
-          className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+          className={`inline-flex items-center rounded-lg border px-3 min-h-[40px] text-sm transition-colors ${
             hasApi
               ? 'border-emerald-700 bg-emerald-950 text-emerald-400'
               : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-600 hover:text-white'
@@ -204,7 +204,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`rounded-lg border px-3 py-1.5 text-sm focus:border-emerald-600 focus:outline-none transition-colors ${
+      className={`rounded-lg border px-3 min-h-[40px] text-sm focus:border-emerald-600 focus:outline-none transition-colors ${
         value
           ? 'border-emerald-700 bg-emerald-950 text-emerald-400'
           : 'border-zinc-700 bg-zinc-900 text-zinc-400'

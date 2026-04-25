@@ -194,7 +194,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   <Link
                     key={toolSlug}
                     href={`/tools/${toolSlug}`}
-                    className="rounded-md border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:border-zinc-600 transition-colors"
+                    className="inline-flex items-center rounded-md border border-zinc-700 bg-zinc-800/50 px-3 min-h-[40px] text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:border-zinc-600 transition-colors"
                   >
                     {toolSlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                   </Link>

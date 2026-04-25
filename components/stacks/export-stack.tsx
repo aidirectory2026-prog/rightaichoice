@@ -72,7 +72,7 @@ export function ExportStack({ title, goal, stages, summary, shareUrl }: ExportSt
     <div className="relative flex items-center gap-2">
       <button
         onClick={copyMarkdown}
-        className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 min-h-[40px] text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
       >
         {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
         {copied ? 'Copied!' : 'Copy as Markdown'}
@@ -81,7 +81,7 @@ export function ExportStack({ title, goal, stages, summary, shareUrl }: ExportSt
       <div className="relative">
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 min-h-[40px] text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
         >
           <Share2 className="h-3.5 w-3.5" />
           Share

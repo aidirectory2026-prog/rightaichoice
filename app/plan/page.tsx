@@ -129,31 +129,31 @@ export default async function PlanPage({ searchParams }: PageProps) {
               <div className="flex flex-wrap justify-center gap-2">
                 <Link
                   href="/tools"
-                  className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 min-h-[36px] text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   Browse all tools
                 </Link>
                 <Link
                   href="/compare"
-                  className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 min-h-[36px] text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   Compare tools
                 </Link>
                 <Link
                   href="/stacks"
-                  className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 min-h-[36px] text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   AI Stacks
                 </Link>
                 <Link
                   href="/recommend"
-                  className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 min-h-[36px] text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   Get recommendations
                 </Link>
                 <Link
                   href="/best"
-                  className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 min-h-[36px] text-xs text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   Best-of lists
                 </Link>

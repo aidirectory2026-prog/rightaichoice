@@ -113,7 +113,7 @@ export function ShareButton({ url, title, text = '', size = 'md', variant = 'ico
       {variant === 'button' ? (
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 min-h-[40px] text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
         >
           <Share2 className={size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
           Share
