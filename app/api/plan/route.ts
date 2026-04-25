@@ -50,6 +50,8 @@ type PlanStage = {
   why: string
   tools: PlanTool[]
   matchTier: MatchTier
+  capabilities?: string[]
+  pricingNote?: string
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert AI project planner for RightAIChoice.
@@ -198,13 +200,17 @@ You MUST respond with ONLY valid JSON in this exact structure:
       "description": "What happens in this stage. For consolidated stages, explicitly walk through what the tool tier covers (research, drafting, image gen, etc.) and disclose pricing honestly.",
       "why": "Why this stage is important — for consolidated stages, explain why one tool is enough.",
       "searchQuery": "simple keyword",
-      "searchCategory": "optional category slug"
+      "searchCategory": "optional category slug",
+      "capabilities": ["optional", "array of 3-6 short bullet items naming what the recommended tool covers in this stage. REQUIRED for consolidated single-stage plans. Example: 'Web research via browsing', 'Drafting and reasoning with GPT-4o', 'Image generation via DALL-E 3', 'Spreadsheet analysis'. Omit for narrow specialty stages."],
+      "pricingNote": "optional short string stating the relevant cost when paid tier is needed, e.g. '$20/mo for Plus; free tier covers ~60% (no image gen, smaller model).' Omit when free tier is sufficient."
     }
   ]
 }
 
 The 'stages' array can have 1 to 6 items. Prefer FEWER stages when one tool genuinely
-covers more of the workflow.
+covers more of the workflow. Single-stage consolidated plans MUST include the
+'capabilities' array (3-6 items) and the 'pricingNote' field if the recommended
+tier is paid.
 
 IMPORTANT: Return ONLY the JSON. No markdown, no explanation outside the JSON.`
 
@@ -419,7 +425,7 @@ export async function POST(request: Request) {
             .map((b) => (b as { type: 'text'; text: string }).text)
             .join('')
 
-          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string }
+          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string }
           type RawPlan = { title: string; summary: string; stages: RawStage[] }
 
           let plan: RawPlan
@@ -447,6 +453,8 @@ export async function POST(request: Request) {
                 why: stage.why,
                 toolResults: results.slice(0, 3),
                 matchTier: tier,
+                capabilities: stage.capabilities,
+                pricingNote: stage.pricingNote,
               }
             })
           )
@@ -459,6 +467,8 @@ export async function POST(request: Request) {
             description: stage.description,
             why: stage.why,
             matchTier: stage.matchTier,
+            ...(stage.capabilities ? { capabilities: stage.capabilities } : {}),
+            ...(stage.pricingNote ? { pricingNote: stage.pricingNote } : {}),
             tools: stage.toolResults.map((tool) => ({
               slug: tool.slug,
               name: tool.name,
@@ -603,6 +613,8 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
               why: stage.why,
               tools,
               matchTier: stage.matchTier,
+              ...(stage.capabilities ? { capabilities: stage.capabilities } : {}),
+              ...(stage.pricingNote ? { pricingNote: stage.pricingNote } : {}),
             }
           })
 

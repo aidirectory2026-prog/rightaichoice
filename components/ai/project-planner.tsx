@@ -56,6 +56,8 @@ type PlanStage = {
   why: string
   tools: PlanTool[]
   matchTier?: MatchTier
+  capabilities?: string[]
+  pricingNote?: string
 }
 
 type Plan = {
@@ -629,15 +631,49 @@ export function ProjectPlanner({
                         {plan.stages.findIndex((s) => s.id === activeStage) + 1}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white">{currentStage.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-xl font-bold text-white">{currentStage.name}</h3>
+                          {plan.stages.length === 1 && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full border border-emerald-700/50 bg-emerald-950/50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300"
+                              title="One tool covers your entire workflow — no juggling multiple subscriptions."
+                            >
+                              <Sparkles className="h-2.5 w-2.5" />
+                              All-in-one workflow
+                            </span>
+                          )}
+                        </div>
                         <p className="mt-2 text-base text-zinc-300 leading-relaxed">
                           {currentStage.description}
                         </p>
+                        {currentStage.capabilities && currentStage.capabilities.length > 0 && (
+                          <div className="mt-3 rounded-lg bg-emerald-950/15 border border-emerald-900/30 px-4 py-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+                              What this covers
+                            </p>
+                            <ul className="space-y-1.5">
+                              {currentStage.capabilities.map((cap, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                                  <span className="text-sm text-zinc-300 leading-relaxed">{cap}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                         {currentStage.why && (
                           <div className="mt-3 flex items-start gap-2 rounded-lg bg-zinc-800/30 border border-zinc-800/50 px-4 py-3">
                             <Lightbulb className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
                             <p className="text-sm text-zinc-400 leading-relaxed">
                               {currentStage.why}
+                            </p>
+                          </div>
+                        )}
+                        {currentStage.pricingNote && (
+                          <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-950/20 border border-amber-900/40 px-4 py-3">
+                            <DollarSign className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                            <p className="text-sm text-amber-200/90 leading-relaxed">
+                              {currentStage.pricingNote}
                             </p>
                           </div>
                         )}
