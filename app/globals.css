@@ -576,3 +576,41 @@
   .rai-cta-shimmer:hover::before { transform: translateX(-130%); }
   .rai-cta-shimmer:active { filter: none; box-shadow: none; }
 }
+
+/* ── Mobile polish (Step 46 Slice 7) ──────────────────────────────
+   - Prevent iOS Safari from zooming the page when tapping inputs.
+     Inputs need ≥16px font-size to avoid auto-zoom on focus. Only
+     applied on touch viewports so desktop stays whatever Tailwind set.
+   - Disable the gray tap-highlight overlay iOS draws on links/buttons.
+   - touch-action: manipulation removes the 300ms double-tap-zoom delay
+     on interactive elements.
+   - overscroll-behavior on horizontal scrollers (compare-tray pills,
+     prose tables) keeps page-level rubber-band from triggering when
+     panning a child.
+*/
+@media (max-width: 1024px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+a, button, [role="button"], input, select, textarea, label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a, button, [role="button"] {
+  touch-action: manipulation;
+}
+
+.overflow-x-auto, .overflow-auto {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
