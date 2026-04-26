@@ -185,9 +185,31 @@ The user does not need a tool for "polishing" if their primary tool already does
 - Each stage must be a distinct phase of work that crosses a real specialization gap
 - Name stages clearly: use action + noun format (e.g., "UI Design", "Content Creation", "Automation Setup")
 - Stages should flow logically from first to last
-- Keep searchQuery to 1-3 simple words that match tool names/categories
-- searchQuery/searchCategory MUST be English keywords matching real tool categories
 - Output 1-6 stages total; default to fewer when one tool can do more
+
+## searchQuery rules (CRITICAL — affects retrieval quality)
+
+The searchQuery field is fed into a tool-catalog keyword search. Bad search
+queries return irrelevant tools (e.g. "email" matches "Angry Email Translator";
+"design" matches "AI Design Sprint"). Follow these rules religiously:
+
+- **Use 2-3 words minimum** — never a single generic word. The retrieval ranker
+  rewards tools that match every keyword, so multi-word queries are sharper.
+- **Pair an action/medium noun with a domain noun.** Examples:
+  - GOOD: "video editor", "logo generator", "voice cloning", "email marketing",
+    "landing page builder", "blog writer", "thumbnail maker", "music generator",
+    "transcription tool", "image generator", "code assistant", "data dashboard"
+  - BAD: "email", "design", "video", "writing", "automation" (single generic word)
+  - BAD: "AI writing assistant" — "AI" is a stop word that matches every tool
+    in the catalog and dilutes results. Drop "AI" from searchQuery.
+- **Avoid stop words**: "ai", "tool", "tools", "app", "best", "top", "with",
+  "for", "the". They match too broadly and destroy ranking.
+- **Match how tool taglines describe themselves**: real tools say "video editor"
+  or "logo generator" in their tagline; they rarely say "video creation
+  software". Use the words the tools themselves use.
+- searchCategory is optional; only use it when you're confident the slug exists
+  (common: writing, image-generation, video, audio, design, productivity, code,
+  marketing, automation). When unsure, omit it — keyword search is enough.
 
 ## Response Format
 You MUST respond with ONLY valid JSON in this exact structure:
@@ -397,12 +419,14 @@ export async function POST(request: Request) {
           // Step 1: Decompose goal into stages (Sonnet).
           // System prompt is cached via Anthropic prompt caching (ephemeral,
           // 5-min TTL) — subsequent calls within the window skip re-processing
-          // the 1.3K-token system block. max_tokens tightened (1500 → 900)
-          // since JSON output is ~600 tokens; smaller cap = faster stream.
+          // the 1.3K-token system block. max_tokens must comfortably fit a
+          // 6-stage plan (each stage ~250 tokens incl. capabilities/pricingNote)
+          // plus title+summary; truncation here = parse failure = user sees
+          // "Failed to generate plan."
           const tDecomposition = performance.now()
           const planResponse = await anthropic.messages.create({
             model: MODEL_DECOMPOSITION,
-            max_tokens: 900,
+            max_tokens: 2500,
             system: [
               {
                 type: 'text',
@@ -433,7 +457,8 @@ export async function POST(request: Request) {
           try {
             const cleaned = planText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
             plan = JSON.parse(cleaned) as RawPlan
-          } catch {
+          } catch (parseErr) {
+            console.error('[plan_parse_fail] stop_reason=', planResponse.stop_reason, 'usage=', JSON.stringify(planResponse.usage), 'len=', planText.length, 'tail=', JSON.stringify(planText.slice(-300)), 'err=', parseErr instanceof Error ? parseErr.message : String(parseErr))
             closeWithError(500, 'Failed to generate plan. Please try again.')
             return
           }

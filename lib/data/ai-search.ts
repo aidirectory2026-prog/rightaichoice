@@ -40,6 +40,88 @@ function sanitizeLike(input: string): string {
     .slice(0, 200) // cap length to prevent oversized queries
 }
 
+// Words that match almost every tool in the catalog ("ai" hits ~95% of taglines,
+// "tool"/"app" hit most marketing copy, etc.) and therefore destroy ranking
+// signal when OR-matched. Dropped before search; if a query is *only* stop
+// words, we restore them as a last resort so we still return something.
+const STOP_WORDS = new Set([
+  'ai', 'the', 'a', 'an', 'and', 'or', 'for', 'with', 'of', 'to', 'in',
+  'on', 'at', 'by', 'tool', 'tools', 'app', 'apps', 'software', 'platform',
+  'platforms', 'best', 'top', 'free', 'paid', 'use', 'using', 'how',
+])
+
+/**
+ * Light stemming so noun-form keywords ("writer", "editor", "designer") match
+ * verb-form taglines ("writing", "edit", "design"). Without this, market-leader
+ * tools like ChatGPT (tagline: "...writing, analysis...") don't match Sonnet's
+ * "blog writer" searchQuery. We add the stem alongside the original keyword
+ * (not in place of) so exact matches still rank highest.
+ */
+function stemKeyword(kw: string): string | null {
+  const k = kw.toLowerCase()
+  if (k.length < 5) return null
+  if (k.endsWith('ing') && k.length >= 6) return k.slice(0, -3)        // writing -> writ
+  if (k.endsWith('ers') && k.length >= 6) return k.slice(0, -3)        // writers -> writ
+  if (k.endsWith('ors') && k.length >= 6) return k.slice(0, -3)        // editors -> edit
+  if (k.endsWith('er') && k.length >= 5) return k.slice(0, -2)         // writer  -> writ
+  if (k.endsWith('or') && k.length >= 5) return k.slice(0, -2)         // editor  -> edit
+  if (k.endsWith('ed') && k.length >= 5) return k.slice(0, -2)         // edited  -> edit
+  if (k.endsWith('ation') && k.length >= 7) return k.slice(0, -5)       // generation -> gener
+  if (k.endsWith('s') && k.length >= 5 && !k.endsWith('ss')) return k.slice(0, -1) // logos -> logo
+  return null
+}
+
+/**
+ * Score a candidate tool by where each keyword hits. Heavily favors name matches.
+ * If a keyword doesn't match exactly, falls back to its stem (writer→writ) at
+ * a discount — this is how we bridge "blog writer" (Sonnet) → "AI assistant
+ * for writing..." (ChatGPT tagline).
+ */
+function relevanceScore(
+  tool: { name?: string; tagline?: string; description?: string; best_for?: string[]; integrations?: string[] },
+  keywords: string[]
+): number {
+  if (keywords.length === 0) return 0
+  const name = (tool.name ?? '').toLowerCase()
+  const tagline = (tool.tagline ?? '').toLowerCase()
+  const description = (tool.description ?? '').toLowerCase()
+  const bestFor = (tool.best_for ?? []).join(' ').toLowerCase()
+  const integrations = (tool.integrations ?? []).join(' ').toLowerCase()
+
+  let score = 0
+  let nameHits = 0
+  let anyFieldHits = 0
+  for (const kw of keywords) {
+    let hit = false
+    let nameHit = false
+    if (name.includes(kw)) { score += 10; nameHit = true; hit = true }
+    if (tagline.includes(kw)) { score += 5; hit = true }
+    if (bestFor.includes(kw)) { score += 4; hit = true }
+    if (integrations.includes(kw)) { score += 2; hit = true }
+    if (description.includes(kw)) { score += 1; hit = true }
+
+    if (!hit) {
+      // Fall back to stem match at a discount.
+      const stem = stemKeyword(kw)
+      if (stem && stem.length >= 4) {
+        if (name.includes(stem)) { score += 6; nameHit = true; hit = true }
+        if (tagline.includes(stem)) { score += 3; hit = true }
+        if (bestFor.includes(stem)) { score += 2; hit = true }
+        if (description.includes(stem)) { score += 1; hit = true }
+      }
+    }
+
+    if (nameHit) nameHits += 1
+    if (hit) anyFieldHits += 1
+  }
+  // Big bonus for matching every keyword somewhere — distinguishes a tool that
+  // matches "video editor" fully from one that matches only "video".
+  if (anyFieldHits === keywords.length && keywords.length > 1) score += 25
+  // Smaller bonus if the name matches more than one keyword (e.g. "AI Video Editor").
+  if (nameHits >= 2) score += 15
+  return score
+}
+
 export async function searchToolsForAI(params: AISearchParams): Promise<AIToolResult[]> {
   const supabase = await createClient()
   const term = sanitizeLike(params.query.trim())
@@ -69,24 +151,39 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     `)
     .eq('is_published', true)
 
-  // Text search across name, tagline, description
-  // Split into keywords and match any word for better recall
+  // Build keyword list, dropping stop-words that destroy ranking signal.
+  let keywords: string[] = []
   if (term) {
-    const keywords = term
+    const raw = term
       .split(/\s+/)
       .map(sanitizeLike)
       .filter((w) => w.length >= 2)
-      .slice(0, 5) // cap to 5 keywords
+      .slice(0, 6)
+    const filtered = raw.filter((w) => !STOP_WORDS.has(w.toLowerCase()))
+    keywords = filtered.length > 0 ? filtered : raw // last-resort: keep stop-words if that's all we have
+  }
 
-    if (keywords.length > 0) {
-      // Build OR conditions: match any keyword in name, tagline, or description
-      const conditions = keywords.flatMap((kw) => [
-        `name.ilike.%${kw}%`,
-        `tagline.ilike.%${kw}%`,
-        `description.ilike.%${kw}%`,
-      ])
-      query = query.or(conditions.join(','))
-    }
+  // Expand keywords with stems so noun-form queries match verb-form taglines.
+  // The stems are also passed to the scorer so it can reward stem matches at
+  // a discount (full match = +10 name, stem match = +6 name).
+  const searchPatterns: string[] = []
+  for (const kw of keywords) {
+    searchPatterns.push(kw)
+    const stem = stemKeyword(kw)
+    if (stem && stem.length >= 4 && !STOP_WORDS.has(stem)) searchPatterns.push(stem)
+  }
+  const uniquePatterns = [...new Set(searchPatterns)]
+
+  if (uniquePatterns.length > 0) {
+    // OR across name/tagline/description for recall. best_for[] is an array
+    // column — we re-rank against it in JS after fetch rather than predicating
+    // on it here (Postgres array ilike across .or() is awkward).
+    const conditions = uniquePatterns.flatMap((kw) => [
+      `name.ilike.%${kw}%`,
+      `tagline.ilike.%${kw}%`,
+      `description.ilike.%${kw}%`,
+    ])
+    query = query.or(conditions.join(','))
   }
 
   if (categoryToolIds) {
@@ -105,7 +202,11 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     query = query.contains('platforms', [params.platform])
   }
 
-  query = query.order('avg_rating', { ascending: false }).limit(10)
+  // Pull a wider candidate pool so JS-side relevance ranking can pick the best
+  // out of many. Avg_rating is the seed-order field, but until reviews land
+  // (currently 0 across the whole catalog) it carries no signal — relevance
+  // ranking has to do the real work below.
+  query = query.order('avg_rating', { ascending: false }).limit(40)
 
   const { data, error } = await query
   if (error) return []
@@ -117,11 +218,13 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
       .select(`
         id, name, slug, tagline, description, pricing_type, skill_level,
         has_api, platforms, avg_rating, review_count, website_url,
+        integrations, best_for,
         tool_categories(categories(name)),
         tool_tags(tags(name))
       `)
       .eq('is_published', true)
       .order('avg_rating', { ascending: false })
+      .order('review_count', { ascending: false })
       .limit(6)
 
     const { data: fallbackData } = await fallbackQuery
@@ -133,7 +236,44 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
 
   if (!data) return []
 
-  return data.map(mapTool)
+  // Re-rank by relevance score, with review_count + avg_rating as tie-breakers.
+  // Stable for ties via final name comparison so output is deterministic.
+  const lcKeywords = keywords.map((k) => k.toLowerCase())
+  const ranked = data
+    .map((tool) => ({
+      tool,
+      score: relevanceScore(tool, lcKeywords),
+    }))
+    // Drop zero-score rows when we *did* have meaningful keywords — they
+    // sneaked in via stop-word OR matches and are not relevant. If we have
+    // no keywords (browse mode), keep everything.
+    .filter((row) => lcKeywords.length === 0 || row.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      if ((b.tool.review_count ?? 0) !== (a.tool.review_count ?? 0)) {
+        return (b.tool.review_count ?? 0) - (a.tool.review_count ?? 0)
+      }
+      if ((b.tool.avg_rating ?? 0) !== (a.tool.avg_rating ?? 0)) {
+        return (b.tool.avg_rating ?? 0) - (a.tool.avg_rating ?? 0)
+      }
+      return (a.tool.name ?? '').localeCompare(b.tool.name ?? '')
+    })
+
+  // Dedupe by case-insensitive name. The catalog has ~38 name collisions
+  // across distinct slugs (e.g. "fusionads.ai" exists as slugs fusionos-ai
+  // AND fusionads-ai). Showing the same name twice in one stage looks broken
+  // even when the rows are technically distinct.
+  const seen = new Set<string>()
+  const deduped: typeof ranked = []
+  for (const row of ranked) {
+    const key = (row.tool.name ?? '').trim().toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(row)
+    if (deduped.length >= 10) break
+  }
+
+  return deduped.map((r) => mapTool(r.tool))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
