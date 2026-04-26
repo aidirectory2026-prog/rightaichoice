@@ -49,7 +49,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-6 py-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-emerald-400" />
-            <h2 className="text-base font-semibold text-white">Personalize your top picks</h2>
+            <h2 className="text-base font-semibold text-white">A few decisions before we recommend your stack</h2>
           </div>
           {onClose && (
             <button
@@ -63,9 +63,9 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
-          <p className="text-sm text-zinc-400">
-            Answer a few quick questions so we can tailor the stack to what actually fits{' '}
-            <span className="text-white font-medium">your skill, budget, and team</span>. Takes ~30 seconds.
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            The right stack looks completely different depending on who's building it. A solo founder on a tight budget needs different tools than a 20-person team that can afford the premium tier. Take a moment to confirm{' '}
+            <span className="text-white font-medium">your skill, budget, team, and goal</span> — these are the decisions that make our recommendation honest and useful to you, not a generic list.
           </p>
 
           {/* Skill */}
@@ -131,14 +131,14 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
               onClick={onSkip}
               className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              Skip & use defaults
+              Skip — recommend without context
             </button>
             <button
               type="submit"
               className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
             >
               <Sparkles className="h-4 w-4" />
-              Personalize my plan
+              Recommend my stack
             </button>
           </div>
         </form>

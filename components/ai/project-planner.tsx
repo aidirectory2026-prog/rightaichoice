@@ -144,16 +144,11 @@ export function ProjectPlanner({
 
     analytics.planStarted('plan_page')
 
-    // If no profile saved yet, show intake modal first and defer the run
-    const savedProfile = profile ?? loadProfile()
-    if (!savedProfile) {
-      setQuery(searchQuery)
-      pendingQueryRef.current = searchQuery
-      setShowIntake(true)
-      return
-    }
-
-    await runPlan(searchQuery, savedProfile)
+    // Always confirm the decisions that shape the recommendation before running.
+    // Pre-fills from any saved profile so returning users can confirm in one click.
+    setQuery(searchQuery)
+    pendingQueryRef.current = searchQuery
+    setShowIntake(true)
   }
 
   async function runPlan(searchQuery: string, userProfile: UserProfile | null) {
