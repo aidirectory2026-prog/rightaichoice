@@ -58,6 +58,13 @@ type PlanStage = {
   matchTier?: MatchTier
   capabilities?: string[]
   pricingNote?: string
+  /**
+   * Phase 7 Step 50 (BUG-005): names of tools the LLM recommended that aren't
+   * in our catalog. Rendered as ghost cards with a "not in catalog yet"
+   * label so users see we considered the tool rather than substituting an
+   * unrelated popular tool.
+   */
+  notInCatalog?: string[]
 }
 
 type Plan = {
@@ -109,21 +116,30 @@ export function ProjectPlanner({
     if (saved) setProfile(saved)
   }, [])
 
-  // Computed stats from the plan
+  // Computed stats from the plan.
+  // Phase 7 Step 50 (BUG-007): single source of truth — dedupe by slug ONCE,
+  // then derive every count from the deduped list. Old code mixed deduped
+  // `totalTools` (Set size) with raw `allTools` pricing/rating counts, so the
+  // header tile showed N distinct tools while the pricing-mix summed to a
+  // larger raw count. Now header, pricing breakdown, and rating tile all
+  // describe the same N tools.
   const planStats = useMemo(() => {
     if (!plan) return null
     const allTools = plan.stages.flatMap((s) => s.tools)
-    const uniqueTools = new Set(allTools.map((t) => t.slug))
-    const freeTools = allTools.filter((t) => t.pricing === 'free').length
-    const freemiumTools = allTools.filter((t) => t.pricing === 'freemium').length
-    const paidTools = allTools.filter((t) => t.pricing === 'paid').length
-    const avgRating = allTools.length > 0
-      ? allTools.reduce((sum, t) => sum + (t.rating || 0), 0) / allTools.filter((t) => t.rating > 0).length
+    const dedupedTools = Array.from(
+      new Map(allTools.map((t) => [t.slug, t])).values()
+    )
+    const freeTools = dedupedTools.filter((t) => t.pricing === 'free').length
+    const freemiumTools = dedupedTools.filter((t) => t.pricing === 'freemium').length
+    const paidTools = dedupedTools.filter((t) => t.pricing === 'paid').length
+    const ratedTools = dedupedTools.filter((t) => t.rating > 0)
+    const avgRating = ratedTools.length > 0
+      ? ratedTools.reduce((sum, t) => sum + t.rating, 0) / ratedTools.length
       : 0
-    const totalReviews = allTools.reduce((sum, t) => sum + (t.reviewCount || 0), 0)
+    const totalReviews = dedupedTools.reduce((sum, t) => sum + (t.reviewCount || 0), 0)
 
     return {
-      totalTools: uniqueTools.size,
+      totalTools: dedupedTools.length,
       totalStages: plan.stages.length,
       freeTools,
       freemiumTools,
@@ -678,7 +694,8 @@ export function ProjectPlanner({
 
                   {/* Tools */}
                   <div className="p-6">
-                    {currentStage.tools.length > 0 && (
+                    {(currentStage.tools.length > 0 ||
+                      (currentStage.notInCatalog?.length ?? 0) > 0) && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between mb-1 gap-3">
                           <div className="flex items-center gap-2 min-w-0">
@@ -873,6 +890,45 @@ export function ProjectPlanner({
                             </div>
                           </Link>
                         ))}
+
+                        {/* Phase 7 Step 50 (BUG-005): LLM-named tools we don't
+                            have in the catalog yet. Rendered as ghost cards so
+                            the user sees the AI's actual recommendation rather
+                            than a popularity-sorted substitute. */}
+                        {currentStage.notInCatalog && currentStage.notInCatalog.length > 0 && (
+                          <>
+                            {currentStage.notInCatalog.map((name) => (
+                              <div
+                                key={`ghost-${name}`}
+                                className="group/card relative flex items-start gap-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 p-5"
+                              >
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-700/50 bg-zinc-800/40 text-base font-bold text-zinc-400">
+                                  {name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-base font-semibold text-zinc-300">
+                                      {name}
+                                    </p>
+                                    <span className="text-[10px] font-medium rounded-full px-2 py-0.5 bg-zinc-800/80 border border-zinc-700/50 text-zinc-400 uppercase tracking-wider">
+                                      Not in catalog yet
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-zinc-500 mt-1 leading-relaxed">
+                                    The AI recommended this tool but we don&apos;t have a page for it yet.
+                                    Search the web for the latest, or suggest we add it.
+                                  </p>
+                                  <Link
+                                    href={`/contact?suggest=${encodeURIComponent(name)}`}
+                                    className="mt-2 inline-flex items-center gap-1 text-[11px] text-emerald-500 hover:text-emerald-400 transition-colors"
+                                  >
+                                    Suggest this tool <ArrowRight className="h-2.5 w-2.5" />
+                                  </Link>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

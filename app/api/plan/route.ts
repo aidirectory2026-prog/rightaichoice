@@ -8,6 +8,8 @@ import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
 import { refinePrompt } from '@/lib/plan/refine-prompt'
 import { searchStageTools, type MatchTier } from '@/lib/plan/stage-search'
 import { runQualityGate, broadenRetrieval, shouldRunQualityGate } from '@/lib/plan/quality-gate'
+import { resolveToolsByName } from '@/lib/plan/resolve-tools'
+import type { AIToolResult } from '@/lib/data/ai-search'
 import type { UserProfile } from '@/lib/plan/user-profile'
 import {
   SKILL_LABELS,
@@ -53,6 +55,13 @@ type PlanStage = {
   matchTier: MatchTier
   capabilities?: string[]
   pricingNote?: string
+  /**
+   * Phase 7 Step 50 (BUG-005): names of tools the LLM recommended that aren't
+   * in our catalog. Client renders one ghost card per name with a
+   * "not in catalog yet — suggest this tool" CTA. Honest about the gap rather
+   * than silently substituting an unrelated popular tool.
+   */
+  notInCatalog?: string[]
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert AI project planner for RightAIChoice.
@@ -211,6 +220,30 @@ queries return irrelevant tools (e.g. "email" matches "Angry Email Translator";
   (common: writing, image-generation, video, audio, design, productivity, code,
   marketing, automation). When unsure, omit it — keyword search is enough.
 
+## recommendedTools rules (CRITICAL — these become the rendered tool cards)
+
+The recommendedTools field is the PRIMARY signal for which tool cards get rendered
+to the user for this stage. List 1-3 specific AI tools you're recommending, using
+their canonical product name. Examples:
+- ["ChatGPT", "Beehiiv"]
+- ["Cursor", "GitHub Copilot"]
+- ["Midjourney"]
+- ["ElevenLabs"]
+- ["Runway", "Pika"]
+
+Rules:
+- Use the official product name as it appears in marketing (ChatGPT not "GPT-4o";
+  Beehiiv not "Beehiiv newsletter platform"; Midjourney not "MJ").
+- Drop tier suffixes ("Plus", "Pro", "Team", "Enterprise") — name the product, not the plan.
+- 1-3 tools max per stage. Prefer fewer — quality over quantity.
+- These tools MUST match what you reference in 'description' and 'capabilities'.
+  If the description says "ChatGPT Plus handles your research", ChatGPT must
+  appear in recommendedTools. Mismatch between prose and recommendedTools is a bug.
+- It's fine to name a tool that may not be in our catalog yet — we'll render a
+  "not in catalog yet" placeholder card so the user knows we considered it.
+  Better to be honest about a gap than to substitute an unrelated tool.
+- ALWAYS provide at least one recommendedTool per stage. Never omit this field.
+
 ## Response Format
 You MUST respond with ONLY valid JSON in this exact structure:
 {
@@ -224,6 +257,7 @@ You MUST respond with ONLY valid JSON in this exact structure:
       "why": "Why this stage is important — for consolidated stages, explain why one tool is enough.",
       "searchQuery": "simple keyword",
       "searchCategory": "optional category slug",
+      "recommendedTools": ["ChatGPT", "Beehiiv"],
       "capabilities": ["optional", "array of 3-6 short bullet items naming what the recommended tool covers in this stage. REQUIRED for consolidated single-stage plans. Example: 'Web research via browsing', 'Drafting and reasoning with GPT-4o', 'Image generation via DALL-E 3', 'Spreadsheet analysis'. Omit for narrow specialty stages."],
       "pricingNote": "optional short string stating the relevant cost when paid tier is needed, e.g. '$20/mo for Plus; free tier covers ~60% (no image gen, smaller model).' Omit when free tier is sufficient."
     }
@@ -450,7 +484,7 @@ export async function POST(request: Request) {
             .map((b) => (b as { type: 'text'; text: string }).text)
             .join('')
 
-          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string }
+          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string; recommendedTools?: string[] }
           type RawPlan = { title: string; summary: string; stages: RawStage[] }
 
           let plan: RawPlan
@@ -463,25 +497,57 @@ export async function POST(request: Request) {
             return
           }
 
-          // Step 2: Parallel DB search per stage (no Claude)
+          // Step 2: Per-stage tool assembly. Phase 7 Step 50 (BUG-005):
+          // LLM-named tools (recommendedTools) are PRIMARY — render whatever the
+          // model actually said in prose. Keyword search fills any remaining
+          // slots up to 3. Names that don't resolve in the catalog become
+          // notInCatalog placeholders so the user sees an honest gap instead of
+          // an unrelated popular substitute.
           const tSearch = performance.now()
           let stagesWithTools = await Promise.all(
             plan.stages.map(async (stage) => {
-              const { results, tier } = await searchStageTools({
-                searchQuery: stage.searchQuery ?? stage.name,
-                ...(stage.searchCategory ? { searchCategory: stage.searchCategory } : {}),
-                fallbackKeywords: refined.intentKeywords,
-              })
+              const requestedNames = stage.recommendedTools ?? []
+              const [resolvedNamed, search] = await Promise.all([
+                resolveToolsByName(requestedNames, supabase),
+                searchStageTools({
+                  searchQuery: stage.searchQuery ?? stage.name,
+                  ...(stage.searchCategory ? { searchCategory: stage.searchCategory } : {}),
+                  fallbackKeywords: refined.intentKeywords,
+                }),
+              ])
+
+              const namedTools: AIToolResult[] = resolvedNamed
+                .map((r) => r.resolved)
+                .filter((t): t is AIToolResult => t !== null)
+                .slice(0, 3)
+              const notInCatalog: string[] = resolvedNamed
+                .filter((r) => r.resolved === null)
+                .map((r) => r.requestedName)
+
+              const namedSlugs = new Set(namedTools.map((t) => t.slug))
+              const slotsLeft = Math.max(0, 3 - namedTools.length)
+              const fillFromSearch = search.results
+                .filter((t) => !namedSlugs.has(t.slug))
+                .slice(0, slotsLeft)
+
+              const merged = [...namedTools, ...fillFromSearch]
+
+              // matchTier: 'keyword' when any LLM-named tool resolved (high
+              // confidence: model named it AND we have it). Otherwise the search
+              // tier reflects how the keyword fallback faired.
+              const finalTier: MatchTier = namedTools.length > 0 ? 'keyword' : search.tier
+
               return {
                 id: stage.id,
                 name: stage.name,
                 description: stage.description,
                 why: stage.why,
                 searchQuery: stage.searchQuery ?? stage.name,
-                toolResults: results.slice(0, 3),
-                matchTier: tier,
+                toolResults: merged,
+                matchTier: finalTier,
                 capabilities: stage.capabilities,
                 pricingNote: stage.pricingNote,
+                notInCatalog,
               }
             })
           )
@@ -525,6 +591,9 @@ export async function POST(request: Request) {
             matchTier: stage.matchTier,
             ...(stage.capabilities ? { capabilities: stage.capabilities } : {}),
             ...(stage.pricingNote ? { pricingNote: stage.pricingNote } : {}),
+            ...(stage.notInCatalog && stage.notInCatalog.length > 0
+              ? { notInCatalog: stage.notInCatalog }
+              : {}),
             tools: stage.toolResults.map((tool) => ({
               slug: tool.slug,
               name: tool.name,
@@ -671,6 +740,9 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
               matchTier: stage.matchTier,
               ...(stage.capabilities ? { capabilities: stage.capabilities } : {}),
               ...(stage.pricingNote ? { pricingNote: stage.pricingNote } : {}),
+              ...(stage.notInCatalog && stage.notInCatalog.length > 0
+                ? { notInCatalog: stage.notInCatalog }
+                : {}),
             }
           })
 

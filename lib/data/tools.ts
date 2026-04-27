@@ -220,12 +220,30 @@ export async function logSearch(query: string, resultCount: number, userId?: str
   })
 }
 
-export async function getAlternativeTools(toolId: string, categoryIds: string[], limit = 4) {
+/**
+ * Phase 7 Step 50 (BUG-015): rank "Alternatives" by semantic similarity to the
+ * source tool, not by raw view_count within a category. The old behavior
+ * returned the most-viewed tools that happened to share any category with the
+ * source tool, which is why /tools/claude listed MarsX, AI Flashcard Maker,
+ * and Mexty as alternatives — they're popular tools that share a coarse
+ * category with Claude but solve completely different problems.
+ *
+ * Scoring per candidate:
+ *   - +5 per shared tag with the source tool
+ *   - +2 per tagline word ≥4 chars also present in source tagline
+ *   - +small log of view_count for tiebreaker
+ * Candidates with score < 1 are dropped (signals truly unrelated tool).
+ */
+export async function getAlternativeTools(
+  toolId: string,
+  categoryIds: string[],
+  limit = 4,
+  opts?: { sourceTagIds?: string[]; sourceTagline?: string; sourceName?: string }
+) {
   const supabase = await createClient()
 
   if (categoryIds.length === 0) return []
 
-  // Get tool IDs in the same categories
   const { data: relatedIds } = await supabase
     .from('tool_categories')
     .select('tool_id')
@@ -238,13 +256,91 @@ export async function getAlternativeTools(toolId: string, categoryIds: string[],
 
   const { data } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count')
+    .select(
+      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, tool_tags(tag_id)`
+    )
     .eq('is_published', true)
     .in('id', uniqueIds)
-    .order('view_count', { ascending: false })
-    .limit(limit)
+    .limit(80)
 
-  return data ?? []
+  if (!data || data.length === 0) return []
+
+  const sourceTagSet = new Set(opts?.sourceTagIds ?? [])
+  const sourceWords = (opts?.sourceTagline ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 4)
+  const sourceWordSet = new Set(sourceWords)
+  const sourceNameLower = (opts?.sourceName ?? '').trim().toLowerCase()
+
+  type Row = {
+    id: string
+    name: string
+    slug: string
+    tagline: string | null
+    logo_url: string | null
+    website_url: string | null
+    pricing_type: string
+    avg_rating: number | null
+    review_count: number | null
+    view_count: number | null
+    tool_tags: Array<{ tag_id: string }> | null
+  }
+
+  const scored = (data as Row[])
+    .map((row) => {
+      const candTagIds = (row.tool_tags ?? []).map((t) => t.tag_id)
+      let score = 0
+      for (const tid of candTagIds) {
+        if (sourceTagSet.has(tid)) score += 5
+      }
+      const candTagline = (row.tagline ?? '').toLowerCase()
+      let wordOverlap = 0
+      for (const w of sourceWordSet) {
+        if (candTagline.includes(w)) wordOverlap += 1
+      }
+      score += wordOverlap * 2
+      // Small popularity tiebreaker — never enough to overpower a real signal,
+      // but breaks ties between equally-related candidates.
+      score += Math.log10((row.view_count ?? 0) + 1) * 0.5
+      return { row, score }
+    })
+    .filter((x) => {
+      // Require ≥1 of: shared tag, OR shared tagline word.
+      // Pure-popularity matches (score from view_count alone, ~0.5–2) are dropped.
+      if (sourceTagSet.size === 0 && sourceWordSet.size === 0) {
+        // No source signal supplied — caller is on the legacy code path.
+        // Fall back to ordering by view_count to match old behaviour.
+        return true
+      }
+      // Score from a single shared tag = 5, single shared word = 2. Threshold of
+      // 2 keeps tag-overlap and word-overlap matches, drops popularity-only.
+      return x.score >= 2
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((x) => {
+      const candNameLower = x.row.name.trim().toLowerCase()
+      // Belt-and-braces: never return the source tool itself if a name collision
+      // sneaks past the .neq('tool_id', toolId) filter (catalog has known
+      // distinct-slug name collisions).
+      if (sourceNameLower && candNameLower === sourceNameLower) return null
+      return {
+        id: x.row.id,
+        name: x.row.name,
+        slug: x.row.slug,
+        tagline: x.row.tagline ?? '',
+        logo_url: x.row.logo_url,
+        website_url: x.row.website_url,
+        pricing_type: x.row.pricing_type,
+        avg_rating: x.row.avg_rating ?? 0,
+        review_count: x.row.review_count ?? 0,
+      }
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null)
+
+  return scored
 }
 
 export async function isToolSaved(toolId: string, userId: string): Promise<boolean> {

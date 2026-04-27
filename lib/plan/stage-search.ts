@@ -46,8 +46,12 @@ export async function searchStageTools(params: {
     if (tier3.length > 0) return { results: tier3, tier: 'emergency' }
   }
 
-  // Tier 4: top-rated catalog — searchToolsForAI's own fallback kicks in
-  // when the query matches nothing, returning top 6 by rating.
-  const final = await searchToolsForAI({ query: params.searchQuery })
-  return { results: final, tier: 'emergency' }
+  // Tier 4: no keyword match. Return empty so the route never silently
+  // surfaces popularity-sorted unrelated tools. Phase 7 Step 50 (BUG-005):
+  // the always-something guarantee is now satisfied by the LLM-named
+  // recommendedTools resolved in route.ts and "not in catalog yet"
+  // placeholders for unresolved names. Triggering the old top-rated catalog
+  // fallback here was the root cause of the planner returning Zendesk +
+  // Workday for a newsletter prompt.
+  return { results: [], tier: 'emergency' }
 }
