@@ -911,18 +911,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
               {/* Alternatives */}
               {alternatives.length > 0 && (
                 <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white">
-                      Alternatives to {tool.name}
-                    </h2>
-                    <Link
-                      href={`/tools?category=${categories[0]?.slug ?? ''}`}
-                      className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                    >
-                      View all
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
+                  <h2 className="text-lg font-semibold text-white mb-4">
+                    Alternatives to {tool.name}
+                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {alternatives.map((alt) => (
                       <ToolCard key={alt.id} tool={alt} />
