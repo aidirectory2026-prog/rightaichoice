@@ -20,11 +20,16 @@ export const metadata: Metadata = {
 export default async function CategoriesPage() {
   const categories = await getCategories()
 
-  // Get tool counts per category
+  // Phase 7 Step 56 (BUG-018): count published tools per category, not raw
+  // tool_categories rows. Inner-joining `tools` with is_published=true filters
+  // out drafts/unpublished tools so the per-category count matches what
+  // /tools?category=<slug> actually renders. Without the filter, drafts and
+  // hidden tools inflate every category's count and erode trust.
   const supabase = await createClient()
   const { data: counts } = await supabase
     .from('tool_categories')
-    .select('category_id')
+    .select('category_id, tools!inner(is_published)')
+    .eq('tools.is_published', true)
   const countMap: Record<string, number> = {}
   ;(counts ?? []).forEach((row: { category_id: string }) => {
     countMap[row.category_id] = (countMap[row.category_id] ?? 0) + 1

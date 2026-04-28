@@ -2,10 +2,11 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Zap, Users, Brain, Shield, BarChart3, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 export const metadata = {
   title: 'About',
-  description: 'RightAIChoice is the decision-making engine for the AI ecosystem. 500+ verified tools, community intelligence, and AI-powered recommendations.',
+  description: `RightAIChoice is the decision-making engine for the AI ecosystem. ${TOOL_COUNT_DISPLAY} verified tools, community intelligence, and AI-powered recommendations.`,
 }
 
 export default function AboutPage() {
@@ -57,7 +58,7 @@ export default function AboutPage() {
                 <div className="flex items-start gap-3">
                   <BarChart3 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
                   <div>
-                    <h3 className="text-sm font-semibold text-white mb-1">500+ Verified AI Tools</h3>
+                    <h3 className="text-sm font-semibold text-white mb-1">{TOOL_COUNT_DISPLAY} Verified AI Tools</h3>
                     <p className="text-sm text-zinc-500">
                       Every tool in our directory undergoes a structured verification process. We analyze the
                       tool&apos;s website, documentation, pricing pages, and public APIs to build accurate,

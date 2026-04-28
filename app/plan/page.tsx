@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ProjectPlanner } from '@/components/ai/project-planner'
 import { createClient } from '@/lib/supabase/server'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -53,7 +54,7 @@ export default async function PlanPage({ searchParams }: PageProps) {
                 </span>
               </h1>
               <p className="mt-6 text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-                Describe your goal in plain language. Our AI analyzes 1,000+ tools,
+                Describe your goal in plain language. Our AI analyzes {TOOL_COUNT_DISPLAY} tools,
                 breaks your project into stages, and recommends the perfect tool
                 for each step.
               </p>
@@ -106,7 +107,7 @@ export default async function PlanPage({ searchParams }: PageProps) {
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
               <div>
-                <p className="text-3xl font-bold text-white">1,000+</p>
+                <p className="text-3xl font-bold text-white">{TOOL_COUNT_DISPLAY}</p>
                 <p className="text-xs text-zinc-500 mt-1">AI tools analyzed</p>
               </div>
               <div>

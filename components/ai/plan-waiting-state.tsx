@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Sparkles, Zap, Layers, TrendingUp, CheckCircle2, Loader2 } from 'lucide-react'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 /**
  * PlanWaitingState
@@ -18,7 +19,7 @@ const SLOW_THRESHOLD_SECONDS = 15
 const TEASERS: Array<{ icon: typeof Sparkles; title: string; body: string }> = [
   {
     icon: Layers,
-    title: 'Matching across 1,500+ tools',
+    title: `Matching across ${TOOL_COUNT_DISPLAY} tools`,
     body: 'We weigh pricing, skill level, integrations, and real user sentiment — not just tags.',
   },
   {
@@ -46,7 +47,7 @@ const TEASERS: Array<{ icon: typeof Sparkles; title: string; body: string }> = [
 const STAGES = [
   'Reading your goal',
   'Breaking it into stages',
-  'Scanning 1,500+ tools',
+  `Scanning ${TOOL_COUNT_DISPLAY} tools`,
   'Scoring for your profile',
   'Assembling the stack',
 ]
@@ -108,7 +109,7 @@ export function PlanWaitingState({ query }: { query: string }) {
           <h2 className="text-balance text-2xl font-bold tracking-tight text-white sm:text-3xl">
             {isSlow
               ? 'Still working — we pick quality over speed'
-              : 'Analyzing 1,500+ AI tools to build your exact stack'}
+              : `Analyzing ${TOOL_COUNT_DISPLAY} AI tools to build your exact stack`}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
             For <span className="font-medium text-zinc-300">&ldquo;{query}&rdquo;</span>

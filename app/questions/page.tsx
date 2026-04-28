@@ -135,14 +135,19 @@ export default async function QuestionsPage({ searchParams }: PageProps) {
             </div>
           </div>
 
-          {/* Question list */}
-          <QuestionList
-            questions={questions}
-            userVotes={userVotes}
-            showTool={true}
-          />
-
-          {questions.length === 0 && (
+          {/* Question list — Phase 7 Step 56 (BUG-004): single empty state.
+              Was: QuestionList rendered its tool-page-flavored "No questions
+              yet — ask about this tool" empty card AND the page rendered a
+              second "No questions match your filters" block. They stacked.
+              Now: render the list only when populated, and branch the empty
+              state on whether any filter is active. */}
+          {questions.length > 0 ? (
+            <QuestionList
+              questions={questions}
+              userVotes={userVotes}
+              showTool={true}
+            />
+          ) : answered !== 'all' ? (
             <div className="py-16 text-center">
               <MessageSquare className="mx-auto h-10 w-10 text-zinc-700 mb-3" />
               <p className="text-zinc-500 text-sm">
@@ -151,6 +156,29 @@ export default async function QuestionsPage({ searchParams }: PageProps) {
                   Clear filters
                 </Link>
               </p>
+            </div>
+          ) : (
+            <div className="py-16 text-center">
+              <MessageSquare className="mx-auto h-10 w-10 text-zinc-700 mb-3" />
+              <p className="text-sm font-medium text-zinc-300">No questions yet</p>
+              <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
+                Be the first to ask the community about an AI tool.
+              </p>
+              {user ? (
+                <Link
+                  href="/questions/ask"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+                >
+                  Ask the first question
+                </Link>
+              ) : (
+                <Link
+                  href="/login?next=/questions/ask"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+                >
+                  Sign in to ask
+                </Link>
+              )}
             </div>
           )}
 
