@@ -20,7 +20,7 @@
 -- ============================================================
 
 UPDATE tools SET website_url = 'https://www.coursebox.ai/pricing', updated_at = now()
-WHERE slug = 'ai-flashcard-maker-by-coursebox' AND website_url LIKE '%fpr=%';
+WHERE slug = 'ai-flashcard-maker' AND website_url LIKE '%fpr=%';
 
 UPDATE tools SET website_url = 'https://meshcapade.com', updated_at = now()
 WHERE slug = 'meshcapade' AND website_url LIKE '%futurepedia%';
@@ -32,7 +32,7 @@ UPDATE tools SET website_url = 'https://audiosocket.com', updated_at = now()
 WHERE slug = 'audiosocket' AND website_url LIKE '%fpr=%';
 
 UPDATE tools SET website_url = 'https://customgpt.ai', updated_at = now()
-WHERE slug = 'customgpt-ai' AND website_url LIKE '%fpr=%';
+WHERE slug = 'customgpt' AND website_url LIKE '%fpr=%';
 
 UPDATE tools SET website_url = 'https://recruitcrm.io', updated_at = now()
 WHERE slug = 'recruit-crm' AND website_url LIKE '%fpr=%';
