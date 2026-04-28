@@ -279,6 +279,32 @@ const IDENTITY_TAGS = new Set([
  */
 const GENERAL_LLM_TAG = 'general-purpose-llm'
 
+/**
+ * Tags that are applied so liberally across the catalog that they carry no
+ * "this is the same product type" signal. Stripped from BOTH source and
+ * candidate before scoring/gating so a Supabase/Hugging-Face overlap on
+ * `open-source` + `api-tool` + `rag` doesn't surface Hugging Face as a
+ * Supabase alternative. (~100-150 tools each in seed data.)
+ *
+ * IDENTITY_TAGS, GENERAL_LLM_TAG, and product-type tags (image-generation,
+ * voice-cloning, etc.) are deliberately NOT here — they're the discriminating
+ * signal we want to preserve.
+ */
+const TAG_STOP_WORDS = new Set([
+  'open-source',
+  'api-tool',
+  'rag',
+  'agent',
+  'workflow',
+  'fine-tuning',
+  'automation',
+  // Skill-level / pricing markers that occasionally appear as content tags
+  'beginner',
+  'intermediate',
+  'advanced',
+  'expert',
+])
+
 const TAGLINE_STOP_WORDS = new Set([
   // generic AI/SaaS marketing terms
   'powered',
@@ -369,7 +395,14 @@ export async function getAlternativeTools(
 
   if (!data || data.length === 0) return []
 
-  const sourceTagSet = new Set(opts?.sourceTagSlugs ?? [])
+  // Strip generic high-frequency tags from the source signal so a Supabase
+  // page doesn't try to match candidates on `open-source` alone. The full
+  // unfiltered set is still used for the LLM-tag check below (since
+  // GENERAL_LLM_TAG is not a stop word).
+  const sourceTagsRaw = new Set(opts?.sourceTagSlugs ?? [])
+  const sourceTagSet = new Set(
+    [...sourceTagsRaw].filter((slug) => !TAG_STOP_WORDS.has(slug))
+  )
   const sourceIdentityTags = new Set(
     [...sourceTagSet].filter((slug) => IDENTITY_TAGS.has(slug))
   )
@@ -397,7 +430,9 @@ export async function getAlternativeTools(
   }
 
   const useIdentityGate = sourceIdentityTags.size > 0
-  const sourceIsGeneralLLM = sourceTagSet.has(GENERAL_LLM_TAG)
+  // LLM-tag check uses the unfiltered source set since GENERAL_LLM_TAG is not
+  // a stop word — both Supabase-class and Claude-class sources route correctly.
+  const sourceIsGeneralLLM = sourceTagsRaw.has(GENERAL_LLM_TAG)
 
   const scored = (data as unknown as Row[])
     .map((row) => {
@@ -405,7 +440,10 @@ export async function getAlternativeTools(
         if (!t.tags) return []
         return Array.isArray(t.tags) ? t.tags.map((x) => x.slug) : [t.tags.slug]
       })
-      const candTagSet = new Set(candTagSlugs)
+      // Full set (used for the LLM-tag check) and stop-word-filtered set
+      // (used for similarity scoring/gating).
+      const candTagSetRaw = new Set(candTagSlugs)
+      const candTagSet = new Set(candTagSlugs.filter((s) => !TAG_STOP_WORDS.has(s)))
       const sharedIdentity = [...sourceIdentityTags].filter((s) => candTagSet.has(s))
       const sharedAnyTag = [...sourceTagSet].filter((s) => candTagSet.has(s))
       const sharedNonIdentity = sharedAnyTag.filter((s) => !IDENTITY_TAGS.has(s))
@@ -425,7 +463,7 @@ export async function getAlternativeTools(
       // but breaks ties between equally-related candidates.
       score += Math.log10((row.view_count ?? 0) + 1) * 0.5
 
-      return { row, score, sharedIdentity, sharedAnyTag, candTagSet }
+      return { row, score, sharedIdentity, sharedAnyTag, candTagSetRaw }
     })
     .filter((x) => {
       // LLM whitelist gate (highest precedence). When source is a general-
@@ -435,7 +473,7 @@ export async function getAlternativeTools(
       // "Alternatives to Claude" given that the catalog applies `chatbot`
       // and `text-generation` tags too liberally.
       if (sourceIsGeneralLLM) {
-        return x.candTagSet.has(GENERAL_LLM_TAG)
+        return x.candTagSetRaw.has(GENERAL_LLM_TAG)
       }
       if (useIdentityGate) {
         // Source has identity tag(s) → alternative must share ≥1.
