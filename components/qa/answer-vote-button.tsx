@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { ArrowBigUp } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import { voteOnAnswer } from '@/actions/questions'
 import { useRouter } from 'next/navigation'
 
@@ -17,13 +18,14 @@ export function AnswerVoteButton({
 }) {
   const { user } = useAuth()
   const router = useRouter()
+  const loginHref = useAuthHref('/login')
   const [currentVote, setCurrentVote] = useState(initialVote)
   const [count, setCount] = useState(upvotes)
   const [isPending, startTransition] = useTransition()
 
   function handleVote() {
     if (!user) {
-      router.push('/login')
+      router.push(loginHref)
       return
     }
 

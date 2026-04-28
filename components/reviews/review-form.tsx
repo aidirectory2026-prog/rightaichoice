@@ -4,10 +4,12 @@ import { useActionState, useState } from 'react'
 import { Star } from 'lucide-react'
 import { submitReview } from '@/actions/reviews'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import Link from 'next/link'
 
 export function ReviewForm({ toolId }: { toolId: string }) {
   const { user } = useAuth()
+  const loginHref = useAuthHref('/login')
   const [state, action, isPending] = useActionState(submitReview, null)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -16,7 +18,7 @@ export function ReviewForm({ toolId }: { toolId: string }) {
     return (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center">
         <p className="text-sm text-zinc-400">
-          <Link href="/login" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+          <Link href={loginHref} className="text-emerald-400 hover:text-emerald-300 transition-colors">
             Sign in
           </Link>{' '}
           to write a review

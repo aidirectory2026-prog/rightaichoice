@@ -3,11 +3,13 @@
 import { useActionState, useState } from 'react'
 import { submitReply } from '@/actions/discussions'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
 
 export function ReplyForm({ discussionId }: { discussionId: string }) {
   const { user } = useAuth()
+  const loginHref = useAuthHref('/login')
   const [state, action, isPending] = useActionState(submitReply, null)
   const [open, setOpen] = useState(false)
 
@@ -15,7 +17,7 @@ export function ReplyForm({ discussionId }: { discussionId: string }) {
     return (
       <p className="text-xs text-zinc-500">
         <Link
-          href="/login"
+          href={loginHref}
           className="text-emerald-400 hover:text-emerald-300 transition-colors"
         >
           Sign in

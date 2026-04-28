@@ -181,7 +181,7 @@ export default function AboutPage() {
               </p>
             </div>
             <Link
-              href="/signup"
+              href="/signup?next=/about"
               className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
             >
               Get started

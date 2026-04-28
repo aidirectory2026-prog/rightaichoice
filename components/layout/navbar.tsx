@@ -2,31 +2,20 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
-
-// Phase 7 redirect-back: build /login or /signup URL preserving the user's
-// current path so they land back where they were after auth. Skip on auth
-// pages themselves (avoid /login?next=/login loops) and on /dashboard
-// (post-auth landing — passing next=/dashboard is a no-op anyway).
-function authHref(target: '/login' | '/signup', current: string): string {
-  if (!current || current === '/' || current.startsWith('/login') || current.startsWith('/signup') || current.startsWith('/dashboard')) {
-    return target
-  }
-  return `${target}?next=${encodeURIComponent(current)}`
-}
 
 export function Navbar() {
   const { user, profile } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const current = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
-  const loginHref = authHref('/login', current)
-  const signupHref = authHref('/signup', current)
+  // Phase 7 Step 58 (BUG-019): shared `useAuthHref` hook replaces the inline
+  // `authHref()` helper that used to live here. Same redirect-back contract,
+  // one source of truth for every "Sign in to X" CTA in the app.
+  const loginHref = useAuthHref('/login')
+  const signupHref = useAuthHref('/signup')
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">

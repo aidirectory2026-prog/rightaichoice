@@ -3,10 +3,12 @@
 import { useActionState } from 'react'
 import { submitQuestion } from '@/actions/questions'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import Link from 'next/link'
 
 export function QuestionForm({ toolId }: { toolId: string }) {
   const { user } = useAuth()
+  const loginHref = useAuthHref('/login')
   const [state, action, isPending] = useActionState(submitQuestion, null)
 
   if (!user) {
@@ -14,7 +16,7 @@ export function QuestionForm({ toolId }: { toolId: string }) {
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center">
         <p className="text-sm text-zinc-400">
           <Link
-            href="/login"
+            href={loginHref}
             className="text-emerald-400 hover:text-emerald-300 transition-colors"
           >
             Sign in

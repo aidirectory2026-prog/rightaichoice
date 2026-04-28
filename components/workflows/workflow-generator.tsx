@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Sparkles, Loader2, RotateCcw, BookmarkPlus, Check, AlertCircle } from 'lucide-react'
 import { WorkflowStepDisplay } from '@/components/workflows/workflow-step-display'
 import { saveWorkflowAction } from '@/actions/workflows'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import { analytics } from '@/lib/analytics'
 import type { WorkflowStep } from '@/types'
 
@@ -32,6 +33,10 @@ export function WorkflowGenerator({ isAuthenticated = true }: { isAuthenticated?
   const [savedId, setSavedId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState('')
   const [isPending, startTransition] = useTransition()
+  // Phase 7 Step 58 (BUG-019): preserve /workflows/generate as `?next=` so
+  // users land back on the generator after auth instead of /dashboard.
+  const loginHref = useAuthHref('/login')
+  const signupHref = useAuthHref('/signup')
 
   async function handleGenerate(goalText?: string) {
     const target = goalText ?? goal.trim()
@@ -98,13 +103,13 @@ export function WorkflowGenerator({ isAuthenticated = true }: { isAuthenticated?
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link
-            href="/signup"
+            href={signupHref}
             className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm font-medium text-white transition-colors"
           >
             Create free account
           </Link>
           <Link
-            href="/login"
+            href={loginHref}
             className="rounded-lg border border-zinc-700 hover:border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:text-white transition-colors"
           >
             Sign in

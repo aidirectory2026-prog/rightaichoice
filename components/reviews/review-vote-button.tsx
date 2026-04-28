@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { ArrowBigUp, ArrowBigDown } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useAuthHref } from '@/lib/hooks/use-auth-href'
 import { voteOnReview } from '@/actions/reviews'
 import { useRouter } from 'next/navigation'
 
@@ -19,13 +20,14 @@ export function ReviewVoteButton({
 }) {
   const { user } = useAuth()
   const router = useRouter()
+  const loginHref = useAuthHref('/login')
   const [currentVote, setCurrentVote] = useState(initialVote)
   const [counts, setCounts] = useState({ up: upvotes, down: downvotes })
   const [isPending, startTransition] = useTransition()
 
   function handleVote(direction: 'up' | 'down') {
     if (!user) {
-      router.push('/login')
+      router.push(loginHref)
       return
     }
 
