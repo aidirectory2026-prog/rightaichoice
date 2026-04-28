@@ -239,12 +239,6 @@ export async function logSearch(query: string, resultCount: number, userId?: str
  */
 
 const IDENTITY_TAGS = new Set([
-  // LLM / chat assistants
-  'chatbot',
-  'llm',
-  'language-model',
-  'text-generation',
-  'conversational-ai',
   // Image
   'image-generation',
   'image-editing',
@@ -269,6 +263,33 @@ const IDENTITY_TAGS = new Set([
   // Avatars / agents
   'ai-avatar',
   'autonomous-agent',
+])
+
+/**
+ * Curated whitelist of general-purpose LLMs in the catalog. Used as a hard
+ * filter when the source tool is one of these — otherwise specialized tools
+ * that happen to share `chatbot` or `text-generation` tags (Sourcegraph Cody
+ * has `chatbot` for its UI; INK Editor has `text-generation` because it
+ * generates SEO copy) sneak into "Alternatives to Claude" and break trust.
+ *
+ * `chatbot` and `text-generation` are deliberately NOT in IDENTITY_TAGS above
+ * because the catalog applies them too liberally. This whitelist is the
+ * targeted fix for the LLM-alternatives case.
+ *
+ * TODO: replace with a `general-purpose-llm` tag in the catalog so this list
+ * is data-driven instead of code-maintained. Keep this list current until then.
+ */
+const GENERAL_LLM_SLUGS = new Set([
+  'chatgpt',
+  'claude',
+  'gemini',
+  'cohere',
+  'mistral',
+  'perplexity',
+  'ai21-labs',
+  'deepseek',
+  'zhipu-ai',
+  'moonshot-ai',
 ])
 
 const TAGLINE_STOP_WORDS = new Set([
@@ -329,7 +350,12 @@ export async function getAlternativeTools(
   toolId: string,
   categoryIds: string[],
   limit = 4,
-  opts?: { sourceTagSlugs?: string[]; sourceTagline?: string; sourceName?: string }
+  opts?: {
+    sourceSlug?: string
+    sourceTagSlugs?: string[]
+    sourceTagline?: string
+    sourceName?: string
+  }
 ) {
   const supabase = await createClient()
 
@@ -384,6 +410,7 @@ export async function getAlternativeTools(
   }
 
   const useIdentityGate = sourceIdentityTags.size > 0
+  const sourceIsGeneralLLM = !!opts?.sourceSlug && GENERAL_LLM_SLUGS.has(opts.sourceSlug)
 
   const scored = (data as unknown as Row[])
     .map((row) => {
@@ -414,9 +441,18 @@ export async function getAlternativeTools(
       return { row, score, sharedIdentity, sharedAnyTag }
     })
     .filter((x) => {
+      // LLM whitelist gate (highest precedence). When source is a general-
+      // purpose LLM (Claude, ChatGPT, Gemini, …), alternatives MUST also be
+      // in the whitelist. This is the only reliable way to keep specialized
+      // tools (Sourcegraph Cody, INK Editor) out of "Alternatives to Claude"
+      // given that the catalog applies `chatbot` and `text-generation` tags
+      // too liberally.
+      if (sourceIsGeneralLLM) {
+        return GENERAL_LLM_SLUGS.has(x.row.slug)
+      }
       if (useIdentityGate) {
-        // Hard gate: source has identity tag(s) → alternative must share ≥1.
-        // This is what filters out Mintlify / INK Editor as Claude alternatives.
+        // Source has identity tag(s) → alternative must share ≥1.
+        // Filters Mintlify-style cross-domain matches.
         return x.sharedIdentity.length >= 1
       }
       // Source has no identity tag (niche specialty). Fall back to "any signal":

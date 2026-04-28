@@ -132,10 +132,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
   // Fetch community data in parallel — each section is fault-tolerant
   const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks, editorialCompares] = await Promise.all([
-    // Phase 7 Step 50 (BUG-015): pass tag slugs + tagline so alternatives rank
-    // by IDENTITY similarity (chatbot, llm, image-generation) — not raw
-    // popularity within a coarse shared category.
+    // Phase 7 Step 50 (BUG-015): pass slug + tag slugs + tagline so the
+    // ranker can apply the general-LLM whitelist (Claude, ChatGPT, Gemini …)
+    // and the IDENTITY_TAGS gate for image/video/voice tools.
     getAlternativeTools(tool.id, categoryIds, 4, {
+      sourceSlug: tool.slug,
       sourceTagSlugs: tagSlugs,
       sourceTagline: tool.tagline ?? '',
       sourceName: tool.name,
