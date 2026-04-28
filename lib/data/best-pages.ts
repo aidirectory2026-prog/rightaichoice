@@ -121,7 +121,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best Free AI Tools',
     h1: 'Best Free AI Tools (No Credit Card Required)',
     description:
-      'Discover the best free AI tools available in 2025 — with generous free tiers, no credit card required. Covers writing, image generation, coding, productivity, and more.',
+      'Discover the best free AI tools available in 2026 — with generous free tiers, no credit card required. Covers writing, image generation, coding, productivity, and more.',
   },
   {
     slug: 'beginners',

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description:
     'Curated lists of the best AI tools by category and use case. Find the top tools for writing, coding, design, productivity, SEO, and more.',
   openGraph: {
-    title: 'Best AI Tools Guides 2025',
+    title: 'Best AI Tools Guides 2026',
     description: 'Curated rankings of the best AI tools by use case.',
   },
 }
