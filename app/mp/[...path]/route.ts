@@ -37,6 +37,16 @@ async function forward(req: NextRequest, params: { path: string[] }) {
   // Propagate the user agent so Mixpanel device/browser parsing works.
   const ua = req.headers.get('user-agent')
   if (ua) headers.set('user-agent', ua)
+  // Phase 7 Step 54 (BUG-003): forward Authorization. Session-replay (/record)
+  // sends `Authorization: Basic base64(token:)` — track/engage put the token in
+  // the body so they didn't need this. Without forwarding, /mp/record/ → 401
+  // and replays never reach Mixpanel. See node_modules/mixpanel-browser/src/
+  // recorder/session-recording.js:451.
+  const auth = req.headers.get('authorization')
+  if (auth) headers.set('authorization', auth)
+  // rrweb payloads can be gzip-compressed; preserve the encoding hint.
+  const contentEncoding = req.headers.get('content-encoding')
+  if (contentEncoding) headers.set('content-encoding', contentEncoding)
 
   const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer()
 
