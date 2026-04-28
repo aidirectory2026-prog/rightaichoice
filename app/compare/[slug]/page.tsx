@@ -12,7 +12,7 @@ import {
   getComparisonBySlug,
   getToolsForComparisonByIds,
 } from '@/lib/data/comparisons'
-import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd } from '@/lib/seo/json-ld'
+import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
 
 type TldrRow = { dimension: string; values: Record<string, string> }
 type UseCaseRow = { persona: string; recommendedSlug: string; reasoning: string }
@@ -130,8 +130,16 @@ export default async function ComparisonSlugPage({ params }: Props) {
     { name: 'Compare', url: '/compare' },
     { name: toolNames.join(' vs '), url: `/compare/${slug}` },
   ])
+  // Phase 7 Step 59 (BUG-021): emit ItemList of SoftwareApplications for
+  // each tool in the comparison. Editorial route already had FAQ + Breadcrumb
+  // + optional Article schema; the missing piece was the tools themselves
+  // expressed as structured products.
+  const itemList = comparisonJsonLd(
+    tools as unknown as Parameters<typeof comparisonJsonLd>[0],
+    `/compare/${slug}`,
+  )
 
-  const jsonLdBlocks: Record<string, unknown>[] = [faq, breadcrumbs]
+  const jsonLdBlocks: Record<string, unknown>[] = [faq, breadcrumbs, itemList]
   if (editorial.is_editorial) {
     jsonLdBlocks.push(
       articleJsonLd({

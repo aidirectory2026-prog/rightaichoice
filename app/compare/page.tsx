@@ -11,6 +11,11 @@ import {
 import { getCategories } from '@/lib/data/categories'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
 import { CompareEmptyState } from '@/components/compare/compare-empty-state'
+import {
+  breadcrumbJsonLd,
+  comparisonJsonLd,
+  jsonLdScriptProps,
+} from '@/lib/seo/json-ld'
 
 type PageProps = {
   searchParams: Promise<{ tools?: string }>
@@ -181,8 +186,23 @@ export default async function ComparePage({ searchParams }: PageProps) {
 
   const toolNames = tools.map((t: { name: string }) => t.name)
 
+  // Phase 7 Step 59 (BUG-021): structured data for SERP rich-results.
+  // Was missing entirely on /compare?tools= — only the editorial slug route
+  // emitted JSON-LD before. Both routes now emit Breadcrumb + ItemList of
+  // SoftwareApplications.
+  const compareUrl = `/compare?tools=${slugs.join(',')}`
+  const jsonLdBlocks = [
+    breadcrumbJsonLd([
+      { name: 'Home', url: '/' },
+      { name: 'Compare', url: '/compare' },
+      { name: toolNames.join(' vs '), url: compareUrl },
+    ]),
+    comparisonJsonLd(tools, compareUrl),
+  ]
+
   return (
     <>
+      <script {...jsonLdScriptProps(jsonLdBlocks)} />
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
