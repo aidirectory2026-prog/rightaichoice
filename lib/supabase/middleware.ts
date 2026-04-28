@@ -32,7 +32,13 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
+    // Phase 7 redirect-back: preserve the original path so the user lands
+    // back where they were trying to go after signing in. Includes the
+    // search string so query-state is round-tripped (e.g. /plan?q=...).
+    const original = request.nextUrl.pathname + request.nextUrl.search
     url.pathname = '/login'
+    url.search = ''
+    url.searchParams.set('next', original)
     return NextResponse.redirect(url)
   }
 

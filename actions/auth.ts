@@ -20,6 +20,13 @@ type AuthState = {
 // `minLength={PASSWORD_MIN}` so the two policies can never drift again.
 const PASSWORD_MIN = 8
 
+// Only allow same-origin relative paths — never open redirects.
+function safeNext(raw: FormDataEntryValue | null, fallback = '/dashboard'): string {
+  if (typeof raw !== 'string') return fallback
+  if (!raw.startsWith('/') || raw.startsWith('//')) return fallback
+  return raw
+}
+
 // ─── Sign Up ────────────────────────────────────────────────────────────────
 
 export async function signUp(_prevState: AuthState, formData: FormData): Promise<AuthState> {
@@ -28,6 +35,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const username = formData.get('username') as string
+  const next = safeNext(formData.get('next'))
 
   // BUG-010: enforce 8 chars BEFORE Supabase. Otherwise Supabase's default
   // policy (6 chars) would accept what the FE rejected, and the QA-reported
@@ -39,12 +47,18 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     }
   }
 
+  // Phase 7 redirect-back: thread `next` into the email-confirmation link so
+  // /auth/confirm honors it. User clicks the email link → /auth/confirm
+  // verifies the token → redirects to `next` instead of /dashboard.
+  const confirmUrl = new URL('/auth/confirm', process.env.NEXT_PUBLIC_APP_URL)
+  if (next !== '/dashboard') confirmUrl.searchParams.set('next', next)
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { username },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
+      emailRedirectTo: confirmUrl.toString(),
     },
   })
 
@@ -62,6 +76,7 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const next = safeNext(formData.get('next'))
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -70,7 +85,7 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect(next)
 }
 
 // ─── Sign Out ────────────────────────────────────────────────────────────────
@@ -129,13 +144,17 @@ export async function updatePassword(_prevState: AuthState, formData: FormData):
 
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(formData?: FormData): Promise<void> {
   const supabase = await createClient()
+  const next = safeNext(formData?.get('next') ?? null)
+
+  const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL)
+  callbackUrl.searchParams.set('next', next)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: callbackUrl.toString(),
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',

@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp, signInWithGoogle } from '@/actions/auth'
 import { GoogleIcon } from '@/components/shared/google-icon'
@@ -8,6 +9,8 @@ import { Logo } from '@/components/shared/logo'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signUp, null)
+  const searchParams = useSearchParams()
+  const nextParam = searchParams.get('next') ?? ''
 
   if (state?.success) {
     return (
@@ -38,10 +41,17 @@ export default function SignupPage() {
           second `<form>`. Two `<form>` elements with submit buttons used to
           let keyboard Tab from the heading land on the OAuth submit BEFORE
           the username field, and any "submit the first form on the page"
-          script triggered OAuth instead of the email/password form. */}
+          script triggered OAuth instead of the email/password form.
+          Phase 7 redirect-back: pass `next` to signInWithGoogle via a
+          one-shot FormData so OAuth signups respect the same redirect
+          contract as email signups. */}
       <button
         type="button"
-        onClick={() => signInWithGoogle()}
+        onClick={() => {
+          const fd = new FormData()
+          if (nextParam) fd.set('next', nextParam)
+          signInWithGoogle(fd)
+        }}
         className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
       >
         <GoogleIcon />
@@ -55,6 +65,10 @@ export default function SignupPage() {
       </div>
 
       <form action={action} className="space-y-4">
+        {/* Phase 7 redirect-back: thread `next` to signUp action so the
+            email-confirmation link includes it and /auth/confirm redirects
+            the user back to where they signed up from. */}
+        {nextParam && <input type="hidden" name="next" value={nextParam} />}
         <div className="space-y-1.5">
           <label htmlFor="username" className="block text-sm font-medium text-zinc-300">
             Username
@@ -129,7 +143,10 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-zinc-500">
         Already have an account?{' '}
-        <Link href="/login" className="text-white hover:underline">
+        <Link
+          href={nextParam ? `/login?next=${encodeURIComponent(nextParam)}` : '/login'}
+          className="text-white hover:underline"
+        >
           Sign in
         </Link>
       </p>

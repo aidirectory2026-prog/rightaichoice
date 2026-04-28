@@ -2,14 +2,31 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 
+// Phase 7 redirect-back: build /login or /signup URL preserving the user's
+// current path so they land back where they were after auth. Skip on auth
+// pages themselves (avoid /login?next=/login loops) and on /dashboard
+// (post-auth landing — passing next=/dashboard is a no-op anyway).
+function authHref(target: '/login' | '/signup', current: string): string {
+  if (!current || current === '/' || current.startsWith('/login') || current.startsWith('/signup') || current.startsWith('/dashboard')) {
+    return target
+  }
+  return `${target}?next=${encodeURIComponent(current)}`
+}
+
 export function Navbar() {
   const { user, profile } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const current = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+  const loginHref = authHref('/login', current)
+  const signupHref = authHref('/signup', current)
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
@@ -83,14 +100,14 @@ export function Navbar() {
           ) : (
             <>
               <Link
-                href="/login"
+                href={loginHref}
                 className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
               >
                 <LogIn className="h-4 w-4" />
                 Sign in
               </Link>
               <Link
-                href="/signup"
+                href={signupHref}
                 onClick={() => analytics.signupStarted('navbar_desktop')}
                 className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
               >
@@ -185,14 +202,14 @@ export function Navbar() {
             ) : (
               <>
                 <Link
-                  href="/login"
+                  href={loginHref}
                   onClick={() => setMobileOpen(false)}
                   className="block rounded-lg px-3.5 py-2 text-sm text-zinc-400 hover:text-white"
                 >
                   Sign in
                 </Link>
                 <Link
-                  href="/signup"
+                  href={signupHref}
                   onClick={() => setMobileOpen(false)}
                   className="block rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white text-center"
                 >

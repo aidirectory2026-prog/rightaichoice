@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [state, action, pending] = useActionState(signIn, null)
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
+  const nextParam = searchParams.get('next') ?? ''
   const authError = errorParam ? AUTH_ERRORS[errorParam] ?? 'Something went wrong. Please try again.' : null
 
   return (
@@ -34,10 +35,17 @@ export default function LoginPage() {
       )}
 
       {/* Phase 7 Step 53 (BUG-012): Google CTA is a plain button, not a
-          second `<form>`. See signup/page.tsx for full rationale. */}
+          second `<form>`. See signup/page.tsx for full rationale.
+          Phase 7 redirect-back: pass `next` to signInWithGoogle via a
+          one-shot FormData so OAuth respects the same redirect contract as
+          email login. */}
       <button
         type="button"
-        onClick={() => signInWithGoogle()}
+        onClick={() => {
+          const fd = new FormData()
+          if (nextParam) fd.set('next', nextParam)
+          signInWithGoogle(fd)
+        }}
         className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
       >
         <GoogleIcon />
@@ -51,6 +59,7 @@ export default function LoginPage() {
       </div>
 
       <form action={action} className="space-y-4">
+        {nextParam && <input type="hidden" name="next" value={nextParam} />}
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
             Email
@@ -107,7 +116,10 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-zinc-500">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-white hover:underline">
+        <Link
+          href={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'}
+          className="text-white hover:underline"
+        >
           Sign up
         </Link>
       </p>
