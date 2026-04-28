@@ -36,5 +36,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Phase 7 Step 53 (BUG-008): authed users hitting /login or /signup
+  // bounce to /dashboard. Scoped to those two exact paths — putting this
+  // in the (auth) layout would break /update-password and /forgot-password,
+  // which legitimately require an authed session (magic-link callback flow).
+  const authOnlyPaths = ['/login', '/signup']
+  if (authOnlyPaths.includes(request.nextUrl.pathname) && user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
   return supabaseResponse
 }
