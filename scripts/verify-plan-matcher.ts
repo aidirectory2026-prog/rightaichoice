@@ -140,6 +140,28 @@ console.log('\nEdge cases')
   check('single-char name → none (too short to be useful)', result.matchKind, 'none')
 }
 
+// ─────────────────────────────────────────────────────────────
+// Alternatives-ranking sanity (BUG-015 follow-up)
+// ─────────────────────────────────────────────────────────────
+//
+// The v1 fix shipped with category-only ranking and let Mintlify (documentation
+// platform) and INK Editor (SEO writer) surface as Claude alternatives because
+// they share generic capability tags like writing-assistant. v2 introduces an
+// IDENTITY_TAGS gate so the score depends on chatbot / text-generation /
+// image-generation etc. rather than every tag equally.
+//
+// We can't unit-test the DB query here, but we *can* document the expected
+// behaviour as a checklist for the live-site repro. After deploy:
+//   /tools/claude  → alternatives must NOT include INK Editor or Mintlify
+//                    Mintlify shares 2 tags with Claude (writing-assistant,
+//                    code-generation) but neither is an identity tag, so the
+//                    new gate filters it.
+//   /tools/claude  → alternatives SHOULD include any of {ChatGPT, Gemini,
+//                    Mistral, Cohere, Perplexity, Llama} that exist in catalog
+//                    — they share `chatbot` and/or `text-generation` (identity
+//                    tags) with Claude.
+//   /tools/midjourney → alternatives SHOULD share `image-generation`.
+
 console.log('')
 if (failures > 0) {
   console.error(`✗ ${failures} verification failure(s).`)

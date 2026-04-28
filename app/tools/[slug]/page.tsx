@@ -124,7 +124,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const categories = tool.tool_categories?.map((tc: { categories: { id: string; name: string; slug: string; icon: string | null } }) => tc.categories).filter(Boolean) ?? []
   const tags = tool.tool_tags?.map((tt: { tags: { id: string; name: string; slug: string } }) => tt.tags).filter(Boolean) ?? []
   const categoryIds = categories.map((c: { id: string }) => c.id)
-  const tagIds = tags.map((t: { id: string }) => t.id)
+  const tagSlugs = tags.map((t: { slug: string }) => t.slug)
 
   // Get alternatives + check saved status in parallel
   const supabase = await createClient()
@@ -132,10 +132,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
   // Fetch community data in parallel — each section is fault-tolerant
   const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks, editorialCompares] = await Promise.all([
-    // Phase 7 Step 50 (BUG-015): pass tag ids + tagline so alternatives rank by
-    // semantic similarity instead of pure popularity-within-category.
+    // Phase 7 Step 50 (BUG-015): pass tag slugs + tagline so alternatives rank
+    // by IDENTITY similarity (chatbot, llm, image-generation) — not raw
+    // popularity within a coarse shared category.
     getAlternativeTools(tool.id, categoryIds, 4, {
-      sourceTagIds: tagIds,
+      sourceTagSlugs: tagSlugs,
       sourceTagline: tool.tagline ?? '',
       sourceName: tool.name,
     }).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),

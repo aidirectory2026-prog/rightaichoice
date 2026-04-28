@@ -221,24 +221,115 @@ export async function logSearch(query: string, resultCount: number, userId?: str
 }
 
 /**
- * Phase 7 Step 50 (BUG-015): rank "Alternatives" by semantic similarity to the
- * source tool, not by raw view_count within a category. The old behavior
- * returned the most-viewed tools that happened to share any category with the
- * source tool, which is why /tools/claude listed MarsX, AI Flashcard Maker,
- * and Mexty as alternatives — they're popular tools that share a coarse
- * category with Claude but solve completely different problems.
+ * Phase 7 Step 50 (BUG-015): rank "Alternatives" by *identity* similarity, not
+ * raw popularity-within-category. Iteration 2 — earlier scoring let Mintlify
+ * (documentation platform) and INK Editor (SEO writer) surface as alternatives
+ * to Claude because they share generic capability tags like `writing-assistant`
+ * and `code-generation`. Identity tags (`chatbot`, `text-generation`, etc.) are
+ * what actually defines a tool's product type, so they dominate the score.
  *
- * Scoring per candidate:
- *   - +5 per shared tag with the source tool
- *   - +2 per tagline word ≥4 chars also present in source tagline
- *   - +small log of view_count for tiebreaker
- * Candidates with score < 1 are dropped (signals truly unrelated tool).
+ * Scoring per candidate (when the source has at least one identity tag):
+ *   - +10 per shared IDENTITY tag (chatbot, llm, image-generation, …)
+ *   - +3  per shared NON-identity tag (writing-assistant, research, …)
+ *   - +1  per non-stop-word tagline word ≥4 chars also in source tagline
+ *   - +log10(view_count)*0.5 tiebreaker
+ *   - HARD GATE: must share at least one identity tag — otherwise filtered.
+ * When source has no identity tag (niche/specialty tool), fall back to: tag
+ * overlap (any tag) + word overlap, score ≥ 5.
  */
+
+const IDENTITY_TAGS = new Set([
+  // LLM / chat assistants
+  'chatbot',
+  'llm',
+  'language-model',
+  'text-generation',
+  'conversational-ai',
+  // Image
+  'image-generation',
+  'image-editing',
+  'image-editor',
+  // Video
+  'video-generation',
+  'video-editing',
+  'video-editor',
+  // Audio / voice
+  'voice-cloning',
+  'voice-generation',
+  'tts',
+  'transcription',
+  'music-generation',
+  'audio-generation',
+  // Search / research engines
+  'ai-search',
+  'search-engine',
+  // Code IDEs (the product, not "writes code as a side effect")
+  'ai-ide',
+  'code-completion',
+  // Avatars / agents
+  'ai-avatar',
+  'autonomous-agent',
+])
+
+const TAGLINE_STOP_WORDS = new Set([
+  // generic AI/SaaS marketing terms
+  'powered',
+  'platform',
+  'tool',
+  'tools',
+  'software',
+  'solution',
+  'solutions',
+  'service',
+  'services',
+  'product',
+  'application',
+  'system',
+  // pronouns / fillers
+  'with',
+  'your',
+  'this',
+  'that',
+  'from',
+  'into',
+  'over',
+  'using',
+  'helps',
+  'help',
+  'make',
+  'makes',
+  'create',
+  'creates',
+  'build',
+  'builds',
+  'manage',
+  // generic descriptors
+  'assistant',
+  'helper',
+  'driven',
+  'enhanced',
+  'enabled',
+  'integrated',
+  'advanced',
+  'simple',
+  'easy',
+  'fast',
+  'powerful',
+  'better',
+  'modern',
+  'professional',
+  'comprehensive',
+  // "real-time" / "next-gen" survives the alpha-only filter as "realtime"
+  'realtime',
+  'real',
+  'time',
+])
+
 export async function getAlternativeTools(
   toolId: string,
   categoryIds: string[],
   limit = 4,
-  opts?: { sourceTagIds?: string[]; sourceTagline?: string; sourceName?: string }
+  opts?: { sourceTagSlugs?: string[]; sourceTagline?: string; sourceName?: string }
 ) {
   const supabase = await createClient()
 
@@ -257,7 +348,7 @@ export async function getAlternativeTools(
   const { data } = await supabase
     .from('tools')
     .select(
-      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, tool_tags(tag_id)`
+      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, tool_tags(tags(slug))`
     )
     .eq('is_published', true)
     .in('id', uniqueIds)
@@ -265,13 +356,17 @@ export async function getAlternativeTools(
 
   if (!data || data.length === 0) return []
 
-  const sourceTagSet = new Set(opts?.sourceTagIds ?? [])
-  const sourceWords = (opts?.sourceTagline ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length >= 4)
-  const sourceWordSet = new Set(sourceWords)
+  const sourceTagSet = new Set(opts?.sourceTagSlugs ?? [])
+  const sourceIdentityTags = new Set(
+    [...sourceTagSet].filter((slug) => IDENTITY_TAGS.has(slug))
+  )
+  const sourceWordSet = new Set(
+    (opts?.sourceTagline ?? '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 4 && !TAGLINE_STOP_WORDS.has(w))
+  )
   const sourceNameLower = (opts?.sourceName ?? '').trim().toLowerCase()
 
   type Row = {
@@ -285,46 +380,57 @@ export async function getAlternativeTools(
     avg_rating: number | null
     review_count: number | null
     view_count: number | null
-    tool_tags: Array<{ tag_id: string }> | null
+    tool_tags: Array<{ tags: { slug: string } | { slug: string }[] | null }> | null
   }
 
-  const scored = (data as Row[])
+  const useIdentityGate = sourceIdentityTags.size > 0
+
+  const scored = (data as unknown as Row[])
     .map((row) => {
-      const candTagIds = (row.tool_tags ?? []).map((t) => t.tag_id)
+      const candTagSlugs = (row.tool_tags ?? []).flatMap((t) => {
+        if (!t.tags) return []
+        return Array.isArray(t.tags) ? t.tags.map((x) => x.slug) : [t.tags.slug]
+      })
+      const candTagSet = new Set(candTagSlugs)
+      const sharedIdentity = [...sourceIdentityTags].filter((s) => candTagSet.has(s))
+      const sharedAnyTag = [...sourceTagSet].filter((s) => candTagSet.has(s))
+      const sharedNonIdentity = sharedAnyTag.filter((s) => !IDENTITY_TAGS.has(s))
+
       let score = 0
-      for (const tid of candTagIds) {
-        if (sourceTagSet.has(tid)) score += 5
-      }
+      score += sharedIdentity.length * 10
+      score += sharedNonIdentity.length * 3
+
       const candTagline = (row.tagline ?? '').toLowerCase()
       let wordOverlap = 0
       for (const w of sourceWordSet) {
         if (candTagline.includes(w)) wordOverlap += 1
       }
-      score += wordOverlap * 2
+      score += wordOverlap
+
       // Small popularity tiebreaker — never enough to overpower a real signal,
       // but breaks ties between equally-related candidates.
       score += Math.log10((row.view_count ?? 0) + 1) * 0.5
-      return { row, score }
+
+      return { row, score, sharedIdentity, sharedAnyTag }
     })
     .filter((x) => {
-      // Require ≥1 of: shared tag, OR shared tagline word.
-      // Pure-popularity matches (score from view_count alone, ~0.5–2) are dropped.
+      if (useIdentityGate) {
+        // Hard gate: source has identity tag(s) → alternative must share ≥1.
+        // This is what filters out Mintlify / INK Editor as Claude alternatives.
+        return x.sharedIdentity.length >= 1
+      }
+      // Source has no identity tag (niche specialty). Fall back to "any signal":
+      // ≥1 shared tag OR ≥3 shared non-stop tagline words.
       if (sourceTagSet.size === 0 && sourceWordSet.size === 0) {
         // No source signal supplied — caller is on the legacy code path.
-        // Fall back to ordering by view_count to match old behaviour.
         return true
       }
-      // Score from a single shared tag = 5, single shared word = 2. Threshold of
-      // 2 keeps tag-overlap and word-overlap matches, drops popularity-only.
-      return x.score >= 2
+      return x.sharedAnyTag.length >= 1 || x.score >= 5
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => {
       const candNameLower = x.row.name.trim().toLowerCase()
-      // Belt-and-braces: never return the source tool itself if a name collision
-      // sneaks past the .neq('tool_id', toolId) filter (catalog has known
-      // distinct-slug name collisions).
       if (sourceNameLower && candNameLower === sourceNameLower) return null
       return {
         id: x.row.id,
