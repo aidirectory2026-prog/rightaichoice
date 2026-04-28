@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { safeNext } from '@/lib/auth/safe-next'
 
 // Handles email confirmation links.
 // Supabase PKCE flow sends ?code=... after verifying the token server-side.
@@ -10,7 +11,9 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as 'signup' | 'recovery' | 'magiclink' | null
-  const next = searchParams.get('next') ?? '/dashboard'
+  // Phase 7 Step 57 (BUG-020): validate `next` to block open-redirect.
+  // See lib/auth/safe-next.ts for the rationale.
+  const next = safeNext(searchParams.get('next'))
 
   const supabase = await createClient()
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { safeNext } from '@/lib/auth/safe-next'
 
 /**
  * Phase 7 Step 53 (BUG-011, BUG-013): action returns the non-secret fields
@@ -20,12 +21,10 @@ type AuthState = {
 // `minLength={PASSWORD_MIN}` so the two policies can never drift again.
 const PASSWORD_MIN = 8
 
-// Only allow same-origin relative paths — never open redirects.
-function safeNext(raw: FormDataEntryValue | null, fallback = '/dashboard'): string {
-  if (typeof raw !== 'string') return fallback
-  if (!raw.startsWith('/') || raw.startsWith('//')) return fallback
-  return raw
-}
+// Phase 7 Step 57 (BUG-020): `safeNext` lives in lib/auth/safe-next.ts so the
+// /auth/callback and /auth/confirm route handlers can share the same guard.
+// Was previously inlined here, leaving the route handlers vulnerable to
+// open-redirect (next=//evil.com).
 
 // ─── Sign Up ────────────────────────────────────────────────────────────────
 

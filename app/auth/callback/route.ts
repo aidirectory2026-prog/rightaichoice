@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { serverAnalytics } from '@/lib/mixpanel-server'
+import { safeNext } from '@/lib/auth/safe-next'
 
 // Handles both Google OAuth redirect and email magic-link/reset redirects.
 // Supabase sends ?code=... for OAuth and ?token_hash=...&type=... for email flows.
@@ -21,7 +22,10 @@ function getClientIp(request: Request): string | undefined {
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  // Phase 7 Step 57 (BUG-020): validate `next` to block open-redirect.
+  // Without safeNext, /auth/callback?code=...&next=//evil.com would phish
+  // users mid-auth-flow with fresh session cookies in the browser.
+  const next = safeNext(searchParams.get('next'))
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as
     | 'signup'
