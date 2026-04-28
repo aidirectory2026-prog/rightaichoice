@@ -32,7 +32,11 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Tools for Coding & Development',
     description:
       'Find the best AI coding assistants, code completion tools, and developer productivity tools. From GitHub Copilot to Cursor — compare the top options.',
-    categories: ['developer-code'],
+    // Phase 7 Step 52 (BUG-016): was `developer-code` which doesn't exist in
+    // the categories table. The canonical seed slug is `code-development`.
+    // Same phantom-slug class as the sitemap /compare/ bug — page rendered
+    // empty because Supabase silently returned 0 tool IDs.
+    categories: ['code-development'],
   },
   {
     slug: 'image-generation',
@@ -40,7 +44,9 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Image Generation Tools',
     description:
       'Compare the top AI image generators including Midjourney, DALL-E 3, Stable Diffusion, and more. Find the right tool for your creative workflow.',
-    categories: ['design-creative'],
+    // Phase 7 Step 52 (BUG-016): was `design-creative` which is a phantom slug.
+    // The canonical category for image generators is `image-generation` itself.
+    categories: ['image-generation'],
     featureKeywords: ['image generation', 'text-to-image'],
   },
   {
@@ -49,7 +55,9 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Video Creation & Editing Tools',
     description:
       'The top AI video tools for creators — from text-to-video generators like Sora and Pika to editing assistants and avatar platforms like HeyGen and Synthesia.',
-    categories: ['voice-audio'],
+    // Phase 7 Step 52 (BUG-016): was `voice-audio` (phantom). Canonical is
+    // `video-audio` for video tools (46 refs in seed data).
+    categories: ['video-audio'],
     featureKeywords: ['video generation', 'text-to-video', 'video editing'],
   },
   {
@@ -58,7 +66,8 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Tools for SEO & Content Marketing',
     description:
       'Top AI-powered SEO tools to rank higher in search. Compare Surfer SEO, Semrush AI, Frase, and other tools for keyword research, content optimization, and competitor analysis.',
-    categories: ['seo-marketing'],
+    // Phase 7 Step 52 (BUG-016): was `seo-marketing` (phantom). Canonical is `marketing-seo`.
+    categories: ['marketing-seo'],
   },
   {
     slug: 'productivity',
@@ -66,7 +75,9 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Tools for Productivity',
     description:
       'Boost your output with the best AI productivity tools — meeting assistants, task managers, note-takers, email writers, and workflow automation platforms.',
-    categories: ['productivity-automation'],
+    // Phase 7 Step 52 (BUG-016): was `productivity-automation` (phantom).
+    // Canonical is `productivity`. The page only uses categories[0] today.
+    categories: ['productivity'],
   },
   {
     slug: 'customer-support',
@@ -90,7 +101,8 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Tools for Design & Creative Work',
     description:
       'AI design tools for every creator — from logo generators and UI builders to AI photo editors, 3D tools, and brand identity platforms.',
-    categories: ['design-creative'],
+    // Phase 7 Step 52 (BUG-016): was `design-creative` (phantom). Canonical is `design-ui`.
+    categories: ['design-ui'],
   },
   {
     slug: 'research',
