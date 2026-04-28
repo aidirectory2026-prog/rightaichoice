@@ -100,15 +100,26 @@ export async function getToolsForComparisonByIds(ids: string[]): Promise<Record<
  * Filters to is_editorial=true so user-saved comparisons (created via the
  * Compare tray) stay out of the public sitemap — those are private/transient
  * and should not be crawled or indexed.
+ *
+ * NOTE: tool_comparisons has no `updated_at` column. The pre-2026-04-29
+ * version of this function selected `updated_at` and was silently failing —
+ * PostgREST returned an error, fetchAllPages saw `data === null`, returned
+ * `[]`, and the sitemap silently dropped every /compare/ URL. We use
+ * `last_reviewed_at` (editorial review date) for sitemap lastModified, with
+ * `published_at` as fallback. See Phase 7 build-log entry 2026-04-29.
  */
 export async function getAllComparisonSlugs() {
   // Use admin client (no cookies) — called from generateStaticParams and sitemap at build time
   const db = getAdminClient()
 
-  return fetchAllPages<{ slug: string; updated_at: string }>((from, to) =>
+  return fetchAllPages<{
+    slug: string
+    last_reviewed_at: string | null
+    published_at: string | null
+  }>((from, to) =>
     db
       .from('tool_comparisons')
-      .select('slug, updated_at')
+      .select('slug, last_reviewed_at, published_at')
       .eq('is_editorial', true)
       .order('published_at', { ascending: false })
       .range(from, to)

@@ -1,25 +1,23 @@
 -- ============================================================
--- 057 — Patch is_editorial flag on the 8 SEO compare pages
+-- 057 — Defensive idempotency guard for editorial compare flags
 -- ============================================================
 -- Phase 7 audit follow-up (2026-04-29).
 --
--- After migration 056 + Vercel redeploy, /sitemap.xml showed only 1
--- of 8 editorial compare URLs (langgraph-vs-crewai-vs-autogen). The
--- sitemap filter `is_editorial = true` (lib/data/comparisons.ts) is
--- doing the right thing — but 7 of 8 rows in tool_comparisons ended
--- up with is_editorial = false despite source migrations 041_01
--- through 041_04, 051, 052, 053 all sending `true` in the INSERT.
+-- Earlier this session we believed the sitemap was missing /compare/
+-- URLs because is_editorial = false on 7 of 8 rows. That was wrong:
+-- live diagnostic showed all 8 already had is_editorial = true. The
+-- ACTUAL bug was in lib/data/comparisons.ts:getAllComparisonSlugs —
+-- it selected the non-existent `updated_at` column on tool_comparisons,
+-- PostgREST errored, fetchAllPages swallowed the error and returned
+-- [], so the sitemap silently dropped every /compare/ URL. That code
+-- bug is fixed in the same Phase 7 commit.
 --
--- Most likely cause: those rows were seeded via an earlier path
--- (the dropped 041_seed_comparisons_editorial.sql aggregate, or a
--- user-saved Compare tray click) before the per-file editorial
--- seeds ran. The per-file inserts then no-op'd on slug conflict
--- and the original is_editorial = false survived.
---
--- This migration force-sets is_editorial = true on the 8 known
--- editorial slugs and back-fills published_at for any that lack
--- it. Idempotent — guarded by `WHERE is_editorial IS DISTINCT
--- FROM true`, so re-running is a no-op.
+-- We keep this migration anyway as a defensive idempotency guard —
+-- if a future seed path inserts an editorial compare with
+-- is_editorial = false (or a user-saved row collides on slug with
+-- a planned editorial slug), re-running 057 will fix it. Initial
+-- (and current) state on prod is already correct; this migration
+-- is a clean no-op there.
 --
 -- Slug-existence pre-check (per feedback_slug_existence_validation.md):
 --   SELECT slug, is_editorial FROM tool_comparisons WHERE slug IN (
@@ -29,13 +27,17 @@
 --     'hailuo-vs-vidu-vs-pika','fathom-vs-grain-vs-gong'
 --   );
 -- Expected: 8 rows.
+--
+-- Note: tool_comparisons has no `updated_at` column, only
+-- `created_at`, `published_at`, `last_reviewed_at`. The earlier
+-- version of this migration referenced `updated_at` and failed at
+-- planning time with `column does not exist`. Fixed below.
 -- ============================================================
 
 UPDATE tool_comparisons
 SET is_editorial = true,
     published_at = COALESCE(published_at, now()),
-    last_reviewed_at = COALESCE(last_reviewed_at, now()),
-    updated_at = now()
+    last_reviewed_at = COALESCE(last_reviewed_at, now())
 WHERE slug IN (
   'cline-vs-aider-vs-continue',
   'openhands-vs-devin',

@@ -102,7 +102,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const comparisonRoutes: MetadataRoute.Sitemap = comparisons.map((c) => ({
     url: `${BASE_URL}/compare/${c.slug}`,
-    lastModified: c.updated_at ? new Date(c.updated_at) : new Date(),
+    lastModified: c.last_reviewed_at
+      ? new Date(c.last_reviewed_at)
+      : c.published_at
+      ? new Date(c.published_at)
+      : new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }))
