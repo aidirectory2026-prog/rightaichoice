@@ -5,7 +5,7 @@ export function Logo({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
 
   return (
     <Link href="/" className={`inline-block font-semibold text-white tracking-tight ${textClass}`}>
-      Right<span className="text-emerald-400">AI</span>Choice
+      Right<span className="text-emerald-400 font-extrabold">AI</span>Choice
     </Link>
   )
 }

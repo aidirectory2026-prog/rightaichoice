@@ -13,7 +13,12 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  // Phase 7 Step 60 (BUG-001): 800 added so the navbar/footer logo's
+  // `font-extrabold` AI letters render at true Inter Black weight rather
+  // than synthesized faux-bold. Two-stop delta vs base font-semibold (600)
+  // is what makes the AI letters scan as load-bearing wordmark, not
+  // decorative color accent.
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const bricolage = Bricolage_Grotesque({
