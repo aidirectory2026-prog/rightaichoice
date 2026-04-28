@@ -44,10 +44,11 @@ export async function POST(request: Request) {
     urls.push(...(tools as { slug: string }[]).map((t) => `${BASE}/tools/${t.slug}`))
   }
 
-  // Comparison pages
+  // Editorial comparison pages only — user-saved comparisons stay private
   const { data: comparisons } = await db
     .from('tool_comparisons')
     .select('slug')
+    .eq('is_editorial', true)
   if (comparisons) {
     urls.push(...(comparisons as { slug: string }[]).map((c) => `${BASE}/compare/${c.slug}`))
   }
