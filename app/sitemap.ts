@@ -11,6 +11,13 @@ import { getAllPosts } from '@/lib/data/blog'
 
 const BASE_URL = 'https://rightaichoice.com'
 
+// Revalidate hourly so newly-seeded tools/comparisons surface in the
+// sitemap without requiring a redeploy. Phase 7 (2026-04-29): caught
+// this gap when 8 editorial /compare/ pages were missing from
+// /sitemap.xml because the static sitemap was last built before the
+// editorial seeds were applied.
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [tools, categories, questions, workflows, comparisons] = await Promise.all([
     getAllToolSlugs(),

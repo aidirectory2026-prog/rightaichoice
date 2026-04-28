@@ -95,7 +95,11 @@ export async function getToolsForComparisonByIds(ids: string[]): Promise<Record<
 }
 
 /**
- * Get all saved comparison slugs for sitemap generation.
+ * Get all editorial comparison slugs for sitemap generation.
+ *
+ * Filters to is_editorial=true so user-saved comparisons (created via the
+ * Compare tray) stay out of the public sitemap — those are private/transient
+ * and should not be crawled or indexed.
  */
 export async function getAllComparisonSlugs() {
   // Use admin client (no cookies) — called from generateStaticParams and sitemap at build time
@@ -105,7 +109,8 @@ export async function getAllComparisonSlugs() {
     db
       .from('tool_comparisons')
       .select('slug, updated_at')
-      .order('view_count', { ascending: false })
+      .eq('is_editorial', true)
+      .order('published_at', { ascending: false })
       .range(from, to)
   )
 }
