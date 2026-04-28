@@ -31,14 +31,16 @@ export default function UpdatePasswordPage() {
           <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-1">
             New password
           </label>
+          {/* Phase 7 Step 53 (BUG-010): minLength is 8 here to match signup
+              and the server-side PASSWORD_MIN constant in actions/auth.ts. */}
           <input
             id="password"
             name="password"
             type="password"
             required
-            minLength={6}
+            minLength={8}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-600 focus:outline-none"
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
           />
         </div>
 
@@ -51,7 +53,7 @@ export default function UpdatePasswordPage() {
             name="confirmPassword"
             type="password"
             required
-            minLength={6}
+            minLength={8}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-600 focus:outline-none"
           />
         </div>

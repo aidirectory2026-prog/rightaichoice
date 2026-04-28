@@ -33,15 +33,16 @@ export default function LoginPage() {
         </p>
       )}
 
-      <form action={signInWithGoogle}>
-        <button
-          type="submit"
-          className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
-      </form>
+      {/* Phase 7 Step 53 (BUG-012): Google CTA is a plain button, not a
+          second `<form>`. See signup/page.tsx for full rationale. */}
+      <button
+        type="button"
+        onClick={() => signInWithGoogle()}
+        className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+      >
+        <GoogleIcon />
+        Continue with Google
+      </button>
 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-zinc-800" />
@@ -54,12 +55,16 @@ export default function LoginPage() {
           <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
             Email
           </label>
+          {/* Phase 7 Step 53 (BUG-013): preserve email after a failed login.
+              Standard pattern — failed-login retries should be a one-field fix
+              (just the password). Password is intentionally not preserved. */}
           <input
             id="email"
             name="email"
             type="email"
             required
             autoComplete="email"
+            defaultValue={state?.values?.email ?? ''}
             placeholder="you@example.com"
             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors"
           />

@@ -4,7 +4,21 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-type AuthState = { error?: string; success?: string } | null
+/**
+ * Phase 7 Step 53 (BUG-011, BUG-013): action returns the non-secret fields
+ * the user just typed so the page can re-fill them after a server error.
+ * Never preserve `password` here — leaving it in component state risks
+ * leakage into RSC payloads / browser back-forward cache.
+ */
+type AuthState = {
+  error?: string
+  success?: string
+  values?: { username?: string; email?: string }
+} | null
+
+// Phase 7 Step 53 (BUG-010): single canonical password rule shared with FE
+// `minLength={PASSWORD_MIN}` so the two policies can never drift again.
+const PASSWORD_MIN = 8
 
 // ─── Sign Up ────────────────────────────────────────────────────────────────
 
@@ -14,6 +28,16 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const username = formData.get('username') as string
+
+  // BUG-010: enforce 8 chars BEFORE Supabase. Otherwise Supabase's default
+  // policy (6 chars) would accept what the FE rejected, and the QA-reported
+  // "FE 8 / BE 6" mismatch comes back.
+  if (typeof password !== 'string' || password.length < PASSWORD_MIN) {
+    return {
+      error: `Password must be at least ${PASSWORD_MIN} characters.`,
+      values: { username, email },
+    }
+  }
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -25,7 +49,7 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: error.message, values: { username, email } }
   }
 
   return { success: 'Check your email to confirm your account.' }
@@ -42,7 +66,7 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return { error: error.message }
+    return { error: error.message, values: { email } }
   }
 
   revalidatePath('/', 'layout')
@@ -88,8 +112,9 @@ export async function updatePassword(_prevState: AuthState, formData: FormData):
     return { error: 'Passwords do not match.' }
   }
 
-  if (password.length < 6) {
-    return { error: 'Password must be at least 6 characters.' }
+  // BUG-010: same 8-char rule as signUp; was 6 here.
+  if (password.length < PASSWORD_MIN) {
+    return { error: `Password must be at least ${PASSWORD_MIN} characters.` }
   }
 
   const { error } = await supabase.auth.updateUser({ password })
