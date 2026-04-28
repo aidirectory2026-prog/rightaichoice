@@ -266,31 +266,18 @@ const IDENTITY_TAGS = new Set([
 ])
 
 /**
- * Curated whitelist of general-purpose LLMs in the catalog. Used as a hard
- * filter when the source tool is one of these — otherwise specialized tools
- * that happen to share `chatbot` or `text-generation` tags (Sourcegraph Cody
- * has `chatbot` for its UI; INK Editor has `text-generation` because it
- * generates SEO copy) sneak into "Alternatives to Claude" and break trust.
+ * Tag slug that marks a tool as a general-purpose LLM (Claude, ChatGPT,
+ * Gemini, …). Used as a hard filter in the Alternatives ranker — when the
+ * source tool carries this tag, only other tools carrying the same tag
+ * surface as alternatives. Specialized tools (Sourcegraph Cody, INK Editor)
+ * that happen to share `chatbot` or `text-generation` get filtered out.
  *
- * `chatbot` and `text-generation` are deliberately NOT in IDENTITY_TAGS above
- * because the catalog applies them too liberally. This whitelist is the
- * targeted fix for the LLM-alternatives case.
- *
- * TODO: replace with a `general-purpose-llm` tag in the catalog so this list
- * is data-driven instead of code-maintained. Keep this list current until then.
+ * `chatbot` and `text-generation` are deliberately NOT in IDENTITY_TAGS
+ * because the catalog applies them too liberally. This tag is the targeted
+ * fix for the LLM-alternatives case. Migration 056 seeds the tag and links
+ * the canonical LLMs.
  */
-const GENERAL_LLM_SLUGS = new Set([
-  'chatgpt',
-  'claude',
-  'gemini',
-  'cohere',
-  'mistral',
-  'perplexity',
-  'ai21-labs',
-  'deepseek',
-  'zhipu-ai',
-  'moonshot-ai',
-])
+const GENERAL_LLM_TAG = 'general-purpose-llm'
 
 const TAGLINE_STOP_WORDS = new Set([
   // generic AI/SaaS marketing terms
@@ -410,7 +397,7 @@ export async function getAlternativeTools(
   }
 
   const useIdentityGate = sourceIdentityTags.size > 0
-  const sourceIsGeneralLLM = !!opts?.sourceSlug && GENERAL_LLM_SLUGS.has(opts.sourceSlug)
+  const sourceIsGeneralLLM = sourceTagSet.has(GENERAL_LLM_TAG)
 
   const scored = (data as unknown as Row[])
     .map((row) => {
@@ -438,17 +425,17 @@ export async function getAlternativeTools(
       // but breaks ties between equally-related candidates.
       score += Math.log10((row.view_count ?? 0) + 1) * 0.5
 
-      return { row, score, sharedIdentity, sharedAnyTag }
+      return { row, score, sharedIdentity, sharedAnyTag, candTagSet }
     })
     .filter((x) => {
       // LLM whitelist gate (highest precedence). When source is a general-
-      // purpose LLM (Claude, ChatGPT, Gemini, …), alternatives MUST also be
-      // in the whitelist. This is the only reliable way to keep specialized
-      // tools (Sourcegraph Cody, INK Editor) out of "Alternatives to Claude"
-      // given that the catalog applies `chatbot` and `text-generation` tags
-      // too liberally.
+      // purpose LLM (Claude, ChatGPT, Gemini, …), alternatives MUST also
+      // carry the general-purpose-llm tag. This is the only reliable way
+      // to keep specialized tools (Sourcegraph Cody, INK Editor) out of
+      // "Alternatives to Claude" given that the catalog applies `chatbot`
+      // and `text-generation` tags too liberally.
       if (sourceIsGeneralLLM) {
-        return GENERAL_LLM_SLUGS.has(x.row.slug)
+        return x.candTagSet.has(GENERAL_LLM_TAG)
       }
       if (useIdentityGate) {
         // Source has identity tag(s) → alternative must share ≥1.
