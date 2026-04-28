@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!profile) return { title: 'User Not Found' }
 
   return {
-    title: `${profile.full_name || profile.username} — RightAIChoice`,
+    title: `${profile.full_name || profile.username}`,
     description: profile.bio || `Community profile for ${profile.username}`,
   }
 }

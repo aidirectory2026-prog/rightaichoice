@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const { meta } = post
   return {
-    title: `${meta.title} — RightAIChoice Blog`,
+    title: meta.title,
     description: meta.description,
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {

@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/footer'
 import { getRecentDiscussions } from '@/lib/data/discussions'
 
 export const metadata: Metadata = {
-  title: 'Discussions — RightAIChoice',
+  title: 'Discussions',
   description: 'Community discussions about AI tools — tips, workflows, comparisons, and real-world use cases.',
 }
 

@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!tool) return { title: 'Tool Not Found' }
 
   return {
-    title: `${tool.name} Report — Honest Review & Sentiment | RightAIChoice`,
+    title: `${tool.name} Report — Honest Review & Sentiment`,
     description: `In-depth analysis of ${tool.name}: 5 pros, 5 cons, market sentiment, pricing breakdown, alternatives, and more.`,
   }
 }

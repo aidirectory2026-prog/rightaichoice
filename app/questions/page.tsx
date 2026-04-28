@@ -8,7 +8,7 @@ import { getRecentQuestions, getQuestionVotes } from '@/lib/data/questions'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: 'Community Q&A — RightAIChoice',
+  title: 'Community Q&A',
   description:
     'Ask questions about AI tools and get answers from real users. Use-case driven Q&A for the AI community.',
 }

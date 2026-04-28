@@ -2,7 +2,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 
 export const metadata = {
-  title: 'Privacy Policy — RightAIChoice',
+  title: 'Privacy Policy',
   description: 'Privacy Policy for RightAIChoice. Comprehensive disclosure of data collection, processing, retention, and your rights under GDPR and CCPA.',
 }
 
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
               <p className="leading-relaxed text-sm mb-3">
                 We collect anonymized and aggregated usage data including pages viewed, search queries entered,
                 tools clicked, filters applied, time spent on pages, and navigation paths. This data is processed
-                through PostHog, our self-hosted analytics platform, and is used exclusively to improve the
+                through Mixpanel, our product analytics platform, and is used exclusively to improve the
                 Platform experience.
               </p>
 
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
                 <li><strong className="text-zinc-300">Supabase, Inc.</strong> — Database hosting, authentication, and row-level access control. Data resides in AWS infrastructure (US regions).</li>
                 <li><strong className="text-zinc-300">Vercel, Inc.</strong> — Application hosting, edge functions, and content delivery. Processes request-level data.</li>
                 <li><strong className="text-zinc-300">Anthropic, PBC</strong> — AI model inference for tool recommendations, chat, and content generation. Queries are not retained for model training.</li>
-                <li><strong className="text-zinc-300">PostHog, Inc.</strong> — Product analytics. Data is processed in accordance with PostHog&apos;s privacy standards.</li>
+                <li><strong className="text-zinc-300">Mixpanel, Inc.</strong> — Product analytics. Data is processed in accordance with Mixpanel&apos;s privacy standards.</li>
                 <li><strong className="text-zinc-300">Functional Software (Sentry)</strong> — Application error monitoring and diagnostics.</li>
               </ul>
               <p className="leading-relaxed text-sm mt-3">
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
               </p>
               <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
                 <li><strong className="text-zinc-300">Strictly necessary</strong> — Authentication session cookies managed by Supabase Auth. These cannot be disabled without impairing core functionality.</li>
-                <li><strong className="text-zinc-300">Analytics</strong> — PostHog tracking cookies used to measure engagement and improve the Platform. These may be declined where required by your jurisdiction.</li>
+                <li><strong className="text-zinc-300">Analytics</strong> — Mixpanel tracking cookies used to measure engagement and improve the Platform. These may be declined where required by your jurisdiction.</li>
               </ul>
               <p className="leading-relaxed text-sm mt-3">
                 We do not deploy advertising cookies, retargeting pixels, social media tracking widgets, or

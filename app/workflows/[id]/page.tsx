@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!workflow) return { title: 'Workflow Not Found' }
 
   return {
-    title: `${workflow.title} — RightAIChoice`,
+    title: workflow.title,
     description: workflow.description,
   }
 }

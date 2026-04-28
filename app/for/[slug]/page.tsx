@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!page) return { title: 'Not Found' }
 
   return {
-    title: `${page.title} (2026) — RightAIChoice`,
+    title: `${page.title} (2026)`,
     description: page.description,
     openGraph: {
       title: `${page.title} 2026`,

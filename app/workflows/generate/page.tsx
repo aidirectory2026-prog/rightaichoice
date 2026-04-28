@@ -5,7 +5,7 @@ import { WorkflowGenerator } from '@/components/workflows/workflow-generator'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: 'Workflow Generator — RightAIChoice',
+  title: 'Workflow Generator',
   description:
     'Describe your goal and get an AI-generated multi-step workflow with the best tools for each step.',
 }

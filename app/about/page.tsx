@@ -4,7 +4,7 @@ import { Zap, Users, Brain, Shield, BarChart3, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'About — RightAIChoice',
+  title: 'About',
   description: 'RightAIChoice is the decision-making engine for the AI ecosystem. 500+ verified tools, community intelligence, and AI-powered recommendations.',
 }
 

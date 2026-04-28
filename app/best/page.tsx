@@ -8,7 +8,7 @@ import { BEST_PAGES } from '@/lib/data/best-pages'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Best AI Tools Guides — RightAIChoice',
+  title: 'Best AI Tools Guides',
   description:
     'Curated lists of the best AI tools by category and use case. Find the top tools for writing, coding, design, productivity, SEO, and more.',
   openGraph: {

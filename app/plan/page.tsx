@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'AI Project Planner — RightAIChoice',
+  title: 'AI Project Planner',
   description:
     'Describe what you want to build or accomplish. Our AI breaks it into stages and recommends the best AI tool for each step.',
 }

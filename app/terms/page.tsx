@@ -2,7 +2,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 
 export const metadata = {
-  title: 'Terms of Service — RightAIChoice',
+  title: 'Terms of Service',
   description: 'Terms of Service governing your use of RightAIChoice. Comprehensive legal terms including eligibility, conduct, intellectual property, liability, and dispute resolution.',
 }
 

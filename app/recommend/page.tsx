@@ -7,7 +7,7 @@ import { RecommendedToolCard } from '@/components/recommendations/recommended-to
 import { getRecommendations } from '@/lib/data/recommendations'
 
 export const metadata: Metadata = {
-  title: 'Find My AI Tool — RightAIChoice',
+  title: 'Find My AI Tool',
   description:
     'Answer 3 quick questions and get AI-powered tool recommendations tailored to your use case, budget, and skill level.',
 }

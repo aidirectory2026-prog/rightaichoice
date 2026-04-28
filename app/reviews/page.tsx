@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/footer'
 import { getRecentReviews } from '@/lib/data/reviews'
 
 export const metadata: Metadata = {
-  title: 'Community Reviews — RightAIChoice',
+  title: 'Community Reviews',
   description: 'Honest, structured reviews of AI tools from real users. Filter by rating, use case, and experience level.',
 }
 

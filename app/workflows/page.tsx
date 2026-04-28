@@ -7,7 +7,7 @@ import { WorkflowCard } from '@/components/workflows/workflow-card'
 import { getWorkflows } from '@/lib/data/workflows'
 
 export const metadata: Metadata = {
-  title: 'AI Workflows — RightAIChoice',
+  title: 'AI Workflows',
   description:
     'Browse community AI tool workflows — step-by-step pipelines for content creation, coding, design, and more.',
 }

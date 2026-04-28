@@ -11,7 +11,7 @@ import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'AI Tool Viability Scores — Is Your AI Tool Safe to Use? | RightAIChoice',
+  title: 'AI Tool Viability Scores — Is Your AI Tool Safe to Use?',
   description:
     'Every AI tool rated 0–100 for survival probability. See which tools are safe bets and which are at risk of shutting down. Updated weekly.',
   openGraph: {

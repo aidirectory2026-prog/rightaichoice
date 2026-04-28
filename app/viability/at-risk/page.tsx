@@ -11,7 +11,7 @@ import { pricingLabel, pricingColor } from '@/lib/utils'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'At-Risk AI Tools (Viability Score <40) — RightAIChoice',
+  title: 'At-Risk AI Tools (Viability Score <40)',
   description:
     'AI tools with the highest shutdown risk. These tools scored below 40 on our viability model — consider alternatives before investing.',
   openGraph: {

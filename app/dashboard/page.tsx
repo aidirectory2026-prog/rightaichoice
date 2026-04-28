@@ -33,7 +33,7 @@ import {
 import { ApiKeysPanel } from '@/components/dashboard/api-keys-panel'
 import { DeleteStackButton } from '@/components/stacks/delete-stack-button'
 
-export const metadata = { title: 'Dashboard — RightAIChoice' }
+export const metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
   const supabase = await createClient()

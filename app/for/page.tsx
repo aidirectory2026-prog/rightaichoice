@@ -9,7 +9,7 @@ import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 export const revalidate = 86400
 
 export const metadata: Metadata = {
-  title: 'AI Tools by Role & Profession — RightAIChoice',
+  title: 'AI Tools by Role & Profession',
   description:
     'Find the best AI tools for your profession. Curated AI toolkits for developers, marketers, designers, freelancers, founders, educators, and 15+ other roles.',
   openGraph: {
