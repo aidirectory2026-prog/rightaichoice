@@ -281,6 +281,25 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {tool.tagline}
                 </p>
 
+                {/* Editorial byline — Tanmay + last verified */}
+                <p className="mt-2 text-xs text-zinc-500">
+                  By{' '}
+                  <Link href="/team" className="text-zinc-300 hover:text-emerald-400 transition-colors">
+                    Tanmay Verma
+                  </Link>
+                  , Founder
+                  {tool.last_verified_at && (
+                    <>
+                      {' · '}Last verified{' '}
+                      {new Date(tool.last_verified_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </>
+                  )}
+                </p>
+
                 {/* Submitted by */}
                 {tool.submitter && (
                   <div className="mt-2 flex items-center gap-1.5 text-sm">
@@ -340,6 +359,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
               />
               <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page" />
             </div>
+          </div>
+
+          {/* FTC affiliate disclosure — inline above the fold, near primary CTA */}
+          <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3.5 py-2.5 text-xs text-zinc-400 flex items-start gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+            <p>
+              <span className="text-zinc-300 font-medium">Affiliate disclosure:</span> We earn a commission when you
+              use our links. Editorial picks are independent.{' '}
+              <Link href="/methodology" className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline">
+                How we choose
+              </Link>
+              .
+            </p>
           </div>
 
           {/* ── Main Content Grid ────────────────────────────────── */}
