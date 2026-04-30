@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { Linkedin, Mail, ShieldCheck, Compass, FileText } from 'lucide-react'
+import { ExternalLink, Mail, ShieldCheck, Compass, FileText } from 'lucide-react'
 import { jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 const PAGE_URL = 'https://rightaichoice.com/team'
@@ -115,7 +115,7 @@ export default function TeamPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
                   >
-                    <Linkedin className="h-4 w-4" /> LinkedIn
+                    <ExternalLink className="h-4 w-4" /> LinkedIn
                   </a>
                   <a
                     href="mailto:hello@rightaichoice.com"
