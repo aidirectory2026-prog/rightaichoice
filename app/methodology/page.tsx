@@ -58,7 +58,7 @@ export default function MethodologyPage() {
       <script {...jsonLdScriptProps([articleSchema, organizationSchema])} />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-3xl font-bold text-white mb-2">Methodology</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">How we evaluate AI tools</h1>
           <p className="text-sm text-zinc-500 mb-8">
             How RightAIChoice picks, reviews, and discloses. Last updated {MODIFIED}. Author:{' '}
             <Link href="/team" className="text-emerald-400 hover:text-emerald-300">
@@ -66,21 +66,6 @@ export default function MethodologyPage() {
             </Link>
             , Founder &amp; Editor-in-Chief.
           </p>
-
-          {/* FTC Disclosure block — top of page, above any editorial content */}
-          <div className="mb-10 rounded-xl border border-amber-900/40 bg-amber-950/10 p-5 flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-white mb-1.5">Affiliate disclosure (FTC)</p>
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                RightAIChoice earns a commission when you sign up or purchase through some of the links on this site.
-                Editorial picks, rankings, and verdicts are independent — affiliate status never determines whether a
-                tool appears, where it ranks, or what we say about it. Affiliate-bearing links are disclosed inline on
-                every tool page above the primary CTA. This complies with the FTC&apos;s 16 CFR Part 255 endorsement
-                guidelines.
-              </p>
-            </div>
-          </div>
 
           {/* (a) Selection criteria */}
           <section className="mb-12">
@@ -273,6 +258,20 @@ export default function MethodologyPage() {
               </Link>
             </div>
           </section>
+
+          {/* FTC Disclosure block — bottom of page (per spec) */}
+          <div className="mt-12 rounded-xl border border-amber-900/40 bg-amber-950/10 p-5 flex items-start gap-3">
+            <ShieldCheck className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-white mb-1.5">Affiliate disclosure (FTC)</p>
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                We earn a commission when you use our links. Editorial picks are independent — affiliate status never
+                determines whether a tool appears, where it ranks, or what we say about it. Affiliate-bearing links
+                are disclosed inline on every tool page above the primary CTA. This complies with the FTC&apos;s 16
+                CFR Part 255 endorsement guidelines.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
       <Footer />

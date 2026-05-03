@@ -1,0 +1,23 @@
+-- ============================================================
+-- Drop duplicate customgpt row (keep customgpt-ai)
+-- (Phase 7 / pre-flight remediation)
+--
+-- Background: two zero-traffic stub rows existed for the same
+-- product (CustomGPT.ai), created ~1.5 minutes apart on
+-- 2026-04-11. Same website_url, both incomplete editorially.
+-- We keep `customgpt-ai` because it matches the catalog naming
+-- convention used by other AI-suffixed tools (notion-ai, copy-ai,
+-- hume-ai, jasper-ai, etc.) and aligns with the SOP tracker note
+-- "customgpt-ai / customgpt".
+--
+-- Pre-delete dependency scan (verified live before commit):
+--   tool_categories: 1 row (cascade-cleaned)
+--   page_views:      1 event (cascade-cleaned)
+--   tool_tags / tool_alternatives / reviews / questions /
+--   discussions / tool_comparisons / click_logs: 0 each
+--
+-- Already applied via Supabase MCP on 2026-05-03; this file
+-- exists for replay safety on a fresh DB.
+-- ============================================================
+
+DELETE FROM tools WHERE slug = 'customgpt';

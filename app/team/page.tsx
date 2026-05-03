@@ -57,7 +57,7 @@ export default function TeamPage() {
       <script {...jsonLdScriptProps([personSchema, breadcrumbSchema])} />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-3xl font-bold text-white mb-2">Team</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">The team behind RightAIChoice</h1>
           <p className="text-sm text-zinc-500 mb-10">
             Every editorial decision on RightAIChoice has a public byline. The platform is small, the standards are
             not.
