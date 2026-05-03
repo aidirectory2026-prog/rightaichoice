@@ -10,9 +10,14 @@
 --   verified `kit` exists in 044_seed_tools_batch21.sql line 49 —
 --   slug is real, this is an UPDATE not an INSERT.
 --
--- Logo URL canonical source: kit.com/brand. We use the
--- warm-white SVG variant because the RAC tool page renders on
--- a dark zinc-900 background; the soft-black variant is invisible.
+-- Logo URL canonical source: media.kit.com/images/logos/kit-logo-warm-white.svg
+-- (warm-white variant chosen because tool pages render on a dark zinc-900
+-- background; soft-black variant is invisible). However, media.kit.com is
+-- not in next.config.ts remotePatterns, so we host the asset ourselves on
+-- Supabase Storage at tool-logos/kit.svg. Run
+-- `npm run preflight:fetch-logos -- --slug=kit` to populate the bucket
+-- (the script will overwrite logo_url on the row to match the Storage URL
+-- below — kept aligned here for fresh-DB replay safety).
 --
 -- Verdict expansion: 60–100 words covering best-fit, standout
 -- features, weaker-than-alts framing (Beehiiv on growth,
@@ -22,7 +27,7 @@
 UPDATE tools
 SET
   editorial_verdict = 'The default email platform for serious creators in 2026 — newsletter writers, course creators, and digital-product sellers whose business is the audience itself. Kit''s standout primitives are creator-economy native: tip jars, the Creator Network referrals engine, paid recommendations, and built-in Stripe-powered digital products fold what would otherwise be Mailchimp + Gumroad + Linktree into one bill. It is weaker than Beehiiv on raw growth and discovery tooling, weaker than Mailchimp / Klaviyo on e-commerce automation, and not in the conversation with HubSpot for B2B sales. Pick Kit when your business is your audience.',
-  logo_url = 'https://media.kit.com/images/logos/kit-logo-warm-white.svg',
+  logo_url = 'https://adtznghodbgkvknilfln.supabase.co/storage/v1/object/public/tool-logos/kit.svg',
   last_verified_at = now(),
   updated_at = now()
 WHERE slug = 'kit';
