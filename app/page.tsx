@@ -69,9 +69,6 @@ export default async function HomePage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* TEMPORARY: Impact affiliate site verification — delete after Impact confirms ownership */}
-        <p className="sr-only">Impact-Site-Verification: 221d68e3-45da-48f6-9fd2-86672b5fa9f7</p>
-
         {/* ─── Hero ─────────────────────────────────────────────── */}
         <section className="relative overflow-hidden bg-zinc-950">
           <div className="hero-aurora-a" aria-hidden="true" />
