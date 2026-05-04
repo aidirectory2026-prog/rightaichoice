@@ -46,6 +46,10 @@ const TARGET_SLUGS = [
   'hubspot',
   'beehiiv',       // added 2026-05-04 — newly seeded by 061_seed_beehiiv.sql
   'convertbox',    // added 2026-05-04 — newly seeded by 062_seed_convertbox.sql
+  'reclaim-ai',    // batch 1 (064)
+  'token-metrics', // batch 1 (064)
+  'flowith',       // batch 1 (064)
+  'foxit',         // batch 1 (064)
 ] as const
 
 const argv = process.argv.slice(2)

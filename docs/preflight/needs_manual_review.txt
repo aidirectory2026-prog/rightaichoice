@@ -1,0 +1,12 @@
+Pre-flight scale — slugs needing manual fill-in
+=================================================
+
+Format: <slug> | <field> | <reason> | <suggested-source>
+
+----- Batch 1 (2026-05-04) -----
+
+token-metrics | pricing_details | tokenmetrics.com/pricing was JS-rendered and unreadable to WebFetch. Tiers exist but exact 2026 prices not verified. | Manually copy from https://www.tokenmetrics.com/pricing
+flowith       | pricing_details | flowith.io/pricing not visible from homepage WebFetch. "NEW UNLIMITED PACK" promo signals paid tiers exist but no $/mo published. | Manually copy from https://www.flowith.io/pricing
+flowith       | integrations    | Homepage lists backers (OpenAI, Microsoft, AWS, NVIDIA) but not consumer-app integrations. Ships with 5 (backers as proxies). Replace with real integration list when verified. | Check flowith.io/integrations or Help Center
+foxit         | pricing_details | foxit.com/shopping is JS-rendered; no plan tiers visible to WebFetch. Foxit PDF Editor and AI Assistant exist as separate SKUs. | Manually copy from https://www.foxit.com/shopping/
+
