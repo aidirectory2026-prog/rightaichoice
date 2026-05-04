@@ -33,3 +33,12 @@ pangram-labs  | pricing_details  | Free tier (4 daily checks) confirmed; paid su
 niural-ai     | pricing_details  | No public pricing visible; contact-sales motion (set pricing_type='contact'). | Sales-quote only; flag in catalog as 'contact'
 niural-ai     | integrations     | "Direct processor integrations" mentioned for payments but specific platforms not detailed. Listed best guesses (QuickBooks, Xero, Slack, Google Workspace) — verify. | Check niural.com/integrations or product docs
 
+----- Batch 5 (2026-05-04) -----
+
+treble-ai     | pricing_details | BSP partner status; no public tiers — sales-led motion. | Manually copy from treble.ai/pricing or contact sales
+spiky-ai      | pricing_details | Demo-only sales motion; no public tiers. | Manually copy from spiky.ai/pricing or contact sales
+smartli       | pricing_details | Pro / Empire tiers exist but exact $/mo "under $100" hedged on homepage. | Verify exact $ from smartli.ai/pricing
+smartli       | integrations    | Only Shopify integration confirmed on homepage. WooCommerce / Facebook / TikTok mentioned in spec but not visible on site. | Check smartli.ai/integrations
+closely       | pricing_details | Promo codes referenced (BLACKFRIDAY20, XMAS15) but tier $/mo not surfaced on homepage. | Manually copy from closelyhq.com/pricing
+typewise      | spec_pivot      | Original spec described "AI typing assistant per-keystroke prediction"; site now positions as "AI Agent Platform for customer service" with $1/resolution. Used current site reality + customer-support category instead of spec's productivity. | If spec was correct earlier, Typewise has pivoted — note in tracker
+

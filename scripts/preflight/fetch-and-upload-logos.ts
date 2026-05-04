@@ -63,6 +63,11 @@ const TARGET_SLUGS = [
   'aisdr',         // batch 4 (067)
   'pangram-labs',  // batch 4 (067)
   'niural-ai',     // batch 4 (067)
+  'treble-ai',     // batch 5 (068)
+  'spiky-ai',      // batch 5 (068)
+  'smartli',       // batch 5 (068)
+  'closely',       // batch 5 (068)
+  'typewise',      // batch 5 (068)
 ] as const
 
 const argv = process.argv.slice(2)
