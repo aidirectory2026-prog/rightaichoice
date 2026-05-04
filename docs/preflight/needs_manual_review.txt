@@ -18,3 +18,11 @@ manychat      | pricing_details | manychat.com returns 403 to WebFetch (Cloudfla
 manychat      | live_verification | All facts (1M+ businesses, channel list, AI Step, integrations) from training-data; site couldn't be WebFetched. | Visit https://manychat.com to spot-check
 laxis         | pricing_details | laxis.com mentions "Start for free" but no public tier table or $/mo visible. | Manually copy from https://www.laxis.com/pricing
 
+----- Batch 3 (2026-05-04) -----
+
+trainual      | pricing_details | trainual.com homepage CTA-gated to demo / free-trial signup; tier $/mo not surfaced. | Manually copy from https://trainual.com/pricing
+brand24       | pricing_details | brand24.com/prices/ exists per homepage link but tier $ + mention caps not in homepage extract. | Manually copy from https://brand24.com/prices/
+landbot       | pricing_details | landbot.io/pricing referenced but tier names + $/mo not in homepage extract. | Manually copy from https://landbot.io/pricing
+demodesk      | pricing_details | Three tiers (Free, Pro, Business) referenced but exact $/mo not surfaced. | Manually copy from https://demodesk.com/pricing
+filevine      | pricing_details | No public pricing — enterprise legal sales motion (industry standard); set pricing_type='contact'. | Sales-quote only; flag in catalog as 'contact'
+

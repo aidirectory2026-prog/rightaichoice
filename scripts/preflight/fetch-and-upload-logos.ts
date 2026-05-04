@@ -55,6 +55,11 @@ const TARGET_SLUGS = [
   'synthflow-ai',  // batch 2 (065)
   'manychat',      // batch 2 (065)
   'laxis',         // batch 2 (065)
+  'trainual',      // batch 3 (066)
+  'brand24',       // batch 3 (066)
+  'landbot',       // batch 3 (066)
+  'demodesk',      // batch 3 (066)
+  'filevine',      // batch 3 (066)
 ] as const
 
 const argv = process.argv.slice(2)
