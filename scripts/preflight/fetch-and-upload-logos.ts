@@ -88,6 +88,13 @@ type FetchedLogo = {
   sourceUrl: string
 }
 
+type ToolRow = {
+  slug: string
+  name: string
+  website_url: string
+  logo_url: string | null
+}
+
 const EXT_BY_MIME: Record<string, string> = {
   'image/svg+xml': 'svg',
   'image/png': 'png',
@@ -144,16 +151,17 @@ async function main() {
   const slugs = ONE_SLUG ? [ONE_SLUG] : (TARGET_SLUGS as readonly string[])
   console.log(`\n${DRY_RUN ? '[DRY-RUN] ' : ''}Processing ${slugs.length} slug(s)\n`)
 
-  const { data: rows, error } = await supabase
+  const { data, error } = await supabase
     .from('tools')
     .select('slug, name, website_url, logo_url')
-    .in('slug', slugs)
+    .in('slug', slugs as string[])
 
   if (error) {
     console.error('DB read failed:', error.message)
     process.exit(1)
   }
-  if (!rows || rows.length === 0) {
+  const rows = (data ?? []) as unknown as ToolRow[]
+  if (rows.length === 0) {
     console.error('No matching tools found.')
     process.exit(1)
   }
@@ -164,8 +172,8 @@ async function main() {
   const failures: string[] = []
 
   for (const row of rows) {
-    const slug = row.slug as string
-    const websiteUrl = row.website_url as string
+    const slug = row.slug
+    const websiteUrl = row.website_url
     console.log(`[${slug}] ${row.name}`)
     console.log(`  current logo_url: ${row.logo_url ?? '(null)'}`)
 
@@ -203,10 +211,12 @@ async function main() {
       continue
     }
 
-    const { error: updErr } = await supabase
-      .from('tools')
-      .update({ logo_url: publicUrl, last_verified_at: new Date().toISOString() })
-      .eq('slug', slug)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateBuilder = (supabase.from('tools') as any).update({
+      logo_url: publicUrl,
+      last_verified_at: new Date().toISOString(),
+    })
+    const { error: updErr } = await updateBuilder.eq('slug', slug)
     if (updErr) {
       console.log(`  ✗ DB update failed: ${updErr.message}`)
       failures.push(slug)
