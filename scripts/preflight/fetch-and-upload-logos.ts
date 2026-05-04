@@ -60,6 +60,9 @@ const TARGET_SLUGS = [
   'landbot',       // batch 3 (066)
   'demodesk',      // batch 3 (066)
   'filevine',      // batch 3 (066)
+  'aisdr',         // batch 4 (067)
+  'pangram-labs',  // batch 4 (067)
+  'niural-ai',     // batch 4 (067)
 ] as const
 
 const argv = process.argv.slice(2)

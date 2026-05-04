@@ -26,3 +26,10 @@ landbot       | pricing_details | landbot.io/pricing referenced but tier names +
 demodesk      | pricing_details | Three tiers (Free, Pro, Business) referenced but exact $/mo not surfaced. | Manually copy from https://demodesk.com/pricing
 filevine      | pricing_details | No public pricing — enterprise legal sales motion (industry standard); set pricing_type='contact'. | Sales-quote only; flag in catalog as 'contact'
 
+----- Batch 4 (2026-05-04) -----
+
+snowfire-ai   | SLUG_MISMATCH    | snowfire.ai homepage describes "Adaptive Enterprise Decision Intelligence Platform", NOT the lead-gen / cold-outreach tool the spec described. Skipped per no-fabrication rule. | Verify the intended product / slug; if the spec is correct, locate the right URL (e.g., snowfire.ai might have moved or been acquired)
+pangram-labs  | pricing_details  | Free tier (4 daily checks) confirmed; paid subscription + API tiers exist but exact $/mo not on homepage. | Manually copy from https://www.pangram.com/pricing
+niural-ai     | pricing_details  | No public pricing visible; contact-sales motion (set pricing_type='contact'). | Sales-quote only; flag in catalog as 'contact'
+niural-ai     | integrations     | "Direct processor integrations" mentioned for payments but specific platforms not detailed. Listed best guesses (QuickBooks, Xero, Slack, Google Workspace) — verify. | Check niural.com/integrations or product docs
+
