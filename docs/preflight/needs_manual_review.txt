@@ -1,0 +1,59 @@
+Pre-flight scale — slugs needing manual fill-in
+=================================================
+
+Format: <slug> | <field> | <reason> | <suggested-source>
+
+----- Batch 1 (2026-05-04) -----
+
+token-metrics | pricing_details | tokenmetrics.com/pricing was JS-rendered and unreadable to WebFetch. Tiers exist but exact 2026 prices not verified. | Manually copy from https://www.tokenmetrics.com/pricing
+flowith       | pricing_details | flowith.io/pricing not visible from homepage WebFetch. "NEW UNLIMITED PACK" promo signals paid tiers exist but no $/mo published. | Manually copy from https://www.flowith.io/pricing
+flowith       | integrations    | Homepage lists backers (OpenAI, Microsoft, AWS, NVIDIA) but not consumer-app integrations. Ships with 5 (backers as proxies). Replace with real integration list when verified. | Check flowith.io/integrations or Help Center
+foxit         | pricing_details | foxit.com/shopping is JS-rendered; no plan tiers visible to WebFetch. Foxit PDF Editor and AI Assistant exist as separate SKUs. | Manually copy from https://www.foxit.com/shopping/
+
+----- Batch 2 (2026-05-04) -----
+
+hume-ai       | pricing_details | hume.ai pricing is API-first usage-based; no clear $/mo tier table on homepage. Free tier exists + per-character TTS rates. | Manually copy from https://www.hume.ai/pricing
+synthflow-ai  | pricing_details | synthflow.ai pricing model is PAYG (pay-as-you-go) per their statement; no public per-minute or tier $ visible to WebFetch. | Manually copy from https://www.synthflow.ai/pricing or contact sales
+manychat      | pricing_details | manychat.com returns 403 to WebFetch (Cloudflare bot-protect). Tier values below from training-data knowledge; verify live. | Visit https://manychat.com/pricing in browser
+manychat      | live_verification | All facts (1M+ businesses, channel list, AI Step, integrations) from training-data; site couldn't be WebFetched. | Visit https://manychat.com to spot-check
+laxis         | pricing_details | laxis.com mentions "Start for free" but no public tier table or $/mo visible. | Manually copy from https://www.laxis.com/pricing
+
+----- Batch 3 (2026-05-04) -----
+
+trainual      | pricing_details | trainual.com homepage CTA-gated to demo / free-trial signup; tier $/mo not surfaced. | Manually copy from https://trainual.com/pricing
+brand24       | pricing_details | brand24.com/prices/ exists per homepage link but tier $ + mention caps not in homepage extract. | Manually copy from https://brand24.com/prices/
+landbot       | pricing_details | landbot.io/pricing referenced but tier names + $/mo not in homepage extract. | Manually copy from https://landbot.io/pricing
+demodesk      | pricing_details | Three tiers (Free, Pro, Business) referenced but exact $/mo not surfaced. | Manually copy from https://demodesk.com/pricing
+filevine      | pricing_details | No public pricing — enterprise legal sales motion (industry standard); set pricing_type='contact'. | Sales-quote only; flag in catalog as 'contact'
+
+----- Batch 4 (2026-05-04) -----
+
+snowfire-ai   | SLUG_MISMATCH    | snowfire.ai homepage describes "Adaptive Enterprise Decision Intelligence Platform", NOT the lead-gen / cold-outreach tool the spec described. Skipped per no-fabrication rule. | Verify the intended product / slug; if the spec is correct, locate the right URL (e.g., snowfire.ai might have moved or been acquired)
+pangram-labs  | pricing_details  | Free tier (4 daily checks) confirmed; paid subscription + API tiers exist but exact $/mo not on homepage. | Manually copy from https://www.pangram.com/pricing
+niural-ai     | pricing_details  | No public pricing visible; contact-sales motion (set pricing_type='contact'). | Sales-quote only; flag in catalog as 'contact'
+niural-ai     | integrations     | "Direct processor integrations" mentioned for payments but specific platforms not detailed. Listed best guesses (QuickBooks, Xero, Slack, Google Workspace) — verify. | Check niural.com/integrations or product docs
+
+----- Batch 5 (2026-05-04) -----
+
+treble-ai     | pricing_details | BSP partner status; no public tiers — sales-led motion. | Manually copy from treble.ai/pricing or contact sales
+spiky-ai      | pricing_details | Demo-only sales motion; no public tiers. | Manually copy from spiky.ai/pricing or contact sales
+smartli       | pricing_details | Pro / Empire tiers exist but exact $/mo "under $100" hedged on homepage. | Verify exact $ from smartli.ai/pricing
+smartli       | integrations    | Only Shopify integration confirmed on homepage. WooCommerce / Facebook / TikTok mentioned in spec but not visible on site. | Check smartli.ai/integrations
+closely       | pricing_details | Promo codes referenced (BLACKFRIDAY20, XMAS15) but tier $/mo not surfaced on homepage. | Manually copy from closelyhq.com/pricing
+typewise      | spec_pivot      | Original spec described "AI typing assistant per-keystroke prediction"; site now positions as "AI Agent Platform for customer service" with $1/resolution. Used current site reality + customer-support category instead of spec's productivity. | If spec was correct earlier, Typewise has pivoted — note in tracker
+
+----- Batch 6 (2026-05-04) -----
+
+amplemarket   | pricing_details | Demo-only sales motion; no public tiers. | Manually copy from amplemarket.com/pricing or contact sales
+sanebox       | pricing_details | "Three plans" referenced but $/mo + $/yr not on homepage. Standard SaneBox tiers (Snack, Lunch, Dinner) historically known but 2026 $ unverified. | Manually copy from sanebox.com/pricing
+corecruit     | pricing_details | No public pricing — sales-led motion for recruitment agencies. | Sales call to corecruit.com or contact sales
+corecruit     | url_canonical    | corecruit.ai redirects 301 → corecruit.com. Stored corecruit.ai as website_url; consider canonicalizing to corecruit.com if redirect persists. | Decide which URL is canonical
+refresh-me    | SKIPPED          | refresh.me returns 403 to WebFetch; insufficient training-data confidence on 2026 product / pricing / features. Skipped per no-fabrication rule. | Manually fill in by visiting refresh.me in browser
+
+----- Batch 7 (2026-05-04) — final -----
+
+confido-health | SKIPPED         | confidohealth.com WebFetch returned empty body (likely fully JS-rendered SPA). Insufficient training-data confidence on 2026 AI healthcare product. Skipped per no-fabrication rule. | Manually fill in by visiting confidohealth.com in browser
+ttsopenai      | SKIPPED         | ttsopenai.com redirects 301 → tts.ainnate.com (then 403). Strong signal of rebrand or acquisition; slug likely stale. Skipped per no-fabrication rule. | Verify if Ainnate is the new brand, update slug accordingly
+brevo          | live_verification | Brevo data populated from training-data knowledge of stable public 2026 pricing (Sendinblue legacy + 2023 rebrand widely-documented). Homepage WebFetch only returned title. | Spot-check tier $ on brevo.com/pricing in browser
+drip           | pricing_details | drip.com mentions subscriber-based model but exact tier $ not surfaced. | Manually copy from drip.com/pricing
+

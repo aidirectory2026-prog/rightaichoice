@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Star, ExternalLink, ShieldCheck } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
@@ -141,6 +141,19 @@ export default async function BestPage({ params }: PageProps) {
             </div>
           ) : (
             <>
+              {/* FTC affiliate disclosure — covers the outbound Visit CTAs below */}
+              <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3.5 py-2.5 text-xs text-zinc-400 flex items-start gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                <p>
+                  <span className="text-zinc-300 font-medium">Affiliate disclosure:</span> We earn a commission when
+                  you use our links. Editorial picks are independent.{' '}
+                  <Link href="/methodology" className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline">
+                    How we choose
+                  </Link>
+                  .
+                </p>
+              </div>
+
               {/* Ranked list */}
               <div className="space-y-4 mb-12">
                 {topTools.map((tool, index) => {

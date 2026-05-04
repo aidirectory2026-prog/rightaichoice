@@ -65,6 +65,7 @@ import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
+import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
 
 // Revalidate tool pages every 5 minutes (ISR)
@@ -281,24 +282,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {tool.tagline}
                 </p>
 
-                {/* Editorial byline — Tanmay + last verified */}
-                <p className="mt-2 text-xs text-zinc-500">
-                  By{' '}
-                  <Link href="/team" className="text-zinc-300 hover:text-emerald-400 transition-colors">
-                    Tanmay Verma
-                  </Link>
-                  , Founder
-                  {tool.last_verified_at && (
-                    <>
-                      {' · '}Last verified{' '}
-                      {new Date(tool.last_verified_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </>
-                  )}
-                </p>
+                <AuthorByline lastVerifiedAt={tool.last_verified_at} />
 
                 {/* Submitted by */}
                 {tool.submitter && (
