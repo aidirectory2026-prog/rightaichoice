@@ -6,7 +6,7 @@ import { ExternalLink, Mail, ShieldCheck, Compass, FileText } from 'lucide-react
 import { jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 const PAGE_URL = 'https://rightaichoice.com/team'
-const LINKEDIN_URL = 'https://www.linkedin.com/in/tanmayverma'
+const LINKEDIN_URL = 'https://www.linkedin.com/in/tanmayverma99'
 // Placeholder SVG — Tanmay can drop a real photo at /public/team/tanmay.jpg
 // and swap PHOTO_URL to '/team/tanmay.jpg' (Next.js <Image> handles either extension).
 const PHOTO_URL = '/team/tanmay.svg'
@@ -85,26 +85,32 @@ export default function TeamPage() {
 
                 <div className="mt-4 space-y-4 text-sm text-zinc-300 leading-relaxed">
                   <p>
-                    Tanmay founded RightAIChoice in 2026 to fix a problem he kept hitting himself: the gap between
-                    marketing claims and actual capability in AI tooling had grown faster than any reviewer or
-                    directory could close it. After watching teams burn weeks comparing AI products through scattered
-                    blog posts, biased listicles, and pay-to-play directories, he set out to build a single
-                    decision-making engine — structured tool data, independent editorial verdicts, and AI-powered
-                    recommendations under one platform — where every signal serves the user&apos;s decision, not the
-                    vendor&apos;s marketing budget.
+                    The catalyst was personal. While building his last venture, Tanmay ran into a problem now familiar
+                    to anyone shipping with AI: he could not tell which tool to use for which job. Every category had
+                    a dozen &ldquo;best AI for X&rdquo; listicles ranking different products in different orders, most
+                    of them paid for placement. Vendor pages all promised the same things — faster, smarter, cheaper.
+                    The honest comparisons lived inside private Slack groups and forum threads. He watched himself,
+                    and then his peers, lose entire weeks to a decision that should have taken twenty minutes. Pick
+                    wrong and you eat the switching cost; pick right and you ship faster than the competition. There
+                    was no neutral ground in between.
                   </p>
                   <p>
-                    His background sits at the intersection of product, editorial, and engineering. Before
-                    RightAIChoice he spent years building consumer products and writing about software, which is the
-                    blend the platform demands: someone who can ship the product, write the verdict, and own the
-                    methodology.
+                    The recognition matched the work he had been doing for years. His background sits at the
+                    intersection of product, editorial, and engineering — building consumer products end-to-end,
+                    writing about software for audiences that paid for clarity, and shipping the kind of internal
+                    tooling that only exists because public versions do not. The blend RightAIChoice demands is the
+                    blend he had already been forced to build: someone who can ship the platform, write the verdict,
+                    and own the methodology in one head.
                   </p>
                   <p>
-                    At RightAIChoice, Tanmay is responsible for every published editorial verdict, the inclusion gates
-                    that decide which tools enter the catalog, the comparison-page editorial framework, the affiliate
-                    disclosure standard, and the StackBack programme that will share affiliate revenue back with
-                    users. Tool vendors do not get to edit verdicts before publication — that line is non-negotiable
-                    and starts here.
+                    The decision was to build the missing layer himself. Not another directory and not another
+                    listicle — a decision-making engine: structured tool data, independent editorial verdicts, and
+                    AI-powered recommendations under one roof, where every signal serves the user&apos;s decision
+                    rather than a vendor&apos;s marketing budget. Tool vendors do not edit verdicts before
+                    publication, do not pay for inclusion, and do not influence the comparison framework. Tanmay
+                    personally owns the editorial verdicts, the inclusion gates that decide which tools enter the
+                    catalog, the comparison-page framework, and the affiliate-disclosure standard. That line is
+                    non-negotiable, and it starts here.
                   </p>
                 </div>
 
