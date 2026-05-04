@@ -37,13 +37,15 @@ const OVERRIDES: Record<string, Override> = {
 }
 
 const TARGET_SLUGS = [
-  'kit',           // re-upload (session-1 logo points at media.kit.com which isn't in CSP / remotePatterns)
-  'systeme-io',
+  'kit',           // re-upload (current clearbit URL isn't in CSP / remotePatterns)
+  'systeme-io',    // re-upload (current clearbit URL isn't in CSP / remotePatterns)
   'customgpt-ai',
   'teachable',
   'thinkific',
   'kajabi',
   'hubspot',
+  'beehiiv',       // added 2026-05-04 — newly seeded by 061_seed_beehiiv.sql
+  'convertbox',    // added 2026-05-04 — newly seeded by 062_seed_convertbox.sql
 ] as const
 
 const argv = process.argv.slice(2)
