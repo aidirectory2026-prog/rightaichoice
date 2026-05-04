@@ -72,6 +72,9 @@ const TARGET_SLUGS = [
   'sanebox',       // batch 6 (069)
   'soona',         // batch 6 (069)
   'corecruit',     // batch 6 (069)
+  'brevo',         // batch 7 (070)
+  'drip',          // batch 7 (070)
+  'aweber',        // batch 7 (070)
 ] as const
 
 const argv = process.argv.slice(2)

@@ -50,3 +50,10 @@ corecruit     | pricing_details | No public pricing — sales-led motion for rec
 corecruit     | url_canonical    | corecruit.ai redirects 301 → corecruit.com. Stored corecruit.ai as website_url; consider canonicalizing to corecruit.com if redirect persists. | Decide which URL is canonical
 refresh-me    | SKIPPED          | refresh.me returns 403 to WebFetch; insufficient training-data confidence on 2026 product / pricing / features. Skipped per no-fabrication rule. | Manually fill in by visiting refresh.me in browser
 
+----- Batch 7 (2026-05-04) — final -----
+
+confido-health | SKIPPED         | confidohealth.com WebFetch returned empty body (likely fully JS-rendered SPA). Insufficient training-data confidence on 2026 AI healthcare product. Skipped per no-fabrication rule. | Manually fill in by visiting confidohealth.com in browser
+ttsopenai      | SKIPPED         | ttsopenai.com redirects 301 → tts.ainnate.com (then 403). Strong signal of rebrand or acquisition; slug likely stale. Skipped per no-fabrication rule. | Verify if Ainnate is the new brand, update slug accordingly
+brevo          | live_verification | Brevo data populated from training-data knowledge of stable public 2026 pricing (Sendinblue legacy + 2023 rebrand widely-documented). Homepage WebFetch only returned title. | Spot-check tier $ on brevo.com/pricing in browser
+drip           | pricing_details | drip.com mentions subscriber-based model but exact tier $ not surfaced. | Manually copy from drip.com/pricing
+
