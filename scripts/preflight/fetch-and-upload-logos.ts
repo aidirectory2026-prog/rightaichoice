@@ -68,6 +68,10 @@ const TARGET_SLUGS = [
   'smartli',       // batch 5 (068)
   'closely',       // batch 5 (068)
   'typewise',      // batch 5 (068)
+  'amplemarket',   // batch 6 (069)
+  'sanebox',       // batch 6 (069)
+  'soona',         // batch 6 (069)
+  'corecruit',     // batch 6 (069)
 ] as const
 
 const argv = process.argv.slice(2)

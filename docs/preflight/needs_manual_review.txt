@@ -42,3 +42,11 @@ smartli       | integrations    | Only Shopify integration confirmed on homepage
 closely       | pricing_details | Promo codes referenced (BLACKFRIDAY20, XMAS15) but tier $/mo not surfaced on homepage. | Manually copy from closelyhq.com/pricing
 typewise      | spec_pivot      | Original spec described "AI typing assistant per-keystroke prediction"; site now positions as "AI Agent Platform for customer service" with $1/resolution. Used current site reality + customer-support category instead of spec's productivity. | If spec was correct earlier, Typewise has pivoted — note in tracker
 
+----- Batch 6 (2026-05-04) -----
+
+amplemarket   | pricing_details | Demo-only sales motion; no public tiers. | Manually copy from amplemarket.com/pricing or contact sales
+sanebox       | pricing_details | "Three plans" referenced but $/mo + $/yr not on homepage. Standard SaneBox tiers (Snack, Lunch, Dinner) historically known but 2026 $ unverified. | Manually copy from sanebox.com/pricing
+corecruit     | pricing_details | No public pricing — sales-led motion for recruitment agencies. | Sales call to corecruit.com or contact sales
+corecruit     | url_canonical    | corecruit.ai redirects 301 → corecruit.com. Stored corecruit.ai as website_url; consider canonicalizing to corecruit.com if redirect persists. | Decide which URL is canonical
+refresh-me    | SKIPPED          | refresh.me returns 403 to WebFetch; insufficient training-data confidence on 2026 product / pricing / features. Skipped per no-fabrication rule. | Manually fill in by visiting refresh.me in browser
+
