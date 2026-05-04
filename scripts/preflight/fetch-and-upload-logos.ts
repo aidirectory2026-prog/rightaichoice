@@ -50,6 +50,11 @@ const TARGET_SLUGS = [
   'token-metrics', // batch 1 (064)
   'flowith',       // batch 1 (064)
   'foxit',         // batch 1 (064)
+  'pinecone',      // batch 2 (058 backfill)
+  'hume-ai',       // batch 2 (065)
+  'synthflow-ai',  // batch 2 (065)
+  'manychat',      // batch 2 (065)
+  'laxis',         // batch 2 (065)
 ] as const
 
 const argv = process.argv.slice(2)

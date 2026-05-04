@@ -10,3 +10,11 @@ flowith       | pricing_details | flowith.io/pricing not visible from homepage W
 flowith       | integrations    | Homepage lists backers (OpenAI, Microsoft, AWS, NVIDIA) but not consumer-app integrations. Ships with 5 (backers as proxies). Replace with real integration list when verified. | Check flowith.io/integrations or Help Center
 foxit         | pricing_details | foxit.com/shopping is JS-rendered; no plan tiers visible to WebFetch. Foxit PDF Editor and AI Assistant exist as separate SKUs. | Manually copy from https://www.foxit.com/shopping/
 
+----- Batch 2 (2026-05-04) -----
+
+hume-ai       | pricing_details | hume.ai pricing is API-first usage-based; no clear $/mo tier table on homepage. Free tier exists + per-character TTS rates. | Manually copy from https://www.hume.ai/pricing
+synthflow-ai  | pricing_details | synthflow.ai pricing model is PAYG (pay-as-you-go) per their statement; no public per-minute or tier $ visible to WebFetch. | Manually copy from https://www.synthflow.ai/pricing or contact sales
+manychat      | pricing_details | manychat.com returns 403 to WebFetch (Cloudflare bot-protect). Tier values below from training-data knowledge; verify live. | Visit https://manychat.com/pricing in browser
+manychat      | live_verification | All facts (1M+ businesses, channel list, AI Step, integrations) from training-data; site couldn't be WebFetched. | Visit https://manychat.com to spot-check
+laxis         | pricing_details | laxis.com mentions "Start for free" but no public tier table or $/mo visible. | Manually copy from https://www.laxis.com/pricing
+
