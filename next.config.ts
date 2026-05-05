@@ -30,6 +30,28 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  // Phase 1 (2026-05-05): the empty community surfaces (/reviews,
+  // /questions, /discussions, /workflows) were removed. Permanent (308)
+  // redirects to relevant live destinations transfer link equity from any
+  // existing Google index entries / external backlinks instead of letting
+  // them 404. The submission affordance is preserved on the tool page via
+  // the QuickFeedback strip — that's why /reviews + /questions land on a
+  // generic /tools listing (the user can pick a tool, then leave feedback).
+  // We deliberately did NOT add robots.txt Disallow lines: blocking
+  // crawlers prevents them from seeing the redirect, which would slow
+  // deindexing of the old URLs.
+  async redirects() {
+    return [
+      { source: '/reviews', destination: '/tools', permanent: true },
+      { source: '/reviews/:path*', destination: '/tools', permanent: true },
+      { source: '/questions', destination: '/tools', permanent: true },
+      { source: '/questions/:path*', destination: '/tools', permanent: true },
+      { source: '/discussions', destination: '/tools', permanent: true },
+      { source: '/discussions/:path*', destination: '/tools', permanent: true },
+      { source: '/workflows', destination: '/plan', permanent: true },
+      { source: '/workflows/:path*', destination: '/plan', permanent: true },
+    ]
+  },
   images: {
     remotePatterns: [
       {

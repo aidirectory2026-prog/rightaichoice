@@ -15,9 +15,7 @@ import {
   Layers,
   Zap,
   ArrowRight,
-  MessageSquare,
   MessagesSquare,
-  GitBranch,
   TrendingUp,
   ShieldCheck,
   ThumbsUp,
@@ -42,24 +40,11 @@ import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentBlock } from '@/components/tools/sentiment-block'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
+import { QuickFeedback } from '@/components/tools/quick-feedback'
 import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
-import { getWorkflowsForTool } from '@/lib/data/workflows'
-import { getReviewsForTool, hasUserReviewed, getReviewVotes } from '@/lib/data/reviews'
-import { getQuestionsForTool, getQuestionVotes } from '@/lib/data/questions'
-import {
-  getDiscussionsForTool,
-  getRepliesForDiscussion,
-  getDiscussionVotes,
-  getReplyVotes,
-} from '@/lib/data/discussions'
-import { DiscussionForm } from '@/components/discussions/discussion-form'
-import { DiscussionList } from '@/components/discussions/discussion-list'
-import { ReviewForm } from '@/components/reviews/review-form'
-import { ReviewList } from '@/components/reviews/review-list'
-import { QuestionForm } from '@/components/qa/question-form'
-import { QuestionList } from '@/components/qa/question-list'
+import { hasUserReviewed } from '@/lib/data/reviews'
 import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
@@ -131,8 +116,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch community data in parallel — each section is fault-tolerant
-  const [alternatives, saved, reviews, alreadyReviewed, questions, discussions, relatedWorkflows, faqs, integrationLinks, editorialCompares] = await Promise.all([
+  // Fetch parallel data — community list/count fetches removed in Phase 1
+  // (the heavy Reviews/Questions/Discussions/Workflows blocks were replaced
+  // by the lightweight QuickFeedback strip). hasUserReviewed is kept so the
+  // strip hides the "Leave a review" CTA for users who already reviewed.
+  const [alternatives, saved, alreadyReviewed, faqs, integrationLinks, editorialCompares] = await Promise.all([
     // Phase 7 Step 50 (BUG-015): pass slug + tag slugs + tagline so the
     // ranker can apply the general-LLM whitelist (Claude, ChatGPT, Gemini …)
     // and the IDENTITY_TAGS gate for image/video/voice tools.
@@ -143,39 +131,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
       sourceName: tool.name,
     }).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
-    getReviewsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getReviewsForTool>>),
     user ? hasUserReviewed(tool.id, user.id).catch(() => false) : Promise.resolve(false),
-    getQuestionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getQuestionsForTool>>),
-    getDiscussionsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getDiscussionsForTool>>),
-    getWorkflowsForTool(tool.slug).catch(() => [] as Awaited<ReturnType<typeof getWorkflowsForTool>>),
     getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>),
     getIntegrationLinks(tool.integrations ?? []).catch(() => new Map<string, string>()),
     getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
-  ])
-
-  // Get user's votes on reviews, questions, and discussions
-  const reviewIds = reviews.map((r: { id: string }) => r.id)
-  const questionIds = questions.map((q: { id: string }) => q.id)
-  const discussionIds = discussions.map((d: { id: string }) => d.id)
-
-  // Fetch replies for each discussion (limit to first 5 discussions shown)
-  const shownDiscussions = discussions.slice(0, 5)
-  const repliesArrays = await Promise.all(
-    shownDiscussions.map((d: { id: string }) => getRepliesForDiscussion(d.id).catch(() => [] as Awaited<ReturnType<typeof getRepliesForDiscussion>>))
-  )
-  const repliesMap: Record<string, typeof repliesArrays[number]> = {}
-  const allReplyIds: string[] = []
-  shownDiscussions.forEach((d: { id: string }, i: number) => {
-    repliesMap[d.id] = repliesArrays[i]
-    repliesArrays[i].forEach((r: { id: string }) => allReplyIds.push(r.id))
-  })
-
-  const emptyVotes: Record<string, 'up' | 'down'> = {}
-  const [userVotes, questionVotes, discussionVotes, replyVotes] = await Promise.all([
-    user ? getReviewVotes(reviewIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
-    user ? getQuestionVotes(questionIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
-    user ? getDiscussionVotes(discussionIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
-    user ? getReplyVotes(allReplyIds, user.id).catch(() => emptyVotes) : Promise.resolve(emptyVotes),
   ])
 
   const skillLabels: Record<string, string> = {
@@ -309,10 +268,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       <span>({tool.review_count} reviews)</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1.5">
-                    <Eye className="h-4 w-4" />
-                    <span>{formatNumber(tool.view_count)} views</span>
-                  </div>
+                  {tool.view_count >= 25 && (
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="h-4 w-4" />
+                      <span>{formatNumber(tool.view_count)} views</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     <span>Added {timeAgo(tool.created_at)}</span>
@@ -362,12 +323,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left column (2/3) — Description, Features, etc. */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Our Take — Editorial Verdict (most prominent) */}
+              {/* Editorial Verdict (most prominent) */}
               {(tool.editorial_verdict || (tool.best_for && tool.best_for.length > 0)) && (
                 <section className="rounded-xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/10 to-zinc-900/50 p-5">
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                    Our Take on {tool.name}
+                    Editorial Verdict
                   </h2>
 
                   <div className="flex flex-wrap gap-x-8 gap-y-3 mb-4">
@@ -434,12 +395,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Our Views — Long-form editorial */}
+              {/* Long-form editorial reasoning behind the verdict */}
               {tool.our_views && (
                 <section>
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <Eye className="h-5 w-5 text-cyan-400" />
-                    Our Views
+                    Behind the Verdict
                   </h2>
                   <div className="prose prose-invert prose-zinc prose-sm max-w-none">
                     <p className="text-zinc-400 leading-relaxed whitespace-pre-line">
@@ -731,161 +692,17 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   has_api: tool.has_api,
                   platforms: tool.platforms ?? [],
                 }}
-                reviews={reviews.slice(0, 5).map((r: { pros: string; cons: string; rating: number; use_case: string }) => ({
-                  pros: r.pros,
-                  cons: r.cons,
-                  rating: r.rating,
-                  use_case: r.use_case,
-                }))}
+                reviews={[]}
               />
 
-              {/* ── Workflow Integration ─────────────────────── */}
-              {relatedWorkflows.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <GitBranch className="h-5 w-5 text-emerald-400" />
-                    {tool.name} in Workflows
-                  </h2>
-                  <div className="space-y-3">
-                    {relatedWorkflows.map((wf) => {
-                      const stepWithTool = wf.steps.find((s) => s.tool_slug === tool.slug)
-                      return (
-                        <a
-                          key={wf.id}
-                          href={`/workflows/${wf.id}`}
-                          className="flex items-start justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3.5 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors group"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-white group-hover:text-emerald-400 transition-colors truncate">
-                              {wf.title}
-                            </p>
-                            {stepWithTool && (
-                              <p className="mt-0.5 text-xs text-zinc-500 truncate">
-                                Used for: {stepWithTool.name}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-500">
-                            <TrendingUp className="h-3.5 w-3.5" />
-                            {wf.upvotes}
-                          </div>
-                        </a>
-                      )
-                    })}
-                  </div>
-                  <div className="mt-3">
-                    <a
-                      href="/workflows"
-                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-                    >
-                      Browse all workflows →
-                    </a>
-                  </div>
-                </section>
-              )}
-
-              {/* ── Reviews Section ──────────────────────────── */}
-              <SectionErrorBoundary fallbackTitle="Reviews couldn't load right now.">
-                <section id="reviews">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <Star className="h-5 w-5 text-amber-400" />
-                      Reviews ({reviews.length})
-                    </h2>
-                  </div>
-
-                  {reviews.length > 0 ? (
-                    <>
-                      <ReviewList reviews={reviews} userVotes={userVotes} />
-                      {!alreadyReviewed && (
-                        <div className="mt-6">
-                          <ReviewForm toolId={tool.id} />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
-                      <p className="text-sm text-zinc-500">No reviews yet. Be the first to share your experience.</p>
-                      <div className="mt-3">
-                        <ReviewForm toolId={tool.id} />
-                      </div>
-                    </div>
-                  )}
-                </section>
-              </SectionErrorBoundary>
-
-              {/* ── Q&A Section ──────────────────────────────── */}
-              <SectionErrorBoundary fallbackTitle="Questions couldn't load right now.">
-                <section id="questions">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-blue-400" />
-                      Questions ({questions.length})
-                    </h2>
-                    {questions.length > 5 && (
-                      <Link
-                        href={`/questions?tool=${tool.slug}`}
-                        className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                      >
-                        View all
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    )}
-                  </div>
-
-                  {questions.length > 0 ? (
-                    <>
-                      <QuestionList
-                        questions={questions.slice(0, 5)}
-                        userVotes={questionVotes}
-                      />
-                      <div className="mt-6">
-                        <QuestionForm toolId={tool.id} />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
-                      <p className="text-sm text-zinc-500">No questions yet. Ask something about {tool.name}.</p>
-                      <div className="mt-3">
-                        <QuestionForm toolId={tool.id} />
-                      </div>
-                    </div>
-                  )}
-                </section>
-              </SectionErrorBoundary>
-
-              {/* ── Discussions Section ────────────────────────── */}
-              <SectionErrorBoundary fallbackTitle="Discussions couldn't load right now.">
-                <section id="discussions">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <MessagesSquare className="h-5 w-5 text-purple-400" />
-                      Discussions ({discussions.length})
-                    </h2>
-                  </div>
-
-                  {discussions.length > 0 ? (
-                    <>
-                      <DiscussionList
-                        discussions={shownDiscussions}
-                        repliesMap={repliesMap}
-                        discussionVotes={discussionVotes}
-                        replyVotes={replyVotes}
-                      />
-                      <div className="mt-6">
-                        <DiscussionForm toolId={tool.id} />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
-                      <p className="text-sm text-zinc-500">No discussions yet. Start a conversation about {tool.name}.</p>
-                      <div className="mt-3">
-                        <DiscussionForm toolId={tool.id} />
-                      </div>
-                    </div>
-                  )}
-                </section>
-              </SectionErrorBoundary>
+              {/* ── Quick Feedback (Phase 1: replaces Reviews / Questions / Discussions blocks) ── */}
+              <QuickFeedback
+                toolId={tool.id}
+                toolSlug={tool.slug}
+                toolName={tool.name}
+                isLoggedIn={!!user}
+                alreadyReviewed={alreadyReviewed}
+              />
 
               {/* ── FAQs ──────────────────────────────────────── */}
               <FaqSection faqs={faqs} toolName={tool.name} />
@@ -974,49 +791,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </dl>
               </div>
 
-              {/* Community Sentiment — rating breakdown */}
-              {reviews.length >= 3 && (() => {
-                const dist = [5, 4, 3, 2, 1].map((star) => ({
-                  star,
-                  count: reviews.filter((r: { rating: number }) => r.rating === star).length,
-                }))
-                const topReview = reviews
-                  .slice()
-                  .sort((a: { upvotes: number }, b: { upvotes: number }) => (b.upvotes ?? 0) - (a.upvotes ?? 0))[0]
-                return (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-                    <h3 className="text-sm font-semibold text-white mb-1">Community Sentiment</h3>
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-2xl font-bold text-white">
-                        {Number(tool.avg_rating).toFixed(1)}
-                      </span>
-                      <span className="text-xs text-zinc-500">/ 5 · {reviews.length} reviews</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {dist.map(({ star, count }) => {
-                        const pct = reviews.length > 0 ? Math.round((count / reviews.length) * 100) : 0
-                        return (
-                          <div key={star} className="flex items-center gap-2 text-xs">
-                            <span className="w-4 text-right text-zinc-500">{star}</span>
-                            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-amber-400"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="w-6 text-zinc-600">{pct}%</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    {topReview?.pros && (
-                      <blockquote className="mt-4 border-l-2 border-emerald-600 pl-3 text-xs text-zinc-400 italic line-clamp-3">
-                        &ldquo;{topReview.pros}&rdquo;
-                      </blockquote>
-                    )}
-                  </div>
-                )
-              })()}
+              {/* Phase 1 (2026-05-05): the rating-distribution sidebar block
+                  was removed alongside the Reviews / Questions / Discussions
+                  sections. Phase 3 will replace it with a synthesized
+                  sentiment block ("What independent users actually report
+                  about [Tool]") sourced from broader research, not the
+                  internal reviews pool. */}
 
               {/* Categories */}
               {categories.length > 0 && (

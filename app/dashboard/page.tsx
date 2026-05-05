@@ -72,79 +72,82 @@ export default async function DashboardPage() {
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zinc-800 overflow-hidden border-2 border-zinc-700">
-                {profile.avatar_url ? (
-                  <Image
-                    src={profile.avatar_url}
-                    alt={profile.username}
-                    width={64}
-                    height={64}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xl font-bold text-zinc-500">
-                    {profile.username.charAt(0).toUpperCase()}
-                  </span>
-                )}
+          {/* Header card */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zinc-800 overflow-hidden border-2 border-zinc-700">
+                  {profile.avatar_url ? (
+                    <Image
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-bold text-zinc-500">
+                      {profile.username.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-xl font-bold text-white truncate">
+                    {profile.full_name || profile.username}
+                  </h1>
+                  <p className="text-sm text-zinc-500 truncate">@{profile.username}</p>
+                  {profile.is_admin && (
+                    <span className="inline-block mt-1 text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-2 py-0.5">
+                      Admin
+                    </span>
+                  )}
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
-                  {profile.full_name || profile.username}
-                </h1>
-                <p className="text-sm text-zinc-500">@{profile.username}</p>
-                {profile.is_admin && (
-                  <span className="inline-block mt-1 text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-2 py-0.5">
-                    Admin
-                  </span>
-                )}
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/u/${profile.username}`}
-                className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Public Profile
-              </Link>
-              {profile.is_admin && (
+              <div className="flex flex-wrap items-center gap-2">
                 <Link
-                  href="/admin"
+                  href={`/u/${profile.username}`}
                   className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                 >
-                  <Settings className="h-3.5 w-3.5" />
-                  Admin
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Public Profile
                 </Link>
+                {profile.is_admin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    Admin
+                  </Link>
+                )}
+                <form action={signOut}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-red-400 hover:border-red-800 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Stats + Badges (now inside the header card) */}
+            <div className="mt-6 flex flex-wrap items-center gap-6 border-t border-zinc-800 pt-5">
+              <div className="flex flex-wrap items-center gap-6">
+                <Stat icon={<Award className="h-4 w-4 text-emerald-400" />} label="Reputation" value={profile.reputation} />
+                <Stat icon={<Star className="h-4 w-4 text-amber-400" />} label="Reviews" value={profile.review_count} />
+                <Stat icon={<MessageSquare className="h-4 w-4 text-blue-400" />} label="Questions" value={profile.question_count} />
+                <Stat icon={<MessageCircle className="h-4 w-4 text-purple-400" />} label="Answers" value={profile.answer_count} />
+              </div>
+              {badges.length > 0 && (
+                <div className="border-l border-zinc-800 pl-6">
+                  <BadgeList badges={badges} />
+                </div>
               )}
-              <form action={signOut}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:text-red-400 hover:border-red-800 transition-colors"
-                >
-                  Sign out
-                </button>
-              </form>
             </div>
           </div>
 
-          {/* Stats + Badges */}
-          <div className="mt-6 flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-6">
-              <Stat icon={<Award className="h-4 w-4 text-emerald-400" />} label="Reputation" value={profile.reputation} />
-              <Stat icon={<Star className="h-4 w-4 text-amber-400" />} label="Reviews" value={profile.review_count} />
-              <Stat icon={<MessageSquare className="h-4 w-4 text-blue-400" />} label="Questions" value={profile.question_count} />
-              <Stat icon={<MessageCircle className="h-4 w-4 text-purple-400" />} label="Answers" value={profile.answer_count} />
-            </div>
-            {badges.length > 0 && (
-              <div className="border-l border-zinc-800 pl-6">
-                <BadgeList badges={badges} />
-              </div>
-            )}
-          </div>
 
           {/* Content Grid */}
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -332,6 +335,7 @@ export default async function DashboardPage() {
                     full_name: profile.full_name,
                     bio: profile.bio,
                     website_url: profile.website_url,
+                    avatar_url: profile.avatar_url,
                   }}
                 />
               </div>

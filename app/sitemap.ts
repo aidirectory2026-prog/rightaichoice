@@ -1,8 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getAllToolSlugs } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
-import { getAllQuestionIds } from '@/lib/data/questions'
-import { getAllWorkflowIds } from '@/lib/data/workflows'
 import { getAllComparisonSlugs } from '@/lib/data/comparisons'
 import { BEST_PAGES } from '@/lib/data/best-pages'
 import { STACKS } from '@/lib/data/stacks'
@@ -19,20 +17,20 @@ const BASE_URL = 'https://rightaichoice.com'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tools, categories, questions, workflows, comparisons] = await Promise.all([
+  const [tools, categories, comparisons] = await Promise.all([
     getAllToolSlugs(),
     getCategories(),
-    getAllQuestionIds(),
-    getAllWorkflowIds(),
     getAllComparisonSlugs(),
   ])
 
+  // Phase 1 (2026-05-05): /reviews, /questions, /discussions, /workflows
+  // (and their per-id routes) were removed. They no longer appear here so
+  // crawlers stop being asked to re-fetch them; the live routes return 404
+  // (or 410 via middleware) so existing index entries deindex naturally.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/tools`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/questions`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
-    { url: `${BASE_URL}/workflows`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE_URL}/recommend`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/ai-chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/viability`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
@@ -57,20 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.75,
     })
   )
-
-  const questionRoutes: MetadataRoute.Sitemap = questions.map(({ id, updated_at }) => ({
-    url: `${BASE_URL}/questions/${id}`,
-    lastModified: updated_at ? new Date(updated_at) : new Date(),
-    changeFrequency: 'monthly',
-    priority: 0.65,
-  }))
-
-  const workflowRoutes: MetadataRoute.Sitemap = workflows.map(({ id, updated_at }) => ({
-    url: `${BASE_URL}/workflows/${id}`,
-    lastModified: updated_at ? new Date(updated_at) : new Date(),
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }))
 
   const bestPageRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}/best`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
@@ -133,7 +117,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...toolRoutes,
     ...categoryRoutes,
     ...comparisonRoutes,
-    ...questionRoutes,
-    ...workflowRoutes,
   ]
 }
