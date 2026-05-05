@@ -43,34 +43,39 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Community */}
+          {/* Editorial */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Community
+              Editorial
             </h3>
             <ul className="mt-3 space-y-2">
               <li>
-                <Link href="/reviews" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Reviews
+                <Link href="/methodology" className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  Methodology
                 </Link>
               </li>
               <li>
-                <Link href="/questions" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Q&A
+                <Link href="/team" className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  Team
                 </Link>
               </li>
               <li>
-                <Link href="/discussions" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Discussions
+                <Link href="/compare" className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  Compare
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-sm text-zinc-500 hover:text-white transition-colors">
+                  Blog
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Platform */}
+          {/* Company */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Platform
+              Company
             </h3>
             <ul className="mt-3 space-y-2">
               <li>

@@ -1,0 +1,42 @@
+-- 072_community_surfaces_removed.sql
+-- Documentation-only migration. No DDL.
+--
+-- Phase 8 / Phase 1 (2026-05-05): the empty community surfaces
+-- (/reviews list, /questions list + per-id detail, /discussions list +
+-- per-id detail, /workflows list + generate + per-id detail) were
+-- removed from the frontend. The replacement affordance is the
+-- QuickFeedback strip on every tool page — a small, single-section
+-- component with two CTAs (Leave a review / Ask a question) that
+-- expand inline for authenticated users.
+--
+-- TABLES PRESERVED:
+--   - reviews          (still written via QuickFeedback → ReviewForm)
+--   - questions        (still written via QuickFeedback → QuestionForm)
+--   - discussions      (no longer written from the frontend; preserved
+--                       for potential later relaunch)
+--   - workflows        (no longer written; preserved)
+--   - answers, discussion_replies, *_votes, etc. (preserved as joined
+--                       data and historical record)
+--
+-- DATA POLICY: rows already in these tables remain queryable. New
+-- writes are still allowed only through the public submission flows
+-- (currently: reviews + questions via QuickFeedback). The other
+-- tables receive no new writes from app code.
+--
+-- ROUTES + REDIRECTS:
+--   /reviews, /reviews/[id]              → 308 → /tools
+--   /questions, /questions/[id]          → 308 → /tools
+--   /discussions, /discussions/[id]      → 308 → /tools
+--   /workflows, /workflows/[id], /generate → 308 → /plan
+--   (configured in next.config.ts redirects())
+--
+-- We deliberately did NOT add robots.txt Disallow rules. Blocking
+-- crawlers prevents them from seeing the 308 redirect, slowing the
+-- deindexing of the old URLs. Letting crawlers follow the redirects
+-- transfers any link equity to live pages.
+--
+-- This file exists to make the change visible in the migration ledger
+-- so future contributors can trace why the tables exist but the
+-- surfaces don't.
+
+SELECT 1;  -- noop so the migration runner records this file as applied
