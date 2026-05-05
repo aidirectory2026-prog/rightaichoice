@@ -362,12 +362,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left column (2/3) — Description, Features, etc. */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Our Take — Editorial Verdict (most prominent) */}
+              {/* Editorial Verdict (most prominent) */}
               {(tool.editorial_verdict || (tool.best_for && tool.best_for.length > 0)) && (
                 <section className="rounded-xl border border-emerald-900/40 bg-gradient-to-b from-emerald-950/10 to-zinc-900/50 p-5">
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                    Our Take on {tool.name}
+                    Editorial Verdict
                   </h2>
 
                   <div className="flex flex-wrap gap-x-8 gap-y-3 mb-4">
@@ -434,12 +434,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Our Views — Long-form editorial */}
+              {/* Long-form editorial reasoning behind the verdict */}
               {tool.our_views && (
                 <section>
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <Eye className="h-5 w-5 text-cyan-400" />
-                    Our Views
+                    Behind the Verdict
                   </h2>
                   <div className="prose prose-invert prose-zinc prose-sm max-w-none">
                     <p className="text-zinc-400 leading-relaxed whitespace-pre-line">
