@@ -37,10 +37,20 @@ import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { ToolFeed } from '@/components/tools/tool-feed'
 import { FaqSection } from '@/components/tools/faq-section'
-import { SentimentBlock } from '@/components/tools/sentiment-block'
+import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
+// Phase 3 density-replacement sections
+import { SkipIfLine } from '@/components/tools/skip-if-line'
+import { CostCalculator } from '@/components/tools/cost-calculator'
+import { HiddenCosts } from '@/components/tools/hidden-costs'
+import { PricingPowerMatch } from '@/components/tools/pricing-power-match'
+import { WorkflowFit } from '@/components/tools/workflow-fit'
+import { SetupTimeline } from '@/components/tools/setup-timeline'
+import { MigrationPaths } from '@/components/tools/migration-paths'
+import { RecentChanges } from '@/components/tools/recent-changes'
+import { StackPairings } from '@/components/tools/stack-pairings'
 import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
@@ -415,14 +425,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* ── Community & Market Signals (Phase 6 data inline) ─ */}
-              <SectionErrorBoundary fallbackTitle="Community signals couldn't load right now.">
-                <SentimentBlock
-                  toolId={tool.id}
-                  toolSlug={tool.slug}
-                  toolName={tool.name}
-                  viewCount={tool.view_count ?? 0}
-                />
+              {/* Phase 3: Skip-if line (closes the verdict band — single sentence) */}
+              <SkipIfLine toolName={tool.name} text={tool.skip_if} />
+
+              {/* Sentiment synthesis — independent-user research pass (Phase 3 rewrite) */}
+              <SectionErrorBoundary fallbackTitle="Sentiment synthesis couldn't load right now.">
+                <SentimentSynthesis toolId={tool.id} toolName={tool.name} />
               </SectionErrorBoundary>
 
               {/* Viability Score */}
@@ -481,6 +489,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </div>
                 </section>
               )}
+
+              {/* Phase 3: material changes (pricing/brand/ownership/deprecations) */}
+              <RecentChanges toolName={tool.name} changes={tool.recent_changes} />
 
               {/* Description */}
               <section>
@@ -547,6 +558,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </div>
                 </section>
               )}
+
+              {/* Phase 3: real-world workflow scenarios */}
+              <WorkflowFit toolName={tool.name} scenarios={tool.workflow_scenarios} />
 
               {/* Use Cases — concrete, curated (from tool.use_cases) */}
               {Array.isArray(tool.use_cases) && tool.use_cases.length > 0 && (
@@ -618,6 +632,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </p>
                 </section>
               )}
+
+              {/* Phase 3 — Pricing & cost band */}
+              <CostCalculator pricingDetails={tool.pricing_details} />
+              <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
+              <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
+
+              {/* Phase 3 — Adoption-friction band */}
+              <SetupTimeline toolName={tool.name} text={tool.setup_time_text} />
+              <MigrationPaths
+                toolName={tool.name}
+                migrationIn={tool.migration_in}
+                migrationOut={tool.migration_out}
+              />
 
               {/* Topics (tool tags) — kept separate from the real Use Cases section */}
               {tags.length > 0 && (
@@ -706,6 +733,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* ── FAQs ──────────────────────────────────────── */}
               <FaqSection faqs={faqs} toolName={tool.name} />
+
+              {/* Phase 3: Stack-pairing recommendations — composes well with this tool */}
+              <StackPairings
+                toolName={tool.name}
+                pairings={alternatives.slice(0, 3).map((alt) => ({
+                  id: alt.id,
+                  slug: alt.slug,
+                  name: alt.name,
+                  tagline: alt.tagline,
+                  logo_url: alt.logo_url,
+                  pairing_reason: null,
+                }))}
+              />
 
               {/* Featured in Head-to-Head Comparisons — editorial only */}
               {editorialCompares.length > 0 && (
