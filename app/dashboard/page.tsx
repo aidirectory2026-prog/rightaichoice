@@ -335,6 +335,7 @@ export default async function DashboardPage() {
                     full_name: profile.full_name,
                     bio: profile.bio,
                     website_url: profile.website_url,
+                    avatar_url: profile.avatar_url,
                   }}
                 />
               </div>
