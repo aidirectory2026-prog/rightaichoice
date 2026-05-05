@@ -11,7 +11,9 @@
     "mixpanel:lexicon:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts --dry-run",
     "mixpanel:lexicon": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts",
     "preflight:fetch-logos:dry": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --dry-run",
-    "preflight:fetch-logos": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts"
+    "preflight:fetch-logos": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts",
+    "backfill:dry": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --dry-run",
+    "backfill:apply": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --apply"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
