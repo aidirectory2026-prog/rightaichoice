@@ -41,6 +41,7 @@ import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
+import { MobileActionBar } from '@/components/tools/mobile-action-bar'
 // Phase 3 density-replacement sections
 import { SkipIfLine } from '@/components/tools/skip-if-line'
 import { CostCalculator } from '@/components/tools/cost-calculator'
@@ -207,7 +208,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
         ]) }}
       />
 
-      <main className="flex-1">
+      <main className="flex-1 pb-20 lg:pb-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           {/* Breadcrumb */}
           <nav className="mb-6 flex items-center gap-1.5 text-sm text-zinc-500">
@@ -805,8 +806,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Right column (1/3) — Sidebar */}
-            <aside className="space-y-6">
+            {/* Right column (1/3) — Sidebar.
+                Phase 3b (2026-05-05): sticky on desktop so the at-a-glance
+                details / categories / resources stay in view as the long
+                main column scrolls. Internal scroll kicks in when the rail
+                is taller than the available viewport height (top-20 leaves
+                room for the navbar). */}
+            <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
               {/* Quick Info Card */}
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <h3 className="text-sm font-semibold text-white mb-4">Details</h3>
@@ -971,6 +977,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
           </div>
         </div>
       </main>
+
+      {/* Phase 3b: mobile-only sticky action bar (lg:hidden inside the component) */}
+      <MobileActionBar
+        tool={{
+          id: tool.id,
+          slug: tool.slug,
+          name: tool.name,
+          logo_url: tool.logo_url,
+          website_url: tool.website_url,
+        }}
+        initialSaved={saved}
+      />
 
       <Footer />
     </>
