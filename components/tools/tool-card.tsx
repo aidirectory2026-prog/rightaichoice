@@ -49,10 +49,10 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
       </div>
 
       {/* Footer: Pricing + Compare + Rating */}
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span
-            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${pricingColor(tool.pricing_type)}`}
+            className={`inline-flex shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${pricingColor(tool.pricing_type)}`}
           >
             {pricingLabel(tool.pricing_type)}
           </span>
@@ -68,13 +68,13 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
         </div>
 
         {tool.avg_rating > 0 ? (
-          <div className="flex items-center gap-1 text-xs text-zinc-500">
+          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-zinc-500">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             <span className="text-zinc-300">{tool.avg_rating.toFixed(1)}</span>
             <span>({tool.review_count})</span>
           </div>
         ) : (
-          <span className="text-xs text-zinc-600">No reviews yet</span>
+          <span className="shrink-0 whitespace-nowrap text-xs text-zinc-600">No reviews yet</span>
         )}
       </div>
     </Link>
