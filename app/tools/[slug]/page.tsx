@@ -52,6 +52,7 @@ import { SetupTimeline } from '@/components/tools/setup-timeline'
 import { MigrationPaths } from '@/components/tools/migration-paths'
 import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
+import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
 import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
@@ -648,6 +649,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* Phase 3 — Pricing & cost band */}
               <CostCalculator pricingDetails={tool.pricing_details} />
+              <PricingPlansComparison
+                toolName={tool.name}
+                pricingDetails={tool.pricing_details}
+                pricingPlanGuides={tool.pricing_plan_guides}
+              />
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 

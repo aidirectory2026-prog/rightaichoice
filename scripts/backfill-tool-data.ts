@@ -92,6 +92,20 @@ const sopOutputSchema = z.object({
   migration_out: z.array(z.string().max(220)).min(0).max(5),
   recent_changes: z.array(z.string().max(280)).min(0).max(4),
 
+  // Phase 3 (added 2026-05-07): structured "Plans compared" surface.
+  // Joined to tools.pricing_details on plan_name at render time. Empty
+  // array is valid (free-only or contact-sales tools).
+  pricing_plan_guides: z
+    .array(
+      z.object({
+        plan_name: z.string().min(1).max(60),
+        ideal_for: z.string().min(20).max(280),
+        key_difference: z.string().min(15).max(280),
+      })
+    )
+    .min(0)
+    .max(8),
+
   // SEO + freshness
   faqs_long_tail: z
     .array(
@@ -268,6 +282,10 @@ C. PHASE 3 DENSITY (decision-critical, almost-never-published surface)
 - migration_in (0-5 items, ≤220 chars each): "From [Predecessor]: [path]"
 - migration_out (0-5 items, ≤220 chars each): "To [Successor]: [path]"
 - recent_changes (0-4 items, ≤280 chars each, most-recent first): material pricing/brand/ownership/deprecation changes
+- pricing_plan_guides (0-8 items, one per published pricing tier): for each tier in pricing_details (passed as input), produce {plan_name, ideal_for, key_difference}.
+  * plan_name MUST match exactly a plan name in the input pricing_details array (case-insensitive ok). If pricing_details is empty, return [].
+  * ideal_for (20-280 chars): the persona / company stage / use case this tier actually fits. Specific, e.g. "Solo creator with under 1K subscribers exploring email" — NOT generic ("anyone wanting more features").
+  * key_difference (15-280 chars): what THIS tier adds versus the previous tier (or "starting tier" / "free entry point" for the first tier). Concrete capability or quota change. NOT marketing puffery.
 
 D. SEO
 - faqs_long_tail (EXACTLY 7-10 items, each {question, answer, target_keyword}): each FAQ targets a distinct long-tail query pattern. Required patterns to cover (pick 7-10):
@@ -453,6 +471,7 @@ async function writeAtomically(
     migration_in: output.migration_in,
     migration_out: output.migration_out,
     recent_changes: output.recent_changes,
+    pricing_plan_guides: output.pricing_plan_guides,
     faqs_long_tail: output.faqs_long_tail,
     seo_keywords: output.seo_keywords,
     website_url: cleanWebsiteUrl,
