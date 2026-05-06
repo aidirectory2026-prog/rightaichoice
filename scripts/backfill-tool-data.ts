@@ -53,7 +53,9 @@ const MODEL = 'claude-sonnet-4-6'
 // ── Output schema ────────────────────────────────────────────────────────────
 
 const densityFieldsSchema = z.object({
-  skip_if: z.string().max(220),
+  // Bumped 220 → 320 (2026-05-06) — Sonnet consistently produces ~280-320
+  // chars of nuanced disqualifier; the original cap rejected ~40% of outputs.
+  skip_if: z.string().max(320),
   hidden_costs: z.array(z.string().max(220)).min(0).max(6),
   pricing_power_text: z.string().max(500),
   workflow_scenarios: z
@@ -246,41 +248,78 @@ function smartSafeMinimum(field: keyof DensityFields, tool: ToolRow): unknown {
 
 // ── Per-tool synthesis ───────────────────────────────────────────────────────
 
-async function synthesizeTool(tool: ToolRow): Promise<DensityFields> {
+// Claude sometimes returns "INSUFFICIENT_DATA" as a literal sentinel, but it
+// also returns prefixed forms like "INSUFFICIENT_DATA — no onboarding flow…"
+// (a soft refusal with explanation). Both should fall back to the smart safe
+// minimum and log for review — never write the sentinel string to the DB.
+function isInsufficient(v: unknown): boolean {
+  return typeof v === 'string' && v.trim().toUpperCase().startsWith('INSUFFICIENT_DATA')
+}
+
+async function callClaude(tool: ToolRow, correction?: string) {
   const client = getAnthropicClient()
-  const message = await client.messages.create({
+  const userContent = correction
+    ? `${buildUserPrompt(tool)}\n\n---\n\nYour previous response failed schema validation:\n${correction}\n\nReturn corrected STRICT JSON of the exact shape, no prose, no code fences. Pay close attention to character limits.`
+    : buildUserPrompt(tool)
+  return client.messages.create({
     model: MODEL,
     max_tokens: 2000,
     system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: buildUserPrompt(tool) }],
+    messages: [{ role: 'user', content: userContent }],
   })
+}
 
-  const textBlock = message.content.find((b) => b.type === 'text')
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('No text content in Claude response')
-  }
-  const raw = textBlock.text.trim()
+async function synthesizeTool(tool: ToolRow): Promise<DensityFields> {
+  let correction: string | undefined
 
-  // Strip code fences if model wrapped output
-  const json = raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
+  // Single auto-retry on validation failure — feeds the zod error back so
+  // Claude can shorten an over-cap field or fix shape drift. Two attempts
+  // total (one initial + one corrective). At ~$0.04 per call, a retry on
+  // ~5% of tools after the bug fixes still keeps the run cost-bounded.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const message = await callClaude(tool, correction)
+    const textBlock = message.content.find((b) => b.type === 'text')
+    if (!textBlock || textBlock.type !== 'text') {
+      throw new Error('No text content in Claude response')
+    }
+    const raw = textBlock.text.trim()
+    const json = raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
 
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(json)
-  } catch (e) {
-    throw new Error(`Claude returned non-JSON output:\n${raw.slice(0, 500)}`)
-  }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(json)
+    } catch {
+      if (attempt === 2) {
+        throw new Error(`Claude returned non-JSON after retry:\n${raw.slice(0, 500)}`)
+      }
+      correction = `Output was not valid JSON. Return ONLY a JSON object, no prose, no code fences.`
+      console.log(`  ↻ retrying ${tool.slug} (non-JSON response)`)
+      continue
+    }
 
-  // Replace any "INSUFFICIENT_DATA" with smart safe minimum + log per field
-  const obj = parsed as Record<string, unknown>
-  for (const field of Object.keys(densityFieldsSchema.shape) as (keyof DensityFields)[]) {
-    if (obj[field] === 'INSUFFICIENT_DATA') {
-      obj[field] = smartSafeMinimum(field, tool)
-      logForReview(tool.slug, field, 'claude_returned_insufficient_data')
+    // Substitute smart-safe-minimum for any field where Claude indicated
+    // insufficient context (whether equality or prefix form).
+    const obj = parsed as Record<string, unknown>
+    for (const field of Object.keys(densityFieldsSchema.shape) as (keyof DensityFields)[]) {
+      if (isInsufficient(obj[field])) {
+        obj[field] = smartSafeMinimum(field, tool)
+        logForReview(tool.slug, field, 'claude_returned_insufficient_data')
+      }
+    }
+
+    try {
+      return densityFieldsSchema.parse(obj)
+    } catch (e) {
+      if (attempt === 2) {
+        throw new Error(
+          `Claude output failed validation after retry: ${e instanceof Error ? e.message : String(e)}`
+        )
+      }
+      correction = e instanceof Error ? e.message.slice(0, 400) : String(e).slice(0, 400)
+      console.log(`  ↻ retrying ${tool.slug} (zod validation failed)`)
     }
   }
-
-  return densityFieldsSchema.parse(obj)
+  throw new Error('synthesizeTool: unreachable')
 }
 
 // ── Main loop ────────────────────────────────────────────────────────────────
