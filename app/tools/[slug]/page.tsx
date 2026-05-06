@@ -9,7 +9,6 @@ import {
   BookOpen,
   Calendar,
   Eye,
-  Tag,
   ChevronRight,
   Check,
   Layers,
@@ -35,7 +34,6 @@ import { PageViewTracker } from '@/components/tools/page-view-tracker'
 import { AddToCompareButton } from '@/components/compare/add-to-compare-button'
 import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
-import { ToolFeed } from '@/components/tools/tool-feed'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
@@ -504,9 +502,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Phase 3: material changes (pricing/brand/ownership/deprecations) */}
-              <RecentChanges toolName={tool.name} changes={tool.recent_changes} />
-
               {/* Description */}
               <section>
                 <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
@@ -657,34 +652,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 
-              {/* Phase 3 — Adoption-friction band */}
+              {/* Phase 3 — Adoption-friction band: setup, migration, recent changes
+                  — all three answer "what's the commitment / what risk am I taking" */}
               <SetupTimeline toolName={tool.name} text={tool.setup_time_text} />
               <MigrationPaths
                 toolName={tool.name}
                 migrationIn={tool.migration_in}
                 migrationOut={tool.migration_out}
               />
+              <RecentChanges toolName={tool.name} changes={tool.recent_changes} />
 
-              {/* Topics (tool tags) — kept separate from the real Use Cases section */}
-              {tags.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-purple-400" />
-                    Topics
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag: { id: string; name: string; slug: string }) => (
-                      <Link
-                        key={tag.id}
-                        href={`/tools?search=${encodeURIComponent(tag.name)}`}
-                        className="rounded-full border border-zinc-800 bg-zinc-900/50 px-3.5 py-1.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
-                      >
-                        {tag.name}
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {/* Topics moved to right rail (Phase 3c) — they were redundant with
+                  Categories which already lives in the rail, and they broke the
+                  main-column flow between commitment band and tutorials. Tags
+                  still feed search via the right-rail entries. */}
 
               {/* Written Tutorials — curated URLs (from tool.tutorial_urls). TutorialVideos handles YouTube separately. */}
               {Array.isArray(tool.tutorial_urls) && tool.tutorial_urls.length > 0 && (
@@ -718,12 +699,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
               {/* ── Tutorial Videos ───────────────────────────── */}
               <TutorialVideos tutorials={tool.tutorial_videos ?? []} />
 
-              {/* ── Recent changes (RSS/Atom from changelog_url) ── */}
-              {tool.changelog_url && (
-                <SectionErrorBoundary fallbackTitle="Recent changes couldn't load.">
-                  <ToolFeed feedUrl={tool.changelog_url} />
-                </SectionErrorBoundary>
-              )}
+              {/* Phase 3c (2026-05-07): the standalone RSS/Atom changelog feed
+                  was removed. The structured Recent Changes section above now
+                  carries material change-history; the raw RSS feed was a noisy
+                  signal few users wanted in the middle of the page. */}
 
               {/* ── AI Panel ─────────────────────────────────── */}
               <AiPanel
@@ -739,15 +718,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   platforms: tool.platforms ?? [],
                 }}
                 reviews={[]}
-              />
-
-              {/* ── Quick Feedback (Phase 1: replaces Reviews / Questions / Discussions blocks) ── */}
-              <QuickFeedback
-                toolId={tool.id}
-                toolSlug={tool.slug}
-                toolName={tool.name}
-                isLoggedIn={!!user}
-                alreadyReviewed={alreadyReviewed}
               />
 
               {/* ── FAQs ──────────────────────────────────────── */}
@@ -822,6 +792,17 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </div>
                 </section>
               )}
+
+              {/* End-of-page CTA: Quick Feedback. Phase 3c moved here from
+                  mid-page so the user reads the full editorial first; feedback
+                  is the natural close, not an interruption. */}
+              <QuickFeedback
+                toolId={tool.id}
+                toolSlug={tool.slug}
+                toolName={tool.name}
+                isLoggedIn={!!user}
+                alreadyReviewed={alreadyReviewed}
+              />
             </div>
 
             {/* Right column (1/3) — Sidebar.
@@ -874,6 +855,26 @@ export default async function ToolDetailPage({ params }: PageProps) {
                         className="rounded-lg border border-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
                       >
                         {cat.icon} {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Topics (Phase 3c: moved from main column to right rail —
+                  they're tags, not editorial content; the rail is the right
+                  home for taxonomy / discovery affordances). */}
+              {tags.length > 0 && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                  <h3 className="text-sm font-semibold text-white mb-3">Topics</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag: { id: string; name: string; slug: string }) => (
+                      <Link
+                        key={tag.id}
+                        href={`/tools?search=${encodeURIComponent(tag.name)}`}
+                        className="rounded-full border border-zinc-800 bg-zinc-950/40 px-2.5 py-0.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
+                      >
+                        {tag.name}
                       </Link>
                     ))}
                   </div>
