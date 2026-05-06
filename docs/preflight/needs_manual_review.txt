@@ -57,3 +57,66 @@ ttsopenai      | SKIPPED         | ttsopenai.com redirects 301 → tts.ainnate.c
 brevo          | live_verification | Brevo data populated from training-data knowledge of stable public 2026 pricing (Sendinblue legacy + 2023 rebrand widely-documented). Homepage WebFetch only returned title. | Spot-check tier $ on brevo.com/pricing in browser
 drip           | pricing_details | drip.com mentions subscriber-based model but exact tier $ not surfaced. | Manually copy from drip.com/pricing
 
+zendesk-ai | all_density_fields | synthesis_error: [
+  {
+    "origin": "string",
+    "code": "too_big",
+    "maximum": 220,
+    "inclusive": true,
+     (Phase 4a backfill)
+marsai | pricing_power_text | claude_returned_insufficient_data (Phase 4a backfill)
+thumbnailai | pricing_power_text | claude_returned_insufficient_data (Phase 4a backfill)
+workday | all_density_fields | synthesis_error: [
+  {
+    "origin": "string",
+    "code": "too_big",
+    "maximum": 220,
+    "inclusive": true,
+     (Phase 4a backfill)
+marsai | pricing_power_text | claude_returned_insufficient_data (Phase 4a backfill)
+marsai | setup_time_text | claude_returned_insufficient_data (Phase 4a backfill)
+marsai | pricing_power_text | claude_returned_insufficient_data (Phase 4a backfill)
+marsai | setup_time_text | claude_returned_insufficient_data (Phase 4a backfill)
+thumbnailai | pricing_power_text | claude_returned_insufficient_data (Phase 4a backfill)
+kit | sop_run | failed: Validation failed after retry: [
+  {
+    "origin": "string",
+    "code": "too_big",
+    "maximum": 6 (Phase 4 SOP)
+prophet-security | pricing_power_text | insufficient_data (Phase 4 SOP)
+prophet-security | setup_time_text | insufficient_data (Phase 4 SOP)
+prophet-security | sop_run | failed: Validation failed after retry: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path (Phase 4 SOP)
+langflow | sop_run | failed: Validation failed after retry: [
+  {
+    "origin": "array",
+    "code": "too_big",
+    "maximum": 15 (Phase 4 SOP)
+openhands | sop_run | failed: Validation failed after retry: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path (Phase 4 SOP)
+crush | sop_run | failed: Validation failed after retry: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": (Phase 4 SOP)
+
+----- Phase 4 dedup follow-ups (2026-05-07) -----
+
+These 7 duplicate sets were KEPT SEPARATE during migration 076 because they're
+genuinely distinct products despite sharing a website_url. Each needs the
+website_url corrected on one or both rows so they don't keep showing up as
+duplicates in future dedup passes.
+
+hostinger-reach + hostinger-horizons | website_url | both share https://hostg.xyz/aff_c (an affiliate redirect). Set each to its actual product URL: hostinger.com/reach + hostinger.com/horizons (or wherever the canonical product pages live).
+coursera + coursera-coach | website_url | coursera-coach should point at the AI tutor product page (coursera.org/coach or similar), not coursera.org root.
+duolingo + duolingo-max | website_url | duolingo-max should point at the Max landing page (duolingo.com/max), not duolingo.com root.
+kaiber + noisee-ai | website_url | noisee-ai shows kaiber.ai but Noisee AI is a separate product. Find Noisee's actual URL (likely noisee.ai or similar) and update.
+luma-ai + luma-ai-genie | website_url | luma-ai-genie should point at lumalabs.ai/genie (the 3D-from-text product), not lumalabs.ai root.
+topaz-labs + topaz-video-ai | website_url | topaz-video-ai should point at topazlabs.com/topaz-video-ai (or the specific Video AI product page), not topazlabs.com root.
+mindos + mindverse | website_url | INVESTIGATE — different brands ("MindOS" vs "Mindverse") share mindos.com. One has the wrong website_url. Check both vendor sites and correct.

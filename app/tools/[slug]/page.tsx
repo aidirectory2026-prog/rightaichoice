@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -114,7 +114,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params
   const tool = await getToolBySlug(slug)
-  if (!tool) notFound()
+  if (!tool) {
+    // Phase 4 dedup (migration 076): if this slug was merged into a
+    // canonical row, the original is_published=false. Check the merged_into
+    // column and 308-redirect to the canonical slug. Preserves SEO equity
+    // from any external backlinks pointing at the old URL.
+    const supabase = await createClient()
+    const { data: merged } = await supabase
+      .from('tools')
+      .select('merged_into')
+      .eq('slug', slug)
+      .not('merged_into', 'is', null)
+      .maybeSingle() as { data: { merged_into: string | null } | null }
+    if (merged?.merged_into) {
+      permanentRedirect(`/tools/${merged.merged_into}`)
+    }
+    notFound()
+  }
 
   // Extract categories and tags from joined data
   const categories = tool.tool_categories?.map((tc: { categories: { id: string; name: string; slug: string; icon: string | null } }) => tc.categories).filter(Boolean) ?? []
