@@ -52,6 +52,7 @@ import { SetupTimeline } from '@/components/tools/setup-timeline'
 import { MigrationPaths } from '@/components/tools/migration-paths'
 import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
+import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
 import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
@@ -143,7 +144,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
     }).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     user ? hasUserReviewed(tool.id, user.id).catch(() => false) : Promise.resolve(false),
-    getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>),
+    // Phase 4 SOP populates tool.faqs_long_tail (jsonb on tools) which
+    // supersedes the legacy tool_faqs table. We prefer the new column when
+    // present and fall back to getFaqsForTool only for tools the SOP
+    // hasn't refreshed yet. Once the full catalog is refreshed (Phase 4
+    // --apply complete), the legacy fetch always returns [] for current
+    // tools, which is fine.
+    Promise.resolve([] as Awaited<ReturnType<typeof getFaqsForTool>>).then(async () => {
+      const longTail = (tool as { faqs_long_tail?: Array<{ question: string; answer: string; target_keyword?: string }> | null }).faqs_long_tail
+      if (Array.isArray(longTail) && longTail.length > 0) {
+        return longTail.map((f, i) => ({ id: `lt-${i}`, question: f.question, answer: f.answer, source: 'sop' as const }))
+      }
+      return getFaqsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getFaqsForTool>>)
+    }),
     getIntegrationLinks(tool.integrations ?? []).catch(() => new Map<string, string>()),
     getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
   ])
@@ -636,6 +649,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* Phase 3 — Pricing & cost band */}
               <CostCalculator pricingDetails={tool.pricing_details} />
+              <PricingPlansComparison
+                toolName={tool.name}
+                pricingDetails={tool.pricing_details}
+                pricingPlanGuides={tool.pricing_plan_guides}
+              />
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 
