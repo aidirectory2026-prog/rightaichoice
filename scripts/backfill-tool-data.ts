@@ -63,7 +63,10 @@ const sopOutputSchema = z.object({
 
   // Structured
   features: z.array(z.string().min(8).max(200)).min(8).max(15),
-  integrations: z.array(z.string().min(2).max(80)).min(0).max(15),
+  // Bumped 15 → 25 (2026-05-07): platform tools (Langflow, MetaGPT,
+  // OpenHands) integrate with everything; the 15 cap rejected ~5% of
+  // outputs on rich-platform tools.
+  integrations: z.array(z.string().min(2).max(80)).min(0).max(25),
   use_cases: z.array(z.string().max(220)).min(0).max(8),
   // Bumped 60 → 120 (2026-05-07) — DeepSeek consistently produces nuanced
   // disqualifier labels around 70-100 chars ("Teams that already standardized
@@ -256,6 +259,8 @@ CRITICAL RULES (any violation invalidates the run):
 3. Speak directly to the buyer ("you", not "users").
 4. Cite specific tool features when justifying a claim.
 5. Each FAQ answer must reference a specific fact from the scraped or seed content.
+6. NEVER use null inside nested object arrays (workflow_scenarios, faqs_long_tail, pricing_plan_guides). Every nested string field MUST be a non-empty string. If you cannot fill a specific nested object, OMIT the entire object from the array — do NOT emit it with null fields. Use INSUFFICIENT_DATA for the WHOLE TOP-LEVEL FIELD only when you cannot produce ANY valid items for it.
+7. Respect array maximums in the schema. Integrations cap is 25 — pick the most relevant ones if the tool integrates with more.
 
 FIELDS TO PRODUCE (return STRICT JSON, exact shape — no prose, no code fences):
 
@@ -370,6 +375,45 @@ function isInsufficient(v: unknown): boolean {
   return typeof v === 'string' && v.trim().toUpperCase().startsWith('INSUFFICIENT_DATA')
 }
 
+// Pre-validation sanitizer (added 2026-05-07): DeepSeek occasionally returns
+// `null` for nested string fields inside object arrays (workflow_scenarios,
+// faqs_long_tail, pricing_plan_guides) when uncertain. The retry doesn't help
+// because the model returns the same null again. Filter out invalid items
+// before zod validates — as long as the array still meets its min count,
+// the run succeeds. If too many items get filtered, zod fires the min-count
+// error and the smart safe minimum kicks in.
+function sanitizeNestedArrays(obj: Record<string, unknown>): void {
+  if (Array.isArray(obj.workflow_scenarios)) {
+    obj.workflow_scenarios = (obj.workflow_scenarios as Array<Record<string, unknown>>).filter(
+      (s) =>
+        typeof s?.persona === 'string' && s.persona.length > 0 &&
+        typeof s?.scenario === 'string' && s.scenario.length > 0 &&
+        typeof s?.outcome === 'string' && s.outcome.length > 0
+    )
+  }
+  if (Array.isArray(obj.faqs_long_tail)) {
+    obj.faqs_long_tail = (obj.faqs_long_tail as Array<Record<string, unknown>>).filter(
+      (f) =>
+        typeof f?.question === 'string' && f.question.length >= 15 &&
+        typeof f?.answer === 'string' && f.answer.length >= 40 &&
+        typeof f?.target_keyword === 'string' && f.target_keyword.length >= 3
+    )
+  }
+  if (Array.isArray(obj.pricing_plan_guides)) {
+    obj.pricing_plan_guides = (obj.pricing_plan_guides as Array<Record<string, unknown>>).filter(
+      (p) =>
+        typeof p?.plan_name === 'string' && p.plan_name.length > 0 &&
+        typeof p?.ideal_for === 'string' && p.ideal_for.length >= 20 &&
+        typeof p?.key_difference === 'string' && p.key_difference.length >= 15
+    )
+  }
+  // Cap integrations at 25 (just-in-case; schema would catch this anyway, but
+  // this lets us drop the overflow silently instead of forcing a retry)
+  if (Array.isArray(obj.integrations) && (obj.integrations as unknown[]).length > 25) {
+    obj.integrations = (obj.integrations as string[]).slice(0, 25)
+  }
+}
+
 const SAFE_MIN: Partial<Record<keyof SopOutput, (tool: ToolRow) => unknown>> = {
   skip_if: (t) => `you need capabilities ${t.name} doesn't currently advertise — review the limitations and pricing tiers above before adopting.`,
   pricing_power_text: (t) => `${t.name}'s pricing fits teams whose volume aligns with the published tiers. Compare against the alternatives listed below for stage-specific value.`,
@@ -410,6 +454,9 @@ async function synthesizeTool(tool: ToolRow, scraped: string): Promise<SopOutput
         }
       }
     }
+
+    // Drop broken nested objects (null/missing required strings) before zod
+    sanitizeNestedArrays(obj)
 
     try {
       return sopOutputSchema.parse(obj)
