@@ -5,6 +5,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),
   NEXT_PUBLIC_APP_URL: z.string().url('NEXT_PUBLIC_APP_URL must be a valid URL'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // DeepSeek V3 — used for all data-layer synthesis (Phase 4 SOP +
+  // Phase 7 generation). OpenAI-compatible endpoint at api.deepseek.com.
+  // ~10x cheaper than Sonnet for comparable quality on structured tasks.
+  DEEPSEEK_API_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   NEXT_PUBLIC_MIXPANEL_TOKEN: z.string().optional(),
