@@ -65,8 +65,12 @@ const sopOutputSchema = z.object({
   features: z.array(z.string().min(8).max(200)).min(8).max(15),
   integrations: z.array(z.string().min(2).max(80)).min(0).max(15),
   use_cases: z.array(z.string().max(220)).min(0).max(8),
-  best_for: z.array(z.string().min(3).max(60)).min(0).max(5),
-  not_for: z.array(z.string().min(3).max(60)).min(0).max(4),
+  // Bumped 60 → 120 (2026-05-07) — DeepSeek consistently produces nuanced
+  // disqualifier labels around 70-100 chars ("Teams that already standardized
+  // on Salesforce Service Cloud and don't want to migrate"). The original 60
+  // cap rejected ~20% of outputs on tools with broad markets like Kit.
+  best_for: z.array(z.string().min(3).max(120)).min(0).max(5),
+  not_for: z.array(z.string().min(3).max(120)).min(0).max(4),
   limitations: z.string().max(1500).nullable(),
 
   // Phase 3 density columns
