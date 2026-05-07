@@ -63,7 +63,10 @@ const sopOutputSchema = z.object({
 
   // Structured
   features: z.array(z.string().min(8).max(200)).min(8).max(15),
-  integrations: z.array(z.string().min(2).max(80)).min(0).max(15),
+  // Bumped 15 → 25 (2026-05-07): platform tools (Langflow, MetaGPT,
+  // OpenHands) integrate with everything; the 15 cap rejected ~5% of
+  // outputs on rich-platform tools.
+  integrations: z.array(z.string().min(2).max(80)).min(0).max(25),
   use_cases: z.array(z.string().max(220)).min(0).max(8),
   // Bumped 60 → 120 (2026-05-07) — DeepSeek consistently produces nuanced
   // disqualifier labels around 70-100 chars ("Teams that already standardized
@@ -169,6 +172,11 @@ type ToolRow = {
   our_views: string | null
   view_count: number | null
   last_full_refresh_at: string | null
+  docs_url: string | null
+  github_url: string | null
+  changelog_url: string | null
+  tutorial_urls: string[] | null
+  community_links: unknown
 }
 
 // ── Checkpoint + review log ─────────────────────────────────────────────────
@@ -192,7 +200,47 @@ function logForReview(slug: string, field: string, reason: string) {
 
 // ── Step A: URL hygiene ─────────────────────────────────────────────────────
 
-const STRIP_PARAMS = ['ref', 'aff', 'via', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fpr', 'rfsn']
+const STRIP_PARAMS = ['ref', 'aff', 'via', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fpr', 'rfsn', 'aff_id', 'affiliate', 'partner', 'via_partner']
+
+// Known affiliate-redirect / tracking domains. URLs hosted here are NOT
+// canonical product pages — they redirect somewhere else after attribution.
+// Examples: hostg.xyz/aff_c (Hostinger affiliate redirect),
+// l.fusionos.ai/iietrevd9nb (FusionAds.ai own redirect),
+// impact.com (Impact partner network).
+//
+// When a tool's website_url matches one of these patterns, we strip query
+// params as usual but ALSO log to needs_manual_review.txt with the original
+// URL so the founder can replace it with the canonical product page.
+const AFFILIATE_REDIRECT_PATTERNS: RegExp[] = [
+  /\/aff_/,                    // /aff_c, /aff_link, etc.
+  /\/iietrev/,                 // FusionAds redirect path
+  /^impact\.com\b/,            // Impact partner network
+  /^partnerstack\b/,
+  /^shareasale\.com\b/,
+  /^avantlink\.com\b/,
+  /^linksynergy\.com\b/,
+  /^click\.linksynergy\.com\b/,
+  /^bit\.ly\b/,                // Shortener — opaque
+  /^tinyurl\.com\b/,
+  /^cutt\.ly\b/,
+  /^goo\.gl\b/,
+  /^t\.co\b/,
+  /^buff\.ly\b/,
+  /^lnkd\.in\b/,
+  /\/track\b/,
+  /\/click\b/,
+  /^l\./,                      // l.{vendor}.com redirect convention
+]
+
+function isAffiliateRedirect(url: string): boolean {
+  try {
+    const u = new URL(url)
+    const hostPath = `${u.hostname}${u.pathname}`.toLowerCase()
+    return AFFILIATE_REDIRECT_PATTERNS.some((re) => re.test(hostPath))
+  } catch {
+    return false
+  }
+}
 
 function cleanUrl(rawUrl: string): string {
   try {
@@ -205,6 +253,51 @@ function cleanUrl(rawUrl: string): string {
     return u.toString()
   } catch {
     return rawUrl
+  }
+}
+
+// Audit a tool's existing URL fields (those NOT touched by SOP synthesis —
+// docs_url, github_url, changelog_url, tutorial_urls, community_links). When
+// any field matches an affiliate-redirect pattern, log it to
+// needs_manual_review.txt so the founder can replace the URL with the
+// canonical destination. We don't auto-replace because we can't know the
+// canonical without resolving the redirect (slow + risk of cache-staleness).
+function auditPreExistingUrls(tool: Record<string, unknown>, slug: string): void {
+  const checks: Array<[string, unknown]> = [
+    ['docs_url', tool.docs_url],
+    ['github_url', tool.github_url],
+    ['changelog_url', tool.changelog_url],
+  ]
+  for (const [field, val] of checks) {
+    if (typeof val === 'string' && val.length > 0 && isAffiliateRedirect(val)) {
+      logForReview(slug, field, `affiliate_redirect_url: ${val.slice(0, 120)}`)
+    }
+  }
+  if (Array.isArray(tool.tutorial_urls)) {
+    for (const u of tool.tutorial_urls) {
+      if (typeof u === 'string' && isAffiliateRedirect(u)) {
+        logForReview(slug, 'tutorial_urls', `affiliate_redirect_url: ${u.slice(0, 120)}`)
+      }
+    }
+  }
+  const cl = tool.community_links as { g2_url?: string; producthunt_url?: string; reddit_threads?: string[] } | null | undefined
+  if (cl && typeof cl === 'object') {
+    const subChecks: Array<[string, unknown]> = [
+      ['community_links.g2_url', cl.g2_url],
+      ['community_links.producthunt_url', cl.producthunt_url],
+    ]
+    for (const [field, val] of subChecks) {
+      if (typeof val === 'string' && val.length > 0 && isAffiliateRedirect(val)) {
+        logForReview(slug, field, `affiliate_redirect_url: ${val.slice(0, 120)}`)
+      }
+    }
+    if (Array.isArray(cl.reddit_threads)) {
+      for (const u of cl.reddit_threads) {
+        if (typeof u === 'string' && isAffiliateRedirect(u)) {
+          logForReview(slug, 'community_links.reddit_threads', `affiliate_redirect_url: ${u.slice(0, 120)}`)
+        }
+      }
+    }
   }
 }
 
@@ -256,6 +349,9 @@ CRITICAL RULES (any violation invalidates the run):
 3. Speak directly to the buyer ("you", not "users").
 4. Cite specific tool features when justifying a claim.
 5. Each FAQ answer must reference a specific fact from the scraped or seed content.
+6. NEVER use null inside nested object arrays (workflow_scenarios, faqs_long_tail, pricing_plan_guides). Every nested string field MUST be a non-empty string. If you cannot fill a specific nested object, OMIT the entire object from the array — do NOT emit it with null fields. Use INSUFFICIENT_DATA for the WHOLE TOP-LEVEL FIELD only when you cannot produce ANY valid items for it.
+7. Respect array maximums in the schema. Integrations cap is 25 — pick the most relevant ones if the tool integrates with more.
+8. Your synthesized output must NEVER contain affiliate URLs, redirect tracking links, URL shorteners, or any URL with /aff_, ?ref=, ?aff=, ?via=, /track, /click, bit.ly, tinyurl, hostg.xyz/aff_, partnerstack, impact.com, etc. If the seed/scrape data contains such a URL and you genuinely need to reference one for context, mention only the bare destination domain (e.g., "the vendor's pricing page") and never embed the URL itself. Direct vendor URLs only.
 
 FIELDS TO PRODUCE (return STRICT JSON, exact shape — no prose, no code fences):
 
@@ -370,6 +466,45 @@ function isInsufficient(v: unknown): boolean {
   return typeof v === 'string' && v.trim().toUpperCase().startsWith('INSUFFICIENT_DATA')
 }
 
+// Pre-validation sanitizer (added 2026-05-07): DeepSeek occasionally returns
+// `null` for nested string fields inside object arrays (workflow_scenarios,
+// faqs_long_tail, pricing_plan_guides) when uncertain. The retry doesn't help
+// because the model returns the same null again. Filter out invalid items
+// before zod validates — as long as the array still meets its min count,
+// the run succeeds. If too many items get filtered, zod fires the min-count
+// error and the smart safe minimum kicks in.
+function sanitizeNestedArrays(obj: Record<string, unknown>): void {
+  if (Array.isArray(obj.workflow_scenarios)) {
+    obj.workflow_scenarios = (obj.workflow_scenarios as Array<Record<string, unknown>>).filter(
+      (s) =>
+        typeof s?.persona === 'string' && s.persona.length > 0 &&
+        typeof s?.scenario === 'string' && s.scenario.length > 0 &&
+        typeof s?.outcome === 'string' && s.outcome.length > 0
+    )
+  }
+  if (Array.isArray(obj.faqs_long_tail)) {
+    obj.faqs_long_tail = (obj.faqs_long_tail as Array<Record<string, unknown>>).filter(
+      (f) =>
+        typeof f?.question === 'string' && f.question.length >= 15 &&
+        typeof f?.answer === 'string' && f.answer.length >= 40 &&
+        typeof f?.target_keyword === 'string' && f.target_keyword.length >= 3
+    )
+  }
+  if (Array.isArray(obj.pricing_plan_guides)) {
+    obj.pricing_plan_guides = (obj.pricing_plan_guides as Array<Record<string, unknown>>).filter(
+      (p) =>
+        typeof p?.plan_name === 'string' && p.plan_name.length > 0 &&
+        typeof p?.ideal_for === 'string' && p.ideal_for.length >= 20 &&
+        typeof p?.key_difference === 'string' && p.key_difference.length >= 15
+    )
+  }
+  // Cap integrations at 25 (just-in-case; schema would catch this anyway, but
+  // this lets us drop the overflow silently instead of forcing a retry)
+  if (Array.isArray(obj.integrations) && (obj.integrations as unknown[]).length > 25) {
+    obj.integrations = (obj.integrations as string[]).slice(0, 25)
+  }
+}
+
 const SAFE_MIN: Partial<Record<keyof SopOutput, (tool: ToolRow) => unknown>> = {
   skip_if: (t) => `you need capabilities ${t.name} doesn't currently advertise — review the limitations and pricing tiers above before adopting.`,
   pricing_power_text: (t) => `${t.name}'s pricing fits teams whose volume aligns with the published tiers. Compare against the alternatives listed below for stage-specific value.`,
@@ -410,6 +545,9 @@ async function synthesizeTool(tool: ToolRow, scraped: string): Promise<SopOutput
         }
       }
     }
+
+    // Drop broken nested objects (null/missing required strings) before zod
+    sanitizeNestedArrays(obj)
 
     try {
       return sopOutputSchema.parse(obj)
@@ -512,7 +650,10 @@ async function main() {
   let q = supabase
     .from('tools')
     .select(
-      'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at'
+      // Phase 4 (2026-05-07): added docs_url, github_url, changelog_url,
+      // tutorial_urls, community_links so we can audit them for third-party
+      // affiliate redirect URLs and log findings to needs_manual_review.txt.
+      'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at, docs_url, github_url, changelog_url, tutorial_urls, community_links'
     )
     .eq('is_published', true)
     .order('last_full_refresh_at', { ascending: true, nullsFirst: true })
@@ -544,8 +685,21 @@ async function main() {
     const prefix = `[${i + 1}/${toProcess.length}] ${tool.slug}`
     const t0 = Date.now()
     try {
-      // Step A
+      // Step A — URL hygiene
       const cleanWebsite = cleanUrl(tool.website_url)
+      if (isAffiliateRedirect(cleanWebsite)) {
+        // The tool's own website_url is a third-party affiliate redirect.
+        // We can't auto-resolve to the canonical destination without
+        // following the redirect (slow + cache-staleness risk). Log for
+        // founder review; SOP still proceeds on the redirect URL so other
+        // fields refresh — the website_url itself stays as-is until manual fix.
+        logForReview(tool.slug, 'website_url', `affiliate_redirect_url: ${cleanWebsite.slice(0, 120)}`)
+      }
+      // Audit the pre-existing URL fields (docs_url, github_url, changelog_url,
+      // tutorial_urls, community_links) for third-party affiliate redirects.
+      // SOP doesn't refresh those fields, but flagging them to
+      // needs_manual_review.txt gives the founder a punch list.
+      auditPreExistingUrls(tool as unknown as Record<string, unknown>, tool.slug)
       // Step B
       const scrape = await scrapeVendor(cleanWebsite)
       // Steps C+D rolled into E (synthesis prompt covers keyword extraction)
