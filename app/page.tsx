@@ -91,24 +91,9 @@ export default async function HomePage() {
               Tell us your goal. Get a complete tool stack with costs, tradeoffs, and alternatives for every stage.
             </p>
 
-            {/* Goal input → planner */}
+            {/* Goal input → planner (textarea + chips inside the component) */}
             <div className="mt-10 max-w-2xl mx-auto">
               <GoalInput />
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-600">
-              <span>Try:</span>
-              {['Build a SaaS product', 'Start a YouTube channel', 'Automate lead generation', 'Launch a podcast'].map(
-                (term) => (
-                  <Link
-                    key={term}
-                    href={`/plan?q=${encodeURIComponent(term)}`}
-                    className="inline-flex items-center min-h-[36px] rounded-full border border-zinc-800 px-3 py-1.5 text-zinc-500 hover:border-emerald-800/50 hover:text-emerald-400 transition-colors"
-                  >
-                    {term}
-                  </Link>
-                )
-              )}
             </div>
 
             <div className="mt-10 flex justify-center" aria-hidden="true">
