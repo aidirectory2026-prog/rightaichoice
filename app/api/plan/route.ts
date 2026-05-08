@@ -244,11 +244,51 @@ Rules:
   Better to be honest about a gap than to substitute an unrelated tool.
 - ALWAYS provide at least one recommendedTool per stage. Never omit this field.
 
+## Plan-level fields (in addition to stages)
+
+Beyond title/summary/stages, every plan MUST include these four top-level fields
+that summarize the stack as a whole. They render as anchor stats on the result
+page and dramatically improve the user's ability to evaluate the plan at a glance.
+
+- **monthlyCostUsd** (integer): the total approximate monthly cost across the
+  entire stack, in US dollars. Sum the recommended tier of every tool the user
+  would actually pay for to execute this plan. Rules:
+  - If everything is free → \`0\`.
+  - Round to a whole dollar (no decimals).
+  - Use the realistic-tier figure, not absolute minimum: if a tool needs Plus to
+    work for this use case, count Plus, not the free tier.
+  - Multiply by team size when relevant to the goal (e.g. "10-person team using
+    Notion AI" → \`10 * 10 = 100\` for $10/seat).
+  - When the goal lacks budget context, assume solo/personal usage.
+
+- **setupOrder** (array of strings, length 1-6): the recommended order to set up
+  the tools, by stage id. Most plans go in the same order as the stages array,
+  but rearrange when a stage is a prerequisite for another (e.g. set up the CRM
+  before the prospecting tool). Use the literal stage \`id\` values
+  (\`["stage-1", "stage-2", ...]\`).
+
+- **timeToFirstValue** (short string, 1-4 words): how soon the user can expect
+  the first measurable outcome AFTER setup. One of: \`"Same day"\`, \`"Within a few days"\`,
+  \`"Within 1 week"\`, \`"2-3 weeks"\`, \`"4-6 weeks"\`, \`"2-3 months"\`. Pick the
+  most realistic option. Don't oversell.
+
+- **riskNote** (string OR null, ~1 sentence ≤140 chars): a single honest caveat
+  the user should know before committing to this stack. Examples of good
+  riskNote content:
+  - "Notion AI's pricing is per-seat — costs scale fast above 10 people."
+  - "Cursor's most useful features require GPT-4 access; budget for OpenAI API too."
+  - "Midjourney requires Discord; not great for teams that already standardized on Slack."
+  - Set to \`null\` when there's genuinely no caveat worth flagging — don't manufacture one.
+
 ## Response Format
 You MUST respond with ONLY valid JSON in this exact structure:
 {
   "title": "Project plan title",
   "summary": "2-sentence summary that names every goal you detected. If consolidating to one tool, the summary should celebrate that — e.g. 'One subscription covers your entire workflow.'",
+  "monthlyCostUsd": 50,
+  "setupOrder": ["stage-1", "stage-2"],
+  "timeToFirstValue": "Within 1 week",
+  "riskNote": "Notion AI's pricing is per-seat — costs scale fast above 10 people.",
   "stages": [
     {
       "id": "stage-1",
@@ -405,6 +445,10 @@ export async function POST(request: Request) {
                   title: string
                   summary: string
                   stages: PlanStage[]
+                  monthlyCostUsd?: number
+                  setupOrder?: string[]
+                  timeToFirstValue?: string
+                  riskNote?: string | null
                 }
                 // Emit outline + enriched instantly from cache. Client hides
                 // WaitingState as soon as `outline` arrives, so this is a
@@ -426,6 +470,10 @@ export async function POST(request: Request) {
                   title: payload.title,
                   summary: payload.summary,
                   stages: outlineStages,
+                  ...(payload.monthlyCostUsd !== undefined ? { monthlyCostUsd: payload.monthlyCostUsd } : {}),
+                  ...(payload.setupOrder ? { setupOrder: payload.setupOrder } : {}),
+                  ...(payload.timeToFirstValue ? { timeToFirstValue: payload.timeToFirstValue } : {}),
+                  ...(payload.riskNote !== undefined ? { riskNote: payload.riskNote } : {}),
                 })
                 write({ type: 'enriched', stages: payload.stages })
                 mark('cache_lookup_ms', tCache)
@@ -485,7 +533,20 @@ export async function POST(request: Request) {
             .join('')
 
           type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string; recommendedTools?: string[] }
-          type RawPlan = { title: string; summary: string; stages: RawStage[] }
+          // Phase 5 plan polish (2026-05-08): added monthlyCostUsd / setupOrder /
+          // timeToFirstValue / riskNote so the result UI can render anchor
+          // stats. All four are optional in the type — older cached payloads
+          // and any LLM responses that omit them stay backward-compatible; the
+          // UI gracefully shows "—" when missing.
+          type RawPlan = {
+            title: string
+            summary: string
+            stages: RawStage[]
+            monthlyCostUsd?: number
+            setupOrder?: string[]
+            timeToFirstValue?: string
+            riskNote?: string | null
+          }
 
           let plan: RawPlan
           try {
@@ -604,7 +665,16 @@ export async function POST(request: Request) {
               whyThisStage: '',
             })),
           }))
-          write({ type: 'outline', title: plan.title, summary: plan.summary, stages: outlineStages })
+          write({
+            type: 'outline',
+            title: plan.title,
+            summary: plan.summary,
+            stages: outlineStages,
+            ...(plan.monthlyCostUsd !== undefined ? { monthlyCostUsd: plan.monthlyCostUsd } : {}),
+            ...(plan.setupOrder ? { setupOrder: plan.setupOrder } : {}),
+            ...(plan.timeToFirstValue ? { timeToFirstValue: plan.timeToFirstValue } : {}),
+            ...(plan.riskNote !== undefined ? { riskNote: plan.riskNote } : {}),
+          })
           timings.outline_ms = Math.round(performance.now() - t0)
 
           // Step 3: Haiku reasons — run in parallel with sentiment lookup
@@ -761,7 +831,15 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
           void admin.from('plan_cache').upsert(
             {
               cache_key: cacheKey,
-              payload: { title: plan.title, summary: plan.summary, stages: finalStages },
+              payload: {
+                title: plan.title,
+                summary: plan.summary,
+                stages: finalStages,
+                ...(plan.monthlyCostUsd !== undefined ? { monthlyCostUsd: plan.monthlyCostUsd } : {}),
+                ...(plan.setupOrder ? { setupOrder: plan.setupOrder } : {}),
+                ...(plan.timeToFirstValue ? { timeToFirstValue: plan.timeToFirstValue } : {}),
+                ...(plan.riskNote !== undefined ? { riskNote: plan.riskNote } : {}),
+              },
               created_at: new Date().toISOString(),
             },
             { onConflict: 'cache_key' }

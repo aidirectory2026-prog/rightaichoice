@@ -18,6 +18,8 @@ import {
   ChevronRight,
   Lightbulb,
   Target,
+  ListOrdered,
+  ShieldAlert,
 } from 'lucide-react'
 import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
@@ -71,6 +73,12 @@ type Plan = {
   title: string
   summary: string
   stages: PlanStage[]
+  // Phase 5 plan polish (2026-05-08): plan-level anchor stats. All optional —
+  // older cached payloads or LLM responses that omit them surface as "—" in UI.
+  monthlyCostUsd?: number
+  setupOrder?: string[]
+  timeToFirstValue?: string
+  riskNote?: string | null
 }
 
 const EXAMPLE_QUERIES = [
@@ -201,14 +209,31 @@ export function ProjectPlanner({
       let buffer = ''
 
       type StreamEvent =
-        | { type: 'outline'; title: string; summary: string; stages: PlanStage[] }
+        | {
+            type: 'outline'
+            title: string
+            summary: string
+            stages: PlanStage[]
+            monthlyCostUsd?: number
+            setupOrder?: string[]
+            timeToFirstValue?: string
+            riskNote?: string | null
+          }
         | { type: 'enriched'; stages: PlanStage[] }
         | { type: 'done'; _timings?: Record<string, number> }
         | { type: 'error'; status?: number; message: string }
 
       const handleEvent = (evt: StreamEvent) => {
         if (evt.type === 'outline') {
-          const nextPlan: Plan = { title: evt.title, summary: evt.summary, stages: evt.stages }
+          const nextPlan: Plan = {
+            title: evt.title,
+            summary: evt.summary,
+            stages: evt.stages,
+            ...(evt.monthlyCostUsd !== undefined ? { monthlyCostUsd: evt.monthlyCostUsd } : {}),
+            ...(evt.setupOrder ? { setupOrder: evt.setupOrder } : {}),
+            ...(evt.timeToFirstValue ? { timeToFirstValue: evt.timeToFirstValue } : {}),
+            ...(evt.riskNote !== undefined ? { riskNote: evt.riskNote } : {}),
+          }
           setPlan(nextPlan)
           if (evt.stages.length > 0) setActiveStage(evt.stages[0].id)
           setLoading(false) // flip from WaitingState to Plan view as soon as structure is known
@@ -556,6 +581,79 @@ export function ProjectPlanner({
                 <span>{planStats.freeTools > 0 ? `${planStats.freeTools} free tool${planStats.freeTools > 1 ? 's' : ''}` : ''}</span>
                 <span>{planStats.totalTools} total tools recommended</span>
               </div>
+            </div>
+          )}
+
+          {/* ── Plan-level anchor stats (Phase 5 polish, 2026-05-08) ── */}
+          {/* Renders only if at least one of the four LLM-emitted plan-level
+              fields is present. Cached payloads from before this rollout will
+              skip the section entirely (no jarring "—" placeholders). */}
+          {plan && (
+            plan.monthlyCostUsd !== undefined ||
+            (plan.setupOrder && plan.setupOrder.length > 0) ||
+            plan.timeToFirstValue ||
+            (plan.riskNote !== undefined && plan.riskNote !== null)
+          ) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {plan.monthlyCostUsd !== undefined && (
+                <div className="rounded-xl border border-emerald-900/40 bg-gradient-to-br from-emerald-950/30 to-zinc-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-4 w-4 text-emerald-400" />
+                    <span className="text-xs text-zinc-500 font-medium">Total monthly</span>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    {plan.monthlyCostUsd === 0 ? 'Free' : `$${plan.monthlyCostUsd}`}
+                  </p>
+                  {plan.monthlyCostUsd > 0 && (
+                    <p className="mt-1 text-[11px] text-zinc-500">across the recommended stack</p>
+                  )}
+                </div>
+              )}
+
+              {plan.timeToFirstValue && (
+                <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-cyan-400" />
+                    <span className="text-xs text-zinc-500 font-medium">Time to first value</span>
+                  </div>
+                  <p className="text-base font-semibold text-white leading-tight">{plan.timeToFirstValue}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">after setup completes</p>
+                </div>
+              )}
+
+              {plan.setupOrder && plan.setupOrder.length > 0 && (
+                <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ListOrdered className="h-4 w-4 text-teal-400" />
+                    <span className="text-xs text-zinc-500 font-medium">Setup order</span>
+                  </div>
+                  <ol className="space-y-0.5 text-xs text-zinc-300">
+                    {plan.setupOrder.slice(0, 4).map((stageId, i) => {
+                      const stage = plan.stages.find((s) => s.id === stageId)
+                      const label = stage?.name ?? stageId
+                      return (
+                        <li key={stageId} className="flex gap-1.5">
+                          <span className="text-zinc-600">{i + 1}.</span>
+                          <span className="truncate">{label}</span>
+                        </li>
+                      )
+                    })}
+                    {plan.setupOrder.length > 4 && (
+                      <li className="text-[11px] text-zinc-600">+{plan.setupOrder.length - 4} more</li>
+                    )}
+                  </ol>
+                </div>
+              )}
+
+              {plan.riskNote !== undefined && plan.riskNote !== null && plan.riskNote.length > 0 && (
+                <div className="rounded-xl border border-amber-900/40 bg-gradient-to-br from-amber-950/20 to-zinc-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldAlert className="h-4 w-4 text-amber-400" />
+                    <span className="text-xs text-zinc-500 font-medium">Heads up</span>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed">{plan.riskNote}</p>
+                </div>
+              )}
             </div>
           )}
 
