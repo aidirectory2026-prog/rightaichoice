@@ -43,15 +43,21 @@ export async function getTools(filters: ToolFilters = {}) {
     query = query.in('id', categoryToolIds)
   }
 
-  // Text search: ilike for short queries, FTS for longer ones
+  // Text search: ilike for short queries (≤2 chars where tsvector lexemes
+  // would be empty), websearch_to_tsquery via the search_vector GIN index
+  // (Phase 5.4 migration 079) for everything else. websearch_to_tsquery
+  // accepts natural input ("video editor without watermark") without
+  // requiring users to learn tsquery syntax.
   if (filters.search) {
-    const term = sanitizeLike(filters.search.trim())
+    const term = filters.search.trim()
     if (term.length <= 2) {
-      query = query.ilike('name', `%${term}%`)
+      const safe = sanitizeLike(term)
+      query = query.ilike('name', `%${safe}%`)
     } else {
-      query = query.or(
-        `name.ilike.%${term}%,tagline.ilike.%${term}%,description.ilike.%${term}%`
-      )
+      query = query.textSearch('search_vector', term, {
+        type: 'websearch',
+        config: 'english',
+      })
     }
   }
 

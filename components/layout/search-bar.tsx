@@ -61,8 +61,11 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
   function navigateTo(type: string, slug: string) {
     setIsOpen(false)
     if (type === 'tool') router.push(`/tools/${slug}`)
-    else if (type === 'category') router.push(`/tools?category=${slug}`)
-    else if (type === 'tag') router.push(`/tools?search=${encodeURIComponent(slug)}`)
+    else if (type === 'category') router.push(`/categories/${slug}`)
+    // Phase 5.4 (2026-05-08): tag suggestions go through the new /search
+    // route so tag clicks benefit from full-text ranking instead of the
+    // legacy /tools?search= ilike fallback.
+    else if (type === 'tag') router.push(`/search?q=${encodeURIComponent(slug)}`)
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -70,7 +73,10 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
     const trimmed = query.trim()
     if (!trimmed) return
     setIsOpen(false)
-    router.push(`/tools?search=${encodeURIComponent(trimmed)}`)
+    // Phase 5.4 (2026-05-08): submit goes to /search instead of /tools.
+    // /search uses the same scaffolding (filters + grid + pagination) but
+    // ranks results by FTS rather than the legacy ilike fallback.
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`)
   }
 
   // Keyboard navigation
