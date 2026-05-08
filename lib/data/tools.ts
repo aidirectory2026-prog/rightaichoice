@@ -380,21 +380,40 @@ export async function getTopInCategory(
   limit = 4
 ) {
   const supabase = await createClient()
-  if (categoryIds.length === 0) return []
-  const { data: relatedIds } = await supabase
-    .from('tool_categories')
-    .select('tool_id')
-    .in('category_id', categoryIds)
-    .neq('tool_id', excludeToolId)
-  if (!relatedIds || relatedIds.length === 0) return []
-  const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
+
+  // Path 1: tool has categories — fetch popular siblings.
+  if (categoryIds.length > 0) {
+    const { data: relatedIds } = await supabase
+      .from('tool_categories')
+      .select('tool_id')
+      .in('category_id', categoryIds)
+      .neq('tool_id', excludeToolId)
+    if (relatedIds && relatedIds.length > 0) {
+      const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
+      const { data } = await supabase
+        .from('tools')
+        .select(
+          `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count`
+        )
+        .eq('is_published', true)
+        .in('id', uniqueIds)
+        .order('view_count', { ascending: false })
+        .limit(limit)
+      if (data && data.length > 0) return data
+    }
+  }
+
+  // Path 2 (Phase 4.5 last-resort, 2026-05-09): tool has no categories at
+  // all (167 of 1,178 published rows). Return the most-viewed published
+  // tools globally so the alternatives section never disappears. Honest
+  // "Top tools" framing in the page render makes this clear.
   const { data } = await supabase
     .from('tools')
     .select(
       `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count`
     )
     .eq('is_published', true)
-    .in('id', uniqueIds)
+    .neq('id', excludeToolId)
     .order('view_count', { ascending: false })
     .limit(limit)
   return data ?? []
