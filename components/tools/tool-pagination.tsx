@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function ToolPagination({
@@ -14,6 +14,10 @@ export function ToolPagination({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  // Phase 5.3 pagination (2026-05-08): use current pathname instead of
+  // hardcoded /tools so this component also works on /categories/[slug]
+  // (and any future paginated listing).
+  const pathname = usePathname()
 
   if (totalPages <= 1) return null
 
@@ -24,7 +28,8 @@ export function ToolPagination({
     } else {
       params.set('page', String(p))
     }
-    router.push(`/tools?${params.toString()}`)
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname)
   }
 
   // Show a window of page numbers around current page

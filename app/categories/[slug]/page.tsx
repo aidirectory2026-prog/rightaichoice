@@ -3,28 +3,38 @@ export const revalidate = 300
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronRight, ArrowRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
+import { ToolPagination } from '@/components/tools/tool-pagination'
 import { getCategoryBySlug } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 
 type PageProps = {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ page?: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params
+  const sp = await searchParams
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
   const category = await getCategoryBySlug(slug)
   if (!category) return { title: 'Category Not Found' }
 
-  const title = `Best ${category.name} AI Tools in 2026`
+  // Phase 5.3 pagination (2026-05-08): page > 1 keeps a separate canonical
+  // (with ?page=N) so Google indexes deeper pages without collapsing them
+  // onto the root. Title also gets a "(Page N)" suffix for clarity.
+  const baseTitle = `Best ${category.name} AI Tools in 2026`
+  const title = page > 1 ? `${baseTitle} (Page ${page})` : baseTitle
   const description =
     category.description
       ? `${category.description} Find and compare the best ${category.name} AI tools with real reviews, pricing, and alternatives.`
       : `Find and compare the best ${category.name} AI tools. Real reviews, pricing comparison, and community insights.`
+
+  const canonicalPath = page > 1 ? `/categories/${slug}?page=${page}` : `/categories/${slug}`
 
   return {
     title,
@@ -36,22 +46,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `compare ${category.name} tools`,
       category.name,
     ],
-    alternates: { canonical: `/categories/${slug}` },
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title,
       description,
-      url: `/categories/${slug}`,
+      url: canonicalPath,
       type: 'website',
     },
   }
 }
 
-export default async function CategoryPage({ params }: PageProps) {
+export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params
+  const sp = await searchParams
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
   const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
-  const { tools, total } = await getTools({ category: slug, sort: 'trending' })
+  const { tools, total, totalPages } = await getTools({
+    category: slug,
+    sort: 'trending',
+    page,
+  })
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -120,13 +136,16 @@ export default async function CategoryPage({ params }: PageProps) {
           {/* Tools grid */}
           {tools.length === 0 ? (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
-              <p className="text-zinc-500">No tools in this category yet.</p>
+              <p className="text-zinc-500">
+                {page > 1
+                  ? `No tools on page ${page}.`
+                  : 'No tools in this category yet.'}
+              </p>
               <Link
-                href="/tools"
+                href={page > 1 ? `/categories/${slug}` : '/tools'}
                 className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300"
               >
-                Browse all tools
-                <ArrowRight className="h-3.5 w-3.5" />
+                {page > 1 ? `Back to ${category.name}` : 'Browse all tools'}
               </Link>
             </div>
           ) : (
@@ -137,17 +156,11 @@ export default async function CategoryPage({ params }: PageProps) {
                 ))}
               </div>
 
-              {total > tools.length && (
-                <div className="mt-8 text-center">
-                  <Link
-                    href={`/tools?category=${slug}`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-5 py-2.5 text-sm text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
-                  >
-                    View all {total} {category.name} tools
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              )}
+              {/* Phase 5.3 pagination (2026-05-08): replaces the previous
+                  "View all N tools → /tools?category=..." escape hatch. The
+                  ToolPagination component reads ?page from URL and rewrites
+                  it; works the same way as on /tools. */}
+              <ToolPagination page={page} totalPages={totalPages} total={total} />
             </>
           )}
         </div>
