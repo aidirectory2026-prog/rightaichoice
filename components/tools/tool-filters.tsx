@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 
@@ -35,9 +35,21 @@ const SORT_OPTIONS = [
   { value: 'alphabetical', label: 'A–Z' },
 ]
 
-export function ToolFilters({ categories }: { categories: Category[] }) {
+export function ToolFilters({
+  categories,
+  hideCategoryFilter = false,
+}: {
+  categories: Category[]
+  // Phase 5.5 (2026-05-08): when mounted on /categories/[slug] the category
+  // is locked by the route itself; hide the category dropdown so users don't
+  // think they can switch categories from this filter bar.
+  hideCategoryFilter?: boolean
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  // Phase 5.5 (2026-05-08): use current pathname so this component drives
+  // both /tools and /categories/[slug]. Was hardcoded to /tools.
+  const pathname = usePathname()
 
   const currentCategory = searchParams.get('category') ?? ''
   const currentPricing = searchParams.get('pricing') ?? ''
@@ -48,7 +60,12 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
   const hasApi = searchParams.get('has_api') === 'true'
 
   const hasActiveFilters =
-    currentCategory || currentPricing || currentSkill || currentPlatform || hasApi || currentSearch
+    (!hideCategoryFilter && currentCategory) ||
+    currentPricing ||
+    currentSkill ||
+    currentPlatform ||
+    hasApi ||
+    currentSearch
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -60,14 +77,21 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
       }
       // Reset page when filters change
       params.delete('page')
-      router.push(`/tools?${params.toString()}`)
+      const qs = params.toString()
+      router.push(qs ? `${pathname}?${qs}` : pathname)
     },
-    [router, searchParams]
+    [router, searchParams, pathname]
   )
 
   const clearAll = useCallback(() => {
-    router.push('/tools')
-  }, [router])
+    // On /categories/[slug] keep the category route; only nuke filter params.
+    // On /tools the entire route is the listing root, so plain push to /tools.
+    if (hideCategoryFilter) {
+      router.push(pathname)
+    } else {
+      router.push('/tools')
+    }
+  }, [router, pathname, hideCategoryFilter])
 
   return (
     <div className="space-y-4">
@@ -102,13 +126,15 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
 
       {/* Filter chips row */}
       <div className="flex flex-wrap gap-2">
-        {/* Category */}
-        <FilterSelect
-          label="Category"
-          value={currentCategory}
-          onChange={(v) => updateParam('category', v)}
-          options={categories.map((c) => ({ value: c.slug, label: `${c.icon ?? ''} ${c.name}` }))}
-        />
+        {/* Category — hidden on /categories/[slug] where the route locks it */}
+        {!hideCategoryFilter && (
+          <FilterSelect
+            label="Category"
+            value={currentCategory}
+            onChange={(v) => updateParam('category', v)}
+            options={categories.map((c) => ({ value: c.slug, label: `${c.icon ?? ''} ${c.name}` }))}
+          />
+        )}
 
         {/* Pricing */}
         <FilterSelect
@@ -156,7 +182,7 @@ export function ToolFilters({ categories }: { categories: Category[] }) {
               onRemove={() => updateParam('search', '')}
             />
           )}
-          {currentCategory && (
+          {currentCategory && !hideCategoryFilter && (
             <FilterPill
               label={categories.find((c) => c.slug === currentCategory)?.name ?? currentCategory}
               onRemove={() => updateParam('category', '')}

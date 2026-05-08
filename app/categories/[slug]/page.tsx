@@ -7,14 +7,23 @@ import { ChevronRight } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
+import { ToolFilters } from '@/components/tools/tool-filters'
 import { ToolPagination } from '@/components/tools/tool-pagination'
-import { getCategoryBySlug } from '@/lib/data/categories'
+import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{
+    page?: string
+    pricing?: string
+    skill_level?: string
+    platform?: string
+    has_api?: string
+    sort?: string
+  }>
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
@@ -63,11 +72,21 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
-  const { tools, total, totalPages } = await getTools({
-    category: slug,
-    sort: 'trending',
-    page,
-  })
+  // Phase 5.5 (2026-05-08): same filter+sort UX as /tools, scoped to this
+  // category. ToolFilters is mounted with hideCategoryFilter so users can't
+  // accidentally jump categories from this bar.
+  const [categories, { tools, total, totalPages }] = await Promise.all([
+    getCategories(),
+    getTools({
+      category: slug,
+      pricing: sp.pricing as PricingType | undefined,
+      skill_level: sp.skill_level as SkillLevel | undefined,
+      platform: sp.platform as Platform | undefined,
+      has_api: sp.has_api === 'true' ? true : undefined,
+      sort: (sp.sort as 'trending' | 'newest' | 'most_reviewed' | 'alphabetical') ?? 'trending',
+      page,
+    }),
+  ])
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -133,19 +152,26 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             )}
           </div>
 
+          {/* Filters — Phase 5.5 (2026-05-08). Same UX as /tools, scoped
+              to this category. hideCategoryFilter omits the category dropdown
+              since the route already locks it. */}
+          <div className="mb-6">
+            <ToolFilters categories={categories} hideCategoryFilter />
+          </div>
+
           {/* Tools grid */}
           {tools.length === 0 ? (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
               <p className="text-zinc-500">
                 {page > 1
                   ? `No tools on page ${page}.`
-                  : 'No tools in this category yet.'}
+                  : 'No tools match these filters in this category.'}
               </p>
               <Link
-                href={page > 1 ? `/categories/${slug}` : '/tools'}
+                href={page > 1 ? `/categories/${slug}` : `/categories/${slug}`}
                 className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300"
               >
-                {page > 1 ? `Back to ${category.name}` : 'Browse all tools'}
+                {page > 1 ? `Back to ${category.name}` : 'Clear filters'}
               </Link>
             </div>
           ) : (
