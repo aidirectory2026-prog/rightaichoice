@@ -51,7 +51,7 @@ import { MigrationPaths } from '@/components/tools/migration-paths'
 import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
 import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
-import { getToolBySlug, getAlternativeTools, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
+import { getToolBySlug, getAlternativeTools, getTopInCategory, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { hasUserReviewed } from '@/lib/data/reviews'
@@ -146,7 +146,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   // (the heavy Reviews/Questions/Discussions/Workflows blocks were replaced
   // by the lightweight QuickFeedback strip). hasUserReviewed is kept so the
   // strip hides the "Leave a review" CTA for users who already reviewed.
-  const [alternatives, saved, alreadyReviewed, faqs, integrationLinks, editorialCompares] = await Promise.all([
+  const [alternatives, categorySiblings, saved, alreadyReviewed, faqs, integrationLinks, editorialCompares] = await Promise.all([
     // Phase 7 Step 50 (BUG-015): pass slug + tag slugs + tagline so the
     // ranker can apply the general-LLM whitelist (Claude, ChatGPT, Gemini …)
     // and the IDENTITY_TAGS gate for image/video/voice tools.
@@ -156,6 +156,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
       sourceTagline: tool.tagline ?? '',
       sourceName: tool.name,
     }).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>),
+    // Phase 4.5 audit fix (2026-05-09): permissive category fallback used
+    // when the strict alternatives ranker returns nothing (was the case
+    // for 934 of 1,178 pages — the section disappeared entirely).
+    getTopInCategory(categoryIds, tool.id, 4).catch(() => [] as Awaited<ReturnType<typeof getTopInCategory>>),
     user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     user ? hasUserReviewed(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     // Phase 4 SOP populates tool.faqs_long_tail (jsonb on tools) which
@@ -461,8 +465,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 <SentimentSynthesis toolId={tool.id} toolName={tool.name} />
               </SectionErrorBoundary>
 
-              {/* Viability Score */}
-              {tool.viability_score != null && (
+              {/* Viability Score — Phase 4.5 audit fix (2026-05-09): renders
+                  even when viability_score is null. Was hidden on 540 of
+                  1,178 pages whose Phase 4 SOP didn't compute a score yet,
+                  leaving a visible gap in the page-flow. Placeholder copy
+                  is honest ("Score in progress — refreshing soon") and
+                  links to /viability so users can read about the methodology
+                  while they wait. */}
+              {tool.viability_score != null ? (
                 <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -515,6 +525,25 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       How we score &rarr;
                     </Link>
                   </div>
+                </section>
+              ) : (
+                <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-zinc-500" />
+                      Viability Score
+                    </h2>
+                    <span className="rounded-full border border-zinc-700 bg-zinc-800/60 px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-zinc-400">
+                      In progress
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-400">
+                    We&apos;re still computing {tool.name}&apos;s viability across the 6 signals (funding, development activity, platform risk, etc.). Refreshing soon —{' '}
+                    <Link href="/viability" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                      read how we score
+                    </Link>
+                    .
+                  </p>
                 </section>
               )}
 
@@ -797,28 +826,42 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Alternatives */}
-              {alternatives.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white">
-                      Alternatives to {tool.name}
-                    </h2>
-                    <Link
-                      href={`/tools/${tool.slug}/alternatives`}
-                      className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                    >
-                      View all
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {alternatives.map((alt) => (
-                      <ToolCard key={alt.id} tool={alt} />
-                    ))}
-                  </div>
-                </section>
-              )}
+              {/* Alternatives — Phase 4.5 audit fix (2026-05-09): when the
+                  strict ranker returns nothing (934 of 1,178 prod pages),
+                  fall back to category siblings rendered as "Top tools in
+                  <Category>" with an honest sub-line. The section header
+                  stays visible 100% of the time, so the page-flow doesn't
+                  collapse on tools where the alternatives field is empty. */}
+              {(() => {
+                const showStrict = alternatives.length > 0
+                const fallbackList = !showStrict ? categorySiblings : []
+                if (!showStrict && fallbackList.length === 0) return null
+                const heading = showStrict ? `Alternatives to ${tool.name}` : `Top tools in this category`
+                const sub = showStrict ? null : `Curated alternatives for ${tool.name} are coming soon — meanwhile, here's what's popular in the same category.`
+                const items = showStrict ? alternatives : fallbackList
+                return (
+                  <section>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-semibold text-white">{heading}</h2>
+                      {showStrict && (
+                        <Link
+                          href={`/tools/${tool.slug}/alternatives`}
+                          className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                          View all
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      )}
+                    </div>
+                    {sub && <p className="text-sm text-zinc-500 mb-4">{sub}</p>}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {items.map((alt) => (
+                        <ToolCard key={alt.id} tool={alt as React.ComponentProps<typeof ToolCard>['tool']} />
+                      ))}
+                    </div>
+                  </section>
+                )
+              })()}
 
               {/* End-of-page CTA: Quick Feedback. Phase 3c moved here from
                   mid-page so the user reads the full editorial first; feedback

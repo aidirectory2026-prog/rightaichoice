@@ -365,6 +365,41 @@ const TAGLINE_STOP_WORDS = new Set([
   'time',
 ])
 
+/**
+ * Phase 4.5 audit fix (2026-05-09): Loose category-based "tools you might
+ * also like" fallback used by the page handler when getAlternativeTools'
+ * strict identity-tag ranker returns nothing. This is intentionally
+ * permissive — the section header switches to "Top tools in <Category>"
+ * so we're honest about it being a category roll-up, not a curated
+ * alternatives list. 934 of 1,178 production pages were rendering NO
+ * alternatives section because the strict ranker filtered everything out.
+ */
+export async function getTopInCategory(
+  categoryIds: string[],
+  excludeToolId: string,
+  limit = 4
+) {
+  const supabase = await createClient()
+  if (categoryIds.length === 0) return []
+  const { data: relatedIds } = await supabase
+    .from('tool_categories')
+    .select('tool_id')
+    .in('category_id', categoryIds)
+    .neq('tool_id', excludeToolId)
+  if (!relatedIds || relatedIds.length === 0) return []
+  const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
+  const { data } = await supabase
+    .from('tools')
+    .select(
+      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count`
+    )
+    .eq('is_published', true)
+    .in('id', uniqueIds)
+    .order('view_count', { ascending: false })
+    .limit(limit)
+  return data ?? []
+}
+
 export async function getAlternativeTools(
   toolId: string,
   categoryIds: string[],
