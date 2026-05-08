@@ -1,100 +1,89 @@
 import Link from 'next/link'
 import { Logo } from '@/components/shared/logo'
 
+// Phase 4.5 audit fix (2026-05-09): re-org from 3 columns
+// (Discover / Editorial / Company) to canonical 4-column structure
+// per the Phase 8 spec: Product / Resources / Company / Legal. The
+// COMMUNITY anti-requirement is preserved — no Community column anywhere.
+//
+// Routes that don't exist yet (/contact, /affiliate-disclosure) were
+// dropped from the link list to avoid 404s. Add them back here when the
+// pages ship. Routes that survived from the old footer (/tools,
+// /categories, /best, /methodology, etc.) keep working from any old
+// inbound links.
+
+const PRODUCT_LINKS: Array<{ href: string; label: string }> = [
+  { href: '/tools', label: 'Browse tools' },
+  { href: '/categories', label: 'Categories' },
+  { href: '/search', label: 'Search' },
+  { href: '/plan', label: 'Plan my stack' },
+  { href: '/compare', label: 'Compare' },
+]
+
+const RESOURCES_LINKS: Array<{ href: string; label: string }> = [
+  { href: '/best', label: 'Best AI guides' },
+  { href: '/stacks', label: 'Stacks' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/methodology', label: 'Methodology' },
+  { href: '/viability', label: 'Viability scoring' },
+]
+
+const COMPANY_LINKS: Array<{ href: string; label: string }> = [
+  { href: '/about', label: 'About' },
+  { href: '/team', label: 'Team' },
+]
+
+const LEGAL_LINKS: Array<{ href: string; label: string }> = [
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+]
+
+function FooterColumn({
+  heading,
+  links,
+}: {
+  heading: string
+  links: Array<{ href: string; label: string }>
+}) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+        {heading}
+      </h3>
+      <ul className="mt-3 space-y-2">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm text-zinc-500 hover:text-white transition-colors"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function Footer() {
   return (
     <footer className="border-t border-zinc-800 bg-zinc-950 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        {/* Brand strip — sits above the link columns so it has room to breathe */}
+        <div className="mb-10 max-w-md">
+          <Logo size="sm" />
+          <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
+            The decision-making engine for discovering AI tools.
+          </p>
+        </div>
+
+        {/* 4 link columns — Product / Resources / Company / Legal */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <Logo size="sm" />
-            <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
-              The decision-making engine for discovering AI tools.
-            </p>
-          </div>
-
-          {/* Discover */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Discover
-            </h3>
-            <ul className="mt-3 space-y-2">
-              <li>
-                <Link href="/tools" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Browse Tools
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link href="/best" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Best AI Guides
-                </Link>
-              </li>
-              <li>
-                <Link href="/tools?sort=trending" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Trending
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Editorial */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Editorial
-            </h3>
-            <ul className="mt-3 space-y-2">
-              <li>
-                <Link href="/methodology" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Methodology
-                </Link>
-              </li>
-              <li>
-                <Link href="/team" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Team
-                </Link>
-              </li>
-              <li>
-                <Link href="/compare" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Compare
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Blog
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Company
-            </h3>
-            <ul className="mt-3 space-y-2">
-              <li>
-                <Link href="/about" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-sm text-zinc-500 hover:text-white transition-colors">
-                  Terms
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterColumn heading="Product" links={PRODUCT_LINKS} />
+          <FooterColumn heading="Resources" links={RESOURCES_LINKS} />
+          <FooterColumn heading="Company" links={COMPANY_LINKS} />
+          <FooterColumn heading="Legal" links={LEGAL_LINKS} />
         </div>
 
         <div className="mt-10 border-t border-zinc-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
