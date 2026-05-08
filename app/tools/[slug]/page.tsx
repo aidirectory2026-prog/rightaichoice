@@ -549,40 +549,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Integrations — link to the integration's tool page when we have one */}
-              {tool.integrations && tool.integrations.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-blue-400" />
-                    Integrations
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {tool.integrations.map((integration: string, i: number) => {
-                      const slug = integrationLinks.get(integration.toLowerCase())
-                      const baseClass = 'rounded-lg border px-3 py-1.5 text-sm transition-colors'
-                      if (slug) {
-                        return (
-                          <Link
-                            key={i}
-                            href={`/tools/${slug}`}
-                            className={`${baseClass} border-emerald-800/60 bg-emerald-900/20 text-emerald-300 hover:border-emerald-600 hover:text-emerald-200`}
-                          >
-                            {integration}
-                          </Link>
-                        )
-                      }
-                      return (
-                        <span
-                          key={i}
-                          className={`${baseClass} border-zinc-800 bg-zinc-900/50 text-zinc-400`}
-                        >
-                          {integration}
-                        </span>
-                      )
-                    })}
-                  </div>
-                </section>
-              )}
+              {/* Phase 4.5 audit fix (2026-05-09): Integrations moved from
+                  here to AFTER PricingPlansComparison so the rendered order
+                  matches the Phase 4 canonical spec:
+                  Features → Use cases → ... → Plans Compared → Integrations
+                  → Hidden Costs. Was rendering ~5 sections too early on 720
+                  of 1,178 pages. */}
 
               {/* Phase 3: real-world workflow scenarios */}
               <WorkflowFit toolName={tool.name} scenarios={tool.workflow_scenarios} />
@@ -665,6 +637,45 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 pricingDetails={tool.pricing_details}
                 pricingPlanGuides={tool.pricing_plan_guides}
               />
+
+              {/* Integrations — moved here in Phase 4.5 (2026-05-09) per the
+                  canonical section spec: Plans Compared → Integrations →
+                  Hidden Costs. Links to the integration's tool page when we
+                  have one. */}
+              {tool.integrations && tool.integrations.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-blue-400" />
+                    Integrations
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {tool.integrations.map((integration: string, i: number) => {
+                      const slug = integrationLinks.get(integration.toLowerCase())
+                      const baseClass = 'rounded-lg border px-3 py-1.5 text-sm transition-colors'
+                      if (slug) {
+                        return (
+                          <Link
+                            key={i}
+                            href={`/tools/${slug}`}
+                            className={`${baseClass} border-emerald-800/60 bg-emerald-900/20 text-emerald-300 hover:border-emerald-600 hover:text-emerald-200`}
+                          >
+                            {integration}
+                          </Link>
+                        )
+                      }
+                      return (
+                        <span
+                          key={i}
+                          className={`${baseClass} border-zinc-800 bg-zinc-900/50 text-zinc-400`}
+                        >
+                          {integration}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </section>
+              )}
+
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 
@@ -976,7 +987,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     <div className="space-y-3">
                       {tool.pricing_details.map(
                         (
-                          plan: { name: string; price: string; features?: string[] },
+                          // Phase 4.5 audit fix (2026-05-09): legacy rows can
+                          // have price as a number (0, 29) instead of a
+                          // string. Type widened + coercion below so 0 renders
+                          // as "$0" not bare "0", and downstream cost-calc
+                          // doesn't blow up on .trim().
+                          plan: { name: string; price: string | number | null; features?: string[] },
                           i: number
                         ) => (
                           <div
@@ -987,7 +1003,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
                               <span className="text-sm font-medium text-white">
                                 {plan.name}
                               </span>
-                              <span className="text-sm text-emerald-400">{plan.price}</span>
+                              <span className="text-sm text-emerald-400">
+                                {plan.price !== null && plan.price !== undefined && plan.price !== ''
+                                  ? typeof plan.price === 'number'
+                                    ? `$${plan.price}`
+                                    : plan.price
+                                  : ''}
+                              </span>
                             </div>
                             {plan.features && plan.features.length > 0 && (
                               <ul className="mt-2 space-y-1">

@@ -53,24 +53,17 @@ export function FaqSection({ faqs, toolName }: { faqs: Faq[]; toolName: string }
         ))}
       </div>
 
-      {/* Schema.org FAQPage structured data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: faqs.map((faq) => ({
-              '@type': 'Question',
-              name: faq.question,
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.answer,
-              },
-            })),
-          }),
-        }}
-      />
+      {/*
+       * Phase 4.5 audit fix (2026-05-09): the FAQPage JSON-LD that used to
+       * live here was duplicating the one already emitted from the page
+       * handler at app/tools/[slug]/page.tsx (inside the [SoftwareApplication,
+       * BreadcrumbList, FAQPage] array). 1,041 of 1,178 catalog pages had
+       * two FAQPage scripts in their HTML. Single source of truth is now the
+       * page-level emitter via lib/seo/json-ld.ts:faqPageJsonLd().
+       *
+       * toolName param kept on the public API for now; some callers may rely
+       * on the prop shape and removing it is a separate refactor.
+       */}
     </section>
   )
 }

@@ -10,7 +10,10 @@ import { LayoutGrid } from 'lucide-react'
 
 type PricingTier = {
   plan?: string
-  price?: string
+  // Phase 4.5 audit fix (2026-05-09): some legacy pricing_details rows store
+  // price as a raw number (0, 29) instead of "$29/mo". Accept both shapes
+  // and stringify defensively at every render site below.
+  price?: string | number | null
   features?: string[]
 }
 
@@ -64,8 +67,10 @@ export function PricingPlansComparison({
             >
               <div className="mb-2">
                 <p className="text-sm font-semibold text-white">{planName}</p>
-                {tier.price && (
-                  <p className="mt-0.5 text-xs text-emerald-400 font-medium">{tier.price}</p>
+                {tier.price !== null && tier.price !== undefined && tier.price !== '' && (
+                  <p className="mt-0.5 text-xs text-emerald-400 font-medium">
+                    {typeof tier.price === 'number' ? `$${tier.price}` : tier.price}
+                  </p>
                 )}
               </div>
 

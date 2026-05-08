@@ -24,8 +24,14 @@ type ParsedPrice = {
   raw: string
 }
 
-function parsePrice(raw: string | undefined): ParsedPrice {
-  const s = (raw ?? '').trim()
+function parsePrice(raw: string | number | undefined | null): ParsedPrice {
+  // Phase 4.5 audit fix (2026-05-09): some pricing_details rows store
+  // tier.price as a number (e.g. 0, 29) rather than a string ("$29/mo").
+  // Without coercion the hydration call crashed with `(e ?? "").trim is
+  // not a function` on 8 production pages (adalo, cropin, designs-ai,
+  // fashable, playground-ai, researchrabbit, scispace, spline). String()
+  // coerces 0 → "0" before .trim() runs.
+  const s = String(raw ?? '').trim()
   if (!s) return { amount: null, cadence: 'custom', raw: s }
   const lower = s.toLowerCase()
   if (lower === 'free' || lower.includes('free forever')) {
