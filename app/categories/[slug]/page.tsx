@@ -1,6 +1,7 @@
 export const revalidate = 300
 
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
@@ -9,9 +10,10 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { ToolFilters } from '@/components/tools/tool-filters'
 import { ToolPagination } from '@/components/tools/tool-pagination'
+import { ToolGridSkeleton } from '@/components/tools/tool-card-skeleton'
 import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
-import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -69,12 +71,91 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const { slug } = await params
   const sp = await searchParams
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  // Phase 6.5 (2026-05-12): only block on the lightweight category lookup.
+  // Heavy work (categories list + filtered tools query) moved into the
+  // streamed CategoryResults child so we can render a Suspense skeleton.
   const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
-  // Phase 5.5 (2026-05-08): same filter+sort UX as /tools, scoped to this
-  // category. ToolFilters is mounted with hideCategoryFilter so users can't
-  // accidentally jump categories from this bar.
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: 'Home', url: 'https://rightaichoice.com' },
+    { name: 'Categories', url: 'https://rightaichoice.com/categories' },
+    { name: category.name, url: `https://rightaichoice.com/categories/${slug}` },
+  ])
+
+  return (
+    <>
+      <Navbar />
+      <script {...jsonLdScriptProps(breadcrumbs)} />
+
+      <main className="flex-1">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+          {/* Breadcrumb */}
+          <nav className="mb-6 flex items-center gap-1.5 text-sm text-zinc-500">
+            <Link href="/categories" className="hover:text-white transition-colors">
+              Categories
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-zinc-300">{category.name}</span>
+          </nav>
+
+          {/* Header — paints immediately. Tool count moved into the
+              streamed CategoryResults child so the page-shell renders
+              before the DB aggregate completes. */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              {category.icon && <span className="text-4xl">{category.icon}</span>}
+              <div>
+                <h1 className="text-3xl font-bold text-white">
+                  Best {category.name} AI Tools
+                </h1>
+                <p className="mt-1 text-zinc-400">Ranked by community</p>
+              </div>
+            </div>
+            {category.description && (
+              <p className="mt-4 max-w-2xl text-sm text-zinc-400 leading-relaxed">
+                {category.description}
+              </p>
+            )}
+          </div>
+
+          {/* Phase 6.5 (2026-05-12): grid + filters streamed via Suspense
+              with a shared skeleton fallback so the page paints fast and
+              avoids layout shift when data lands. */}
+          <Suspense fallback={<CategoryResultsSkeleton />}>
+            <CategoryResults
+              slug={slug}
+              page={page}
+              categoryName={category.name}
+              sp={sp}
+            />
+          </Suspense>
+        </div>
+      </main>
+
+      <Footer />
+    </>
+  )
+}
+
+async function CategoryResults({
+  slug,
+  page,
+  categoryName,
+  sp,
+}: {
+  slug: string
+  page: number
+  categoryName: string
+  sp: {
+    page?: string
+    pricing?: string
+    skill_level?: string
+    platform?: string
+    has_api?: string
+    sort?: string
+  }
+}) {
   const [categories, { tools, total, totalPages }] = await Promise.all([
     getCategories(),
     getTools({
@@ -88,11 +169,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     }),
   ])
 
-  const jsonLd = {
+  const itemList = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: `Best ${category.name} AI Tools`,
-    description: `The best ${category.name} AI tools — compared by features, pricing, and community reviews.`,
+    name: `Best ${categoryName} AI Tools`,
+    description: `The best ${categoryName} AI tools — compared by features, pricing, and community reviews.`,
     url: `https://rightaichoice.com/categories/${slug}`,
     numberOfItems: total,
     ...(tools.length > 0 && {
@@ -108,91 +189,51 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <>
-      <Navbar />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([
-          jsonLd,
-          breadcrumbJsonLd([
-            { name: 'Home', url: 'https://rightaichoice.com' },
-            { name: 'Categories', url: 'https://rightaichoice.com/categories' },
-            { name: category.name, url: `https://rightaichoice.com/categories/${slug}` },
-          ]),
-        ]) }}
-      />
-
-      <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          {/* Breadcrumb */}
-          <nav className="mb-6 flex items-center gap-1.5 text-sm text-zinc-500">
-            <Link href="/categories" className="hover:text-white transition-colors">
-              Categories
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-zinc-300">{category.name}</span>
-          </nav>
-
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              {category.icon && <span className="text-4xl">{category.icon}</span>}
-              <div>
-                <h1 className="text-3xl font-bold text-white">
-                  Best {category.name} AI Tools
-                </h1>
-                <p className="mt-1 text-zinc-400">
-                  {total} tool{total !== 1 ? 's' : ''} · ranked by community
-                </p>
-              </div>
-            </div>
-            {category.description && (
-              <p className="mt-4 max-w-2xl text-sm text-zinc-400 leading-relaxed">
-                {category.description}
-              </p>
-            )}
-          </div>
-
-          {/* Filters — Phase 5.5 (2026-05-08). Same UX as /tools, scoped
-              to this category. hideCategoryFilter omits the category dropdown
-              since the route already locks it. */}
-          <div className="mb-6">
-            <ToolFilters categories={categories} hideCategoryFilter />
-          </div>
-
-          {/* Tools grid */}
-          {tools.length === 0 ? (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
-              <p className="text-zinc-500">
-                {page > 1
-                  ? `No tools on page ${page}.`
-                  : 'No tools match these filters in this category.'}
-              </p>
-              <Link
-                href={page > 1 ? `/categories/${slug}` : `/categories/${slug}`}
-                className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300"
-              >
-                {page > 1 ? `Back to ${category.name}` : 'Clear filters'}
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {tools.map((tool) => (
-                  <ToolCard key={tool.id} tool={tool} />
-                ))}
-              </div>
-
-              {/* Phase 5.3 pagination (2026-05-08): replaces the previous
-                  "View all N tools → /tools?category=..." escape hatch. The
-                  ToolPagination component reads ?page from URL and rewrites
-                  it; works the same way as on /tools. */}
-              <ToolPagination page={page} totalPages={totalPages} total={total} />
-            </>
-          )}
+      <script {...jsonLdScriptProps(itemList)} />
+      <p className="-mt-4 mb-6 text-xs text-zinc-500">
+        {total} tool{total !== 1 ? 's' : ''} found
+      </p>
+      <div className="mb-6">
+        <ToolFilters categories={categories} hideCategoryFilter />
+      </div>
+      {tools.length === 0 ? (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
+          <p className="text-zinc-500">
+            {page > 1
+              ? `No tools on page ${page}.`
+              : 'No tools match these filters in this category.'}
+          </p>
+          <Link
+            href={`/categories/${slug}`}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300"
+          >
+            {page > 1 ? `Back to ${categoryName}` : 'Clear filters'}
+          </Link>
         </div>
-      </main>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tools.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
+          <ToolPagination page={page} totalPages={totalPages} total={total} />
+        </>
+      )}
+    </>
+  )
+}
 
-      <Footer />
+function CategoryResultsSkeleton() {
+  return (
+    <>
+      <div className="-mt-4 mb-6 h-3 w-24 rounded bg-zinc-800 animate-pulse" />
+      <div className="mb-6 flex flex-wrap gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-9 w-24 rounded-lg bg-zinc-800 animate-pulse" />
+        ))}
+      </div>
+      <ToolGridSkeleton count={9} cols="category" />
     </>
   )
 }
