@@ -151,7 +151,10 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
                   </span>
                 </div>
               ) : (
-                <span className="text-xs text-zinc-600">No reviews yet</span>
+                // Phase 6.1 (2026-05-11): em dash beats "No reviews yet" —
+                // the column still aligns and the comparison stays scannable
+                // without a placeholder stamp.
+                <span className="text-xs text-zinc-600">—</span>
               )}
             </div>
           ))}

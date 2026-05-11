@@ -67,15 +67,18 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
           />
         </div>
 
-        {tool.avg_rating > 0 ? (
+        {tool.avg_rating > 0 && (
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-zinc-500">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             <span className="text-zinc-300">{tool.avg_rating.toFixed(1)}</span>
             <span>({tool.review_count})</span>
           </div>
-        ) : (
-          <span className="shrink-0 whitespace-nowrap text-xs text-zinc-600">No reviews yet</span>
         )}
+        {/* Phase 6.1 (2026-05-11): empty-state stamp removed. The card
+            simply omits the rating chip when there are no reviews —
+            cleaner than the placeholder text and the rest of the card
+            (viability score, pricing badge, compare button) still
+            communicates value. */}
       </div>
     </Link>
   )

@@ -132,9 +132,15 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Stats + Badges (now inside the header card) */}
-            <div className="mt-6 flex flex-wrap items-center gap-6 border-t border-zinc-800 pt-5">
-              <div className="flex flex-wrap items-center gap-6">
+            {/* Stats + Badges (now inside the header card)
+                Phase 6.1 (2026-05-11): inner stats container changed from
+                `flex flex-wrap items-center gap-6` to a full-width
+                space-between row so the four stats spread evenly across
+                the card instead of clustering at the left with ~60% empty
+                space. Badge rail (when present) stays right-aligned via
+                the parent justify-between. */}
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-6 border-t border-zinc-800 pt-5">
+              <div className="flex w-full flex-wrap items-center justify-between gap-6 sm:w-auto sm:flex-1">
                 <Stat icon={<Award className="h-4 w-4 text-emerald-400" />} label="Reputation" value={profile.reputation} />
                 <Stat icon={<Star className="h-4 w-4 text-amber-400" />} label="Reviews" value={profile.review_count} />
                 <Stat icon={<MessageSquare className="h-4 w-4 text-blue-400" />} label="Questions" value={profile.question_count} />
