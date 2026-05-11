@@ -21,10 +21,18 @@ const envSchema = z.object({
   MIXPANEL_SERVICE_ACCOUNT_USERNAME: z.string().optional(),
   MIXPANEL_SERVICE_ACCOUNT_SECRET: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-  // Phase 7A — Google Search Console keyword mining. Path is the
-  // absolute file path to a service-account JSON key with
-  // webmasters.readonly scope. See docs/marketing/10-gsc-keyword-mining.md.
-  GSC_SERVICE_ACCOUNT_KEY_PATH: z.string().optional(),
+  // Phase 7A — Google Search Console keyword mining (OAuth 2.0 path).
+  // Service-account keys are blocked by Google's default org policy
+  // (iam.disableServiceAccountKeyCreation), so we use OAuth 2.0 user
+  // credentials instead. See docs/marketing/10-gsc-keyword-mining.md.
+  //
+  // GSC_OAUTH_CLIENT_PATH — absolute path to the client_secret_*.json
+  // downloaded from GCP Console → Credentials → OAuth 2.0 Client IDs
+  // (Desktop application type).
+  GSC_OAUTH_CLIENT_PATH: z.string().optional(),
+  // GSC_OAUTH_TOKEN_PATH — absolute path where the bootstrap script
+  // saves the long-lived refresh_token after the one-time browser flow.
+  GSC_OAUTH_TOKEN_PATH: z.string().optional(),
   // GSC site identifier — `sc-domain:rightaichoice.com` for a domain
   // property (recommended) or `https://rightaichoice.com/` for a
   // URL-prefix property. Default is the domain form.

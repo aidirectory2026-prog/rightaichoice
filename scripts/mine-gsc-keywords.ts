@@ -17,8 +17,11 @@
  * REQUIRED ENV (in .env.local — see docs/marketing/10-gsc-keyword-mining.md):
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
- *   GSC_SERVICE_ACCOUNT_KEY_PATH       (absolute path to the JSON key)
+ *   GSC_OAUTH_CLIENT_PATH              (downloaded OAuth client_secret JSON)
+ *   GSC_OAUTH_TOKEN_PATH               (refresh_token saved by oauth bootstrap)
  *   GSC_SITE_URL                       (default: sc-domain:rightaichoice.com)
+ *
+ * One-time setup: `npm run gsc:oauth:bootstrap` (browser-based "Allow" flow).
  *
  * OUTPUT:
  *   scripts/.gsc-opportunities.json    (consumed by 7B/7C/7D/7E/7L/7M)
@@ -233,10 +236,12 @@ async function main() {
   }
 
   // ─── APPLY mode ───
-  if (!process.env.GSC_SERVICE_ACCOUNT_KEY_PATH) {
+  if (!process.env.GSC_OAUTH_CLIENT_PATH || !process.env.GSC_OAUTH_TOKEN_PATH) {
     console.error(
-      '\n❌ GSC_SERVICE_ACCOUNT_KEY_PATH not set in .env.local.\n' +
-        '   Follow docs/marketing/10-gsc-keyword-mining.md to set up GCP + service account.\n'
+      '\n❌ GSC OAuth not set up.\n' +
+        '   Set GSC_OAUTH_CLIENT_PATH + GSC_OAUTH_TOKEN_PATH in .env.local,\n' +
+        '   then run `npm run gsc:oauth:bootstrap` to do the one-time browser flow.\n' +
+        '   See docs/marketing/10-gsc-keyword-mining.md.\n'
     )
     process.exit(1)
   }

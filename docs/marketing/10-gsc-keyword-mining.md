@@ -1,87 +1,94 @@
-# Phase 7A — GSC Keyword Mining: GCP Setup Guide
+# Phase 7A — GSC Keyword Mining: GCP OAuth Setup Guide
 
 **Goal:** give the `mine-gsc-keywords` script read-only access to your Google Search Console data so it can pull, per tool slug, every query where we rank positions 5-20 (page 1 but not clicking — high-intent, rankable). The output JSON drives generation order for Phase 7B-7M (compare pages, alternatives, worth-it, how-to, hubs).
 
-**Why:** GSC has the only reliable signal of what real Google users are searching that surfaces our pages. Free, lossless, no scraping. Quota is 1,200 queries/min — way more than we'll ever use.
+**Why OAuth (not service accounts):** Google's "Secure by Default" org policy (`iam.disableServiceAccountKeyCreation`) blocks JSON service-account keys on most new GCP organizations. OAuth 2.0 user credentials sidestep that entirely — you authorize once via browser, the script stores a long-lived refresh token, and that's it.
 
 **Time:** 10-15 minutes. One-time setup.
 
 ---
 
-## Step 1 — Create a Google Cloud project
+## Step 1 — Configure the OAuth consent screen
 
-1. Open https://console.cloud.google.com
-2. Sign in with the Google account that owns Search Console for rightaichoice.com.
-3. Click the project dropdown (top-left, next to "Google Cloud") → **New Project**.
-4. Name: `rightaichoice-gsc` (anything works). Leave "Organization" blank.
-5. Click **Create**, wait ~10 seconds, then make sure the new project is selected in the dropdown.
+Even if you've already created the GCP project (`rightaichoice-gsc`) and enabled the Search Console API, you still need to set up the consent screen before you can create an OAuth client.
 
-## Step 2 — Enable the Search Console API
-
-1. Search bar at the top → type `Search Console API` → click the result.
-2. Click the blue **Enable** button.
-3. Wait for "API enabled" confirmation.
-
-## Step 3 — Create a service account
-
-1. Go to https://console.cloud.google.com/iam-admin/serviceaccounts
+1. Open https://console.cloud.google.com/apis/credentials/consent
 2. Make sure your `rightaichoice-gsc` project is selected at the top.
-3. Click **+ Create Service Account**.
-4. Name: `gsc-mining`. Description: `Phase 7A keyword mining`.
-5. Click **Create and Continue**.
-6. **Skip** the "Grant access" step (no project roles needed). Click **Continue**.
-7. **Skip** "Grant users access". Click **Done**.
+3. **User type:**
+   - If you have a Google Workspace org: pick **Internal** (refresh tokens never expire — the cleanest option).
+   - Otherwise: pick **External** (works fine; refresh token may expire after 7 days while the app stays in "Testing" status — see Step 5).
+4. Click **Create**.
+5. Fill in the minimal fields:
+   - **App name:** `rightaichoice-gsc`
+   - **User support email:** your email
+   - **Developer contact email:** your email
+   - Leave everything else blank.
+6. Click **Save and Continue**.
+7. **Scopes:** click **Add or Remove Scopes** → search for `webmasters.readonly` → check the box next to `https://www.googleapis.com/auth/webmasters.readonly` → **Update** → **Save and Continue**.
+8. **Test users** (only shown if you picked External): click **+ Add Users**, paste your own Google email, **Add** → **Save and Continue**.
+9. **Summary:** click **Back to Dashboard**.
 
-## Step 4 — Generate the JSON key
+## Step 2 — Create the OAuth Client ID
 
-1. You should now see your `gsc-mining` service account in the list. Click it.
-2. Tab: **Keys** → **Add Key** → **Create new key**.
-3. Key type: **JSON**. Click **Create**.
-4. A JSON file downloads (e.g. `rightaichoice-gsc-1234abcd.json`). **This is your credential file** — never commit it to git.
-5. Note the service account's email (looks like `gsc-mining@rightaichoice-gsc.iam.gserviceaccount.com`). You'll need it for Step 6.
+1. Open https://console.cloud.google.com/apis/credentials
+2. Click **+ Create Credentials** → **OAuth client ID**.
+3. **Application type:** **Desktop app**.
+4. **Name:** `gsc-mining`.
+5. Click **Create**.
+6. A modal appears with your Client ID + Client Secret. Click **Download JSON** at the bottom — this saves a file like `client_secret_xxxxxxxx.apps.googleusercontent.com.json`.
 
-## Step 5 — Move the JSON key somewhere safe
+## Step 3 — Move the JSON file somewhere safe
 
 ```bash
 mkdir -p ~/.gsc
-mv ~/Downloads/rightaichoice-gsc-*.json ~/.gsc/key.json
-chmod 600 ~/.gsc/key.json
+mv ~/Downloads/client_secret_*.json ~/.gsc/oauth-client.json
+chmod 600 ~/.gsc/oauth-client.json
 ```
 
 (Adjust the source path if your browser saves elsewhere.)
 
-## Step 6 — Share Search Console with the service account
+The OAuth client JSON contains your `client_id` + `client_secret`. Treat it like a password — it's outside the repo so it can't be accidentally committed.
 
-This is the bit everyone forgets — **GCP and GSC are separate products**. Granting the service account a GCP role is NOT enough; you also need to add it as a *Search Console user*.
+## Step 4 — Add the env vars to `.env.local`
 
-1. Open https://search.google.com/search-console
-2. Top-left property dropdown → select `rightaichoice.com` (or `https://rightaichoice.com/` if it's a URL-prefix property).
-3. Settings (gear icon, bottom-left) → **Users and permissions**.
-4. Click **Add user**.
-5. Email: paste the service account email from Step 4 (e.g. `gsc-mining@rightaichoice-gsc.iam.gserviceaccount.com`).
-6. Permission: **Restricted** (read-only is enough — we never write to GSC from this script).
-7. Click **Add**.
-
-## Step 7 — Add the env vars to `.env.local`
-
-In `rightaichoice/.env.local`, add two lines:
+In `rightaichoice/.env.local`, add three lines:
 
 ```bash
-# Phase 7A — GSC keyword mining
-GSC_SERVICE_ACCOUNT_KEY_PATH=/Users/<your-username>/.gsc/key.json
+# Phase 7A — GSC OAuth keyword mining
+GSC_OAUTH_CLIENT_PATH=/Users/<your-username>/.gsc/oauth-client.json
+GSC_OAUTH_TOKEN_PATH=/Users/<your-username>/.gsc/oauth-token.json
 GSC_SITE_URL=sc-domain:rightaichoice.com
 ```
 
-**`GSC_SITE_URL` value depends on how your property is verified:**
+Replace `<your-username>` with your actual macOS username (run `whoami` in a terminal if you're not sure — likely `tanmay`).
+
+**`GSC_SITE_URL` value depends on how your property is verified in Search Console:**
 - Domain property (recommended, covers all subdomains + http/https): `sc-domain:rightaichoice.com`
 - URL-prefix property (single host+protocol): `https://rightaichoice.com/` (trailing slash required)
 
-Check which one you have in Search Console → Settings → Ownership verification. If you see "Domain property", use the `sc-domain:` form. If you see a URL like `https://rightaichoice.com/`, use that.
+Check which one you have at https://search.google.com/search-console → Settings → Ownership verification.
 
-## Step 8 — Smoke-test against one tool
+## Step 5 — Run the one-time browser auth flow
 
 ```bash
 cd rightaichoice
+npm run gsc:oauth:bootstrap
+```
+
+What happens:
+
+1. The script prints a URL to your terminal, then opens your browser to that URL automatically.
+2. Google shows a consent screen titled "rightaichoice-gsc wants access to your Google Account".
+3. **If you see a "This app isn't verified" warning screen** — that's expected for any personal OAuth app. Click **Advanced** → **Go to rightaichoice-gsc (unsafe)**. It's not actually unsafe; Google just shows this warning until you submit the app for formal verification (a multi-week review process we don't need to do for a personal mining script).
+4. Google asks you to confirm the `webmasters.readonly` scope. Click **Continue** or **Allow**.
+5. Browser redirects to a localhost URL and shows a green "✓ Authorized" page. You can close the tab.
+6. Terminal prints `✓ Saved refresh_token to ~/.gsc/oauth-token.json` and exits.
+
+If the browser doesn't auto-open, copy the URL from your terminal and paste it manually.
+
+## Step 6 — Smoke-test against one tool
+
+```bash
 npm run mine:gsc:apply -- --slug=kit
 ```
 
@@ -102,11 +109,13 @@ Resuming: 0 done, 1 remaining
   Bucket totals: { compare: ..., alternative: ..., 'worth-it': ..., 'how-to': ..., 'use-case': ..., unbucketed: ... }
 ```
 
-If you see `403 User does not have sufficient permission for site` — go back to Step 6, the service account isn't a verified user on the property yet (can take a minute to propagate after Add).
+If you see `403 User does not have sufficient permission` — your Google account isn't a verified user on the GSC property. Open Search Console → Settings → Users and permissions → confirm your email is listed with at least Restricted access.
 
-If you see `400 Site not found` — the `GSC_SITE_URL` form doesn't match the verified property. Try the other form (sc-domain vs https://).
+If you see `400 Site not found` — the `GSC_SITE_URL` form doesn't match your verified property. Try the other form (sc-domain vs https://).
 
-## Step 9 — Full run
+If you see `invalid_grant` — your refresh token expired (External-app + Testing-status apps expire refresh tokens after 7 days). Re-run `npm run gsc:oauth:bootstrap`. Long-term fix: switch the consent screen to "In production" status (Step 1, External users only) — once published you no longer hit the 7-day expiry.
+
+## Step 7 — Full run
 
 ```bash
 rm scripts/.gsc-mining-progress.json   # optional: clear single-tool checkpoint
@@ -116,23 +125,6 @@ npm run mine:gsc:apply
 Takes ~6 minutes for 1,178 tools at 5-way concurrency. Output lands at `scripts/.gsc-opportunities.json` and is consumed by Phase 7B-7M generation scripts.
 
 ---
-
-## What to do if GSC is too sparse
-
-If your Search Console property has < 30 days of data, the output will be thin. Two paths:
-
-1. **Wait a few weeks**, then re-run — GSC builds history fast once a sitemap is verified.
-2. **Use the 7A.fallback path** (not yet built; spec'd in `Phase8(site-overhaul-v2)/plan.md`) — Reddit/Quora scraping + Google Suggest harvesting. Lower-quality signal, no auth needed.
-
-## Cost
-
-Free. GSC API quota is 1,200 queries/min/project; full run uses ~1,178 queries spread over ~6 minutes. We never come close to the limit.
-
-## Security
-
-- The JSON key file (`~/.gsc/key.json`) is a long-lived credential. Treat it like a password.
-- It's in `~/.gsc/` (outside the repo) so it can't be accidentally committed.
-- If you ever need to revoke it: GCP Console → Service Accounts → `gsc-mining` → Keys → delete the active key, generate a new one, swap into `.env.local`.
 
 ## What this script outputs
 
@@ -153,3 +145,28 @@ Free. GSC API quota is 1,200 queries/min/project; full run uses ~1,178 queries s
 ```
 
 Sorted descending by `est_volume_score` (impressions / position). Phase 7B reads the `compare` bucket; 7C reads `alternative`; 7D reads `worth-it`; 7E reads `use-case`; 7M reads `how-to`. The top of each bucket gets generated first.
+
+## What to do if GSC is too sparse
+
+If your Search Console property has < 30 days of data, the output will be thin. Two paths:
+
+1. **Wait a few weeks**, then re-run — GSC builds history fast once a sitemap is verified.
+2. **Use the 7A.fallback path** (not yet built; spec'd in `Phase8(site-overhaul-v2)/plan.md`) — Reddit/Quora scraping + Google Suggest harvesting. Lower-quality signal, no auth needed.
+
+## Cost
+
+Free. GSC API quota is 1,200 queries/min/project; full run uses ~1,178 queries spread over ~6 minutes. We never come close to the limit.
+
+## Security
+
+- Both files in `~/.gsc/` are long-lived credentials. Treat them like passwords.
+- They're outside the repo so they can't be accidentally committed.
+- To revoke at any time: visit https://myaccount.google.com/permissions, find `rightaichoice-gsc`, click **Remove access**. Then re-run `npm run gsc:oauth:bootstrap` to re-authorize.
+
+## Why the 7-day refresh-token expiry exists (External + Testing only)
+
+Google added this in 2022 to limit blast radius for unverified OAuth apps. If you don't want to deal with it:
+
+- **Best:** if your Google account is part of a Workspace org, change User Type to **Internal** in the consent screen. Refresh tokens never expire.
+- **OK:** push your app to "In production" publishing status (consent screen → **Publish App** button). Google will accept this without verification for non-sensitive scopes — but `webmasters.readonly` is treated as sensitive, so they'll ask you to either submit for verification (slow) or keep using it personally (fine, just stays in test mode).
+- **Just live with it:** re-run the bootstrap once a week if needed. Takes 30 seconds.

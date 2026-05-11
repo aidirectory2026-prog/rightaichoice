@@ -1,38 +1,54 @@
 /**
- * Phase 7A — Google Search Console API client.
+ * Phase 7A — Google Search Console API client (OAuth 2.0 path).
  *
- * Thin wrapper around the GSC `searchAnalytics.query` REST endpoint
- * using service-account JWT auth. We deliberately avoid the heavy
- * `googleapis` package — only `google-auth-library` is needed.
+ * Uses OAuth 2.0 Desktop user credentials (NOT service-account keys —
+ * they're blocked by the iam.disableServiceAccountKeyCreation org policy
+ * Google enforces by default on new GCP organizations).
  *
  * Auth flow:
- *   1. Reads service-account JSON key from GSC_SERVICE_ACCOUNT_KEY_PATH
- *   2. JWT-signed Bearer token, scoped to webmasters.readonly
- *   3. POST to searchconsole.googleapis.com REST endpoint
+ *   1. One-time bootstrap (`npm run gsc:oauth:bootstrap`) does the
+ *      browser-based "click Allow" flow and saves a refresh_token
+ *      to GSC_OAUTH_TOKEN_PATH.
+ *   2. On every API call, this client exchanges the refresh_token
+ *      for a fresh 1-hour access_token (transparent — google-auth-library
+ *      handles the refresh).
+ *   3. POST to searchconsole.googleapis.com REST endpoint.
  *
  * The GSC site can be either a domain property (`sc-domain:example.com`)
- * or a URL-prefix property (`https://example.com/`). Default is domain
- * since that's what we recommend in docs/marketing/10-gsc-keyword-mining.md.
+ * or a URL-prefix property (`https://example.com/`). Default is domain.
  */
 
-import { JWT } from 'google-auth-library'
+import { OAuth2Client } from 'google-auth-library'
+import { readFileSync } from 'fs'
 
 const GSC_BASE = 'https://searchconsole.googleapis.com/webmasters/v3'
-const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 
-let jwtClient: JWT | null = null
+let oauthClient: OAuth2Client | null = null
 
-function getJwt(): JWT {
-  if (jwtClient) return jwtClient
-  const keyPath = process.env.GSC_SERVICE_ACCOUNT_KEY_PATH
-  if (!keyPath) {
+function getOAuthClient(): OAuth2Client {
+  if (oauthClient) return oauthClient
+  const clientPath = process.env.GSC_OAUTH_CLIENT_PATH
+  const tokenPath = process.env.GSC_OAUTH_TOKEN_PATH
+  if (!clientPath || !tokenPath) {
     throw new Error(
-      'GSC_SERVICE_ACCOUNT_KEY_PATH not set. See docs/marketing/10-gsc-keyword-mining.md for setup.'
+      'GSC OAuth not set up. Set GSC_OAUTH_CLIENT_PATH and GSC_OAUTH_TOKEN_PATH in .env.local, then run `npm run gsc:oauth:bootstrap`. See docs/marketing/10-gsc-keyword-mining.md.'
     )
   }
-  // google-auth-library reads the JSON keyfile lazily on first authorize().
-  jwtClient = new JWT({ keyFile: keyPath, scopes: SCOPES })
-  return jwtClient
+  const clientJson = JSON.parse(readFileSync(clientPath, 'utf-8'))
+  // Desktop OAuth client JSON wraps creds under either "installed" or "web"
+  const creds = clientJson.installed || clientJson.web
+  if (!creds || !creds.client_id || !creds.client_secret) {
+    throw new Error(`OAuth client JSON at ${clientPath} is missing client_id/client_secret.`)
+  }
+  const tokenJson = JSON.parse(readFileSync(tokenPath, 'utf-8'))
+  if (!tokenJson.refresh_token) {
+    throw new Error(
+      `Token file at ${tokenPath} has no refresh_token. Re-run \`npm run gsc:oauth:bootstrap\`.`
+    )
+  }
+  oauthClient = new OAuth2Client(creds.client_id, creds.client_secret)
+  oauthClient.setCredentials({ refresh_token: tokenJson.refresh_token })
+  return oauthClient
 }
 
 export type GscRow = {
@@ -62,10 +78,9 @@ export async function querySearchAnalytics(
   siteUrl: string,
   body: SearchAnalyticsQuery
 ): Promise<GscRow[]> {
-  const jwt = getJwt()
-  const token = await jwt.authorize()
-  const accessToken = token.access_token
-  if (!accessToken) throw new Error('GSC auth returned no access_token')
+  const client = getOAuthClient()
+  const { token } = await client.getAccessToken()
+  if (!token) throw new Error('Failed to refresh OAuth access token — try re-running bootstrap.')
 
   const encoded = encodeURIComponent(siteUrl)
   const url = `${GSC_BASE}/sites/${encoded}/searchAnalytics/query`
@@ -73,7 +88,7 @@ export async function querySearchAnalytics(
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
