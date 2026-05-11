@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { SearchBar } from '@/components/layout/search-bar'
 import { ToolCard } from '@/components/tools/tool-card'
 import { ToolFilters } from '@/components/tools/tool-filters'
@@ -55,6 +56,17 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          {/* Phase 6.3 (2026-05-11): breadcrumbs + BreadcrumbList JSON-LD.
+              Even though the page is noindex, the visual nav still helps
+              users get back to /tools without using the back button. */}
+          <Breadcrumbs
+            crumbs={[
+              { name: 'Home', url: '/' },
+              { name: 'Tools', url: '/tools' },
+              { name: 'Search', url: '/search' },
+            ]}
+          />
+
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-white">
               {q ? `Results for "${q}"` : 'Search AI Tools'}

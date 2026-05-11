@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { ProjectPlanner } from '@/components/ai/project-planner'
 import { createClient } from '@/lib/supabase/server'
 import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
@@ -29,6 +30,18 @@ export default async function PlanPage({ searchParams }: PageProps) {
     <>
       <Navbar />
       <main className="flex-1">
+        {/* Phase 6.3 (2026-05-11): breadcrumbs + BreadcrumbList JSON-LD.
+            Wrapped in a content container so the breadcrumbs sit above the
+            hero block rather than disappearing into the aurora gradients. */}
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6">
+          <Breadcrumbs
+            crumbs={[
+              { name: 'Home', url: '/' },
+              { name: 'Plan My Stack', url: '/plan' },
+            ]}
+          />
+        </div>
+
         {/* Hero section */}
         <div className="relative overflow-hidden">
           {/* Background layers */}
