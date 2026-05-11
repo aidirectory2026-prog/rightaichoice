@@ -21,6 +21,14 @@ const envSchema = z.object({
   MIXPANEL_SERVICE_ACCOUNT_USERNAME: z.string().optional(),
   MIXPANEL_SERVICE_ACCOUNT_SECRET: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+  // Phase 7A — Google Search Console keyword mining. Path is the
+  // absolute file path to a service-account JSON key with
+  // webmasters.readonly scope. See docs/marketing/10-gsc-keyword-mining.md.
+  GSC_SERVICE_ACCOUNT_KEY_PATH: z.string().optional(),
+  // GSC site identifier — `sc-domain:rightaichoice.com` for a domain
+  // property (recommended) or `https://rightaichoice.com/` for a
+  // URL-prefix property. Default is the domain form.
+  GSC_SITE_URL: z.string().optional(),
 })
 
 function validateEnv() {

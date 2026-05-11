@@ -13,7 +13,9 @@
     "preflight:fetch-logos:dry": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --dry-run",
     "preflight:fetch-logos": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts",
     "refresh:dry": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --dry-run",
-    "refresh:apply": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --apply"
+    "refresh:apply": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --apply",
+    "mine:gsc:dry": "tsx --env-file=.env.local scripts/mine-gsc-keywords.ts --dry-run",
+    "mine:gsc:apply": "tsx --env-file=.env.local scripts/mine-gsc-keywords.ts --apply"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -23,6 +25,7 @@
     "@supabase/supabase-js": "^2.100.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "google-auth-library": "^10.6.2",
     "gray-matter": "^4.0.3",
     "lucide-react": "^1.7.0",
     "mixpanel-browser": "^2.78.0",
