@@ -20,6 +20,7 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { GoalInput } from '@/components/home/goal-input'
 import { Reveal } from '@/components/ui/reveal'
 import { StackAssembly } from '@/components/home/stack-assembly'
+import { RecentlyViewed } from '@/components/home/recently-viewed'
 import { SectionHeader } from '@/components/home/section-header'
 import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
@@ -101,6 +102,13 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ─── Recently viewed ─────────────────────────────────────
+             Phase 6.4 (2026-05-11): server component reads the
+             rac_recent cookie and renders a compact rail. Returns
+             null when the cookie is empty, so first-time visitors
+             jump straight from hero to Stack Assembly. */}
+        <RecentlyViewed />
 
         {/* ─── Stack Assembly Demo ─────────────────────────────── */}
         <section className="relative overflow-hidden border-t border-zinc-900/50 bg-zinc-950">

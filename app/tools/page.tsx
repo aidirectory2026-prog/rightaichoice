@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/layout/search-bar'
 import { ToolCard } from '@/components/tools/tool-card'
 import { ToolFilters } from '@/components/tools/tool-filters'
 import { ToolPagination } from '@/components/tools/tool-pagination'
+import { RecentlyViewed } from '@/components/home/recently-viewed'
 import Link from 'next/link'
 import { getTools, logSearch } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
@@ -73,6 +74,12 @@ export default async function ToolsPage({
             <ToolResults params={params} />
           </Suspense>
         </div>
+
+        {/* Phase 6.4 (2026-05-11): recently-viewed rail at the bottom of
+            the listing — gives returning visitors a one-tap way back to
+            tools they were comparing. Returns null when cookie is empty,
+            so first-time visitors don't see a placeholder. */}
+        <RecentlyViewed />
       </main>
 
       <Footer />

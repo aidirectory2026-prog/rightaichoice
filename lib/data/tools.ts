@@ -582,6 +582,29 @@ export async function isToolSaved(toolId: string, userId: string): Promise<boole
 }
 
 /**
+ * Phase 6.4 (2026-05-11): fetch tools matching the slugs in the
+ * 'rac_recent' cookie, in the order the slugs were given. Used by the
+ * homepage + /tools index "Recently viewed" rail. Caller is responsible
+ * for parsing the cookie (lives in next/headers, not lib).
+ */
+export async function getToolsBySlugs(slugs: string[]) {
+  if (slugs.length === 0) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select(
+      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, viability_score`
+    )
+    .in('slug', slugs)
+    .eq('is_published', true)
+  if (!data) return []
+  // Preserve the input order (cookie is most-recent-first); Supabase
+  // .in() returns rows in DB order so we re-sort here.
+  const bySlug = new Map(data.map((t) => [t.slug, t]))
+  return slugs.map((s) => bySlug.get(s)).filter(Boolean) as typeof data
+}
+
+/**
  * Phase 6.2 (2026-05-11): list every saved tool for a user, newest-first.
  * Used by /saved page. Joins user_saved_tools → tools so we get the same
  * shape ToolCard expects. Falls back to empty array on any error.

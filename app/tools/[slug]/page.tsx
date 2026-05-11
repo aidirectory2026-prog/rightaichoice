@@ -59,6 +59,7 @@ import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
+import { RecordRecentView } from '@/components/tools/record-recent-view'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
@@ -226,6 +227,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
     <>
       <Navbar />
       <PageViewTracker path={`/tools/${slug}`} toolId={tool.id} />
+      {/* Phase 6.4 (2026-05-11): cookie-set sibling that powers the
+          "Recently viewed" rail on homepage + /tools index. Pure side-
+          effect; renders nothing. */}
+      <RecordRecentView slug={slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify([
