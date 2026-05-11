@@ -482,6 +482,34 @@
   }
 }
 
+/* Phase 6.6 (2026-05-12): mobile fallback. The 7s infinite cycle made
+   the hero look broken on small viewports — cards visibly faded in/out
+   while the user was trying to read them. Same static-cards treatment
+   as prefers-reduced-motion: cards mounted with full opacity, no cycle,
+   typing caret stops blinking, arrow stops bobbing. The desktop animation
+   is intact above 640px. */
+@media (max-width: 640px) {
+  .stack-assembly-typing,
+  .stack-assembly-arrow,
+  .stack-assembly-card,
+  .stack-assembly-cta {
+    animation: none;
+    opacity: 1;
+  }
+  .stack-assembly-typing {
+    width: auto;
+    border-right: none;
+  }
+  .stack-assembly-stack {
+    min-height: 0; /* drop the desktop reservation; static cards use
+                       their natural height on mobile */
+  }
+  .stack-assembly-card {
+    transform: none; /* belt-and-suspenders: ensure no leftover
+                         transform from the keyframe initial state */
+  }
+}
+
 /* ── Microinteractions (Step 45 Slice 4) ────────────────────────
    Reusable utility classes. Apply alongside existing Tailwind on
    any card, link, or CTA for a consistent feel.
