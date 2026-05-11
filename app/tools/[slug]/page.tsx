@@ -60,6 +60,7 @@ import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
 import { RecordRecentView } from '@/components/tools/record-recent-view'
+import { StickyToc } from '@/components/tools/sticky-toc'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
@@ -887,6 +888,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 is taller than the available viewport height (top-20 leaves
                 room for the navbar). */}
             <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+              {/* Phase 6.7 (2026-05-12): sticky table-of-contents.
+                  Auto-discovers <h2> elements in <main> at runtime,
+                  slugifies them into stable IDs, and uses
+                  IntersectionObserver to highlight the section in
+                  view. Hidden below lg: because the right rail
+                  collapses there too. */}
+              <StickyToc />
+
               {/* Quick Info Card */}
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <h3 className="text-sm font-semibold text-white mb-4">Details</h3>
