@@ -581,6 +581,39 @@ export async function isToolSaved(toolId: string, userId: string): Promise<boole
   return !!data
 }
 
+/**
+ * Phase 6.2 (2026-05-11): list every saved tool for a user, newest-first.
+ * Used by /saved page. Joins user_saved_tools → tools so we get the same
+ * shape ToolCard expects. Falls back to empty array on any error.
+ */
+export async function getSavedTools(userId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('user_saved_tools')
+    .select(
+      `created_at, tools(id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, viability_score)`
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  // Supabase types this as `tools: T | T[]` depending on FK resolution; in
+  // practice tool_id → tools is a single row, but we defensively unwrap.
+  return (data ?? [])
+    .map((row: { tools: unknown }) => (Array.isArray(row.tools) ? row.tools[0] : row.tools))
+    .filter(Boolean) as Array<{
+      id: string
+      name: string
+      slug: string
+      tagline: string
+      logo_url: string | null
+      website_url: string
+      pricing_type: string
+      avg_rating: number
+      review_count: number
+      view_count: number
+      viability_score: number | null
+    }>
+}
+
 export async function toggleSaveTool(toolId: string, userId: string): Promise<boolean> {
   const supabase = await createClient()
   const saved = await isToolSaved(toolId, userId)

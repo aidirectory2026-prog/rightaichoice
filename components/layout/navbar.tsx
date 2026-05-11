@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useAuthHref } from '@/lib/hooks/use-auth-href'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen, Bookmark } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 
 export function Navbar() {
@@ -79,13 +79,26 @@ export function Navbar() {
         {/* Right: Auth actions */}
         <div className="hidden lg:flex items-center gap-3">
           {user ? (
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              {profile?.username ?? 'Dashboard'}
-            </Link>
+            <>
+              {/* Phase 6.2 (2026-05-11): /saved entry-point in the navbar so
+                  logged-in users can find their bookmarked tools without
+                  bouncing through the dashboard. */}
+              <Link
+                href="/saved"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                aria-label="Saved tools"
+              >
+                <Bookmark className="h-4 w-4" />
+                <span className="hidden xl:inline">Saved</span>
+              </Link>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                {profile?.username ?? 'Dashboard'}
+              </Link>
+            </>
           ) : (
             <>
               <Link
