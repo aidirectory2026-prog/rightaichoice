@@ -482,6 +482,40 @@
   }
 }
 
+/* Phase 6.8 (2026-05-12): compare tray polish.
+   - Slide-up entrance the first time the tray appears (after the
+     first tool is added). 280ms is fast enough to feel responsive
+     without the bar "popping" into view.
+   - Pulse on the Compare Now button once 2+ tools are queued so the
+     user notices the CTA is now live without us forcing an auto-nav.
+*/
+.rai-compare-tray {
+  animation: rai-compare-tray-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rai-compare-tray-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.rai-compare-cta-pulse {
+  animation: rai-compare-cta-pulse 2.4s ease-in-out infinite;
+}
+@keyframes rai-compare-cta-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(52, 211, 153, 0.55),
+      0 6px 18px rgba(5, 150, 105, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(52, 211, 153, 0),
+      0 6px 18px rgba(5, 150, 105, 0.45);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rai-compare-tray { animation: none; }
+  .rai-compare-cta-pulse { animation: none; }
+}
+
 /* Phase 6.6 (2026-05-12): mobile fallback. The 7s infinite cycle made
    the hero look broken on small viewports — cards visibly faded in/out
    while the user was trying to read them. Same static-cards treatment

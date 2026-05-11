@@ -17,8 +17,13 @@ export function CompareTray() {
     router.push(`/compare?tools=${slugs}`)
   }
 
+  // Phase 6.8 (2026-05-12): once 2+ tools are selected, the Compare Now
+  // button becomes the natural next step — give it a subtle pulse so
+  // users notice without us forcing an auto-navigation.
+  const ready = items.length >= 2
+
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-sm">
+    <div className="rai-compare-tray fixed bottom-0 inset-x-0 z-50 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4">
         {/* Label */}
         <div className="flex items-center gap-2 text-sm text-zinc-400 shrink-0">
@@ -66,7 +71,11 @@ export function CompareTray() {
           <button
             onClick={handleCompare}
             disabled={items.length < 2}
-            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 min-h-[40px] text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`inline-flex items-center justify-center rounded-lg px-4 min-h-[40px] text-sm font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              ready
+                ? 'bg-emerald-600 hover:bg-emerald-500 rai-compare-cta-pulse'
+                : 'bg-emerald-600 hover:bg-emerald-500'
+            }`}
           >
             Compare Now
           </button>
