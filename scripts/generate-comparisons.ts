@@ -101,10 +101,13 @@ type Progress = {
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
 const isApply = args.includes('--apply')
+const isDeep = args.includes('--deep') // v3 mode: replace existing rows with deeper content
 const limitArg = args.find((a) => a.startsWith('--limit='))
 const slugArg = args.find((a) => a.startsWith('--slug='))
+const topArg = args.find((a) => a.startsWith('--top='))
 const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : undefined
 const targetSlug = slugArg ? slugArg.split('=')[1] : undefined
+const topN = topArg ? parseInt(topArg.split('=')[1], 10) : undefined
 
 if (!isDryRun && !isApply) {
   console.error('Pass --dry-run or --apply (see script header for examples).')
@@ -152,7 +155,7 @@ const faqSchema = z.object({
 // Page-level target is 1,800-2,800 words. Failed-attempt patterns from
 // v1 (use_cases.persona > 80, pricing_analysis > 2000) addressed:
 // persona max 120, pricing_analysis max 3500.
-const compareOutputSchema = z.object({
+const compareOutputSchemaV2 = z.object({
   tldr: z.array(tldrRowSchema).min(4).max(6),
   verdict: z.string().min(180).max(1000),
   feature_analysis: z.string().min(1100).max(4500),
@@ -162,7 +165,32 @@ const compareOutputSchema = z.object({
   faqs: z.array(faqSchema).min(6).max(10),
 })
 
-type CompareOutput = z.infer<typeof compareOutputSchema>
+// v3 schema (2026-05-13): the v2 schema enforced chars not words —
+// 1100-char floor on feature_analysis is only ~200 words, hence the
+// 450-word avg output instead of the intended 1,100. v3 fixes that
+// with character minimums calibrated to DeepSeek's actual response
+// distribution under stronger prompts:
+//   - feature_analysis 4500 chars ≈ 750 words (2× v2's 450 avg)
+//   - pricing_analysis 1500 chars ≈ 250 words (slight bump from v2's 241 avg)
+// Initial 7000/2000 attempt got 100% schema rejection — DeepSeek caps at
+// ~5500 chars even with explicit word-count prompts. Used in --deep mode.
+const compareOutputSchemaV3 = z.object({
+  tldr: z.array(tldrRowSchema).min(5).max(6),
+  verdict: z.string().min(280).max(1200),
+  // 3500-char floor (~580 words) is the practical minimum after 100-pair
+  // run showed 15/100 failures at 4500/1500. Median actual output is
+  // ~716 words; this floor accommodates the bottom-quartile pairs while
+  // still being 30% over v2's 450-word avg.
+  feature_analysis: z.string().min(3500).max(15000),
+  pricing_analysis: z.string().min(1200).max(7000),
+  use_cases: z.array(useCaseSchema).min(4).max(6),
+  benchmarks: z.array(benchmarkRowSchema).max(5).nullable(),
+  faqs: z.array(faqSchema).min(8).max(12),
+})
+
+const compareOutputSchema = isDeep ? compareOutputSchemaV3 : compareOutputSchemaV2
+
+type CompareOutput = z.infer<typeof compareOutputSchemaV2>
 
 // ── Catalog fetch ────────────────────────────────────────────────────────────
 
@@ -375,7 +403,7 @@ function dedupAndCap(pairsByTool: Map<string, Pair[]>): Pair[] {
 
 // ── DeepSeek prompts ─────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are RightAIChoice's senior editorial reviewer producing SEO-optimized compare-page content for two AI tools. Pages must compete for top Google rankings on "X vs Y" head terms — that requires depth (1,800–2,800 words total), declarative answers, and real data, not template fluff.
+const SYSTEM_PROMPT_V2 = `You are RightAIChoice's senior editorial reviewer producing SEO-optimized compare-page content for two AI tools. Pages must compete for top Google rankings on "X vs Y" head terms — that requires depth (1,800–2,800 words total), declarative answers, and real data, not template fluff.
 
 HARD RULES (non-negotiable):
 
@@ -452,6 +480,97 @@ Use the EXACT slug strings provided in input as keys in tldr.values and benchmar
 PRICING ABSENCE: if pricing_details is empty/null for both tools, write a brief honest pricing_analysis acknowledging the absence — never fabricate tiers.
 
 BENCHMARKS ABSENCE: if input has no defensible benchmark data, return benchmarks: null (the JSON literal null, not an empty array).`
+
+// v3 prompt (2026-05-13): used by --deep mode for top-100 head-term
+// regeneration. Same rules as v2 but with HARD word-count enforcement
+// (because v2's char-based zod limits silently allowed 450-word output
+// when 1,500+ was intended). Every section's word target is explicit.
+const SYSTEM_PROMPT_V3 = `You are RightAIChoice's senior editorial reviewer producing IN-DEPTH, SEO-OPTIMIZED compare-page content for two AI tools. These pages target HEAD-TERM Google rankings ("X vs Y" queries with 5K–50K monthly searches). Competitor pages on these queries run 2,500–4,000 words. To compete you MUST produce equivalent depth — not 500-word skim summaries.
+
+HARD WORD COUNTS (non-negotiable — count words, not chars):
+- feature_analysis: 1,500–2,800 words total. Each ## H2 section: 250–500 words.
+- pricing_analysis: 500–1,200 words. Each tool's pricing breakdown alone: 200–400 words.
+- verdict: 60–150 words (3–4 sentences).
+- Each FAQ answer: 35–120 words.
+- Each use_cases.reasoning: 20–60 words.
+
+HARD RULES (same as v2, restated for emphasis):
+
+1. **No fabrication.** Only facts from input data. If silent on a topic, say so honestly.
+
+2. **No marketing superlatives.** No "best-in-class", "industry-leading", "revolutionary", "world-class", etc.
+
+3. **Declarative winners.** "Tool A wins for use case X because <specific reason>." No hedging.
+
+4. **Target keyword density.** "<Tool A> vs <Tool B>" using EXACT input tool names MUST appear:
+   - In the FIRST sentence of the verdict
+   - In at least 3 of the H2 headings (e.g. "## Pricing: <A> vs <B>")
+   - 5+ times naturally in body prose
+   - Plus 3+ semantic variations: "<A> versus <B>", "<A> compared to <B>", "<A> or <B>", "switching from <A> to <B>", "moving from <A> to <B>"
+
+5. **2026 freshness (REQUIRED — v2 missed this on 79% of pages).** Use "in 2026" or "as of 2026" at least THREE times across the page: once in verdict, once in pricing_analysis, once in feature_analysis. Pricing tier names MUST be flagged as "current 2026 pricing" or similar.
+
+6. **E-E-A-T signals.** Where input data references external URLs (vendor docs, changelog, benchmark sources), cite them in markdown link form: [vendor docs](url). At least 2 such links per feature_analysis when input has URLs.
+
+7. **JSON OUTPUT ONLY.** No prose outside the JSON. No markdown fences.
+
+OUTPUT SCHEMA (v3 — deeper than v2):
+
+{
+  "tldr": [
+    {"dimension": "<short label>", "values": {"<slug-a>": "<80–220 char specific answer>", "<slug-b>": "<80–220 char specific answer>"}},
+    ...
+  ],
+  // 5–6 rows. REQUIRED dimensions: "Best for", "Pricing tier", "Setup complexity", "Strongest differentiator", "Biggest gap" (or "Limitation"). Each value MUST be specific and contrasting.
+
+  "verdict": "<280–1200 char declarative paragraph, 60–150 words. Open sentence: '<Tool A> vs <Tool B>' phrase. Sentence 2: name the head-use-case winner. Sentence 3–4: secondary winner + the single deciding factor. Use '2026' once.>",
+
+  "feature_analysis": "<7,000–14,000 chars, 1,500–2,800 words markdown article. STRUCTURE — 5–7 ## H2 sections:
+    ## <H2 with 'X vs Y' or '<A> vs <B>': <Capability area>
+    (250–500 word substantive analysis. Cite specific input features. Open with declarative claim. Close with 'X wins here because…' or 'Y wins on <specific dimension>'.)
+
+    Required H2 topics (adapt names as appropriate to the tools): Core capabilities / Differentiation, AI & model approach, Integrations & ecosystem, Performance & scale, Developer experience or Workflow, Enterprise & governance. Include 5–7 of these.
+
+    Markdown: ## H2 only (no ### H3 inside H2 bodies), - bullets allowed, **bold** for tool names, [link text](url) for external refs.
+  >",
+
+  "pricing_analysis": "<2,000–6,500 chars, 500–1,200 words markdown. STRUCTURE:
+    ## <Tool A> pricing in 2026
+    (200–400 words. Cite every plan/tier from pricing_details. Note hidden costs, overage fees, contract terms, what's included at each tier.)
+
+    ## <Tool B> pricing in 2026
+    (200–400 words. Same depth.)
+
+    ## Value-per-dollar: <A> vs <B>
+    (100–400 words. Direct declarative comparison. Who wins per company-size / use-case segment. Reference 2026 pricing tiers explicitly.)
+  >",
+
+  "use_cases": [
+    {"persona": "<concrete role + team-size + situation, 3–120 chars>", "recommendedSlug": "<slug-a OR slug-b>", "reasoning": "<80–500 char specific reason — name the feature/pricing/integration that drives the recommendation, 20–60 words>"},
+    ...
+  ],
+  // 4–6 rows. Cover varied team sizes/budgets. Each reasoning must cite a specific feature or pricing fact.
+
+  "benchmarks": [
+    {"dimension": "<benchmark name>", "values": {"<slug-a>": {"score": "<value>", "unit": "<unit>", "source": "<source>"}, "<slug-b>": {...}}},
+    ...
+  ] OR null,
+  // null when no defensible benchmarks exist in input. 0–5 rows otherwise.
+
+  "faqs": [
+    {"question": "<20–220 char real buyer question>", "answer": "<140–800 char direct answer, 35–120 words, opens with the answer not 'It depends'>"},
+    ...
+  ]
+  // 8–12 FAQs. REQUIRED topics (minimum): pricing/free tier, integrations, migration path, learning curve, scale/team-size fit, security/compliance, customer support quality. Plus 2+ specific buyer questions surfaced from the tools' data. Each answer must be substantive (3–5 sentences).
+}
+
+Use the EXACT slug strings provided in input as keys in tldr.values and benchmarks.values. recommendedSlug MUST be one of the two slugs (NEVER null — pick a winner even on close calls).
+
+PRICING ABSENCE: if pricing_details is empty/null for both tools, still write a substantive pricing_analysis (500+ words) covering pricing model type, expected cost drivers, contract terms — even if specific tier numbers are unavailable.
+
+BENCHMARKS ABSENCE: if input has no defensible benchmark data, return benchmarks: null (the JSON literal null, not an empty array).`
+
+const SYSTEM_PROMPT = isDeep ? SYSTEM_PROMPT_V3 : SYSTEM_PROMPT_V2
 
 function buildUserPrompt(a: Tool, b: Tool, scoreContext?: string): string {
   function fmtTool(t: Tool): string {
@@ -567,6 +686,22 @@ async function generatePairContent(pair: Pair, scoreContext?: string): Promise<C
 async function writePair(pair: Pair, content: CompareOutput): Promise<void> {
   const supa = getAdminClient()
   const now = new Date().toISOString()
+
+  // Deep mode: delete any existing editorial row for this slug first,
+  // then insert the fresh v3 version. We do NOT preserve the original
+  // tool_comparisons.id (a v3 page is conceptually a new editorial
+  // version), and any back-references to the old row should be rare —
+  // user-saved comparisons via /compare?tools= live on different rows
+  // (is_editorial=false).
+  if (isDeep) {
+    const { error: delErr } = await supa
+      .from('tool_comparisons')
+      .delete()
+      .eq('slug', pair.pair_slug)
+      .eq('is_editorial', true)
+    if (delErr) throw new Error(`DB pre-delete: ${delErr.message}`)
+  }
+
   const { error } = await supa.from('tool_comparisons').insert({
     tool_ids: [pair.tool_a.id, pair.tool_b.id],
     slug: pair.pair_slug,
@@ -654,26 +789,37 @@ async function main() {
   console.log(`After catalog fallback: ${totalAfterFallback} pairs`)
 
   let allPairs = dedupAndCap(pairsByTool)
+  // --top=N cuts BEFORE existing-slugs filter so deep mode targets the
+  // top-scoring pairs regardless of whether v2 already wrote them.
+  if (topN) allPairs = allPairs.slice(0, topN)
   if (limit) allPairs = allPairs.slice(0, limit)
   console.log(`After global dedup + cap: ${allPairs.length} unique pairs (max ${MAX_PAIRS})`)
 
-  // Filter against existing editorial slugs
-  const existing = await fetchExistingEditorialSlugs()
-  const todoPairs = allPairs.filter((p) => !existing.has(p.pair_slug))
-  const skippedCount = allPairs.length - todoPairs.length
-  console.log(`Skipped (already exists): ${skippedCount}`)
-  console.log(`To generate: ${todoPairs.length}`)
+  // Filter against existing editorial slugs UNLESS --deep mode (which
+  // wants to replace existing rows with deeper content).
+  let todoPairs: Pair[]
+  if (isDeep) {
+    todoPairs = allPairs
+    console.log(`Deep mode: will REPLACE all ${todoPairs.length} editorial rows with v3 content`)
+  } else {
+    const existing = await fetchExistingEditorialSlugs()
+    todoPairs = allPairs.filter((p) => !existing.has(p.pair_slug))
+    const skippedCount = allPairs.length - todoPairs.length
+    console.log(`Skipped (already exists): ${skippedCount}`)
+    console.log(`To generate: ${todoPairs.length}`)
+  }
   console.log('')
 
   if (isDryRun) {
-    console.log('Top 20 pairs that would be generated:')
+    console.log(`Top 20 pairs that would be ${isDeep ? 'regenerated (v3 deep)' : 'generated'}:`)
     for (const p of todoPairs.slice(0, 20)) {
       console.log(
         `  · ${p.pair_slug.padEnd(50)} | score ${String(p.source_score).padStart(5)} | ${p.origin}`
       )
     }
     console.log('')
-    console.log(`Re-run with --apply to generate. Estimated cost: ~$${(todoPairs.length * 0.005).toFixed(2)} DeepSeek.`)
+    const perPage = isDeep ? 0.018 : 0.005 // v3 produces ~3× more tokens
+    console.log(`Re-run with --apply to ${isDeep ? 'regenerate (deep v3)' : 'generate'}. Estimated cost: ~$${(todoPairs.length * perPage).toFixed(2)} DeepSeek.`)
     return
   }
 

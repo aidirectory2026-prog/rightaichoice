@@ -25,7 +25,9 @@
     "mine:quora:apply": "tsx --env-file=.env.local scripts/mine-quora.ts --apply",
     "mine:merge": "tsx --env-file=.env.local scripts/merge-opportunities.ts",
     "compare:dry": "tsx --env-file=.env.local scripts/generate-comparisons.ts --dry-run",
-    "compare:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply"
+    "compare:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply",
+    "compare:deep:dry": "tsx --env-file=.env.local scripts/generate-comparisons.ts --dry-run --deep",
+    "compare:deep:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply --deep"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

@@ -1,8 +1,14 @@
 # Phase 7B — Compare Page Generation: Failure Log
 
-**Last run:** 2026-05-12 / 2026-05-13 (v2 prompt, all retries complete).
+**Last updated:** 2026-05-13 (after Phase 7B.deep top-100 v3 upgrade).
 
-**Final tally:** 579 of 580 target pairs generated (99.8% success rate). 1 stubborn failure documented below.
+**Final tally:** 579 of 580 v2 pages written + top 100 upgraded to v3 depth. 1 stubborn v2 failure (`coupa-ai-vs-stampli`) carries over since it's not in top 100 — see below.
+
+**State of `/compare/[slug]` editorial pages on prod:**
+- 100 top-head-term pairs at **v3 deep quality** (~1,039 words avg, 6 H2 sections, 100% "2026" coverage)
+- 479 long-tail pairs at **v2 quality** (~691 words avg, 5 H2 sections — strong structural SEO, fine for long-tail)
+- 8 pre-existing manual pages from prior phases
+- = **587 total live editorial compare pages**
 
 ---
 
