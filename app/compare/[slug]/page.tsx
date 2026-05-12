@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Scale, ArrowLeft } from 'lucide-react'
+import { Scale, ChevronRight } from 'lucide-react'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -59,6 +59,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${names.join(' vs ')} — RightAIChoice`,
       description,
       url: `https://rightaichoice.com/compare/${slug}`,
+      type: 'article',
+      siteName: 'RightAIChoice',
+      // og:image is auto-resolved from app/compare/[slug]/opengraph-image.tsx
+      // by Next.js's file-route convention — no explicit image listing needed.
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${names.join(' vs ')} — RightAIChoice`,
+      description,
+      // twitter:image inherits from openGraph.images by default in Next.js
     },
     alternates: {
       canonical: `https://rightaichoice.com/compare/${slug}`,
@@ -164,13 +174,21 @@ export default async function ComparisonSlugPage({ params }: Props) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
-            <Link
-              href="/tools"
-              className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors mb-4"
+            {/* Phase 7B.seo (2026-05-13): visual breadcrumb trail.
+                Page-level BreadcrumbList JSON-LD already emitted above
+                via jsonLdBlocks; the Breadcrumbs component would also
+                emit one (duplicate), so we render the visual nav inline
+                here instead of importing Breadcrumbs. */}
+            <nav
+              aria-label="Breadcrumb"
+              className="mb-4 flex items-center gap-1.5 text-sm text-zinc-500"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Tools
-            </Link>
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <Link href="/compare" className="hover:text-white transition-colors">Compare</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="text-zinc-300">{toolNames.join(' vs ')}</span>
+            </nav>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-white">

@@ -27,7 +27,9 @@
     "compare:dry": "tsx --env-file=.env.local scripts/generate-comparisons.ts --dry-run",
     "compare:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply",
     "compare:deep:dry": "tsx --env-file=.env.local scripts/generate-comparisons.ts --dry-run --deep",
-    "compare:deep:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply --deep"
+    "compare:deep:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply --deep",
+    "indexnow:dry": "tsx --env-file=.env.local scripts/submit-indexnow.ts --dry-run",
+    "indexnow:submit": "tsx --env-file=.env.local scripts/submit-indexnow.ts --submit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

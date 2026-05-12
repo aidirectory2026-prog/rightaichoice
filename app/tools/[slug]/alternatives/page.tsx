@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Scale } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
@@ -78,9 +78,28 @@ export default async function AlternativesPage({ params }: PageProps) {
 
         {alternatives.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {alternatives.map((alt) => (
-              <ToolCard key={alt.id} tool={alt} />
-            ))}
+            {alternatives.map((alt) => {
+              // Phase 7B.seo (2026-05-13): canonical alpha-sorted compare slug
+              // matches the format Phase 7B's generator wrote into
+              // tool_comparisons. If the editorial /compare/{slug} page
+              // exists, this is a strong contextual link from a related
+              // page — feeds PageRank to the compare set + helps Google
+              // associate the two URLs as topically linked.
+              const [a, b] = [tool.slug, alt.slug].sort()
+              const compareSlug = `${a}-vs-${b}`
+              return (
+                <div key={alt.id} className="flex flex-col gap-2">
+                  <ToolCard tool={alt} />
+                  <Link
+                    href={`/compare/${compareSlug}`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-emerald-950/40 hover:border-emerald-800 hover:text-emerald-300 text-zinc-400 px-3 py-2 text-xs font-medium transition-colors"
+                  >
+                    <Scale className="h-3.5 w-3.5" />
+                    Compare {tool.name} vs {alt.name}
+                  </Link>
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 p-10 text-center">
