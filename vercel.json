@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/indexnow-recent",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/calculate-viability",
+      "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/cron/refresh-faqs",
+      "schedule": "0 5 * * 1"
+    }
+  ]
+}

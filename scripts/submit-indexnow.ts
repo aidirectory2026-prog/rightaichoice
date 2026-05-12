@@ -25,7 +25,12 @@ import { getAdminClient } from '../lib/cron/supabase-admin'
 
 const INDEXNOW_HOST = 'https://api.indexnow.org/indexnow'
 const SITE = 'rightaichoice.com'
-const KEY = 'a8a235f29e1a4efcb9bc4e3735b89786'
+// Re-using the pre-existing key from lib/indexnow.ts — that key file
+// has been live + verified for weeks via the /api/cron/indexnow-recent
+// daily cron, so IndexNow accepts our submissions immediately. The
+// new key generated 2026-05-13 is left in /public/ for redundancy but
+// not used as the active key.
+const KEY = '1ddd347878cead47f293292da0707a19'
 const KEY_LOCATION = `https://${SITE}/${KEY}.txt`
 const BATCH_CAP = 10_000 // IndexNow per-request URL limit
 

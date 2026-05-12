@@ -37,7 +37,12 @@ import { OAuth2Client } from 'google-auth-library'
 
 const PORT = 8765
 const REDIRECT_URI = `http://localhost:${PORT}/callback`
-const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
+// 2026-05-13: scope widened from .readonly → full webmasters so we can
+// also POST sitemap submissions via scripts/submit-sitemap-gsc.ts.
+// Existing refresh tokens (issued under the narrower readonly scope)
+// will fail with insufficient_scope; re-running this bootstrap is the
+// fix.
+const SCOPES = ['https://www.googleapis.com/auth/webmasters']
 
 function fail(msg: string): never {
   console.error(`\n❌ ${msg}\n`)
