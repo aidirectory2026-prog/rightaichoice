@@ -16,7 +16,14 @@
     "refresh:apply": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --apply",
     "gsc:oauth:bootstrap": "tsx --env-file=.env.local scripts/oauth-gsc-bootstrap.ts",
     "mine:gsc:dry": "tsx --env-file=.env.local scripts/mine-gsc-keywords.ts --dry-run",
-    "mine:gsc:apply": "tsx --env-file=.env.local scripts/mine-gsc-keywords.ts --apply"
+    "mine:gsc:apply": "tsx --env-file=.env.local scripts/mine-gsc-keywords.ts --apply",
+    "mine:suggest:dry": "tsx --env-file=.env.local scripts/mine-suggest.ts --dry-run",
+    "mine:suggest:apply": "tsx --env-file=.env.local scripts/mine-suggest.ts --apply",
+    "mine:reddit:dry": "tsx --env-file=.env.local scripts/mine-reddit.ts --dry-run",
+    "mine:reddit:apply": "tsx --env-file=.env.local scripts/mine-reddit.ts --apply",
+    "mine:quora:dry": "tsx --env-file=.env.local scripts/mine-quora.ts --dry-run",
+    "mine:quora:apply": "tsx --env-file=.env.local scripts/mine-quora.ts --apply",
+    "mine:merge": "tsx --env-file=.env.local scripts/merge-opportunities.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
