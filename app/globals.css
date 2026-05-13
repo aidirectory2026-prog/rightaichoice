@@ -680,3 +680,14 @@ a, button, [role="button"] {
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Phase 7H follow-up (2026-05-13): anchor-link landing offset.
+   The sticky navbar is h-16 (64px); without this rule, in-page
+   anchors (StickyToc clicks, hash-jump navigation) scroll the H2/H3
+   flush to viewport top where the navbar covers them and the section
+   BELOW appears to be the target. 80px = 64 + 16 padding. Applies
+   site-wide so any future anchor-link UX inherits the fix. */
+h2[id],
+h3[id] {
+  scroll-margin-top: 5rem;
+}

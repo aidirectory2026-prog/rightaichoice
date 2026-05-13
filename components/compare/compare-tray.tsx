@@ -29,12 +29,18 @@ export function CompareTray() {
         <div className="flex items-center gap-2 text-sm text-zinc-400 shrink-0">
           <Scale className="h-4 w-4 text-emerald-400" />
           <span className="hidden sm:inline">Compare</span>
-          <span className="text-zinc-600">({items.length}/3)</span>
+          <span className="text-zinc-600">{items.length} of 3 selected</span>
         </div>
 
-        {/* Tool pills */}
+        {/* Tool search — kept OUTSIDE the overflow-x scroll container
+            below so its dropdown isn't clipped by the implicit
+            overflow-y:hidden the browser applies when overflow-x is
+            set. Without this split, typing in the search showed no
+            recommendations on screens where the pill row overflowed. */}
+        <CompareToolSearch />
+
+        {/* Tool pills (overflow-x scroll for many pills) */}
         <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
-          <CompareToolSearch />
           {items.map((item) => (
             <div
               key={item.id}
