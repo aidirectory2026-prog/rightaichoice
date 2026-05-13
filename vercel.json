@@ -12,6 +12,26 @@
     {
       "path": "/api/cron/refresh-faqs",
       "schedule": "0 5 * * 1"
+    },
+    {
+      "path": "/api/cron/refresh-latest-updates",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-sentiment",
+      "schedule": "0 4 * * 0"
+    },
+    {
+      "path": "/api/cron/discover-tutorials",
+      "schedule": "0 5 * * 0"
+    },
+    {
+      "path": "/api/cron/generate-editorials",
+      "schedule": "0 6 * * 0"
+    },
+    {
+      "path": "/api/cron/refresh-tools",
+      "schedule": "0 7 * * 1"
     }
   ]
 }
