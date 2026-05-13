@@ -31,7 +31,11 @@
     "indexnow:dry": "tsx --env-file=.env.local scripts/submit-indexnow.ts --dry-run",
     "indexnow:submit": "tsx --env-file=.env.local scripts/submit-indexnow.ts --submit",
     "gsc:sitemap:submit": "tsx --env-file=.env.local scripts/submit-sitemap-gsc.ts",
-    "gsc:build-list": "tsx --env-file=.env.local scripts/build-gsc-indexing-list.ts"
+    "gsc:build-list": "tsx --env-file=.env.local scripts/build-gsc-indexing-list.ts",
+    "latest:dry": "tsx --env-file=.env.local scripts/refresh-latest-updates.ts --dry-run",
+    "latest:apply": "tsx --env-file=.env.local scripts/refresh-latest-updates.ts --apply",
+    "audit:indexation:dry": "tsx --env-file=.env.local scripts/audit-gsc-indexation.ts --dry-run",
+    "audit:indexation": "tsx --env-file=.env.local scripts/audit-gsc-indexation.ts --apply"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
