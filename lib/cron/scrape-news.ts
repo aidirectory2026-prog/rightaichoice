@@ -1,131 +1,175 @@
 /**
- * Phase 8.next Stage 4 / Tier 2 (2026-05-13): news mentions via Apify Google Search.
+ * Phase 8.next refactor (2026-05-13): free RSS-feed scraping for news mentions.
  *
- * Searches `"{tool name}" 2026 site:({tech-press domains})` via the
- * Apify Google Search Scraper actor and returns the top organic
- * results. Limits to a curated allowlist of credible AI/tech press
- * domains so we don't surface low-quality SEO spam.
+ * Replaces the Apify Google Search dependency with direct RSS pulls
+ * from a curated allowlist of credible AI/tech press outlets. Each
+ * RSS feed is fetched once per orchestrator run (cached in-memory
+ * for the process lifetime), then we filter items mentioning the
+ * tool name (case-insensitive substring match).
  *
- * Cost: actor base + ~$0.0025 per result row. We request 10 results
- * per query → ~$0.025 per tool. Across the 1,178-tool catalog ≈ $30
- * one-time backfill.
+ * Trade-off vs. Google: misses anything outside our curated outlets,
+ * but quality is higher (no SEO-spam blogs surfacing). For RAC's
+ * "freshness signal" use case, that's the right trade.
  */
-import { runActorAndCollect } from '@/lib/seo/apify-client'
-
-const ACTOR_ID = 'apify/google-search-scraper'
-
-// Curated allowlist of credible AI/tech press domains. Filtering by
-// site: in the query string is more reliable than post-filtering by
-// hostname because Google sometimes returns redirector URLs.
-const PRESS_DOMAINS = [
-  'techcrunch.com',
-  'theverge.com',
-  'arstechnica.com',
-  'wired.com',
-  'venturebeat.com',
-  'theinformation.com',
-  'thenextweb.com',
-  'fastcompany.com',
-  'businessinsider.com',
-  'bloomberg.com',
-  'cnbc.com',
-  'forbes.com',
-  'thedecoder.com',
-]
+import { fetchPageText } from './scrape'
 
 export type NewsMention = {
   title: string
   url: string
   domain: string
   description: string
-  date: string | null // ISO date if Google's snippet exposes one
+  date: string | null // ISO date when parseable from <pubDate>
 }
 
-type GoogleSearchResult = {
-  title?: string
-  url?: string
-  description?: string
-  emphasizedKeywords?: string[]
-  date?: string
-  // Apify Google Search Scraper output shape varies by actor version
-  // — read permissively below.
-  [k: string]: unknown
+// Curated AI/tech press RSS feeds. Every URL must return RSS 2.0 or
+// Atom XML and update at least daily. If a feed dies, comment it out
+// and the rest still work.
+const RSS_FEEDS: Array<{ domain: string; url: string }> = [
+  { domain: 'techcrunch.com', url: 'https://techcrunch.com/feed/' },
+  { domain: 'theverge.com', url: 'https://www.theverge.com/rss/index.xml' },
+  { domain: 'wired.com', url: 'https://www.wired.com/feed/rss' },
+  { domain: 'venturebeat.com', url: 'https://venturebeat.com/feed/' },
+  { domain: 'arstechnica.com', url: 'https://feeds.arstechnica.com/arstechnica/index' },
+  { domain: 'the-decoder.com', url: 'https://the-decoder.com/feed/' },
+]
+
+// Process-lifetime cache so a long-running orchestrator script doesn't
+// re-fetch the same RSS feed 1,178 times. Cleared between cron fires
+// (each cron route invocation is a fresh process).
+let feedCacheTs: number | null = null
+let feedCacheItems: NewsMention[] = []
+const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
+
+function unescapeHtml(s: string): string {
+  return s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
 }
 
-function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return ''
-  }
+function stripTags(s: string): string {
+  return unescapeHtml(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 /**
- * Fetch news mentions for a tool. Returns up to `limit` items from the
- * curated press allowlist, sorted by Google's rank (no re-sort).
+ * Parse a single RSS/Atom feed XML and extract items as NewsMention[].
+ * Permissive — handles both RSS 2.0 (<item>) and Atom (<entry>) shapes.
+ */
+function parseFeed(xml: string, domain: string): NewsMention[] {
+  const items: NewsMention[] = []
+  // Try RSS <item>...</item> first
+  const itemRe = /<item[\s\S]*?<\/item>/gi
+  let matches = xml.match(itemRe) ?? []
+  if (matches.length === 0) {
+    // Atom <entry>...</entry>
+    const entryRe = /<entry[\s\S]*?<\/entry>/gi
+    matches = xml.match(entryRe) ?? []
+  }
+  for (const block of matches) {
+    const title = (block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').trim()
+    let link = ''
+    // RSS: <link>URL</link>; Atom: <link href="URL"/>
+    const rssLink = block.match(/<link>([\s\S]*?)<\/link>/i)?.[1]?.trim()
+    const atomLink = block.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]?.trim()
+    link = rssLink || atomLink || ''
+    // <description> for RSS, <summary> or <content> for Atom
+    const desc =
+      block.match(/<description>([\s\S]*?)<\/description>/i)?.[1] ??
+      block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i)?.[1] ??
+      block.match(/<content[^>]*>([\s\S]*?)<\/content>/i)?.[1] ??
+      ''
+    // <pubDate> for RSS, <published> or <updated> for Atom
+    const pubRaw =
+      block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] ??
+      block.match(/<published>([\s\S]*?)<\/published>/i)?.[1] ??
+      block.match(/<updated>([\s\S]*?)<\/updated>/i)?.[1] ??
+      ''
+    let date: string | null = null
+    if (pubRaw) {
+      const d = new Date(pubRaw.trim())
+      if (!Number.isNaN(d.getTime())) date = d.toISOString().slice(0, 10)
+    }
+    if (!title || !link) continue
+    items.push({
+      title: stripTags(title).slice(0, 220),
+      url: link,
+      domain,
+      description: stripTags(desc).slice(0, 400),
+      date,
+    })
+  }
+  return items
+}
+
+/**
+ * Refresh the in-process feed cache by pulling all configured RSS
+ * feeds in parallel. Cheap (~6 fetches, ~2 sec).
+ */
+async function refreshFeedCache(): Promise<NewsMention[]> {
+  const now = Date.now()
+  if (feedCacheTs && now - feedCacheTs < CACHE_TTL_MS && feedCacheItems.length > 0) {
+    return feedCacheItems
+  }
+  const all: NewsMention[] = []
+  await Promise.all(
+    RSS_FEEDS.map(async ({ domain, url }) => {
+      try {
+        const xml = await fetchPageText(url, 8000).catch(() => '')
+        if (!xml || xml.length < 200) return
+        // fetchPageText strips tags by default — we need raw XML. Use raw fetch.
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          },
+        })
+        if (!res.ok) return
+        const rawXml = await res.text()
+        const parsed = parseFeed(rawXml, domain)
+        all.push(...parsed)
+      } catch {
+        // ignore feed-level failures; the rest still work
+      }
+    })
+  )
+  feedCacheTs = now
+  feedCacheItems = all
+  return all
+}
+
+/**
+ * Search the cached feed corpus for items mentioning a tool. Returns
+ * top `limit` matches, sorted by date desc.
  *
- * Skips silently if APIFY_TOKEN missing — caller decides what to do.
+ * Match rule: case-insensitive substring of `toolName` in title or
+ * description. Word-boundary check to avoid noise (e.g., "kit" should
+ * match "Kit AI" but not "kitchen").
  */
 export async function fetchNewsMentions(
   toolName: string,
-  limit = 10,
-  opts: { lookbackDays?: number } = {}
+  limit = 8,
+  _opts: { lookbackDays?: number } = {}
 ): Promise<NewsMention[]> {
-  if (!process.env.APIFY_TOKEN) {
-    console.warn('[scrape-news] APIFY_TOKEN missing; skipping')
-    return []
-  }
-  const lookbackDays = opts.lookbackDays ?? 90
-  // Build query: "tool name" 2026 (site:domain1 OR site:domain2 ...)
-  const sites = PRESS_DOMAINS.map((d) => `site:${d}`).join(' OR ')
-  const query = `"${toolName}" 2026 (${sites})`
+  const allItems = await refreshFeedCache()
+  if (allItems.length === 0) return []
 
-  let items: GoogleSearchResult[]
-  try {
-    items = await runActorAndCollect<GoogleSearchResult>(
-      ACTOR_ID,
-      {
-        queries: query,
-        resultsPerPage: Math.max(10, limit),
-        maxPagesPerQuery: 1,
-        languageCode: 'en',
-        countryCode: 'us',
-      },
-      { timeoutMs: 5 * 60 * 1000 }
-    )
-  } catch (err) {
-    console.warn(`[scrape-news] actor failed for "${toolName}":`, err instanceof Error ? err.message : err)
-    return []
-  }
+  const needle = toolName.toLowerCase().trim()
+  if (needle.length < 2) return []
+  // Word-boundary regex to reject substring noise
+  const wbRe = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\\\]\\\\]/g, '\\\\$&')}\\b`, 'i')
 
-  // The actor returns a top-level result per query plus a nested
-  // `organicResults` array. Handle both shapes.
-  const flatResults: GoogleSearchResult[] = []
-  for (const item of items) {
-    if (Array.isArray((item as { organicResults?: GoogleSearchResult[] }).organicResults)) {
-      flatResults.push(...((item as { organicResults: GoogleSearchResult[] }).organicResults))
-    } else if (item.url && item.title) {
-      flatResults.push(item)
-    }
-  }
-
-  const mentions: NewsMention[] = []
-  for (const r of flatResults) {
-    if (!r.url || !r.title) continue
-    const domain = extractDomain(String(r.url))
-    if (!PRESS_DOMAINS.includes(domain)) continue
-    mentions.push({
-      title: String(r.title).slice(0, 220),
-      url: String(r.url),
-      domain,
-      description: String(r.description ?? '').slice(0, 400),
-      date: r.date ? String(r.date) : null,
-    })
-    if (mentions.length >= limit) break
-  }
-  // Note: lookbackDays is informational — Google search doesn't strictly
-  // enforce date filtering via the actor's input schema. We trust the
-  // "2026" in the query to bias toward recent articles.
-  void lookbackDays
-  return mentions
+  const matched = allItems.filter((it) => wbRe.test(it.title) || wbRe.test(it.description))
+  // Sort by date desc (null last)
+  matched.sort((a, b) => {
+    if (!a.date && !b.date) return 0
+    if (!a.date) return 1
+    if (!b.date) return -1
+    return b.date.localeCompare(a.date)
+  })
+  return matched.slice(0, limit)
 }

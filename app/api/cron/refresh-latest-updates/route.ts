@@ -20,7 +20,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { discoverChangelog, discoverBlog } from '@/lib/cron/scrape-changelog'
 import { fetchNewsMentions } from '@/lib/cron/scrape-news'
 import { searchHN } from '@/lib/cron/scrape-hn'
-import { discoverTwitterHandle, fetchTweets } from '@/lib/cron/scrape-twitter'
+import { searchReddit } from '@/lib/cron/scrape-reddit'
 import { synthesizeLatestUpdates, type SignalInput } from '@/lib/cron/latest-updates'
 
 export const maxDuration = 300 // 5 min — plenty of headroom for 25 tools at 5x concurrency
@@ -58,14 +58,10 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
     discoverChangelog(tool.website_url, tool.changelog_url).catch(() => null),
     discoverBlog(tool.website_url, tool.blog_url).catch(() => null),
   ])
-  let twitterHandle = tool.twitter_handle
-  if (!twitterHandle) {
-    twitterHandle = await discoverTwitterHandle(tool.slug, tool.website_url).catch(() => null)
-  }
-  const [news, hn, tweets] = await Promise.all([
+  const [news, hn, reddit] = await Promise.all([
     fetchNewsMentions(tool.name, 8).catch(() => []),
     searchHN(tool.name, 30).catch(() => []),
-    fetchTweets(tool.name, twitterHandle, 5, 30).catch(() => []),
+    searchReddit(tool.name, 5, 30).catch(() => []),
   ])
   const signal: SignalInput = {
     changelog_text: changelog?.text,
@@ -74,7 +70,13 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
     blog_url: blog?.url,
     news,
     hn,
-    tweets,
+    reddit: reddit.map((r) => ({
+      title: r.title,
+      url: r.permalink,
+      subreddit: r.subreddit,
+      score: r.score,
+      created_utc: r.created_utc,
+    })),
   }
   const result = await synthesizeLatestUpdates(tool.name, signal)
   if (!result) return { ok: false, error: 'synthesis_failed' }
@@ -85,7 +87,6 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
   }
   if (changelog?.url && changelog.url !== tool.changelog_url) updates.changelog_url = changelog.url
   if (blog?.url && blog.url !== tool.blog_url) updates.blog_url = blog.url
-  if (twitterHandle && twitterHandle !== tool.twitter_handle) updates.twitter_handle = twitterHandle
 
   const { error } = await supa.from('tools').update(updates as never).eq('id', tool.id)
   if (error) return { ok: false, error: `db_update: ${error.message}` }
