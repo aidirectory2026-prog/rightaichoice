@@ -177,6 +177,11 @@ type ToolRow = {
   changelog_url: string | null
   tutorial_urls: string[] | null
   community_links: unknown
+  // Phase 8.next SOP-v2 (2026-05-13): latest_updates JSONB passed as
+  // synth context — gives DeepSeek visibility into recent news / HN /
+  // Reddit / changelog signal so descriptions cite latest model
+  // versions, pricing changes, 2026 launches.
+  latest_updates: unknown
 }
 
 // ── Checkpoint + review log ─────────────────────────────────────────────────
@@ -314,11 +319,21 @@ async function scrapeVendor(websiteUrl: string): Promise<{ text: string; status:
     }
   })()
 
+  // Phase 8.next SOP-v2 (2026-05-13): expanded scrape candidates +
+  // wider char cap per source. Vendor pages where latest model versions
+  // / pricing changes typically land FIRST: changelog, release notes,
+  // "what's new", blog. Adding these surfaces GPT-5.5-class updates
+  // that haven't propagated to the homepage yet.
   const candidates = [
     websiteUrl,
     `${origin}/pricing`,
     `${origin}/integrations`,
     `${origin}/features`,
+    `${origin}/changelog`,
+    `${origin}/release-notes`,
+    `${origin}/releases`,
+    `${origin}/whats-new`,
+    `${origin}/blog`,
   ]
 
   const chunks: string[] = []
@@ -327,7 +342,10 @@ async function scrapeVendor(websiteUrl: string): Promise<{ text: string; status:
     try {
       const text = await fetchPageText(url)
       if (text && text.length > 200) {
-        chunks.push(`### Source: ${url}\n${text.slice(0, 4000)}`)
+        // 6000 chars per source (was 4000) — gives DeepSeek room to
+        // pick up the specific model versions / 2026 dates / new
+        // feature announcements that get buried in longer pages.
+        chunks.push(`### Source: ${url}\n${text.slice(0, 6000)}`)
         oks++
       }
     } catch {
@@ -352,6 +370,8 @@ CRITICAL RULES (any violation invalidates the run):
 6. NEVER use null inside nested object arrays (workflow_scenarios, faqs_long_tail, pricing_plan_guides). Every nested string field MUST be a non-empty string. If you cannot fill a specific nested object, OMIT the entire object from the array — do NOT emit it with null fields. Use INSUFFICIENT_DATA for the WHOLE TOP-LEVEL FIELD only when you cannot produce ANY valid items for it.
 7. Respect array maximums in the schema. Integrations cap is 25 — pick the most relevant ones if the tool integrates with more.
 8. Your synthesized output must NEVER contain affiliate URLs, redirect tracking links, URL shorteners, or any URL with /aff_, ?ref=, ?aff=, ?via=, /track, /click, bit.ly, tinyurl, hostg.xyz/aff_, partnerstack, impact.com, etc. If the seed/scrape data contains such a URL and you genuinely need to reference one for context, mention only the bare destination domain (e.g., "the vendor's pricing page") and never embed the URL itself. Direct vendor URLs only.
+9. **FRESHNESS PRIORITY (Phase 8.next SOP-v2):** When the LATEST NEWS section of the user prompt contains items that contradict or extend the vendor's homepage content, the news WINS. Examples: vendor homepage says "powered by GPT-4" but news mentions "now on GPT-5.5" — write "now on GPT-5.5" in the description. Vendor homepage says "$20/mo Pro tier" but news mentions a price hike to $25/mo — reflect the price hike. Vendor homepage from 2024 misses a 2026 feature launch covered by TechCrunch — INCLUDE the 2026 feature. The whole purpose of this SOP is to surface current reality, not preserve dated vendor copy.
+10. **Specificity over generality:** prefer "supports GPT-5.5, Claude Opus 4.7, Gemini 2.5 Pro" over "supports multiple AI models". Prefer "$25/mo Pro, $50/mo Team (May 2026 pricing)" over "freemium pricing." Cite specific model names, dates, dollar amounts, version numbers — these are exactly the details buyers look for and competitors get wrong. If the data doesn't surface a specific, omit rather than generalize.
 
 FIELDS TO PRODUCE (return STRICT JSON, exact shape — no prose, no code fences):
 
@@ -402,6 +422,22 @@ Return ONLY a JSON object of this exact shape — no prose, no code fences, no c
 function buildUserPrompt(tool: ToolRow, scraped: string): string {
   const safe = (v: unknown) => (v == null || v === '' ? '(none)' : v)
   const arr = (a: unknown) => (Array.isArray(a) && a.length > 0 ? a.join('; ') : '(none)')
+
+  // Phase 8.next SOP-v2 (2026-05-13): render latest_updates as compact
+  // bulleted news context. Gives DeepSeek visibility into what
+  // tech-press / HN / Reddit / changelog signal exists for this tool
+  // in the last 90 days — so descriptions can cite latest model
+  // versions, pricing changes, 2026 launches that haven't propagated
+  // to the vendor's homepage yet.
+  type LatestItem = { date?: string; source?: string; title?: string; summary?: string }
+  const lu = Array.isArray(tool.latest_updates) ? (tool.latest_updates as LatestItem[]) : []
+  const latestSection = lu.length
+    ? lu
+        .slice(0, 10)
+        .map((it) => `- ${it.date ?? '?'} · ${it.source ?? '?'} · ${(it.title ?? '').slice(0, 140)} — ${(it.summary ?? '').slice(0, 220)}`)
+        .join('\n')
+    : '(no recent third-party news/HN/changelog signal captured — synthesize from vendor scrape only)'
+
   return `## TOOL TO REFRESH
 
 Slug: ${tool.slug}
@@ -422,13 +458,24 @@ Not for: ${arr(tool.not_for)}
 Limitations: ${safe(tool.limitations)}
 Existing editorial verdict: ${safe(tool.editorial_verdict)}
 
-## SCRAPED VENDOR CONTENT
+## SCRAPED VENDOR CONTENT (homepage, /pricing, /integrations, /features, /changelog, /release-notes, /blog where they exist)
 
-${scraped || '(scrape returned no usable content — synthesize from seed data only; flag low-confidence fields with INSUFFICIENT_DATA)'}
+${scraped || '(scrape returned no usable content — synthesize from seed data + LATEST NEWS only; flag low-confidence fields with INSUFFICIENT_DATA)'}
+
+## LATEST NEWS / COMMUNITY SIGNAL (last ~90 days, independently sourced from tech-press RSS, Hacker News, Reddit, vendor changelog/blog)
+
+${latestSection}
 
 ## TASK
 
-Produce the JSON object specified in the system prompt. Refresh every field using the scraped content as the source of truth where it's richer than the seed data; fall back to seed data where the scrape is silent. Use INSUFFICIENT_DATA as the field value (for top-level string fields) when neither source can answer.`
+Produce the JSON object specified in the system prompt. PRIORITY ORDER for facts:
+1. LATEST NEWS (most current — overrides stale vendor copy when conflict)
+2. SCRAPED VENDOR CONTENT (current as of today's scrape)
+3. SEED DATA (fallback only)
+
+**Critical:** when the latest news mentions a newer model version (e.g., "GPT-5.5"), a new pricing tier, a recent launch, or any 2026 development that the vendor's static homepage doesn't reflect, INCORPORATE that update into the description/features/integrations/recent_changes. Do NOT default to the older version from vendor scrape if news contradicts it.
+
+Use INSUFFICIENT_DATA as the field value (for top-level string fields) when no source can answer.`
 }
 
 async function callDeepSeek(tool: ToolRow, scraped: string, correction?: string): Promise<string> {
@@ -653,7 +700,11 @@ async function main() {
       // Phase 4 (2026-05-07): added docs_url, github_url, changelog_url,
       // tutorial_urls, community_links so we can audit them for third-party
       // affiliate redirect URLs and log findings to needs_manual_review.txt.
-      'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at, docs_url, github_url, changelog_url, tutorial_urls, community_links'
+      // Phase 8.next SOP-v2 (2026-05-13): added latest_updates so the
+      // Tier 2 timeline (news, HN, Reddit, changelog signal) can feed
+      // the description synthesis as fresher context than the vendor
+      // homepage alone.
+      'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at, docs_url, github_url, changelog_url, tutorial_urls, community_links, latest_updates'
     )
     .eq('is_published', true)
     .order('last_full_refresh_at', { ascending: true, nullsFirst: true })
