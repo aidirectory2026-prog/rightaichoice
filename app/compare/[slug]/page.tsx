@@ -13,6 +13,8 @@ import {
   getToolsForComparisonByIds,
 } from '@/lib/data/comparisons'
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
+import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
+import { RelatedComparesRail } from '@/components/seo/related-compares'
 
 type TldrRow = { dimension: string; values: Record<string, string> }
 type UseCaseRow = { persona: string; recommendedSlug: string; reasoning: string }
@@ -111,6 +113,17 @@ export default async function ComparisonSlugPage({ params }: Props) {
   const toolNames = tools.map((t) => (t as { name: string }).name)
   const toolSlugs = tools.map((t) => (t as { slug: string }).slug)
   const editorial = comparison as EditorialComparison
+
+  // Phase 7H — fetch sibling editorial compares featuring either tool
+  // for the bottom internal-linking rail. Limited to 6 cards; helper
+  // dedups against the current pair_slug so we don't link back to
+  // ourselves. Failure is non-fatal (rail just renders nothing).
+  const relatedCompares = await getRelatedComparesForPair(
+    (tools[0] as { id: string }).id,
+    (tools[1] as { id: string }).id,
+    slug,
+    6
+  ).catch(() => [])
 
   const fmtRating = (r: unknown): string => {
     const n = typeof r === 'number' ? r : parseFloat(String(r ?? ''))
@@ -343,6 +356,46 @@ export default async function ComparisonSlugPage({ params }: Props) {
                 <div key={i}>
                   <h3 className="text-sm font-medium text-white mb-1">{f.question}</h3>
                   <p className="text-sm text-zinc-400 whitespace-pre-line">{f.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Phase 7H — Related comparisons + tool detail links.
+              Per the audit, /compare/[slug] previously had only 1
+              outbound internal link (breadcrumb). This block adds 8-10
+              contextual links: 4-6 sibling compares + 2 tool detail
+              pages + 2 alternatives pages. Total density jumps from
+              ~1 to ~10 internal links per page — meaningful PageRank
+              signal flow into the 587 compare set + back into the
+              tool detail pages. */}
+          <RelatedComparesRail compares={relatedCompares} heading={`More ${toolNames[0]} or ${toolNames[1]} comparisons`} />
+
+          {/* Direct links to both tools' canonical pages — strong
+              topical signal for Google to associate the compare page
+              with the underlying tools. */}
+          <section className="mt-8 border-t border-zinc-800 pt-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400 mb-4">
+              Explore each tool further
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {tools.map((t: any) => (
+                <div key={t.slug} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+                  <div className="text-base font-semibold text-white mb-2">{t.name}</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/tools/${t.slug}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-emerald-700 hover:bg-emerald-950/40 hover:text-emerald-300"
+                    >
+                      View {t.name} review
+                    </Link>
+                    <Link
+                      href={`/tools/${t.slug}/alternatives`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-emerald-700 hover:bg-emerald-950/40 hover:text-emerald-300"
+                    >
+                      {t.name} alternatives
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

@@ -14,6 +14,8 @@ import { ToolGridSkeleton } from '@/components/tools/tool-card-skeleton'
 import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
 import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { getRelatedComparesForCategory } from '@/lib/seo/internal-links'
+import { RelatedComparesRail } from '@/components/seo/related-compares'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -127,6 +129,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               slug={slug}
               page={page}
               categoryName={category.name}
+              categoryId={category.id}
               sp={sp}
             />
           </Suspense>
@@ -142,11 +145,13 @@ async function CategoryResults({
   slug,
   page,
   categoryName,
+  categoryId,
   sp,
 }: {
   slug: string
   page: number
   categoryName: string
+  categoryId: string
   sp: {
     page?: string
     pricing?: string
@@ -156,7 +161,7 @@ async function CategoryResults({
     sort?: string
   }
 }) {
-  const [categories, { tools, total, totalPages }] = await Promise.all([
+  const [categories, { tools, total, totalPages }, relatedCompares] = await Promise.all([
     getCategories(),
     getTools({
       category: slug,
@@ -167,6 +172,11 @@ async function CategoryResults({
       sort: (sp.sort as 'trending' | 'newest' | 'most_reviewed' | 'alphabetical') ?? 'trending',
       page,
     }),
+    // Phase 7H — featured comparisons in this category. Adds 6 contextual
+    // outbound editorial links to a page that previously had only a
+    // breadcrumb + pagination. Only fetched on page 1 to keep deeper
+    // pagination snappy.
+    page === 1 ? getRelatedComparesForCategory(categoryId, 6).catch(() => []) : Promise.resolve([]),
   ])
 
   const itemList = {
@@ -218,6 +228,12 @@ async function CategoryResults({
             ))}
           </div>
           <ToolPagination page={page} totalPages={totalPages} total={total} />
+          {relatedCompares.length > 0 && (
+            <RelatedComparesRail
+              compares={relatedCompares}
+              heading={`Featured ${categoryName} comparisons`}
+            />
+          )}
         </>
       )}
     </>
