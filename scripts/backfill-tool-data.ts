@@ -83,9 +83,15 @@ const sopOutputSchema = z.object({
   workflow_scenarios: z
     .array(
       z.object({
-        persona: z.string().max(60),
-        scenario: z.string().max(280),
-        outcome: z.string().max(180),
+        // Phase 8.next SOP-v2 hotfix (2026-05-14): v2's richer
+        // prompt produces longer outcomes that exceeded the 180-char
+        // cap on ~15% of tools. Bumped: persona 60→100, scenario
+        // 280→400, outcome 180→320. Matches the new prompt directive
+        // to cite specific model versions / 2026 dates / dollar
+        // amounts which add length.
+        persona: z.string().max(100),
+        scenario: z.string().max(400),
+        outcome: z.string().max(320),
       })
     )
     .min(2)
