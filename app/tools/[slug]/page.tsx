@@ -62,6 +62,7 @@ import { SectionErrorBoundary } from '@/components/shared/section-error-boundary
 import { RecordRecentView } from '@/components/tools/record-recent-view'
 import { StickyToc } from '@/components/tools/sticky-toc'
 import { ViewTracker } from '@/components/analytics/view-tracker'
+import { LatestUpdatesSection } from '@/components/tools/latest-updates-section'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
@@ -497,6 +498,21 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* Phase 3: Skip-if line (closes the verdict band — single sentence) */}
               <SkipIfLine toolName={tool.name} text={tool.skip_if} />
+
+              {/* Phase 8.next Stage 5 (2026-05-13): "Latest from {Tool}"
+                  freshness section — chronological timeline of vendor
+                  changelog + blog + news + HN + Twitter mentions,
+                  refreshed weekly. Position chosen for max prominence
+                  immediately after the Verdict band; users browsing for
+                  decision-relevant info see CURRENT signal before
+                  scrolling further. */}
+              <SectionErrorBoundary fallbackTitle="Latest updates couldn't load right now.">
+                <LatestUpdatesSection
+                  toolName={tool.name}
+                  items={tool.latest_updates as never}
+                  updatedAt={tool.latest_updates_at as string | null}
+                />
+              </SectionErrorBoundary>
 
               {/* Sentiment synthesis — independent-user research pass (Phase 3 rewrite) */}
               <SectionErrorBoundary fallbackTitle="Sentiment synthesis couldn't load right now.">
