@@ -177,6 +177,66 @@ export async function getFeaturedEditorialComparisons(limit = 6) {
 }
 
 /**
+ * Phase 7H follow-up (2026-05-13): paginated browse of ALL editorial
+ * comparisons for the /compare hub. The existing
+ * getFeaturedEditorialComparisons is for hero rails (12-card cap);
+ * this returns the full set with offset/page.
+ *
+ * Sort: published_at desc (newest first). Page 1 always shows the
+ * latest. View_count would create staleness (older pages would always
+ * win as their counts accrue), so we stick with chronological for the
+ * hub listing.
+ */
+export async function getEditorialComparisonsPaginated(page = 1, perPage = 24) {
+  const supabase = await createClient()
+  const safePage = Math.max(1, page)
+  const offset = (safePage - 1) * perPage
+
+  // Count
+  const { count } = await supabase
+    .from('tool_comparisons')
+    .select('slug', { count: 'exact', head: true })
+    .eq('is_editorial', true)
+
+  // Page rows
+  const { data, error } = await supabase
+    .from('tool_comparisons')
+    .select('slug, tool_ids, verdict, published_at, view_count')
+    .eq('is_editorial', true)
+    .order('published_at', { ascending: false })
+    .range(offset, offset + perPage - 1)
+  if (error || !data) {
+    return { compares: [], total: 0, totalPages: 0, page: safePage }
+  }
+
+  const allIds = Array.from(new Set(data.flatMap((c) => c.tool_ids as string[])))
+  if (allIds.length === 0) {
+    return { compares: [], total: count ?? 0, totalPages: 0, page: safePage }
+  }
+
+  const { data: tools } = await supabase
+    .from('tools')
+    .select('id, slug, name')
+    .in('id', allIds)
+  const nameById = new Map((tools ?? []).map((t) => [t.id, t.name as string]))
+
+  const compares = data.map((c) => ({
+    slug: c.slug as string,
+    verdict: (c.verdict as string | null) ?? '',
+    toolNames: (c.tool_ids as string[]).map((id) => nameById.get(id)).filter(Boolean) as string[],
+    viewCount: (c.view_count as number) ?? 0,
+  }))
+
+  const total = count ?? 0
+  return {
+    compares,
+    total,
+    totalPages: Math.ceil(total / perPage),
+    page: safePage,
+  }
+}
+
+/**
  * Get a saved comparison by slug.
  * Uses admin client (no cookies) so the SSG /compare/[slug] route
  * can pre-render at build time without hitting DYNAMIC_SERVER_USAGE.

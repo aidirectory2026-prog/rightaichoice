@@ -6,11 +6,12 @@ import { Footer } from '@/components/layout/footer'
 import { ComparisonTable } from '@/components/compare/comparison-table'
 import {
   getToolsForComparison,
-  getFeaturedEditorialComparisons,
+  getEditorialComparisonsPaginated,
 } from '@/lib/data/comparisons'
 import { getCategories } from '@/lib/data/categories'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
 import { CompareEmptyState } from '@/components/compare/compare-empty-state'
+import { ComparePagination } from '@/components/compare/compare-pagination'
 import {
   breadcrumbJsonLd,
   comparisonJsonLd,
@@ -18,19 +19,26 @@ import {
 } from '@/lib/seo/json-ld'
 
 type PageProps = {
-  searchParams: Promise<{ tools?: string }>
+  searchParams: Promise<{ tools?: string; page?: string }>
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const { tools: toolsParam } = await searchParams
+  const { tools: toolsParam, page: pageParam } = await searchParams
   const slugs = (toolsParam ?? '').split(',').filter(Boolean)
 
   if (slugs.length < 2) {
+    // Phase 7H follow-up (2026-05-13): paginated hub gets per-page
+    // canonical + title so deeper pages stay distinct in Google's index
+    // (matches /categories/[slug] convention from Phase 5.3).
+    const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+    const baseTitle = 'Compare AI Tools — Side-by-side editorial head-to-heads'
+    const title = page > 1 ? `${baseTitle} (Page ${page})` : baseTitle
+    const canonicalPath = page > 1 ? `/compare?page=${page}` : '/compare'
     return {
-      title: 'Compare AI Tools — Side-by-side editorial head-to-heads',
+      title,
       description:
         'Compare any AI tool on RightAIChoice: features, pricing, ratings, and editorial verdicts on the comparisons people actually search for.',
-      alternates: { canonical: 'https://rightaichoice.com/compare' },
+      alternates: { canonical: `https://rightaichoice.com${canonicalPath}` },
     }
   }
 
@@ -48,13 +56,25 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function ComparePage({ searchParams }: PageProps) {
-  const { tools: toolsParam } = await searchParams
+  const { tools: toolsParam, page: pageParam } = await searchParams
   const slugs = (toolsParam ?? '').split(',').filter(Boolean).slice(0, 3)
 
   // ── Hub landing page (no ?tools= query) ──────────────────────
   if (slugs.length < 2) {
-    const [editorial, categories] = await Promise.all([
-      getFeaturedEditorialComparisons(12).catch(() => []),
+    const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+    const PER_PAGE = 24
+    // Phase 7H follow-up (2026-05-13): replaced the static 12-featured
+    // grid with a paginated 24-per-page listing of ALL editorial
+    // comparisons. With 587+ pages, the hub previously exposed only
+    // ~2% of the catalog to discovery — bad for both UX (no way to
+    // browse) and SEO (Googlebot only sees the same 12 from this hub).
+    const [{ compares, total, totalPages }, categories] = await Promise.all([
+      getEditorialComparisonsPaginated(page, PER_PAGE).catch(() => ({
+        compares: [],
+        total: 0,
+        totalPages: 0,
+        page: 1,
+      })),
       getCategories().catch(() => []),
     ])
 
@@ -62,22 +82,25 @@ export default async function ComparePage({ searchParams }: PageProps) {
       <>
         <Navbar />
         <main className="flex-1">
-          {/* Build-your-own search hero */}
-          <CompareEmptyState />
+          {/* Build-your-own search hero — only on page 1 to keep
+              deeper pages focused on browsing the listing. */}
+          {page === 1 && <CompareEmptyState />}
 
-          {/* Editorial compares */}
-          {editorial.length > 0 && (
-            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 border-t border-zinc-800/50">
+          {/* Editorial compares — paginated full listing */}
+          {compares.length > 0 && (
+            <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${page === 1 ? 'py-12 border-t border-zinc-800/50' : 'pt-8 pb-12'}`}>
               <div className="mb-8">
                 <h2 className="text-xl font-semibold text-white">
-                  In-depth editorial comparisons
+                  {page === 1 ? 'In-depth editorial comparisons' : `All comparisons — page ${page}`}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Deeply-researched head-to-heads with at-a-glance tables, benchmarks, and verdicts
+                  {page === 1
+                    ? `Deeply-researched head-to-heads with at-a-glance tables, benchmarks, and verdicts. Browse all ${total.toLocaleString()} comparisons below.`
+                    : `Browse the full catalog of ${total.toLocaleString()} editorial comparisons.`}
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {editorial.map((c) => (
+                {compares.map((c) => (
                   <Link
                     key={c.slug}
                     href={`/compare/${c.slug}`}
@@ -97,6 +120,7 @@ export default async function ComparePage({ searchParams }: PageProps) {
                   </Link>
                 ))}
               </div>
+              <ComparePagination page={page} totalPages={totalPages} total={total} />
             </section>
           )}
 

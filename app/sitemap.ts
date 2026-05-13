@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/tools`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/compare`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/recommend`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/ai-chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
@@ -39,6 +40,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/methodology`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/team`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
   ]
+
+  // Phase 7H follow-up (2026-05-13): include paginated /compare?page=N
+  // URLs so Googlebot discovers + crawls every page of the editorial-
+  // compare listing. With ~587 editorial pairs at 24/page, that's
+  // ~25 pages of /compare?page=2..25 in addition to /compare (page 1
+  // included in staticRoutes above).
+  const compareHubPages = Math.max(1, Math.ceil(comparisons.length / 24))
+  const compareHubPagedRoutes: MetadataRoute.Sitemap = []
+  for (let p = 2; p <= compareHubPages; p++) {
+    compareHubPagedRoutes.push({
+      url: `${BASE_URL}/compare?page=${p}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    })
+  }
 
   const toolRoutes: MetadataRoute.Sitemap = tools.map(({ slug, updated_at }) => ({
     url: `${BASE_URL}/tools/${slug}`,
@@ -110,6 +127,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
+    ...compareHubPagedRoutes,
     ...stackRoutes,
     ...bestPageRoutes,
     ...roleRoutes,
