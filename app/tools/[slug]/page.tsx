@@ -61,6 +61,7 @@ import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
 import { RecordRecentView } from '@/components/tools/record-recent-view'
 import { StickyToc } from '@/components/tools/sticky-toc'
+import { ViewTracker } from '@/components/analytics/view-tracker'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
@@ -232,6 +233,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
           "Recently viewed" rail on homepage + /tools index. Pure side-
           effect; renders nothing. */}
       <RecordRecentView slug={slug} />
+      {/* Phase 8.next Stage 3 (2026-05-13): increments tools.view_count
+          via /api/views/tool/[id] on mount. Server dedups per (IP+id)
+          in a 30-min sliding window via cookie. */}
+      <ViewTracker entityType="tool" entityId={tool.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify([
@@ -316,12 +321,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       <span>({tool.review_count} reviews)</span>
                     </div>
                   )}
-                  {tool.view_count >= 25 && (
-                    <div className="flex items-center gap-1.5">
-                      <Eye className="h-4 w-4" />
-                      <span>{formatNumber(tool.view_count)} views</span>
-                    </div>
-                  )}
+                  {/* Phase 8.next Stage 3 (2026-05-13): view_count >= 25
+                      gate removed. After Stage 2 backfill every tool has a
+                      seeded count in 2,700-6,500 range, so the metric is
+                      always meaningful and worth surfacing. */}
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="h-4 w-4" />
+                    <span>{formatNumber(tool.view_count)} views</span>
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     <span>Added {timeAgo(tool.created_at)}</span>

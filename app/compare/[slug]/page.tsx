@@ -15,6 +15,7 @@ import {
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
+import { ViewTracker } from '@/components/analytics/view-tracker'
 
 type TldrRow = { dimension: string; values: Record<string, string> }
 type UseCaseRow = { persona: string; recommendedSlug: string; reasoning: string }
@@ -182,6 +183,10 @@ export default async function ComparisonSlugPage({ params }: Props) {
   return (
     <>
       <script {...jsonLdScriptProps(jsonLdBlocks)} />
+      {/* Phase 8.next Stage 3 (2026-05-13): increments
+          tool_comparisons.view_count via /api/views/compare/[id] on
+          mount. Same dedup + bot filter as /tools/[slug]. */}
+      <ViewTracker entityType="compare" entityId={comparison.id as string} />
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
