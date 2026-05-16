@@ -84,8 +84,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ?.map((tc: { categories: { name: string } }) => tc.categories?.name)
     .filter(Boolean) ?? []
 
+  // Phase 7J: feed last-modified into article:modified_time so SERPs
+  // surface freshness. Prefer the explicit refresh timestamp from the
+  // SOP, fall back to row.updated_at (auto-bumped on any column change).
   const base = buildToolPageMeta(
-    { name: tool.name, tagline: tool.tagline, pricing_type: tool.pricing_type },
+    {
+      name: tool.name,
+      tagline: tool.tagline,
+      pricing_type: tool.pricing_type,
+      updated_at: tool.last_full_refresh_at ?? tool.updated_at ?? null,
+      created_at: tool.created_at ?? null,
+    },
     slug,
   )
 

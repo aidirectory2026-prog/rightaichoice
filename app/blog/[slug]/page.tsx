@@ -21,6 +21,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) return { title: 'Post Not Found' }
 
   const { meta } = post
+  // Phase 7J: emit article:modified_time so SERPs surface freshness for
+  // long-form content. Falls back to publishedAt when an updated_at isn't
+  // present in frontmatter.
+  const modifiedTime = meta.updatedAt ?? meta.publishedAt
   return {
     title: meta.title,
     description: meta.description,
@@ -31,6 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: `/blog/${slug}`,
       type: 'article',
       publishedTime: meta.publishedAt,
+      modifiedTime,
       authors: [meta.author],
       ...(meta.image && { images: [{ url: meta.image, alt: meta.title }] }),
     },
@@ -40,6 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: meta.description,
       ...(meta.image && { images: [meta.image] }),
     },
+    other: { 'article:modified_time': modifiedTime },
   }
 }
 

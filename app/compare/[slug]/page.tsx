@@ -53,7 +53,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
   const names = tools.map((t) => (t as { name: string }).name)
-  return buildComparePageMeta(names, slug)
+  return buildComparePageMeta(names, slug, {
+    publishedAt: (comparison as { published_at?: string | null }).published_at ?? null,
+    lastReviewedAt:
+      (comparison as { last_reviewed_at?: string | null }).last_reviewed_at ?? null,
+  })
 }
 
 export default async function ComparisonSlugPage({ params }: Props) {

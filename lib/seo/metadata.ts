@@ -29,6 +29,16 @@ export type ToolMetaInput = {
   name: string
   tagline?: string | null
   pricing_type?: string | null
+  /** Phase 7J: drives <meta property="article:modified_time"> */
+  updated_at?: string | null
+  /** Phase 7J: drives <meta property="article:published_time"> */
+  created_at?: string | null
+}
+
+function toIso(d: string | null | undefined): string | undefined {
+  if (!d) return undefined
+  const parsed = new Date(d)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString()
 }
 
 export function buildToolPageMeta(t: ToolMetaInput, slug: string) {
@@ -36,6 +46,8 @@ export function buildToolPageMeta(t: ToolMetaInput, slug: string) {
   const desc = t.tagline
     ? `${t.tagline} See ${t.name}'s 2026 pricing, integrations, ratings, and the closest alternatives — independently reviewed by ${SITE}.`
     : `Independent ${t.name} review for 2026: pricing, features, integrations, ratings, and the closest alternatives. Picked by ${SITE} editorial.`
+  const modified = toIso(t.updated_at)
+  const published = toIso(t.created_at)
   return {
     title,
     description: desc.slice(0, 175),
@@ -45,6 +57,9 @@ export function buildToolPageMeta(t: ToolMetaInput, slug: string) {
       url: `https://rightaichoice.com/tools/${slug}`,
       type: 'article' as const,
       siteName: SITE,
+      ...(published && { publishedTime: published }),
+      ...(modified && { modifiedTime: modified }),
+      authors: [`${SITE} Editorial`],
     },
     twitter: {
       card: 'summary_large_image' as const,
@@ -54,6 +69,7 @@ export function buildToolPageMeta(t: ToolMetaInput, slug: string) {
     alternates: {
       canonical: `https://rightaichoice.com/tools/${slug}`,
     },
+    ...(modified && { other: { 'article:modified_time': modified } }),
   }
 }
 
@@ -69,12 +85,23 @@ export function buildAlternativesPageMeta(toolName: string, slug: string) {
   }
 }
 
-export function buildComparePageMeta(toolNames: string[], slug: string) {
+export type CompareMetaTimestamps = {
+  publishedAt?: string | null
+  lastReviewedAt?: string | null
+}
+
+export function buildComparePageMeta(
+  toolNames: string[],
+  slug: string,
+  timestamps: CompareMetaTimestamps = {},
+) {
   const titlePrefix = toolNames.join(' vs ')
   const title = `${titlePrefix} — Side-by-Side Comparison (2026)`
   const desc = `In-depth 2026 comparison: ${toolNames.join(
     ' vs '
   )}. Pricing tiers, feature deltas, integration coverage, ratings, and a buyer-first verdict from ${SITE}.`
+  const modified = toIso(timestamps.lastReviewedAt) ?? toIso(timestamps.publishedAt)
+  const published = toIso(timestamps.publishedAt)
   return {
     title,
     description: desc.slice(0, 200),
@@ -84,6 +111,9 @@ export function buildComparePageMeta(toolNames: string[], slug: string) {
       url: `https://rightaichoice.com/compare/${slug}`,
       type: 'article' as const,
       siteName: SITE,
+      ...(published && { publishedTime: published }),
+      ...(modified && { modifiedTime: modified }),
+      authors: [`${SITE} Editorial`],
     },
     twitter: {
       card: 'summary_large_image' as const,
@@ -93,6 +123,7 @@ export function buildComparePageMeta(toolNames: string[], slug: string) {
     alternates: {
       canonical: `https://rightaichoice.com/compare/${slug}`,
     },
+    ...(modified && { other: { 'article:modified_time': modified } }),
   }
 }
 
