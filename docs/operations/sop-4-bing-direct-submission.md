@@ -27,9 +27,11 @@
 
 ## Quotas
 
-- 500 URLs / site / day (Bing's hard cap).
-- The script splits into 500-URL batches and stops at the daily quota — if our catalog grows beyond 500 URLs in a category, we'll need to rotate batches across multiple days.
+- Bing's *documented* cap is 500/site/day, but the **real per-account quota is much lower** — new accounts start at 10/day; verified accounts (like ours, as of 2026-05-16) get ~100/day; aged accounts can hit the 500 ceiling.
+- The script probes `GetUrlSubmissionQuota` at runtime and respects whatever Bing actually grants today. If the probe fails, it falls back to a safe 100.
+- Reset is **UTC midnight** — re-run after that for the next batch.
 - IndexNow has no documented daily cap; use it for bulk re-submissions, use Bing direct submission for surgical/strategic pushes.
+- **Rotation strategy for our ~3,000-URL catalog at 100/day:** day 1-6 compares (587), day 7-18 tools (1,176), day 19-30 alts (1,176), day 31+ categories + best + stacks + roles. Or trigger via `--tools` / `--alternatives` / `--categories` flags to choose explicitly.
 
 ## Verification
 
