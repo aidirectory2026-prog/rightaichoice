@@ -16,10 +16,12 @@
  * mismatches (asked about voice, got image gen), not to grade fit-and-finish.
  * Strict grading would block too many borderline-OK answers and add noise.
  */
-import type Anthropic from '@anthropic-ai/sdk'
+import { callDeepSeek, stripJsonFences } from './deepseek'
 import { searchStageTools, type MatchTier } from './stage-search'
 
-const GATE_MODEL = 'claude-haiku-4-5-20251001'
+// Phase 9 Stage 1 (2026-05-16): gate provider switched from Anthropic
+// Haiku → DeepSeek V3. Same lenient grading; cheaper. Timeout cap
+// preserved to keep worst-case planner latency budget intact.
 const GATE_TIMEOUT_MS = 1500
 const GATE_RETRY_TIMEOUT_MS = 2000
 
@@ -67,11 +69,9 @@ FAIL (only when there's a real mismatch):
 Respond with ONLY the JSON. No prose, no markdown.`
 
 export async function runQualityGate({
-  anthropic,
   query,
   stages,
 }: {
-  anthropic: Anthropic
   query: string
   stages: GateStageInput[]
 }): Promise<GateVerdict> {
@@ -87,26 +87,14 @@ export async function runQualityGate({
   const userMessage = `User goal: "${query}"\n\nRecommended stack:\n${stackSummary}`
 
   try {
-    const response = await Promise.race([
-      anthropic.messages.create({
-        model: GATE_MODEL,
-        max_tokens: 100,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('gate_timeout')), GATE_TIMEOUT_MS)
-      ),
-    ])
-
-    const text = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { type: 'text'; text: string }).text)
-      .join('')
-      .trim()
-
-    const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-    const parsed = JSON.parse(cleaned) as { pass: boolean; reason?: string }
+    const text = await callDeepSeek({
+      system: SYSTEM_PROMPT,
+      user: userMessage,
+      max_tokens: 120,
+      json: true,
+      timeout_ms: GATE_TIMEOUT_MS,
+    })
+    const parsed = JSON.parse(stripJsonFences(text)) as { pass: boolean; reason?: string }
     return parsed.pass === true
       ? { pass: true }
       : { pass: false, reason: parsed.reason ?? 'gate_failed_no_reason' }

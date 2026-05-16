@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { z } from 'zod'
-import { getAnthropicClient } from '@/lib/ai/anthropic'
+import { callDeepSeek, stripJsonFences } from '@/lib/plan/deepseek'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -21,12 +21,11 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-// Model ladder: Sonnet for stage decomposition (needs reasoning + structure),
-// Haiku for the per-tool "why this fits you" reasons (simple text mapping —
-// Haiku is ~3-5× faster and ~12× cheaper for this task). See Step 39 in
-// Phase6(polish-depth-scale)/plan.md.
-const MODEL_DECOMPOSITION = 'claude-sonnet-4-6'
-const MODEL_REASONS = 'claude-haiku-4-5-20251001'
+// Phase 9 Stage 1 (2026-05-16): planner LLM provider switched from
+// Anthropic (Sonnet decomposition + Haiku reasons) → DeepSeek V3 single
+// model for both passes. ~8× cheaper at parity quality on JSON-structured
+// output. Two-pass streaming preserved: `outline` event still streams in
+// ~2-3s, `enriched` (per-tool reasons + sentiment) lands ~3-4s after.
 
 type PlanTool = {
   slug: string
@@ -402,7 +401,6 @@ export async function POST(request: Request) {
         }
 
         try {
-          const anthropic = getAnthropicClient()
           const supabase = await createClient()
 
           const profileContext = profile ? profileToPromptContext(profile) : ''
@@ -498,39 +496,24 @@ export async function POST(request: Request) {
           // connection. Saves ~50-100ms on cold invocations.
           void supabase.from('tools').select('id').limit(1)
 
-          // Step 1: Decompose goal into stages (Sonnet).
-          // System prompt is cached via Anthropic prompt caching (ephemeral,
-          // 5-min TTL) — subsequent calls within the window skip re-processing
-          // the 1.3K-token system block. max_tokens must comfortably fit a
-          // 6-stage plan (each stage ~250 tokens incl. capabilities/pricingNote)
-          // plus title+summary; truncation here = parse failure = user sees
-          // "Failed to generate plan."
+          // Step 1: Decompose goal into stages (DeepSeek V3).
+          // No prompt caching (DeepSeek doesn't support Anthropic's
+          // cache_control). The 5-min server-side plan_cache covers
+          // repeated queries; cold cost per call is ~$0.005 (vs ~$0.04
+          // on Claude Sonnet). response_format: json_object enforces a
+          // valid JSON object, so we don't need the manual fence-strip
+          // we had to do with Claude — but we keep it as a defensive
+          // fallback for edge-case wrappers.
           const tDecomposition = performance.now()
-          const planResponse = await anthropic.messages.create({
-            model: MODEL_DECOMPOSITION,
-            max_tokens: 2500,
-            system: [
-              {
-                type: 'text',
-                text: PLANNER_SYSTEM_PROMPT,
-                cache_control: { type: 'ephemeral' },
-              },
-            ],
-            messages: [
-              {
-                role: 'user',
-                content: profile
-                  ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
-                  : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
-              },
-            ],
+          const planText = await callDeepSeek({
+            system: PLANNER_SYSTEM_PROMPT,
+            user: profile
+              ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
+              : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
+            max_tokens: 4096,
+            json: true,
           })
           mark('decomposition_ms', tDecomposition)
-
-          const planText = planResponse.content
-            .filter((b) => b.type === 'text')
-            .map((b) => (b as { type: 'text'; text: string }).text)
-            .join('')
 
           type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string; recommendedTools?: string[] }
           // Phase 5 plan polish (2026-05-08): added monthlyCostUsd / setupOrder /
@@ -550,10 +533,9 @@ export async function POST(request: Request) {
 
           let plan: RawPlan
           try {
-            const cleaned = planText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-            plan = JSON.parse(cleaned) as RawPlan
+            plan = JSON.parse(stripJsonFences(planText)) as RawPlan
           } catch (parseErr) {
-            console.error('[plan_parse_fail] stop_reason=', planResponse.stop_reason, 'usage=', JSON.stringify(planResponse.usage), 'len=', planText.length, 'tail=', JSON.stringify(planText.slice(-300)), 'err=', parseErr instanceof Error ? parseErr.message : String(parseErr))
+            console.error('[plan_parse_fail] provider=deepseek len=', planText.length, 'tail=', JSON.stringify(planText.slice(-300)), 'err=', parseErr instanceof Error ? parseErr.message : String(parseErr))
             closeWithError(500, 'Failed to generate plan. Please try again.')
             return
           }
@@ -626,7 +608,6 @@ export async function POST(request: Request) {
             timings.gate_ran = 1
             const tGate = performance.now()
             const verdict = await runQualityGate({
-              anthropic,
               query: refined.normalizedGoal,
               stages: stagesWithTools,
             })
@@ -705,19 +686,14 @@ ${toolSummaryInput}
 
 Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: {"ChatGPT": "Great for brainstorming and drafting initial content ideas", "Canva": "Quick professional designs without design skills"}`
 
-              const reasonResponse = await anthropic.messages.create({
-                model: MODEL_REASONS,
-                // Reasons are short (~15-20 words × up to ~10 tools = ~400 tokens).
-                // Tighter cap keeps latency tied to actual output length.
-                max_tokens: 800,
-                messages: [{ role: 'user', content: promptBody }],
+              // Reasons are short (~15-20 words × up to ~10 tools = ~400 tokens).
+              // DeepSeek with json_object mode returns a parsable object directly.
+              const reasonText = await callDeepSeek({
+                user: promptBody,
+                max_tokens: 1024,
+                json: true,
               })
-              const reasonText = reasonResponse.content
-                .filter((b) => b.type === 'text')
-                .map((b) => (b as { type: 'text'; text: string }).text)
-                .join('')
-              const cleaned = reasonText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-              return JSON.parse(cleaned) as Record<string, string>
+              return JSON.parse(stripJsonFences(reasonText)) as Record<string, string>
             } catch {
               return {}
             }
