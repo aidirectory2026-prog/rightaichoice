@@ -64,6 +64,7 @@ import { StickyToc } from '@/components/tools/sticky-toc'
 import { ViewTracker } from '@/components/analytics/view-tracker'
 import { LatestUpdatesSection } from '@/components/tools/latest-updates-section'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
+import { buildToolPageMeta } from '@/lib/seo/metadata'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
 
@@ -83,33 +84,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ?.map((tc: { categories: { name: string } }) => tc.categories?.name)
     .filter(Boolean) ?? []
 
-  const description = tool.tagline.length > 155
-    ? tool.tagline.slice(0, 152) + '…'
-    : tool.tagline
+  const base = buildToolPageMeta(
+    { name: tool.name, tagline: tool.tagline, pricing_type: tool.pricing_type },
+    slug,
+  )
 
   return {
-    title: `${tool.name} — Reviews, Pricing & Alternatives`,
-    description,
+    ...base,
     keywords: [
       tool.name,
-      `${tool.name} review`,
       `${tool.name} pricing`,
       `${tool.name} alternatives`,
+      `${tool.name} features`,
       ...categories.map((c: string) => `best ${c} AI tools`),
       'AI tools',
     ],
-    alternates: { canonical: `/tools/${slug}` },
     openGraph: {
-      title: `${tool.name} — Reviews, Pricing & Alternatives`,
-      description,
-      url: `/tools/${slug}`,
-      type: 'website',
+      ...base.openGraph,
       ...(tool.logo_url && { images: [{ url: tool.logo_url, alt: tool.name }] }),
     },
     twitter: {
-      card: 'summary',
-      title: `${tool.name} — RightAIChoice`,
-      description,
+      ...base.twitter,
       ...(tool.logo_url && { images: [tool.logo_url] }),
     },
   }

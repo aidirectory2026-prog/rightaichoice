@@ -13,6 +13,7 @@ import {
   getToolsForComparisonByIds,
 } from '@/lib/data/comparisons'
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
+import { buildComparePageMeta } from '@/lib/seo/metadata'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
 import { ViewTracker } from '@/components/analytics/view-tracker'
@@ -52,31 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
   const names = tools.map((t) => (t as { name: string }).name)
-  const title = `${names.join(' vs ')} — AI Tool Comparison`
-  const description = `In-depth side-by-side comparison of ${names.join(' and ')}. Compare features, pricing, ratings, and more to make the right AI tool choice.`
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title: `${names.join(' vs ')} — RightAIChoice`,
-      description,
-      url: `https://rightaichoice.com/compare/${slug}`,
-      type: 'article',
-      siteName: 'RightAIChoice',
-      // og:image is auto-resolved from app/compare/[slug]/opengraph-image.tsx
-      // by Next.js's file-route convention — no explicit image listing needed.
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${names.join(' vs ')} — RightAIChoice`,
-      description,
-      // twitter:image inherits from openGraph.images by default in Next.js
-    },
-    alternates: {
-      canonical: `https://rightaichoice.com/compare/${slug}`,
-    },
-  }
+  return buildComparePageMeta(names, slug)
 }
 
 export default async function ComparisonSlugPage({ params }: Props) {

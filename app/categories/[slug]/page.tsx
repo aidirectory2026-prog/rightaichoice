@@ -14,6 +14,7 @@ import { ToolGridSkeleton } from '@/components/tools/tool-card-skeleton'
 import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
 import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { buildCategoryPageMeta } from '@/lib/seo/metadata'
 import { getRelatedComparesForCategory } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
 import type { PricingType, Platform, SkillLevel } from '@/types'
@@ -40,18 +41,14 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   // Phase 5.3 pagination (2026-05-08): page > 1 keeps a separate canonical
   // (with ?page=N) so Google indexes deeper pages without collapsing them
   // onto the root. Title also gets a "(Page N)" suffix for clarity.
-  const baseTitle = `Best ${category.name} AI Tools in 2026`
-  const title = page > 1 ? `${baseTitle} (Page ${page})` : baseTitle
-  const description =
-    category.description
-      ? `${category.description} Find and compare the best ${category.name} AI tools with real reviews, pricing, and alternatives.`
-      : `Find and compare the best ${category.name} AI tools. Real reviews, pricing comparison, and community insights.`
+  const longDesc = category.description
+    ? `${category.description} Find and compare the best ${category.name} AI tools with real ratings, pricing, and alternatives.`
+    : null
 
-  const canonicalPath = page > 1 ? `/categories/${slug}?page=${page}` : `/categories/${slug}`
+  const base = buildCategoryPageMeta(category.name, slug, page, longDesc)
 
   return {
-    title,
-    description,
+    ...base,
     keywords: [
       `best ${category.name} AI tools`,
       `${category.name} AI`,
@@ -59,11 +56,10 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       `compare ${category.name} tools`,
       category.name,
     ],
-    alternates: { canonical: canonicalPath },
     openGraph: {
-      title,
-      description,
-      url: canonicalPath,
+      title: base.title,
+      description: base.description,
+      url: base.alternates.canonical,
       type: 'website',
     },
   }

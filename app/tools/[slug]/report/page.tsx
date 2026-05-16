@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ReportClient } from '@/components/report/report-client'
 import { getToolBySlug } from '@/lib/data/tools'
+import { buildReportPageMeta } from '@/lib/seo/metadata'
 
 export const revalidate = 300
 
@@ -14,10 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const tool = await getToolBySlug(slug)
   if (!tool) return { title: 'Tool Not Found' }
 
-  return {
-    title: `${tool.name} Report — Honest Review & Sentiment`,
-    description: `In-depth analysis of ${tool.name}: 5 pros, 5 cons, market sentiment, pricing breakdown, alternatives, and more.`,
-  }
+  return buildReportPageMeta(tool.name, slug)
 }
 
 export default async function ReportPage({ params }: PageProps) {

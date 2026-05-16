@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { getToolBySlug, getAlternativeTools } from '@/lib/data/tools'
+import { buildAlternativesPageMeta } from '@/lib/seo/metadata'
 
 export const revalidate = 300
 
@@ -17,10 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   const tool = await getToolBySlug(slug)
   if (!tool) return { title: 'Tool Not Found' }
-  return {
-    title: `Alternatives to ${tool.name}`,
-    description: `Curated list of AI tools that compete with or replace ${tool.name}. Picked for direct product-type match, not generic category overlap.`,
-  }
+  return buildAlternativesPageMeta(tool.name, slug)
 }
 
 const PAGE_LIMIT = 30
