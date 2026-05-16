@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SEO — Monthly Phase 4 SOP refresh reminder.
+  1st of every month, 09:00 local. Triggers the once-a-month $10
+  catalog refresh: `npm run refresh:apply -- --force`. ~6-8h
+  unattended; run it in the evening + leave Mac plugged in.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.rightaichoice.seo-monthly-sop</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/osascript</string>
+    <string>-e</string>
+    <string>display notification "Run TONIGHT (6-8h unattended, ~$10): caffeinate -dims npm run refresh:apply -- --force. Runbook: docs/operations/sop-1-monthly-refresh.md" with title "SEO: Monthly Phase 4 SOP refresh" sound name "Hero"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Day</key><integer>1</integer>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>StartCalendarIntervalMissedFire</key><true/>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>

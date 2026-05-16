@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SEO — Weekly Monday review.
+  Mondays 09:30 local. Triggers the master Mon-only checklist:
+  GSC indexed-page count, /admin/authority audit, pipeline health
+  check from sop-pipelines-master.md.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.rightaichoice.seo-monday-review</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/osascript</string>
+    <string>-e</string>
+    <string>display notification "1. GSC indexed-page count (target +50/wk) 2. /admin/authority audit 3. Pipeline health (sop-pipelines-master.md). 30 min cap." with title "SEO: Weekly Monday review" sound name "Hero"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>30</integer>
+    <key>Weekday</key><integer>1</integer>
+  </dict>
+  <key>StartCalendarIntervalMissedFire</key><true/>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>

@@ -1,15 +1,37 @@
 # macOS daily-growth launchd reminder
 
-This folder contains a `launchd` plist that auto-runs `npm run daily` every weekday morning at 9:00 and posts a macOS Notification Center alert when it completes. After install, you literally never have to remember Bing / GSC / IndexNow daily submissions — your Mac handles it.
+> **Important note as of 2026-05-16:** the *real* daily Bing submission now runs
+> server-side via Vercel cron (`/api/cron/submit-urls-bing`, daily 09:00 UTC).
+> It works whether your laptop is on or off, lid open or closed, you're on
+> vacation, etc. **This local launchd plist is now a redundant fallback
+> + the way the manual-checklist surfaces on your screen when you open the
+> laptop.** If the Vercel cron is healthy you can technically skip installing
+> this — but you'll miss the in-terminal checklist nudge.
 
-## Install (60 seconds, one-time)
+This folder contains a `launchd` plist that auto-runs `npm run daily` every weekday morning at 9:00 and posts a macOS Notification Center alert when it completes.
+
+## Install ALL reminders (60 seconds, one-time)
+
+```bash
+./scripts/launchd/install-all.sh
+```
+
+This installs 5 plists:
+
+| Schedule | Notification | What you do |
+|---|---|---|
+| Mon-Fri 09:00 | "RAC daily growth — all green / needs attention" | Check terminal log if needs-attention; do checklist |
+| Mon-Fri 10:00 | "SEO: Founder outreach" | Open /admin/daily → grab 10 CSV rows → paste into Gmail |
+| Mon-Fri 14:00 | "SEO: HARO/Qwoted inbox" | Filter to AI/software, 2-3 replies max, 15 min cap |
+| Mondays 09:30 | "SEO: Weekly Monday review" | GSC index check + /admin/authority audit + pipeline health |
+| 1st of month 09:00 | "SEO: Monthly Phase 4 SOP refresh" | Run `npm run refresh:apply -- --force` overnight |
+
+To install just the daily orchestrator (and skip the SEO task reminders):
 
 ```bash
 cp scripts/launchd/com.rightaichoice.daily.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.rightaichoice.daily.plist
 ```
-
-That's it. Tomorrow at 9:00am you'll get a notification: **"RAC daily growth — all green"** (or "needs attention" if any step failed).
 
 ## Verify it's loaded
 
