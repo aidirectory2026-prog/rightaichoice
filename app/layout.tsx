@@ -6,7 +6,7 @@ import { CompareProvider } from "@/components/providers/compare-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { websiteJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
+import { websiteJsonLd, organizationJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import "./globals.css";
 
 const inter = Inter({
@@ -93,7 +93,11 @@ export default async function RootLayout({
       className={`dark ${inter.variable} ${bricolage.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] lg:pb-0">
-        <script {...jsonLdScriptProps(websiteJsonLd())} />
+        {/* Phase 7F (2026-05-15): emit both Organization + WebSite as one
+            JSON-LD payload at the root so every page inherits the brand-
+            entity signal. Helps Google build the knowledge-panel entity
+            once authority builds. */}
+        <script {...jsonLdScriptProps([organizationJsonLd(), websiteJsonLd()])} />
         <MixpanelProvider>
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}

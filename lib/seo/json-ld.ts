@@ -11,6 +11,31 @@ const PUBLISHER = {
   url: BASE_URL,
 }
 
+// ── Organization (root layout) ─────────────────────────────────────
+//
+// Phase 7F (2026-05-15): brand-level Organization schema in the global
+// layout. Helps Google build the brand entity (knowledge-panel
+// eligible once authority builds), and is the canonical
+// `@type: Organization` ref that other helpers (Article.publisher,
+// AggregateRating provider, etc.) point at via PUBLISHER below.
+
+export function organizationJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'RightAIChoice',
+    url: BASE_URL,
+    logo: `${BASE_URL}/logo.svg`,
+    description:
+      'RightAIChoice is the decision engine for AI tools — independent reviews, side-by-side comparisons, viability scores, and a custom-stack planner. Built by editors, not by vendors.',
+    sameAs: [
+      'https://twitter.com/rightaichoice',
+      'https://www.linkedin.com/company/rightaichoice',
+    ],
+    foundingDate: '2026',
+  }
+}
+
 // ── WebSite (root layout) ──────────────────────────────────────────
 
 export function websiteJsonLd() {
