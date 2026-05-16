@@ -33,6 +33,7 @@ import { Settings2, CheckCircle, AlertCircle, Gauge } from 'lucide-react'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 import { PlanQuickWinsStrip } from '@/components/ai/plan-quick-wins-strip'
 import { PlanStickyActions } from '@/components/ai/plan-sticky-actions'
+import { PlanVariationPills, type PlanVariant } from '@/components/ai/plan-variation-pills'
 
 type PlanTool = {
   slug: string
@@ -50,6 +51,9 @@ type PlanTool = {
   budgetFit?: 'fits' | 'over' | 'unknown'
   integrationMatches?: string[]
   whyForYou?: string
+  // Phase 9 Stage 4 (2026-05-16): freshness + setup-time depth.
+  lastVerifiedAt?: string | null
+  setupTimeText?: string | null
 }
 
 type MatchTier = 'keyword' | 'category_fallback' | 'emergency'
@@ -126,6 +130,8 @@ export function ProjectPlanner({
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showIntake, setShowIntake] = useState(false)
+  // Phase 9 Stage 4 (2026-05-16): active variation pill. null = default plan.
+  const [activeVariant, setActiveVariant] = useState<PlanVariant | null>(null)
   const pendingQueryRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -186,7 +192,11 @@ export function ProjectPlanner({
     setShowIntake(true)
   }
 
-  async function runPlan(searchQuery: string, userProfile: UserProfile | null) {
+  async function runPlan(
+    searchQuery: string,
+    userProfile: UserProfile | null,
+    variantOverride?: PlanVariant | null,
+  ) {
     setQuery(searchQuery)
     setLoading(true)
     setError('')
@@ -197,7 +207,11 @@ export function ProjectPlanner({
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery, profile: userProfile }),
+        body: JSON.stringify({
+          query: searchQuery,
+          profile: userProfile,
+          variant: variantOverride ?? null,
+        }),
       })
 
       // Non-stream early failures (400 validation, 429 rate limit) still come
@@ -477,11 +491,16 @@ export function ProjectPlanner({
 
             <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <Sparkles className="h-4 w-4 text-emerald-400" />
                   <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
                     Your AI Stack Plan
                   </span>
+                  {activeVariant && (
+                    <span className="text-[10px] font-semibold text-amber-300 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Variation: {activeVariant.replace('_', ' ')}
+                    </span>
+                  )}
                 </div>
                 {/* Phase 9 Stage 3 (2026-05-16): quick-wins strip lands
                     above the title so the user sees the value (tool count,
@@ -953,6 +972,40 @@ export function ProjectPlanner({
                                 {tool.tagline}
                               </p>
 
+                              {/* Phase 9 Stage 4 (2026-05-16): depth chips
+                                  — freshness (last_verified_at) + setup-time
+                                  (setup_time_text). Both are optional; row
+                                  only renders if at least one is present. */}
+                              {(tool.lastVerifiedAt || tool.setupTimeText) && (
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                  {tool.lastVerifiedAt && (() => {
+                                    const days = Math.floor(
+                                      (Date.now() - new Date(tool.lastVerifiedAt).getTime()) / 86_400_000,
+                                    )
+                                    const tone =
+                                      days <= 3
+                                        ? 'border-emerald-800/40 bg-emerald-950/30 text-emerald-300'
+                                        : days <= 7
+                                          ? 'border-zinc-700/60 bg-zinc-900/50 text-zinc-300'
+                                          : 'border-zinc-800 bg-zinc-950/40 text-zinc-500'
+                                    const label =
+                                      days < 1 ? 'Updated today' : days === 1 ? 'Updated yesterday' : `Updated ${days}d ago`
+                                    return (
+                                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${tone}`}>
+                                        <CheckCircle className="h-2.5 w-2.5" />
+                                        {label}
+                                      </span>
+                                    )
+                                  })()}
+                                  {tool.setupTimeText && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-cyan-800/40 bg-cyan-950/30 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
+                                      <Clock className="h-2.5 w-2.5" />
+                                      {tool.setupTimeText.length > 50 ? `${tool.setupTimeText.slice(0, 48)}…` : tool.setupTimeText}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
                               {/* Match score + budget chip row */}
                               {(tool.matchScore != null || tool.budgetFit) && (
                                 <div className="mt-2.5 flex flex-wrap items-center gap-2">
@@ -1127,6 +1180,17 @@ export function ProjectPlanner({
               )}
             </div>
           </div>
+
+          {/* Phase 9 Stage 4 (2026-05-16): variation pills — clicking re-fires
+              the planner with the constraint added. Cache-keyed per variant. */}
+          <PlanVariationPills
+            active={activeVariant}
+            disabled={loading}
+            onPick={(v) => {
+              setActiveVariant(v)
+              void runPlan(query, profile, v)
+            }}
+          />
 
           {/* ── Quick Stage Overview / Flow ── */}
           <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-5">

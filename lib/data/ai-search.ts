@@ -28,6 +28,11 @@ export type AIToolResult = {
   tags: string[]
   integrations: string[]
   best_for: string[]
+  // Phase 9 Stage 4 (2026-05-16): expose freshness + setup-time to the
+  // planner result so the UI can render the "Updated N days ago" chip +
+  // "⏱ 30 min to first output" tag per tool card.
+  last_verified_at?: string | null
+  setup_time_text?: string | null
 }
 
 /** Escape characters that have special meaning in Supabase ilike patterns */
@@ -145,7 +150,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     .select(`
       id, name, slug, tagline, description, pricing_type, skill_level,
       has_api, platforms, avg_rating, review_count, website_url,
-      integrations, best_for,
+      integrations, best_for, last_verified_at, setup_time_text,
       tool_categories(categories(name)),
       tool_tags(tags(name))
     `)
@@ -218,7 +223,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
       .select(`
         id, name, slug, tagline, description, pricing_type, skill_level,
         has_api, platforms, avg_rating, review_count, website_url,
-        integrations, best_for,
+        integrations, best_for, last_verified_at, setup_time_text,
         tool_categories(categories(name)),
         tool_tags(tags(name))
       `)
@@ -302,5 +307,7 @@ function mapTool(tool: any): AIToolResult {
     tags,
     integrations: tool.integrations ?? [],
     best_for: tool.best_for ?? [],
+    last_verified_at: tool.last_verified_at ?? null,
+    setup_time_text: tool.setup_time_text ?? null,
   }
 }

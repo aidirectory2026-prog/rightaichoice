@@ -43,6 +43,9 @@ type PlanTool = {
   whyForYou?: string
   sentimentScore?: string | null
   quickVerdict?: string | null
+  // Phase 9 Stage 4 (2026-05-16): freshness + setup-time depth.
+  lastVerifiedAt?: string | null
+  setupTimeText?: string | null
 }
 
 type PlanStage = {
@@ -388,17 +391,42 @@ const profileSchema = z
   .optional()
   .nullable()
 
+// Phase 9 Stage 4 (2026-05-16): variation pills in the result UI re-fire
+// the planner with one of these constraints. Each variant adds a single
+// sentence to the user message ("Constrain ALL picks to..."), and feeds
+// into the cache key so each variant gets its own cache slot.
+export const PLAN_VARIANTS = ['budget', 'open_source', 'premium', 'fast_setup'] as const
+export type PlanVariant = (typeof PLAN_VARIANTS)[number]
+
 const planSchema = z.object({
   query: z.string().trim().min(1, 'Query is required').max(5000, 'Query is too long'),
   profile: profileSchema,
+  variant: z.enum(PLAN_VARIANTS).optional().nullable(),
 })
+
+function variantInstruction(variant: PlanVariant): string {
+  switch (variant) {
+    case 'budget':
+      return '\n\nVARIATION: Budget mode. EVERY tool you recommend MUST have a free or freemium tier that covers the user\'s use case. Skip paid-only tools entirely. monthlyCostUsd MUST be 0 or near-zero.'
+    case 'open_source':
+      return '\n\nVARIATION: Open-source only. EVERY tool you recommend MUST be open-source (MIT, Apache, GPL, etc) or have a clear self-hostable option. Prefer tools the user could fork. Skip closed-source SaaS entirely.'
+    case 'premium':
+      return '\n\nVARIATION: Premium picks. Pick the BEST tool for each stage regardless of price — assume the user has budget. Lean into Pro/Team tiers. Justify the spend in the stage description.'
+    case 'fast_setup':
+      return '\n\nVARIATION: Fastest setup. EVERY pick must be usable within minutes of signup — no API integration, no self-hosting, no enterprise sales calls. timeToFirstValue should be "Same day".'
+  }
+}
 
 // Cache key = sha256 of normalized goal + canonical profile signature.
 // Same prompt + same profile → same cache entry. Different profiles get their
 // own entries so match scores stay correct.
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
 
-function makeCacheKey(normalizedGoal: string, profile: UserProfile | null | undefined): string {
+function makeCacheKey(
+  normalizedGoal: string,
+  profile: UserProfile | null | undefined,
+  variant?: PlanVariant | null,
+): string {
   const profileSig = profile
     ? JSON.stringify({
         skill: profile.skill,
@@ -409,7 +437,7 @@ function makeCacheKey(normalizedGoal: string, profile: UserProfile | null | unde
         existingTools: [...profile.existingTools].sort(),
       })
     : 'anonymous'
-  const raw = `${normalizedGoal.trim().toLowerCase()}::${profileSig}`
+  const raw = `${normalizedGoal.trim().toLowerCase()}::${profileSig}::v=${variant ?? 'default'}`
   return createHash('sha256').update(raw).digest('hex')
 }
 
@@ -438,7 +466,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { query, profile } = parsed.data
+    const { query, profile, variant } = parsed.data
 
     // Stream NDJSON (one JSON object per line). Events in order:
     //   {type: 'outline',  title, summary, stages:[...tools w/o reasons/sentiment/match]}
@@ -477,7 +505,7 @@ export async function POST(request: Request) {
           // ── Cache lookup (24h TTL) ──
           // Uses admin client because plan_cache has RLS locked to service role.
           // Cast because the admin client isn't generic-typed against our schema.
-          const cacheKey = makeCacheKey(refined.normalizedGoal, profile)
+          const cacheKey = makeCacheKey(refined.normalizedGoal, profile, variant)
           const admin = getAdminClient() as unknown as {
             from: (table: string) => {
               select: (cols: string) => {
@@ -575,11 +603,13 @@ export async function POST(request: Request) {
           // we had to do with Claude — but we keep it as a defensive
           // fallback for edge-case wrappers.
           const tDecomposition = performance.now()
+          const baseUser = profile
+            ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
+            : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`
+          const userMessage = variant ? `${baseUser}${variantInstruction(variant)}` : baseUser
           const planText = await callDeepSeek({
             system: PLANNER_SYSTEM_PROMPT,
-            user: profile
-              ? `Create a detailed AI tool plan for: "${refined.normalizedGoal}"\n\n${profileContext}\n\nTailor the stages and keywords to match this user's skill, budget, and goal. If they're on a free budget, avoid enterprise-only workflows. If they're solo, skip team-collaboration stages.`
-              : `Create a detailed AI tool plan for: "${refined.normalizedGoal}"`,
+            user: userMessage,
             max_tokens: 4096,
             json: true,
           })
@@ -721,6 +751,8 @@ export async function POST(request: Request) {
               rating: tool.avg_rating,
               reviewCount: tool.review_count,
               whyThisStage: '',
+              lastVerifiedAt: tool.last_verified_at ?? null,
+              setupTimeText: tool.setup_time_text ?? null,
             })),
           }))
           write({

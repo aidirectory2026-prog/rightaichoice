@@ -159,7 +159,7 @@ export async function resolveToolsByName(
   const { data, error } = await supabase
     .from('tools')
     .select(
-      `id, name, slug, tagline, description, pricing_type, skill_level, has_api, platforms, avg_rating, review_count, website_url, integrations, best_for`
+      `id, name, slug, tagline, description, pricing_type, skill_level, has_api, platforms, avg_rating, review_count, website_url, integrations, best_for, last_verified_at, setup_time_text`
     )
     .eq('is_published', true)
     .or(conditions.join(','))
@@ -188,6 +188,8 @@ export async function resolveToolsByName(
     website_url: string | null
     integrations: string[] | null
     best_for: string[] | null
+    last_verified_at: string | null
+    setup_time_text: string | null
   }
 
   const candidates: AIToolResult[] = (data as Row[]).map((row) => ({
@@ -207,6 +209,8 @@ export async function resolveToolsByName(
     tags: [],
     integrations: row.integrations ?? [],
     best_for: row.best_for ?? [],
+    last_verified_at: row.last_verified_at,
+    setup_time_text: row.setup_time_text,
   }))
 
   return cleaned.map((name) => pickBestMatch(name, candidates))
