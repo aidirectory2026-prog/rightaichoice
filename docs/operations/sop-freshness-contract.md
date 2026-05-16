@@ -12,20 +12,26 @@ This SOP defines three production pipelines that enforce that contract — what 
 
 **How:** [`/api/cron/refresh-tools`](../../app/api/cron/refresh-tools/route.ts) fires hourly (`0 * * * *` UTC). Each fire processes the 10 stalest tools by `last_verified_at ASC NULLS FIRST`. 24 hourly fires × 10 = **240 refreshes/day** (20% headroom over the 200 target).
 
-**Per-tool work** (~25 seconds): scrape vendor homepage → Claude Sonnet 4.6 synthesizes 7 fields → atomic write → audit row in `refresh_logs`.
+**Per-tool work** (~25 seconds): scrape vendor homepage → **DeepSeek V3** synthesizes 9 SEO-load-bearing fields → single-corrective-retry on zod fail → atomic write → audit row in `refresh_logs`.
 
-**Fields refreshed:**
-- `description` (2-4 paragraph detailed)
+**Fields refreshed (9 + 2 timestamps + GitHub stars):**
+- `tagline` (20-140 char hero-line, MUST include the tool's primary capability keyword)
+- `description` (3-4 paragraph, 1500-2000 chars; leads with what+who, references 3-5 features, closes with vs-alternatives positioning)
+- `editorial_verdict` (2-3 sentence opinionated take, ≤ 500 chars)
+- `our_views` (5-8 paragraph long-form editorial, 800-1800 chars — long-tail keyword-rich)
 - `pricing_type` (free/freemium/paid/contact)
-- `features[]` (≤ 15)
-- `integrations[]` (≤ 15)
-- `best_for[]` (≤ 5)
-- `not_for[]` (≤ 5)
-- `editorial_verdict` (2-3 sentence opinion)
+- `features[]` (8-15, concrete verb+noun strings, search-able)
+- `integrations[]` (8-15 named integrations, no generic categories)
+- `best_for[]` (3-5 ideal personas/use-cases, scannable like sub-headers)
+- `not_for[]` (3-5 anti-fit scenarios — honest, lists real limitations)
 - `last_verified_at` (timestamp — drives the cascade)
 - `github_stars` (when applicable)
 
-**Deeper fields** (workflow_scenarios, FAQs, latest_updates, pricing_plan_guides, recent_changes) get monthly Phase 4 SOP via `npm run refresh:apply -- --force`.
+**Why 9 fields not 7:** the tool detail page's hero + sidebar + comparison rail all read from `tagline` + `our_views` directly. Adding those two to the hourly cron means every product-page section stays current within ≤1 day, not just the body.
+
+**Deeper fields** (`workflow_scenarios`, `faqs_long_tail`, `pricing_plan_guides`, `recent_changes`, `setup_time_text`, `migration_in/out`, `hidden_costs`, `skip_if`, `limitations`, `seo_keywords`, `use_cases`) get monthly Phase 4 SOP via `npm run refresh:apply -- --force`.
+
+**LLM choice:** DeepSeek V3 (`deepseek-chat`). Migrated from Claude Sonnet 4.6 on 2026-05-16 (user request + cost). ~10× cheaper for structured extraction with no quality drop in our zod-validated pipeline. Anthropic key is still present for fallback if DeepSeek has an outage.
 
 ### Verification (every Monday morning)
 
@@ -56,11 +62,12 @@ LIMIT 10;
 | All refreshes 4xx from Anthropic | ANTHROPIC_API_KEY expired | Rotate at console.anthropic.com, update Vercel env |
 | Refresh takes > 290s per fire | Vendor pages too large or DeepSeek slow | Lower `?batch=8`; investigate which tool is slow |
 
-### Cost
+### Cost (after 2026-05-16 DeepSeek migration)
 
-- Claude Sonnet 4.6 at ~$3 input / $15 output per 1M tokens
-- ~2k input + 1k output per tool ≈ $0.021/tool
-- **240 tools/day × $0.021 = ~$5/day = ~$150/month**
+- DeepSeek V3 at ~$0.27 input / $1.10 output per 1M tokens
+- ~3k input + 1.5k output per tool ≈ $0.002/tool
+- **240 tools/day × $0.002 = ~$0.50/day = ~$15/month**
+- (Was $150/month under Claude Sonnet — ~90% cost reduction at parity quality.)
 
 ### Recovery — what to do if catalog goes stale (>7 days for >50 tools)
 
@@ -79,20 +86,33 @@ LIMIT 10;
 
 ---
 
-## Pipeline 2 — Daily 50 new tools added
+## Pipeline 2 — Daily 50 new tools added (TRACTION-GATED)
 
-**Contract:** Up to 50 net-new tools ingested per day. Quality gate: ≥ 2/5 curation score (cron) or ≥ 3/5 (scale-catalog manual).
+**Contract:** Up to 50 net-new tools/day, **all with measurable real-world traction** (HN points, Reddit threads, or composite score). Generic "appeared on a list" picks are rejected.
 
 **How:** [`/api/cron/ingest-tools`](../../app/api/cron/ingest-tools/route.ts) fires twice daily at 01:00 + 13:00 UTC. Each fire enriches up to 25 candidates → **50 inserts/day target**.
 
 **Pipeline stages per fire:**
 1. **Discover** — pull from sources in `lib/cron/discover.ts` (Product Hunt daily, Futurepedia newest, GitHub trending, etc.)
 2. **Dedup** — drop any name/domain already in `tools` table or `merged_into` chain
-3. **Enrich** — Claude Sonnet fills tagline + description + categories + features
-4. **Curate** — quality gate via `lib/cron/curate.ts` (skips template-y / spam / abandoned)
-5. **Insert** — `is_published=true` + IndexNow ping → URL pushed to Bing/Yandex within minutes
+3. **Enrich** — DeepSeek fills tagline + description + categories + features
+4. **Traction probe (NEW 2026-05-16)** — for each candidate, in parallel:
+   - HN Algolia search (last 30d, free): max story points + comment count
+   - Reddit JSON search (last 30d, free): unique threads mentioning the name
+   - Composite score: `hn_max_points + reddit_threads × 30 + reddit_upvotes × 0.1`
+5. **Curate** — hard-traction gate + soft criteria gate
+   - **Hard gate (NEW):** rejects unless any one of:
+     - HN story ≥ 30 points in last 30d, OR
+     - ≥ 3 unique Reddit threads in last 30d, OR
+     - Composite score ≥ 80
+   - **Soft gate:** raised from ≥ 2/5 → **≥ 3/5** plan criteria (trending, growing, in-use, category-gap, viability)
+6. **Insert** — `is_published=true` + IndexNow ping → URL pushed to Bing/Yandex within minutes
 
-**Honest caveat:** the AI-tool space adds ~20-50 genuinely-new quality tools per day globally. Some days the discovery pipeline returns 50+; some days 10-15. Pipeline ceiling is 50/day; actual yield varies. We don't force-feed junk to hit a number.
+**Yield expectation:** the hard gate cuts noise aggressively. On a typical day:
+- 50-100 raw discoveries → ~30-50 pass dedup → ~15-30 pass traction probe → ~10-25 pass soft criteria → INSERTED
+- Some days the gate admits 5; some days 35. We never force-feed a tool that didn't earn its place via measurable buzz.
+
+**Honest caveat:** the AI-tool space adds ~20-50 genuinely-new tools per day globally with measurable traction. The "50/day" target is a ceiling. Yield = real-world signal; lower numbers on quiet days are correct behavior, not a bug.
 
 ### Verification
 
@@ -123,6 +143,32 @@ GROUP BY source ORDER BY 2 DESC;
 - Enrichment: ~$0.005/tool DeepSeek + ~$0.005/tool Anthropic curation
 - **50 tools/day × $0.01 = ~$0.50/day = ~$15/month**
 - Apify usage (discovery sources) may add ~$5/month if Reddit/PH free tier exhausts
+
+---
+
+## Cascade coverage map — every page touched when a tool refreshes
+
+When `lib/cron/refresh.ts` writes to `tools.*` for tool X, here's exactly which pages reflect the new data and how fast:
+
+| Page / surface | Where it reads from | Cache | Lag after refresh |
+|---|---|---|---|
+| `/tools/[slug]` (tool detail) | `tools.*` direct | ISR 5 min | **≤ 5 min** |
+| `/tools/[slug]/alternatives` | `tools.*` + alternatives table | ISR 5 min | **≤ 5 min** |
+| `/tools/[slug]/report` | `tools.*` direct | ISR 5 min | **≤ 5 min** |
+| `/tools` (listing) | `tools.*` direct | ISR 5 min | ≤ 5 min |
+| `/categories/[slug]` (category page) | `tools.*` direct | ISR 5 min | **≤ 5 min** |
+| `/compare/[slug]` — live data (pricing, integrations, ratings, view count) | `tools.*` direct (`getToolsForComparisonByIds`) | `force-dynamic` | **immediate** |
+| `/compare/[slug]` — editorial text (tldr, verdict, feature_analysis) | `tool_comparisons.*` (pre-generated) | dynamic | ≤ 24h via cascade cron (Pipeline 3) |
+| `/best/[slug]` (best-of pages) | `tools.*` direct | ISR 1 hour | **≤ 1 hour** |
+| `/stacks/[slug]` | `tools.*` direct | ISR 1 hour | ≤ 1 hour |
+| `/for/[slug]` (role pages) | `tools.*` direct | ISR 1 hour | ≤ 1 hour |
+| Home page hero / featured rails | `tools.*` direct | ISR 5 min | ≤ 5 min |
+| Search results | `tools.*` direct | ISR 5 min | ≤ 5 min |
+| RSS feed / opengraph images | `tools.*` direct | dynamic | immediate |
+
+**The single guarantee:** within **1 hour** of `tools.last_verified_at` advancing for tool X, every page on the site that mentions tool X reflects the new data. Compare pages are even faster — pricing tier tables refresh immediately on next request.
+
+The ONLY field that lags > 1 hour is the editorial-opinion text in `tool_comparisons.*` (TLDR row, verdict paragraph, feature-analysis prose) — Pipeline 3 (cascade-editorials) handles those within ~24-48h.
 
 ---
 

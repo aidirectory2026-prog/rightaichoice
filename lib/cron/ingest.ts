@@ -4,6 +4,7 @@ import { discoverTools } from './discover'
 import { dedup } from './dedup'
 import { enrichTool } from './enrich'
 import { loadCurateContext, curateCandidate } from './curate'
+import { probeTractionBatch } from './traction-probe'
 
 interface IngestResult {
   runId: string
@@ -29,11 +30,11 @@ export async function runIngestion(
   const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, gated: 0, inserted: 0, failed: 0, insertedSlugs: [] }
 
   const curateCtx = await loadCurateContext(supabase)
-  // Cron path can't cheaply compute category-gap per candidate inside the 60s
-  // Vercel budget, so it runs at ≥2/5. Bulk scale-catalog.ts keeps the plan's
-  // ≥3/5. All cron discoveries come from recency-filtered sources (PH daily,
-  // Futurepedia newest, GitHub trending), so trending auto-credits.
-  curateCtx.minCriteria = 2
+  // Phase 8 (2026-05-16): raise the soft-criteria minimum from 2 → 3.
+  // "Most trending, going viral" requires more than just appearing on a
+  // curated list — combined with the new traction-hard gate (HN/Reddit
+  // probe below), this filters out tools without real-world buzz.
+  curateCtx.minCriteria = 3
 
   // 1. Discover
   const raw = await discoverTools()
@@ -74,6 +75,15 @@ export async function runIngestion(
   // caller can override for ad-hoc bigger pushes.
   const batch = unique.slice(0, batchSize)
 
+  // 3a. Traction probes (HN + Reddit) for the batch — run in parallel
+  // so per-batch overhead is ~5s instead of 50s sequential. The probe
+  // result feeds the traction-hard gate inside curate.
+  console.log(`[ingest:${runId}] probing traction for ${batch.length} candidates…`)
+  const tractionMap = await probeTractionBatch(
+    batch.map((t) => t.name),
+    5,
+  )
+
   for (const tool of batch) {
     try {
       const enriched = await enrichTool(tool.name, tool.url, tool.description)
@@ -92,13 +102,27 @@ export async function runIngestion(
 
       result.enriched++
 
-      // 4. Curation gate — Step 41 quality requirement (cron runs at ≥2/5)
+      // 4. Curation gate — soft criteria (≥3/5) + traction-hard probe.
+      const traction = tractionMap.get(tool.name)
       const decision = curateCandidate(
         {
           name: tool.name,
           websiteUrl: tool.url,
           enriched,
-          signals: { recentList: true }, // all cron sources are recency lists
+          signals: {
+            recentList: true,
+            usageSignal: traction
+              ? { redditThreads: traction.reddit.threadCount }
+              : undefined,
+            tractionHard: traction
+              ? {
+                  hnPoints: traction.hn.maxPoints,
+                  redditThreads: traction.reddit.threadCount,
+                  score: traction.score,
+                  hardPass: traction.hardPass,
+                }
+              : undefined,
+          },
         },
         curateCtx,
       )

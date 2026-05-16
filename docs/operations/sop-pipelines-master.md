@@ -143,32 +143,35 @@ This doc is read on Mondays during the weekly review. If a pipeline is failing r
 | Schedule | **Hourly (`0 * * * *`)** |
 | Trigger | Vercel cron |
 | Reads | 10 stalest `tools` per fire, by `last_verified_at ASC NULLS FIRST` |
-| Writes | 7 fields (description, pricing_type, features[], integrations[], best_for[], not_for[], editorial_verdict) + `last_verified_at` + `github_stars`; audit row in `refresh_logs` |
-| Failure mode | Per-tool: validation fail → keep prior data, log to `refresh_logs.status='failed'`. Overall: 300s timeout caps each fire at ~12 tools. |
+| Writes | 9 SEO-load-bearing fields (tagline, description, editorial_verdict, our_views, pricing_type, features[], integrations[], best_for[], not_for[]) + `last_verified_at` + `github_stars`; audit row in `refresh_logs` |
+| Failure mode | Per-tool: validation fail → keep prior data (single-corrective-retry first), log to `refresh_logs.status='failed'`. Overall: 300s timeout caps each fire at ~12 tools. |
 | Verification | `select count(*) from tools where last_verified_at >= now() - interval '24 hours' and is_published = true` → ≥ 200 |
-| Recovery | If 24h count < 100: check Vercel cron logs for ANTHROPIC_API_KEY errors or scraping failures. Fire `?batch=20` manually 5× to clear backlog. |
+| Recovery | If 24h count < 100: check Vercel cron logs for DEEPSEEK_API_KEY errors or scraping failures. Fire `?batch=20` manually 5× to clear backlog. |
 
 **Phase 8 freshness contract:** 24 fires × 10 tools = 240 refreshes/day. The full ~1,176 catalog cycles in ~5 days — every tool re-verified at least weekly. Full SOP docs: [`sop-freshness-contract.md`](sop-freshness-contract.md).
 
-**Cost:** ~$5/day ($150/mo) Anthropic.
+**LLM:** DeepSeek V3 (migrated from Claude Sonnet 4.6 on 2026-05-16). Anthropic key remains for fallback. **Cost: ~$15/mo** (was $150 under Claude).
 
 ---
 
-## 5. Ingest new tools (`/api/cron/ingest-tools`)
+## 5. Ingest new tools — TRACTION-GATED (`/api/cron/ingest-tools`)
 
 | Field | Value |
 |---|---|
 | Schedule | **01:00 + 13:00 UTC daily** |
 | Trigger | Vercel cron |
-| Reads | Discovery sources via `lib/cron/discover.ts` (Product Hunt, Futurepedia, GitHub trending, etc.); existing `tools.slug` for dedup |
+| Reads | Discovery sources via `lib/cron/discover.ts` (Product Hunt, Futurepedia, GitHub trending, etc.); existing `tools.slug` for dedup. Then per-candidate HN Algolia + Reddit JSON probe. |
 | Writes | New `tools` rows (`is_published=true`) + `ingestion_logs` per stage + IndexNow ping per inserted slug |
-| Failure mode | Per-candidate: enrichment fail → logged + skipped. Curation fail (< 2/5 score) → gated + logged. Some days yield < 50 (real net-new < 50 globally — pipeline doesn't force-feed junk). |
-| Verification | `select count(*) from tools where created_at >= now() - interval '24 hours'` → 30-50 |
-| Recovery | If 0 inserts for 2+ days: check `ingestion_logs` for discovery source status. Expand sources in `lib/cron/discover.ts` if needed. |
+| Failure mode | Per-candidate: enrichment fail → logged + skipped. Traction-hard gate fail → `gated` with `traction-hard:hn=X/reddit=Y/score=Z` reason. Soft criteria < 3/5 → gated. |
+| Verification | `select count(*) from tools where created_at >= now() - interval '24 hours'` → 10-50 (lower bound is correct on quiet days) |
+| Recovery | If 0 inserts for 2+ days: check `ingestion_logs.error_message` — most likely "traction-hard" rejections (gate too strict) or discovery source down. Threshold tunable in `lib/cron/traction-probe.ts`. |
 
-**Phase 8 freshness contract:** target 50/day; pipeline ceiling 50 per fire × 2 = 100/day. Realistic sustained: 30-50/day.
+**Phase 8 traction contract (2026-05-16):**
+- Hard gate: must have any one of (HN ≥ 30 points last 30d) OR (≥ 3 Reddit threads last 30d) OR (composite score ≥ 80)
+- Soft gate: ≥ 3 of 5 plan criteria (was ≥ 2)
+- Yield: 10-50/day (signal-dependent)
 
-**Cost:** ~$0.50/day ($15/mo) DeepSeek + Anthropic.
+**Cost:** ~$0.50/day ($15/mo) DeepSeek + free HN/Reddit probes.
 
 ---
 

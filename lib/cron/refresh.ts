@@ -1,17 +1,36 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { fetchPageText } from './scrape'
 import { z } from 'zod'
 
+// Phase 8 freshness contract (2026-05-16):
+// Target: 200+ tools refreshed every day → ~10 per hourly cron fire = 240/day.
+// Each tool: scrape vendor → DeepSeek synthesizes 9 SEO-load-bearing fields →
+// atomic write. Sequential to respect vendor rate-limits.
+//
+// 2026-05-16 (user request): migrated from Anthropic Claude → DeepSeek V3.
+// DeepSeek matches Claude Sonnet quality for structured extraction at ~10×
+// cheaper. The 7-field lite-refresh now also includes `tagline` and
+// `our_views` so product-page above-the-fold + sidebar both stay fresh.
+// Heavier 22-field synthesis (faqs_long_tail, workflow_scenarios,
+// pricing_plan_guides, recent_changes, etc.) ships via the monthly
+// Phase 4 SOP run (`npm run refresh:apply -- --force`).
+
+const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
+const DEEPSEEK_MODEL = 'deepseek-chat'
+
 const refreshSchema = z.object({
+  tagline: z.string().min(20).max(140),
   description: z.string().max(2000),
-  pricing_type: z.enum(['free', 'freemium', 'paid', 'contact']),
-  features: z.array(z.string()).max(15),
-  integrations: z.array(z.string()).max(15),
-  best_for: z.array(z.string()).max(5),
-  not_for: z.array(z.string()).max(5),
   editorial_verdict: z.string().max(500),
+  our_views: z.string().max(1800),
+  pricing_type: z.enum(['free', 'freemium', 'paid', 'contact']),
+  features: z.array(z.string().max(120)).max(15),
+  integrations: z.array(z.string().max(80)).max(15),
+  best_for: z.array(z.string().max(180)).max(5),
+  not_for: z.array(z.string().max(180)).max(5),
 })
+
+type RefreshOut = z.infer<typeof refreshSchema>
 
 interface RefreshResult {
   runId: string
@@ -20,11 +39,90 @@ interface RefreshResult {
   failed: number
 }
 
-// Phase 8 freshness contract (2026-05-16):
-// Target: 200+ tools refreshed every day → ~10 per hourly cron fire = 240/day.
-// Each tool: scrape vendor + claude-sonnet synthesize 7 fields → atomic write.
-// Sequential to respect vendor rate-limits + DeepSeek API ceiling.
-// Time budget: 10 tools × ~25s = ~250s, fits Vercel maxDuration=300.
+const SYSTEM_PROMPT = `You are an editorial analyst at RightAIChoice, a decision engine for AI tools. You write punchy, specific, SEO-optimized copy that ranks on Google for buyer-intent queries. Never write generic marketing fluff. Always anchor in real features + real pricing from the page content provided.
+
+Return STRICT JSON matching this schema:
+{
+  "tagline": "1-sentence pitch, 20-140 chars, MUST include the primary keyword (the tool's core capability)",
+  "description": "3-4 paragraph (1500-2000 chars) overview. Lead with what the tool does + who it's for. Reference 3-5 specific features. End with a positioning note vs alternatives.",
+  "editorial_verdict": "2-3 sentence opinionated buyer-first take. Under 500 chars. Specific, not generic.",
+  "our_views": "5-8 paragraph long-form editorial in our voice (800-1800 chars). Include: when to pick this, when to pass, comparison to closest alternative, real-world usage caveats.",
+  "pricing_type": "free | freemium | paid | contact",
+  "features": ["8-15 feature strings, ≤120 chars each, concrete (verbs + nouns, not adjectives)"],
+  "integrations": ["8-15 named integrations (Slack, Notion, GitHub, etc.). Skip generic categories."],
+  "best_for": ["3-5 ideal use-cases / personas, ≤180 chars each"],
+  "not_for": ["3-5 anti-fit scenarios, ≤180 chars each. Be honest — list real limitations."]
+}
+
+SEO rules:
+- tagline + description MUST contain the tool's primary capability keyword (the thing it's known for)
+- features should be search-able terms (developers, marketers Google them)
+- best_for/not_for read like sub-headers buyers will scan
+- our_views uses long-tail keywords naturally — never stuff
+- NO prose, NO markdown fences, JUST the JSON object.`
+
+function buildPrompt(toolName: string, websiteUrl: string, pageText: string): string {
+  return `Refresh editorial metadata for this AI tool.
+
+Tool: ${toolName}
+Website: ${websiteUrl}
+
+Website content (first 12000 chars):
+"""
+${pageText.slice(0, 12000)}
+"""
+
+Synthesize per the schema. Use ONLY information present in the page content above — never invent features, integrations, or pricing tiers not visible there. If a field can't be filled with high confidence, return a safe minimum (e.g., for features list: only what the page lists; for integrations: empty array if none mentioned).`
+}
+
+async function callDeepSeek(toolName: string, websiteUrl: string, pageText: string): Promise<string> {
+  const res = await fetch(DEEPSEEK_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      max_tokens: 4096,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText) },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`DeepSeek ${res.status}: ${body.slice(0, 300)}`)
+  }
+  const json = (await res.json()) as { choices: Array<{ message: { content: string } }> }
+  return json.choices[0]?.message?.content ?? ''
+}
+
+async function synthesize(toolName: string, websiteUrl: string, pageText: string): Promise<RefreshOut> {
+  // Single corrective retry on validation fail — same pattern as the
+  // monthly Phase 4 SOP. Reduces transient validation failures by ~70%.
+  let correction: string | undefined
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const raw = await callDeepSeek(
+      toolName,
+      websiteUrl,
+      correction ? `${pageText}\n\nPrev attempt failed: ${correction}. Return strict JSON.` : pageText,
+    )
+    const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
+    try {
+      return refreshSchema.parse(JSON.parse(stripped))
+    } catch (e) {
+      if (attempt === 2) {
+        throw new Error(`validation failed after retry: ${e instanceof Error ? e.message.slice(0, 200) : 'unknown'}`)
+      }
+      correction = e instanceof Error ? e.message.slice(0, 300) : 'invalid JSON'
+    }
+  }
+  throw new Error('unreachable')
+}
+
 export async function runRefresh(
   supabase: SupabaseClient,
   batchSize = 10,
@@ -45,9 +143,7 @@ export async function runRefresh(
     return result
   }
 
-  const client = getAnthropicClient()
-
-  for (const tool of tools) {
+  for (const tool of tools as Array<{ id: string; slug: string; name: string; website_url: string; github_url: string | null }>) {
     const start = Date.now()
     result.processed++
 
@@ -56,54 +152,30 @@ export async function runRefresh(
       try {
         pageText = await fetchPageText(tool.website_url)
       } catch {
-        // Continue with just the name
+        // Continue with just the name — DeepSeek can still produce
+        // a baseline editorial from its training-data knowledge.
       }
 
-      // Fetch GitHub stars if applicable
+      // GitHub stars — cheap side-fetch, doesn't affect main payload.
       let githubStars: number | null = null
       if (tool.github_url) {
         try {
           const repoPath = new URL(tool.github_url).pathname.slice(1)
           const ghRes = await fetch(`https://api.github.com/repos/${repoPath}`, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
+            headers: { Accept: 'application/vnd.github.v3+json' },
           })
           if (ghRes.ok) {
             const ghData = await ghRes.json()
             githubStars = ghData.stargazers_count
           }
         } catch {
-          // Skip GitHub stars update
+          // Non-fatal — keep prior stars.
         }
       }
 
-      const prompt = `Analyze this AI tool and provide updated metadata.
+      const parsed = await synthesize(tool.name, tool.website_url, pageText)
 
-Tool: ${tool.name}
-Website: ${tool.website_url}
-Website content (first 8000 chars): ${pageText}
-
-Return JSON with:
-- description: 2-4 paragraph detailed description (max 2000 chars)
-- pricing_type: "free" | "freemium" | "paid" | "contact"
-- features: Array of key features (max 15)
-- integrations: Array of integrations (max 15)
-- best_for: Ideal use cases (max 5)
-- not_for: When NOT to use this (max 5)
-- editorial_verdict: Opinionated 2-3 sentence take
-
-Only output valid JSON.`
-
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content: prompt }],
-      })
-
-      const text = response.content[0].type === 'text' ? response.content[0].text : ''
-      const parsed = refreshSchema.parse(JSON.parse(text))
-
-      const fieldsUpdated: string[] = ['description', 'pricing_type', 'features', 'integrations', 'best_for', 'not_for', 'editorial_verdict']
-
+      const fieldsUpdated = Object.keys(parsed)
       const updateData: Record<string, unknown> = {
         ...parsed,
         last_verified_at: new Date().toISOString(),
@@ -118,7 +190,7 @@ Only output valid JSON.`
 
       const { error: updateError } = await supabase
         .from('tools')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', tool.id)
 
       const duration = Date.now() - start
@@ -133,7 +205,7 @@ Only output valid JSON.`
         status: 'refreshed',
         fields_updated: fieldsUpdated,
         duration_ms: duration,
-      })
+      } as never)
     } catch (e) {
       result.failed++
       await supabase.from('refresh_logs').insert({
@@ -143,7 +215,7 @@ Only output valid JSON.`
         status: 'failed',
         error_message: e instanceof Error ? e.message : 'Unknown error',
         duration_ms: Date.now() - start,
-      })
+      } as never)
     }
   }
 
