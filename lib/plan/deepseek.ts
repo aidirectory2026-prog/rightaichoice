@@ -29,6 +29,16 @@ export type DeepSeekArgs = {
 }
 
 export async function callDeepSeek(args: DeepSeekArgs): Promise<string> {
+  // Phase 9 Stage 5 diag (2026-05-16): fail loudly + with a distinct error
+  // message when the API key isn't present. Without this, the route's
+  // catch-all sees the upstream 401 ("Bearer undefined") and maps it to
+  // 503 "AI service temporarily unavailable" — making "no key" and "key
+  // rejected" look identical to the operator. Now: "no key" → "missing
+  // DEEPSEEK_API_KEY" which the route logs verbatim.
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error('missing DEEPSEEK_API_KEY env var on this runtime')
+  }
+
   const messages: Array<{ role: 'system' | 'user'; content: string }> = []
   if (args.system) messages.push({ role: 'system', content: args.system })
   messages.push({ role: 'user', content: args.user })

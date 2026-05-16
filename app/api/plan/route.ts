@@ -936,9 +936,19 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
             { onConflict: 'cache_key' }
           )
         } catch (err) {
-          console.error('Plan API error:', err)
-          const message = err instanceof Error ? err.message : 'Unexpected error'
-          if (message.includes('credit balance') || message.includes('billing') || message.includes('authentication') || message.includes('401')) {
+          // Phase 9 Stage 5 diag (2026-05-16): keep the operator-friendly
+          // category in the user-visible message but ALSO surface the raw
+          // upstream error in Vercel logs so we can tell missing-key apart
+          // from rejected-key apart from rate-limited apart from JSON parse fail.
+          const rawMessage = err instanceof Error ? err.message : 'Unexpected error'
+          console.error('[plan_route_error]', JSON.stringify({
+            error: rawMessage,
+            stack: err instanceof Error ? err.stack?.split('\n').slice(0, 4).join(' | ') : undefined,
+            hasDeepSeekKey: Boolean(process.env.DEEPSEEK_API_KEY),
+          }))
+          if (rawMessage.includes('missing DEEPSEEK_API_KEY')) {
+            closeWithError(503, 'AI service unavailable (config). The operator has been notified.')
+          } else if (rawMessage.includes('credit balance') || rawMessage.includes('billing') || rawMessage.includes('authentication') || rawMessage.includes('401')) {
             closeWithError(503, 'AI service temporarily unavailable. Please try again later.')
           } else {
             closeWithError(500, 'Something went wrong. Please try again.')
