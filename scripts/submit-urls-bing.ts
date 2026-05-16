@@ -26,8 +26,12 @@ import { getAdminClient } from '../lib/cron/supabase-admin'
 
 const SITE_URL = 'https://rightaichoice.com'
 const BING_ENDPOINT = 'https://ssl.bing.com/webmaster/api.svc/json/SubmitUrlbatch'
+const BING_QUOTA_ENDPOINT = 'https://ssl.bing.com/webmaster/api.svc/json/GetUrlSubmissionQuota'
 const PER_REQUEST_CAP = 500
-const DAILY_QUOTA = 500
+// Documented default is 500/day but real per-account limits are much
+// lower (new accounts: 10/day; verified: ~100/day; aged: higher). The
+// script probes GetUrlSubmissionQuota at runtime and respects what
+// Bing actually grants this account today.
 
 type Args = {
   dry: boolean
@@ -96,6 +100,17 @@ async function gatherUrls(args: Args): Promise<string[]> {
   return urls
 }
 
+async function fetchDailyQuota(apiKey: string): Promise<number | null> {
+  const url = `${BING_QUOTA_ENDPOINT}?siteUrl=${encodeURIComponent(SITE_URL)}&apikey=${encodeURIComponent(apiKey)}`
+  try {
+    const res = await fetch(url, { method: 'GET' })
+    const json = (await res.json()) as { d?: { DailyQuota?: number } }
+    return json.d?.DailyQuota ?? null
+  } catch {
+    return null
+  }
+}
+
 async function submitChunk(apiKey: string, urls: string[]): Promise<void> {
   const url = `${BING_ENDPOINT}?apikey=${encodeURIComponent(apiKey)}`
   const res = await fetch(url, {
@@ -131,16 +146,25 @@ async function main() {
     process.exit(1)
   }
 
-  if (urls.length > DAILY_QUOTA) {
+  // Probe what Bing actually allows for this account today.
+  const quota = await fetchDailyQuota(apiKey)
+  if (quota === null) {
+    console.warn(`[bing] could not probe daily quota — defaulting to 100`)
+  }
+  const cap = quota ?? 100
+
+  if (urls.length > cap) {
     console.warn(
-      `[bing] ${urls.length} URLs exceeds 500/day Bing quota. Submitting first 500 only.`,
+      `[bing] ${urls.length} URLs exceeds today's quota (${cap}). Submitting first ${cap} only.`,
     )
-    urls.length = DAILY_QUOTA
+    urls.length = cap
   }
 
-  // Chunk into 500-URL batches (Bing's per-request cap).
-  for (let i = 0; i < urls.length; i += PER_REQUEST_CAP) {
-    const chunk = urls.slice(i, i + PER_REQUEST_CAP)
+  // Per-request cap is 500 OR today's quota, whichever's smaller — so
+  // we never send a single batch larger than Bing will accept.
+  const requestCap = Math.min(PER_REQUEST_CAP, cap)
+  for (let i = 0; i < urls.length; i += requestCap) {
+    const chunk = urls.slice(i, i + requestCap)
     await submitChunk(apiKey, chunk)
   }
 
