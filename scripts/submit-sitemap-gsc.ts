@@ -27,7 +27,10 @@ import { OAuth2Client } from 'google-auth-library'
 import { readFileSync } from 'fs'
 
 const SITE = process.env.GSC_SITE_URL || 'sc-domain:rightaichoice.com'
-const SITEMAP_URL = 'https://rightaichoice.com/sitemap.xml'
+// Phase 7I (2026-05-16): submit the index, not the legacy monolith.
+// /sitemap-index.xml lists 8 per-type subsitemaps; GSC will fetch each.
+const SITEMAP_URL =
+  process.env.GSC_SITEMAP_URL || 'https://rightaichoice.com/sitemap-index.xml'
 
 function fail(msg: string): never {
   console.error(`\n❌ ${msg}\n`)

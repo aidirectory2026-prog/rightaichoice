@@ -1,37 +1,34 @@
 import type { MetadataRoute } from 'next'
-import { getAllToolSlugs } from '@/lib/data/tools'
-import { getCategories } from '@/lib/data/categories'
-import { getAllComparisonSlugs } from '@/lib/data/comparisons'
-import { BEST_PAGES } from '@/lib/data/best-pages'
-import { STACKS } from '@/lib/data/stacks'
-import { ROLE_PAGES } from '@/lib/data/role-pages'
-import { getAllPosts } from '@/lib/data/blog'
 
 const BASE_URL = 'https://rightaichoice.com'
 
-// Revalidate hourly so newly-seeded tools/comparisons surface in the
-// sitemap without requiring a redeploy. Phase 7 (2026-04-29): caught
-// this gap when 8 editorial /compare/ pages were missing from
-// /sitemap.xml because the static sitemap was last built before the
-// editorial seeds were applied.
+// Phase 7I (2026-05-16): /sitemap.xml is now the STATIC-ONLY sitemap.
+// Per-type sitemaps live in nested route segments:
+//   /tools/sitemap.xml      — all tool detail pages (1,176)
+//   /compare/sitemap.xml    — editorial compare pages + paged hub
+//   /categories/sitemap.xml — category landing pages
+//   /best/sitemap.xml       — best-of pages
+//   /stacks/sitemap.xml     — stack pages
+//   /for/sitemap.xml        — role pages
+//   /blog/sitemap.xml       — blog posts
+// All listed in /sitemap-index.xml (the URL submitted to GSC + Bing).
+//
+// Why split: monolithic sitemap with 1,800+ URLs collapsed all per-type
+// crawl signals together. Per-type sitemaps let Google report indexation
+// stats per content category, and let us push freshness signals at the
+// per-type level (e.g. tool pages refresh weekly, blog monthly).
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tools, categories, comparisons] = await Promise.all([
-    getAllToolSlugs(),
-    getCategories(),
-    getAllComparisonSlugs(),
-  ])
-
-  // Phase 1 (2026-05-05): /reviews, /questions, /discussions, /workflows
-  // (and their per-id routes) were removed. They no longer appear here so
-  // crawlers stop being asked to re-fetch them; the live routes return 404
-  // (or 410 via middleware) so existing index entries deindex naturally.
-  const staticRoutes: MetadataRoute.Sitemap = [
+  return [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/tools`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/compare`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/best`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/stacks`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${BASE_URL}/for`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/recommend`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/ai-chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/viability`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
@@ -39,101 +36,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/viability/safe-bets`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/methodology`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/team`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-  ]
-
-  // Phase 7H follow-up (2026-05-13): include paginated /compare?page=N
-  // URLs so Googlebot discovers + crawls every page of the editorial-
-  // compare listing. With ~587 editorial pairs at 24/page, that's
-  // ~25 pages of /compare?page=2..25 in addition to /compare (page 1
-  // included in staticRoutes above).
-  const compareHubPages = Math.max(1, Math.ceil(comparisons.length / 24))
-  const compareHubPagedRoutes: MetadataRoute.Sitemap = []
-  for (let p = 2; p <= compareHubPages; p++) {
-    compareHubPagedRoutes.push({
-      url: `${BASE_URL}/compare?page=${p}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    })
-  }
-
-  const toolRoutes: MetadataRoute.Sitemap = tools.map(({ slug, updated_at }) => ({
-    url: `${BASE_URL}/tools/${slug}`,
-    lastModified: updated_at ? new Date(updated_at) : new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.85,
-  }))
-
-  const categoryRoutes: MetadataRoute.Sitemap = categories.map(
-    (cat: { slug: string; updated_at?: string }) => ({
-      url: `${BASE_URL}/categories/${cat.slug}`,
-      lastModified: cat.updated_at ? new Date(cat.updated_at) : new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.75,
-    })
-  )
-
-  const bestPageRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/best`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    ...BEST_PAGES.map((p) => ({
-      url: `${BASE_URL}/best/${p.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-    })),
-  ]
-
-  const stackRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/stacks`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
-    ...STACKS.map((s) => ({
-      url: `${BASE_URL}/stacks/${s.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-    })),
-  ]
-
-  const roleRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/for`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    ...ROLE_PAGES.map((r) => ({
-      url: `${BASE_URL}/for/${r.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-    })),
-  ]
-
-  const comparisonRoutes: MetadataRoute.Sitemap = comparisons.map((c) => ({
-    url: `${BASE_URL}/compare/${c.slug}`,
-    lastModified: c.last_reviewed_at
-      ? new Date(c.last_reviewed_at)
-      : c.published_at
-      ? new Date(c.published_at)
-      : new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.8,
-  }))
-
-  const blogPosts = getAllPosts()
-  const blogRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    ...blogPosts.map((post) => ({
-      url: `${BASE_URL}/blog/${post.slug}`,
-      lastModified: new Date(post.publishedAt),
-      changeFrequency: 'monthly' as const,
-      priority: 0.75,
-    })),
-  ]
-
-  return [
-    ...staticRoutes,
-    ...compareHubPagedRoutes,
-    ...stackRoutes,
-    ...bestPageRoutes,
-    ...roleRoutes,
-    ...blogRoutes,
-    ...toolRoutes,
-    ...categoryRoutes,
-    ...comparisonRoutes,
   ]
 }
