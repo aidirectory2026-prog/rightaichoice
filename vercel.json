@@ -31,7 +31,15 @@
     },
     {
       "path": "/api/cron/refresh-tools",
-      "schedule": "0 7 * * 1"
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/ingest-tools",
+      "schedule": "0 1,13 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-compare-editorials",
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/resubmit-sitemap-gsc",

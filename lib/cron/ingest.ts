@@ -16,11 +16,24 @@ interface IngestResult {
   insertedSlugs: string[]
 }
 
-export async function runIngestion(supabase: SupabaseClient): Promise<IngestResult> {
+// Phase 8 freshness contract (2026-05-16):
+// Target: 50 new tools/day. Vercel cron fires this at 01:00 + 13:00 UTC
+// (twice daily); each fire enriches up to `batchSize` candidates. With
+// batch=25 we get 50 inserts/day. The real net-new yield depends on
+// discovery sources — most days 30-50, some days bursts past 50.
+export async function runIngestion(
+  supabase: SupabaseClient,
+  batchSize = 25,
+): Promise<IngestResult> {
   const runId = crypto.randomUUID()
   const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, gated: 0, inserted: 0, failed: 0, insertedSlugs: [] }
 
   const curateCtx = await loadCurateContext(supabase)
+  // Cron path can't cheaply compute category-gap per candidate inside the 60s
+  // Vercel budget, so it runs at ≥2/5. Bulk scale-catalog.ts keeps the plan's
+  // ≥3/5. All cron discoveries come from recency-filtered sources (PH daily,
+  // Futurepedia newest, GitHub trending), so trending auto-credits.
+  curateCtx.minCriteria = 2
 
   // 1. Discover
   const raw = await discoverTools()
@@ -57,8 +70,9 @@ export async function runIngestion(supabase: SupabaseClient): Promise<IngestResu
     }
   }
 
-  // 3. Enrich + Insert (batch of 15 to stay within Vercel timeout)
-  const batch = unique.slice(0, 15)
+  // 3. Enrich + Insert. batchSize defaults to 25 (fits 300s Pro maxDuration);
+  // caller can override for ad-hoc bigger pushes.
+  const batch = unique.slice(0, batchSize)
 
   for (const tool of batch) {
     try {
@@ -78,9 +92,14 @@ export async function runIngestion(supabase: SupabaseClient): Promise<IngestResu
 
       result.enriched++
 
-      // 4. Curation gate — Step 41 quality requirement
+      // 4. Curation gate — Step 41 quality requirement (cron runs at ≥2/5)
       const decision = curateCandidate(
-        { name: tool.name, websiteUrl: tool.url, enriched },
+        {
+          name: tool.name,
+          websiteUrl: tool.url,
+          enriched,
+          signals: { recentList: true }, // all cron sources are recency lists
+        },
         curateCtx,
       )
       if (!decision.pass) {
@@ -115,6 +134,13 @@ export async function runIngestion(supabase: SupabaseClient): Promise<IngestResu
         best_for: enriched.best_for,
         not_for: enriched.not_for,
         editorial_verdict: enriched.editorial_verdict,
+        // Step 40 depth fields — now populated in the same enrichment pass
+        tutorial_urls: enriched.tutorial_urls,
+        limitations: enriched.limitations,
+        models: enriched.models,
+        community_links: enriched.community_links,
+        use_cases: enriched.use_cases,
+        our_views: enriched.our_views,
         last_verified_at: new Date().toISOString(),
         is_published: true,
       })

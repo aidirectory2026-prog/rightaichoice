@@ -20,17 +20,25 @@ interface RefreshResult {
   failed: number
 }
 
-export async function runRefresh(supabase: SupabaseClient): Promise<RefreshResult> {
+// Phase 8 freshness contract (2026-05-16):
+// Target: 200+ tools refreshed every day → ~10 per hourly cron fire = 240/day.
+// Each tool: scrape vendor + claude-sonnet synthesize 7 fields → atomic write.
+// Sequential to respect vendor rate-limits + DeepSeek API ceiling.
+// Time budget: 10 tools × ~25s = ~250s, fits Vercel maxDuration=300.
+export async function runRefresh(
+  supabase: SupabaseClient,
+  batchSize = 10,
+): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
   const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
 
-  // Select 15 tools with oldest last_verified_at
+  // Stalest-first ordering. nullsFirst → tools never refreshed jump the queue.
   const { data: tools, error } = await supabase
     .from('tools')
     .select('id, slug, name, website_url, github_url')
     .eq('is_published', true)
     .order('last_verified_at', { ascending: true, nullsFirst: true })
-    .limit(15)
+    .limit(batchSize)
 
   if (error || !tools) {
     console.error('Failed to fetch tools for refresh:', error)

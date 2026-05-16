@@ -15,20 +15,22 @@ This doc is read on Mondays during the weekly review. If a pipeline is failing r
 
 ---
 
-## Pipeline inventory (10 active, all server-side)
+## Pipeline inventory (12 active, all server-side)
 
 | # | Path | Schedule (UTC) | Lid-state | Purpose |
 |---|---|---|---|---|
 | 1 | `/api/cron/indexnow-recent` | Daily 07:00 | server | IndexNow ping new URLs (Bing/Yandex) |
 | 2 | `/api/cron/submit-urls-bing` | Daily 09:00 | server | Bing direct API submission, smart-rotation |
 | 3 | `/api/cron/refresh-latest-updates` | Daily 02:00 | server | Per-tool "Latest from" refresh (top 50) |
-| 4 | `/api/cron/calculate-viability` | Mon 04:00 | server | Recompute viability score per tool |
-| 5 | `/api/cron/refresh-faqs` | Mon 05:00 | server | Regenerate stale FAQs via DeepSeek |
-| 6 | `/api/cron/resubmit-sitemap-gsc` | Mon 06:00 | server | Tell Google to re-fetch sitemap-index |
-| 7 | `/api/cron/refresh-tools` | Mon 07:00 | server | 15 stalest tools — Phase 4 SOP slice |
-| 8 | `/api/cron/scrape-sentiment` | Sun 04:00 | server | Reddit/HN/G2 sentiment quotes per tool |
-| 9 | `/api/cron/discover-tutorials` | Sun 05:00 | server | YouTube tutorial discovery per tool |
-| 10 | `/api/cron/generate-editorials` | Sun 06:00 | server | Backfill new editorial comparisons |
+| 4 | `/api/cron/refresh-tools` | **Hourly** | server | **200+/day tool refresh — Phase 8 freshness contract** |
+| 5 | `/api/cron/ingest-tools` | 01:00 + 13:00 | server | **50 new tools/day target — Phase 8 freshness contract** |
+| 6 | `/api/cron/refresh-compare-editorials` | Daily 08:00 | server | **Cascade: regen compare editorials when underlying tools refresh** |
+| 7 | `/api/cron/calculate-viability` | Mon 04:00 | server | Recompute viability score per tool |
+| 8 | `/api/cron/refresh-faqs` | Mon 05:00 | server | Regenerate stale FAQs via DeepSeek |
+| 9 | `/api/cron/resubmit-sitemap-gsc` | Mon 06:00 | server | Tell Google to re-fetch sitemap-index |
+| 10 | `/api/cron/scrape-sentiment` | Sun 04:00 | server | Reddit/HN/G2 sentiment quotes per tool |
+| 11 | `/api/cron/discover-tutorials` | Sun 05:00 | server | YouTube tutorial discovery per tool |
+| 12 | `/api/cron/generate-editorials` | Sun 06:00 | server | Backfill new editorial comparisons |
 
 **Plus 1 manual + 1 quarterly pipeline:**
 - `scripts/backfill-tool-data.ts` (Phase 4 SOP full-catalog refresh) — manual monthly via `npm run refresh:apply -- --force`
@@ -134,19 +136,57 @@ This doc is read on Mondays during the weekly review. If a pipeline is failing r
 
 ---
 
-## 7. Refresh tools (`/api/cron/refresh-tools`)
+## 4. Refresh tools — daily 200+ contract (`/api/cron/refresh-tools`)
 
 | Field | Value |
 |---|---|
-| Schedule | Mon 07:00 UTC |
+| Schedule | **Hourly (`0 * * * *`)** |
 | Trigger | Vercel cron |
-| Reads | 15 stalest `tools` by `last_full_refresh_at ASC NULLS FIRST` |
-| Writes | Full Phase 4 SOP — re-scrapes vendor, re-synthesizes 22 fields per tool. Updates `tools.*` |
-| Failure mode | Per-tool: validation fail → keep prior data. Overall: 60-second Vercel timeout caps the batch at 15. |
-| Verification | `select min(last_full_refresh_at) from tools where is_published = true` → should advance ~15 tools/week |
-| Recovery | If catalog goes >60d stale: the weekly cron isn't keeping up. Run manual full SOP: `npm run refresh:apply -- --force` |
+| Reads | 10 stalest `tools` per fire, by `last_verified_at ASC NULLS FIRST` |
+| Writes | 7 fields (description, pricing_type, features[], integrations[], best_for[], not_for[], editorial_verdict) + `last_verified_at` + `github_stars`; audit row in `refresh_logs` |
+| Failure mode | Per-tool: validation fail → keep prior data, log to `refresh_logs.status='failed'`. Overall: 300s timeout caps each fire at ~12 tools. |
+| Verification | `select count(*) from tools where last_verified_at >= now() - interval '24 hours' and is_published = true` → ≥ 200 |
+| Recovery | If 24h count < 100: check Vercel cron logs for ANTHROPIC_API_KEY errors or scraping failures. Fire `?batch=20` manually 5× to clear backlog. |
 
-**Why it exists:** keeps the worst-aged 15 tools rolling. Whole catalog cycles in ~80 weeks at 15/wk, so the manual monthly SOP run is what actually keeps things fresh — this cron is the safety net.
+**Phase 8 freshness contract:** 24 fires × 10 tools = 240 refreshes/day. The full ~1,176 catalog cycles in ~5 days — every tool re-verified at least weekly. Full SOP docs: [`sop-freshness-contract.md`](sop-freshness-contract.md).
+
+**Cost:** ~$5/day ($150/mo) Anthropic.
+
+---
+
+## 5. Ingest new tools (`/api/cron/ingest-tools`)
+
+| Field | Value |
+|---|---|
+| Schedule | **01:00 + 13:00 UTC daily** |
+| Trigger | Vercel cron |
+| Reads | Discovery sources via `lib/cron/discover.ts` (Product Hunt, Futurepedia, GitHub trending, etc.); existing `tools.slug` for dedup |
+| Writes | New `tools` rows (`is_published=true`) + `ingestion_logs` per stage + IndexNow ping per inserted slug |
+| Failure mode | Per-candidate: enrichment fail → logged + skipped. Curation fail (< 2/5 score) → gated + logged. Some days yield < 50 (real net-new < 50 globally — pipeline doesn't force-feed junk). |
+| Verification | `select count(*) from tools where created_at >= now() - interval '24 hours'` → 30-50 |
+| Recovery | If 0 inserts for 2+ days: check `ingestion_logs` for discovery source status. Expand sources in `lib/cron/discover.ts` if needed. |
+
+**Phase 8 freshness contract:** target 50/day; pipeline ceiling 50 per fire × 2 = 100/day. Realistic sustained: 30-50/day.
+
+**Cost:** ~$0.50/day ($15/mo) DeepSeek + Anthropic.
+
+---
+
+## 6. Refresh compare editorials — cascade (`/api/cron/refresh-compare-editorials`)
+
+| Field | Value |
+|---|---|
+| Schedule | **Daily 08:00 UTC** |
+| Trigger | Vercel cron |
+| Reads | `v_stale_comparisons` view (any compare where MAX(tool.last_verified_at) > compare.last_reviewed_at), top 20 by staleness DESC |
+| Writes | `tool_comparisons.{tldr, verdict, feature_analysis, pricing_analysis, use_cases, faqs, last_reviewed_at}` via DeepSeek synthesis |
+| Failure mode | Per-compare: DeepSeek validation fail → keep prior editorial, log in result. Doesn't bump `last_reviewed_at` (so it re-attempts next day). |
+| Verification | `select count(*) from tool_comparisons where last_reviewed_at >= now() - interval '24 hours' and is_editorial = true` → 15-25 |
+| Recovery | If `v_stale_comparisons` count > 1000: backlog isn't draining. Bump `?batch=40` (needs maxDuration bump) or fire twice daily in vercel.json. |
+
+**Why it exists:** Compare pages already render LIVE pricing/integrations/ratings from tools.* (zero lag). But the editorial verdict + feature-analysis text in `tool_comparisons.*` is pre-generated and goes out of sync when tools change. This cascade re-syncs it within ~24-48h of any tool refresh.
+
+**Cost:** ~$0.10/day ($3/mo) DeepSeek.
 
 ---
 
