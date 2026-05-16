@@ -30,6 +30,7 @@ import { loadProfile, saveProfile, profileSummary, type UserProfile } from '@/li
 import { analytics } from '@/lib/analytics'
 import { matchLabel } from '@/lib/plan/match-score'
 import { Settings2, CheckCircle, AlertCircle, Gauge } from 'lucide-react'
+import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 
 type PlanTool = {
   slug: string
@@ -1088,6 +1089,16 @@ export function ProjectPlanner({
               ))}
             </div>
           </div>
+
+          {/* ── Newsletter CTA — plan_completion placement (Phase 7K) ── */}
+          <NewsletterForm
+            source="plan_completion"
+            variant="card"
+            headline="Don't lose this stack"
+            sub="We'll email you when a tool in your stack gets a major update, new pricing tier, or a better alternative."
+            ctaLabel="Email me updates"
+            sourceEntity={query ? `plan:${query.slice(0, 80)}` : undefined}
+          />
 
           {/* ── Footer CTA ── */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/50 to-zinc-900/30 p-5">

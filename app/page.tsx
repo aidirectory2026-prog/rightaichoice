@@ -26,6 +26,7 @@ import { getFeaturedTools } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
 import { categoryIconFor } from '@/lib/icons/category-icon'
+import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 
 const EXAMPLE_STACKS = [
   {
@@ -95,6 +96,15 @@ export default async function HomePage() {
             {/* Goal input → planner (textarea + chips inside the component) */}
             <div className="mt-10 max-w-2xl mx-auto">
               <GoalInput />
+            </div>
+
+            <div className="mt-12 max-w-xl mx-auto">
+              <NewsletterForm
+                source="home_hero"
+                variant="card"
+                headline="One AI tool every Friday"
+                sub="A 60-second editorial pick from across 1,200+ tools we track. Independent, no funnel."
+              />
             </div>
 
             <div className="mt-10 flex justify-center" aria-hidden="true">

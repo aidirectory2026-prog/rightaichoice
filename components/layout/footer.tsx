@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Logo } from '@/components/shared/logo'
+import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 
 // Phase 4.5 audit fix (2026-05-09): re-org from 3 columns
 // (Discover / Editorial / Company) to canonical 4-column structure
@@ -36,6 +37,7 @@ const COMPANY_LINKS: Array<{ href: string; label: string }> = [
 const LEGAL_LINKS: Array<{ href: string; label: string }> = [
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
+  { href: '/unsubscribe', label: 'Unsubscribe' },
 ]
 
 function FooterColumn({
@@ -70,12 +72,22 @@ export function Footer() {
   return (
     <footer className="border-t border-zinc-800 bg-zinc-950 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Brand strip — sits above the link columns so it has room to breathe */}
-        <div className="mb-10 max-w-md">
-          <Logo size="sm" />
-          <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
-            The decision-making engine for discovering AI tools.
-          </p>
+        {/* Brand strip + newsletter capture — sit above the link columns */}
+        <div className="mb-10 grid gap-8 md:grid-cols-2">
+          <div className="max-w-md">
+            <Logo size="sm" />
+            <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
+              The decision-making engine for discovering AI tools.
+            </p>
+          </div>
+          <div>
+            <NewsletterForm
+              source="footer"
+              variant="inline"
+              headline="One AI tool every Friday"
+              sub="A 60-second editorial pick. No filler, no funnel — unsubscribe anytime."
+            />
+          </div>
         </div>
 
         {/* 4 link columns — Product / Resources / Company / Legal */}

@@ -6,6 +6,7 @@ import { CompareProvider } from "@/components/providers/compare-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
 import { websiteJsonLd, organizationJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import "./globals.css";
 
@@ -110,6 +111,7 @@ export default async function RootLayout({
           </AuthProvider>
         </MixpanelProvider>
         <MobileNav />
+        <MobileNewsletterSticky />
       </body>
     </html>
   );
