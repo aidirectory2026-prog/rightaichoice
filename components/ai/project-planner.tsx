@@ -68,6 +68,11 @@ type PlanStage = {
    * unrelated popular tool.
    */
   notInCatalog?: string[]
+  // Phase 9 Stage 2 (2026-05-16): existing-tools build-around.
+  usesExistingTool?: boolean
+  existingToolSlot?: string | null
+  // Phase 9 Stage 4 (2026-05-16): per-stage runner-up reasoning.
+  vsRunnerUp?: string | null
 }
 
 type Plan = {
@@ -80,6 +85,9 @@ type Plan = {
   setupOrder?: string[]
   timeToFirstValue?: string
   riskNote?: string | null
+  // Phase 9 Stage 2 (2026-05-16): integration map between user's existing
+  // tools and the recommended stages they slot into.
+  integratesWithExisting?: Array<{ existingTool: string; atStages: string[] }>
 }
 
 const EXAMPLE_QUERIES = [
@@ -428,6 +436,39 @@ export function ProjectPlanner({
       {/* ─── Plan Result — Dashboard Layout ─── */}
       {plan && !loading && (
         <div className="space-y-6">
+          {/* Phase 9 Stage 2 (2026-05-16): "Built around your stack" banner
+              when the user provided existingTools and the planner used at
+              least one of them. Goes ABOVE the title block so it's the first
+              thing the user sees about how the planner thought about them. */}
+          {(() => {
+            const stages = plan.stages
+            const usedExisting = stages.some((s) => s.usesExistingTool)
+            const integrated = plan.integratesWithExisting ?? []
+            const profileExisting = profile?.existingTools ?? []
+            if (!usedExisting && integrated.length === 0 && profileExisting.length === 0) {
+              return null
+            }
+            const names = (() => {
+              if (integrated.length > 0) return integrated.map((i) => i.existingTool)
+              if (profileExisting.length > 0) return profileExisting
+              return stages.filter((s) => s.existingToolSlot).map((s) => s.existingToolSlot!)
+            })()
+            const uniqueNames = Array.from(new Set(names)).slice(0, 6)
+            return (
+              <div className="mb-5 rounded-xl border border-emerald-700/40 bg-emerald-950/20 p-4 flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-emerald-300">
+                    Built around your stack
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-300">
+                    We slotted in <strong className="text-white">{uniqueNames.join(', ')}</strong> where they already cover the work, then added complementary picks for the gaps.
+                  </p>
+                </div>
+              </div>
+            )
+          })()}
+
           {/* ── Top Bar: Title + Actions ── */}
           <div className="relative overflow-hidden rounded-2xl border border-emerald-900/30 bg-gradient-to-r from-emerald-950/40 via-zinc-900/60 to-zinc-900/40 p-6">
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl" />
@@ -924,6 +965,16 @@ export function ProjectPlanner({
                                       Works with {m}
                                     </span>
                                   ))}
+                                  {/* Phase 9 Stage 2 (2026-05-16): positive
+                                      "you already own this" pill — replaces
+                                      the prior amber WARNING for the same
+                                      condition. Green = "good, no friction". */}
+                                  {tool.matchReasons?.some((r) => r.startsWith('✓ You already own')) && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-700/60 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                      <CheckCircle className="h-2.5 w-2.5" />
+                                      You already own this
+                                    </span>
+                                  )}
                                 </div>
                               )}
 
@@ -934,17 +985,26 @@ export function ProjectPlanner({
                                 </p>
                               )}
 
-                              {/* Match warnings */}
-                              {tool.matchWarnings && tool.matchWarnings.length > 0 && (
-                                <div className="mt-2 space-y-1">
-                                  {tool.matchWarnings.map((w, wi) => (
-                                    <p key={wi} className="text-[11px] text-amber-400/80 flex items-start gap-1">
-                                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                      {w}
-                                    </p>
-                                  ))}
-                                </div>
-                              )}
+                              {/* Match warnings — filter out the legacy
+                                  "You already use this tool" warning since
+                                  Phase 9 Stage 2 renders that as a positive
+                                  green pill above instead. Keeps old cached
+                                  payloads from rendering both signals. */}
+                              {(() => {
+                                const visibleWarnings = (tool.matchWarnings ?? []).filter(
+                                  (w) => !w.toLowerCase().includes('already use this'),
+                                )
+                                return visibleWarnings.length > 0 ? (
+                                  <div className="mt-2 space-y-1">
+                                    {visibleWarnings.map((w, wi) => (
+                                      <p key={wi} className="text-[11px] text-amber-400/80 flex items-start gap-1">
+                                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                        {w}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : null
+                              })()}
 
                               {tool.quickVerdict && (
                                 <p className="mt-2 text-xs text-zinc-400 italic">

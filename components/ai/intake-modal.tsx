@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Sparkles } from 'lucide-react'
 import type { UserProfile, SkillLevel, Budget, TeamSize, Industry, GoalType } from '@/lib/plan/user-profile'
+import { ExistingToolsChipInput } from './existing-tools-chip-input'
 import {
   SKILL_LABELS,
   BUDGET_LABELS,
@@ -29,17 +30,11 @@ const DEFAULT_PROFILE: UserProfile = {
 
 export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
   const [profile, setProfile] = useState<UserProfile>(initial ?? DEFAULT_PROFILE)
-  const [existingToolsText, setExistingToolsText] = useState(
-    (initial?.existingTools ?? []).join(', ')
-  )
+  const [existingTools, setExistingTools] = useState<string[]>(initial?.existingTools ?? [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const tools = existingToolsText
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
-    onSubmit({ ...profile, existingTools: tools })
+    onSubmit({ ...profile, existingTools })
   }
 
   return (
@@ -113,15 +108,16 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             />
           </Field>
 
-          {/* Existing tools */}
-          <Field label="Tools you already use (optional)" hint="Comma-separated, e.g. Notion, Figma, ChatGPT">
-            <input
-              type="text"
-              value={existingToolsText}
-              onChange={(e) => setExistingToolsText(e.target.value)}
-              placeholder="ChatGPT, Notion, Figma…"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-700 focus:outline-none"
-            />
+          {/* Existing tools — Phase 9 Stage 2: chip input + autocomplete
+              from the live catalog. Lets the planner build AROUND the
+              user's stack (slot existing tools into stages, recommend
+              complementary tools for the gaps) instead of recommending
+              duplicates the user already owns. */}
+          <Field
+            label="Tools you already use (optional)"
+            hint="We'll build AROUND these — slot them into the plan + add complementary picks for the gaps."
+          >
+            <ExistingToolsChipInput value={existingTools} onChange={setExistingTools} />
           </Field>
 
           {/* Actions */}

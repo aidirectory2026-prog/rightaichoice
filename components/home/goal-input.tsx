@@ -109,6 +109,13 @@ export function GoalInput() {
             A bit more context helps — at least {MIN_CHARS - trimmed.length} more characters.
           </p>
         )}
+
+        {/* Phase 9 Stage 2 (2026-05-16): primes the user to expect the
+            existing-tools question in the intake modal, so it's not a
+            surprise interruption mid-flow. */}
+        <p className="text-[11px] text-zinc-500 text-center">
+          Already use some AI tools? We'll ask in the next step and build the stack <em>around</em> them.
+        </p>
       </form>
 
       <div className="flex flex-wrap justify-center gap-2">

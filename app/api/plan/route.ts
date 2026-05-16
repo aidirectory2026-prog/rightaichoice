@@ -61,6 +61,20 @@ type PlanStage = {
    * than silently substituting an unrelated popular tool.
    */
   notInCatalog?: string[]
+  /**
+   * Phase 9 Stage 2 (2026-05-16): true when this stage's primary pick is one
+   * of the user's existing tools (i.e. we're using what they already have).
+   * Drives the green "✓ you already own this — slots in at {stageName}" UI.
+   */
+  usesExistingTool?: boolean
+  /** The existing-tool name this stage uses, if usesExistingTool=true. */
+  existingToolSlot?: string | null
+  /**
+   * Phase 9 Stage 4 (2026-05-16): one-sentence justification of why the
+   * primary pick beats the runner-up tool in the same recommendedTools list.
+   * Rendered as a subtle callout below the best-pick card.
+   */
+  vsRunnerUp?: string | null
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert AI project planner for RightAIChoice.
@@ -243,6 +257,52 @@ Rules:
   Better to be honest about a gap than to substitute an unrelated tool.
 - ALWAYS provide at least one recommendedTool per stage. Never omit this field.
 
+## EXISTING-TOOLS RULES (CRITICAL — when the user profile lists existing tools)
+
+If the user profile includes "Already uses: <comma-separated tool names>",
+those are tools the user ALREADY owns and uses. Treat them as constraints
+that shape the recommendation:
+
+1. **NEVER recommend a tool the user already owns** as a stage's PRIMARY
+   pick (the first item in recommendedTools). If a stage's need is already
+   covered by one of their existing tools, the existing tool IS the stage's
+   pick — set \`usesExistingTool: true\` and \`existingToolSlot\` to the
+   existing tool's canonical name (matching what the user typed). Example:
+   user has "Notion" → for a "Documentation" stage, recommend Notion AI as
+   the pick and set usesExistingTool=true.
+
+2. **Prefer complementary tools that integrate** with the user's existing
+   stack. If they use Notion, prefer tools with Notion integrations. If they
+   use Slack, prefer tools with Slack integrations. The 'why' field for the
+   stage should mention the integration explicitly: "Connects to your Notion
+   stack via API."
+
+3. **If a stage's need is PARTIALLY covered by an existing tool, recommend
+   a gap-filler** — not a duplicate of the existing tool. Example: user has
+   ChatGPT (which can write, but is general-purpose) and asks for an email-
+   marketing stack — recommend Beehiiv/Mailchimp (specialist for delivery),
+   not Jasper/Copy.ai (another general writer that duplicates what
+   ChatGPT already does).
+
+4. **Output \`integratesWithExisting\` at the top level** (array, optional)
+   listing the existing tools each stage's pick connects to. Shape:
+   \`[{ existingTool: "Notion", atStages: ["stage-1", "stage-2"] }, ...]\`
+   Omit if no integrations identified. Use the canonical existing-tool name
+   the user provided.
+
+5. **Per-stage \`usesExistingTool\` boolean** (default false). True when the
+   stage's primary pick IS one of the user's existing tools. When true, also
+   set \`existingToolSlot\` to that tool's name. recommendedTools should
+   still list the canonical product name.
+
+6. The \`title\` and \`summary\` should celebrate the build-around when at
+   least one stage uses an existing tool — e.g., "Built around your
+   existing Notion + Slack stack — adds 2 specialist tools for the gaps."
+
+7. **Never penalize or downrank** an existing tool. They've already
+   onboarded; using what they have is HIGHER value than asking them to
+   adopt a new tool that does the same thing.
+
 ## Plan-level fields (in addition to stages)
 
 Beyond title/summary/stages, every plan MUST include these four top-level fields
@@ -283,22 +343,28 @@ page and dramatically improve the user's ability to evaluate the plan at a glanc
 You MUST respond with ONLY valid JSON in this exact structure:
 {
   "title": "Project plan title",
-  "summary": "2-sentence summary that names every goal you detected. If consolidating to one tool, the summary should celebrate that — e.g. 'One subscription covers your entire workflow.'",
+  "summary": "2-sentence summary that names every goal you detected. If consolidating to one tool, the summary should celebrate that — e.g. 'One subscription covers your entire workflow.' If using existingTools, celebrate the build-around — e.g. 'Built around your existing Notion + Slack stack.'",
   "monthlyCostUsd": 50,
   "setupOrder": ["stage-1", "stage-2"],
   "timeToFirstValue": "Within 1 week",
   "riskNote": "Notion AI's pricing is per-seat — costs scale fast above 10 people.",
+  "integratesWithExisting": [
+    {"existingTool": "Notion", "atStages": ["stage-1"]}
+  ],
   "stages": [
     {
       "id": "stage-1",
       "name": "Stage Name (or 'Your Complete AI Workflow' for consolidated single-stage plans)",
       "description": "What happens in this stage. For consolidated stages, explicitly walk through what the tool tier covers (research, drafting, image gen, etc.) and disclose pricing honestly.",
-      "why": "Why this stage is important — for consolidated stages, explain why one tool is enough.",
+      "why": "Why this stage is important — for consolidated stages, explain why one tool is enough. When usesExistingTool=true, explain why their existing tool already covers this slot.",
       "searchQuery": "simple keyword",
       "searchCategory": "optional category slug",
       "recommendedTools": ["ChatGPT", "Beehiiv"],
       "capabilities": ["optional", "array of 3-6 short bullet items naming what the recommended tool covers in this stage. REQUIRED for consolidated single-stage plans. Example: 'Web research via browsing', 'Drafting and reasoning with GPT-4o', 'Image generation via DALL-E 3', 'Spreadsheet analysis'. Omit for narrow specialty stages."],
-      "pricingNote": "optional short string stating the relevant cost when paid tier is needed, e.g. '$20/mo for Plus; free tier covers ~60% (no image gen, smaller model).' Omit when free tier is sufficient."
+      "pricingNote": "optional short string stating the relevant cost when paid tier is needed, e.g. '$20/mo for Plus; free tier covers ~60% (no image gen, smaller model).' Omit when free tier is sufficient.",
+      "usesExistingTool": false,
+      "existingToolSlot": null,
+      "vsRunnerUp": "Optional one-sentence justification of why the primary pick beats the runner-up tool in the same recommendedTools list. Reference cost, integration, or fit. Omit if the stage has only one tool."
     }
   ]
 }
@@ -447,6 +513,7 @@ export async function POST(request: Request) {
                   setupOrder?: string[]
                   timeToFirstValue?: string
                   riskNote?: string | null
+                  integratesWithExisting?: Array<{ existingTool: string; atStages: string[] }>
                 }
                 // Emit outline + enriched instantly from cache. Client hides
                 // WaitingState as soon as `outline` arrives, so this is a
@@ -472,6 +539,9 @@ export async function POST(request: Request) {
                   ...(payload.setupOrder ? { setupOrder: payload.setupOrder } : {}),
                   ...(payload.timeToFirstValue ? { timeToFirstValue: payload.timeToFirstValue } : {}),
                   ...(payload.riskNote !== undefined ? { riskNote: payload.riskNote } : {}),
+                  ...(payload.integratesWithExisting && payload.integratesWithExisting.length > 0
+                    ? { integratesWithExisting: payload.integratesWithExisting }
+                    : {}),
                 })
                 write({ type: 'enriched', stages: payload.stages })
                 mark('cache_lookup_ms', tCache)
@@ -515,7 +585,7 @@ export async function POST(request: Request) {
           })
           mark('decomposition_ms', tDecomposition)
 
-          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string; recommendedTools?: string[] }
+          type RawStage = { id: string; name: string; description: string; why: string; searchQuery?: string; searchCategory?: string; capabilities?: string[]; pricingNote?: string; recommendedTools?: string[]; usesExistingTool?: boolean; existingToolSlot?: string | null; vsRunnerUp?: string | null }
           // Phase 5 plan polish (2026-05-08): added monthlyCostUsd / setupOrder /
           // timeToFirstValue / riskNote so the result UI can render anchor
           // stats. All four are optional in the type — older cached payloads
@@ -529,6 +599,7 @@ export async function POST(request: Request) {
             setupOrder?: string[]
             timeToFirstValue?: string
             riskNote?: string | null
+            integratesWithExisting?: Array<{ existingTool: string; atStages: string[] }>
           }
 
           let plan: RawPlan
@@ -591,6 +662,9 @@ export async function POST(request: Request) {
                 capabilities: stage.capabilities,
                 pricingNote: stage.pricingNote,
                 notInCatalog,
+                usesExistingTool: stage.usesExistingTool ?? false,
+                existingToolSlot: stage.existingToolSlot ?? null,
+                vsRunnerUp: stage.vsRunnerUp ?? null,
               }
             })
           )
@@ -636,6 +710,9 @@ export async function POST(request: Request) {
             ...(stage.notInCatalog && stage.notInCatalog.length > 0
               ? { notInCatalog: stage.notInCatalog }
               : {}),
+            ...(stage.usesExistingTool ? { usesExistingTool: true } : {}),
+            ...(stage.existingToolSlot ? { existingToolSlot: stage.existingToolSlot } : {}),
+            ...(stage.vsRunnerUp ? { vsRunnerUp: stage.vsRunnerUp } : {}),
             tools: stage.toolResults.map((tool) => ({
               slug: tool.slug,
               name: tool.name,
@@ -655,6 +732,9 @@ export async function POST(request: Request) {
             ...(plan.setupOrder ? { setupOrder: plan.setupOrder } : {}),
             ...(plan.timeToFirstValue ? { timeToFirstValue: plan.timeToFirstValue } : {}),
             ...(plan.riskNote !== undefined ? { riskNote: plan.riskNote } : {}),
+            ...(plan.integratesWithExisting && plan.integratesWithExisting.length > 0
+              ? { integratesWithExisting: plan.integratesWithExisting }
+              : {}),
           })
           timings.outline_ms = Math.round(performance.now() - t0)
 
@@ -815,6 +895,9 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
                 ...(plan.setupOrder ? { setupOrder: plan.setupOrder } : {}),
                 ...(plan.timeToFirstValue ? { timeToFirstValue: plan.timeToFirstValue } : {}),
                 ...(plan.riskNote !== undefined ? { riskNote: plan.riskNote } : {}),
+                ...(plan.integratesWithExisting && plan.integratesWithExisting.length > 0
+                  ? { integratesWithExisting: plan.integratesWithExisting }
+                  : {}),
               },
               created_at: new Date().toISOString(),
             },

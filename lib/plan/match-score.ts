@@ -103,14 +103,39 @@ export function computeMatchScore(tool: ToolForScoring, profile: UserProfile): M
     reasons.push(`Works with ${integrationMatches.slice(0, 2).join(', ')}`)
   }
 
-  // ── Not already owned (15 pts) ──────────────────────────────
+  // ── Already-owned-by-user (positive boost, Phase 9 Stage 2 flip) ──
+  // Before 2026-05-16 this was a -15 penalty + amber warning "You already
+  // use this tool" — exactly backwards. A tool the user already owns +
+  // already onboarded onto is HIGHER value than one they'd have to adopt
+  // fresh. We now boost it by +10 and surface it as a positive reason
+  // pill ("✓ You already own this"). The planner prompt (route.ts) also
+  // instructs the LLM to slot existing tools into stages rather than
+  // recommending duplicates, so this path mostly catches edge cases
+  // where the LLM still recommends a duplicate.
   const replaces: string[] = []
   const toolNameLower = tool.name.toLowerCase()
-  const alreadyOwned = userTools.some((ut) => toolNameLower.includes(ut) || ut.includes(toolNameLower))
-  if (!alreadyOwned) {
-    score += 15
+  const alreadyOwned = userTools.some(
+    (ut) => toolNameLower.includes(ut) || ut.includes(toolNameLower),
+  )
+  if (alreadyOwned) {
+    score += 10
+    reasons.push('✓ You already own this')
+    // Track which of the user's existing tools this slot covers — the
+    // UI uses this to render the green "slots in at {stageName}" sub-line.
+    for (const ut of userTools) {
+      if (toolNameLower.includes(ut) || ut.includes(toolNameLower)) {
+        // Find the original-casing entry from profile.existingTools.
+        const original = profile.existingTools.find(
+          (t) => t.toLowerCase().trim() === ut,
+        )
+        if (original) replaces.push(original)
+      }
+    }
   } else {
-    warnings.push('You already use this tool')
+    // Small boost for tools that AREN'T duplicates (rewards fresh picks
+    // that genuinely fill a gap). Smaller than the existing-owned boost
+    // so we don't dwarf the "you already own this" signal.
+    score += 5
   }
 
   // ── Industry fit (10 pts) ───────────────────────────────────
