@@ -691,3 +691,53 @@ h2[id],
 h3[id] {
   scroll-margin-top: 5rem;
 }
+/* ─────────────────────────────────────────────────────────────────
+   Phase 9 Stage 3 (2026-05-16) — Planner result reveal animations.
+
+   The planner used to dump all stages + tool cards at once when the
+   `enriched` stream event landed. Felt static. These keyframes stagger
+   the reveal by index (--rac-idx custom property set inline per card)
+   and add a subtle scale on the winner card so the eye lands on it
+   first. Cap stagger at ~600ms total so users can scroll over the
+   animation without waiting for it to finish.
+   ───────────────────────────────────────────────────────────────── */
+
+@keyframes rac-card-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rac-card-reveal {
+  opacity: 0;
+  animation: rac-card-reveal 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--rac-idx, 0) * 60ms);
+}
+
+@keyframes rac-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.rac-icon-pulse {
+  animation: rac-icon-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rac-card-reveal {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  .rac-icon-pulse {
+    animation: none !important;
+  }
+}

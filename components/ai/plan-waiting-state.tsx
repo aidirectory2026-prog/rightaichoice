@@ -164,7 +164,7 @@ export function PlanWaitingState({ query }: { query: string }) {
         >
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-800/40 bg-emerald-950/50">
-              <TeaserIcon className="h-5 w-5 text-emerald-400" />
+              <TeaserIcon className="h-5 w-5 text-emerald-400 rac-icon-pulse" />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-white">{teaser.title}</div>

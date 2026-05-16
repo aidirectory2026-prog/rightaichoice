@@ -31,6 +31,8 @@ import { analytics } from '@/lib/analytics'
 import { matchLabel } from '@/lib/plan/match-score'
 import { Settings2, CheckCircle, AlertCircle, Gauge } from 'lucide-react'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
+import { PlanQuickWinsStrip } from '@/components/ai/plan-quick-wins-strip'
+import { PlanStickyActions } from '@/components/ai/plan-sticky-actions'
 
 type PlanTool = {
   slug: string
@@ -481,6 +483,15 @@ export function ProjectPlanner({
                     Your AI Stack Plan
                   </span>
                 </div>
+                {/* Phase 9 Stage 3 (2026-05-16): quick-wins strip lands
+                    above the title so the user sees the value (tool count,
+                    cost, time-to-first-value) before reading anything. */}
+                <PlanQuickWinsStrip
+                  stageCount={plan.stages.length}
+                  toolCount={plan.stages.reduce((acc, s) => acc + s.tools.length, 0)}
+                  {...(plan.monthlyCostUsd !== undefined ? { monthlyCostUsd: plan.monthlyCostUsd } : {})}
+                  {...(plan.timeToFirstValue ? { timeToFirstValue: plan.timeToFirstValue } : {})}
+                />
                 <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight tracking-tight">
                   {plan.title}
                 </h2>
@@ -715,7 +726,8 @@ export function ProjectPlanner({
                     <button
                       key={stage.id}
                       onClick={() => setActiveStage(stage.id)}
-                      className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all duration-200 ${
+                      style={{ ['--rac-idx' as string]: i }}
+                      className={`rac-card-reveal w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all duration-200 ${
                         activeStage === stage.id
                           ? 'bg-emerald-950/30 border border-emerald-800/40'
                           : 'border border-transparent hover:bg-zinc-800/30'
@@ -881,14 +893,30 @@ export function ProjectPlanner({
                           </span>
                         </div>
 
+                        {/* Phase 9 Stage 4 (2026-05-16): per-stage "vs the
+                            runner-up" reasoning — surfaces WHY the model
+                            picked tool #1 over tool #2 in 1 sentence. Only
+                            shown when the LLM populates the field + the
+                            stage has ≥2 tools to compare. */}
+                        {currentStage.vsRunnerUp && currentStage.tools.length > 1 && (
+                          <div className="rounded-lg border border-emerald-800/30 bg-emerald-950/10 px-4 py-2.5 text-xs text-emerald-200/90 flex items-start gap-2">
+                            <Trophy className="h-3.5 w-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                            <span>
+                              <strong className="text-emerald-300">Why this over the runner-up:</strong>{' '}
+                              {currentStage.vsRunnerUp}
+                            </span>
+                          </div>
+                        )}
+
                         {currentStage.tools.map((tool, ti) => (
                           <Link
                             key={tool.slug}
                             href={`/tools/${tool.slug}`}
-                            className={`group/card relative flex items-start gap-4 rounded-xl border p-5 transition-all hover:shadow-lg ${
+                            style={{ ['--rac-idx' as string]: ti }}
+                            className={`rac-card-reveal group/card relative flex items-start gap-4 rounded-xl border p-5 transition-all hover:shadow-lg min-w-0 ${
                               ti === 0
-                                ? 'border-emerald-800/40 bg-gradient-to-r from-emerald-950/20 to-zinc-900/20 hover:border-emerald-700/50'
-                                : 'border-zinc-800 bg-zinc-950/20 hover:border-zinc-700'
+                                ? 'border-emerald-700/60 bg-gradient-to-r from-emerald-950/30 to-zinc-900/30 hover:border-emerald-500/70 shadow-lg shadow-emerald-950/30'
+                                : 'border-zinc-800 bg-zinc-950/20 hover:border-zinc-700 opacity-90 hover:opacity-100'
                             }`}
                           >
                             {/* Tool avatar */}
@@ -905,7 +933,7 @@ export function ProjectPlanner({
                             {/* Tool info */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-base font-semibold text-white group-hover/card:text-emerald-400 transition-colors">
+                                <p className="text-base font-semibold text-white group-hover/card:text-emerald-400 transition-colors truncate max-w-full">
                                   {tool.name}
                                 </p>
                                 {ti === 0 && (
@@ -1186,6 +1214,42 @@ export function ProjectPlanner({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Phase 9 Stage 3 (2026-05-16): sticky save/share/re-plan action
+          bar. Floats top-right on desktop, bottom-bar on mobile. Visible
+          only once the user has scrolled past the result hero so it
+          doesn't compete with the in-place top-bar actions on first paint. */}
+      {plan && (
+        <PlanStickyActions
+          onSave={() => {
+            document.querySelector('button[aria-label*="Save"], [data-save-stack]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }}
+          onShare={async () => {
+            const url = typeof window !== 'undefined' ? window.location.href : ''
+            try {
+              if (navigator.share) {
+                await navigator.share({ title: plan.title, text: plan.summary, url })
+              } else {
+                await navigator.clipboard.writeText(url)
+              }
+            } catch {
+              /* user cancelled or clipboard unavailable */
+            }
+          }}
+          onReplan={() => {
+            const el = document.querySelector('[data-variations-pills]')
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            } else {
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+          }}
+          onNewGoal={() => {
+            setPlan(null)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+        />
       )}
     </div>
   )
