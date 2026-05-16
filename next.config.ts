@@ -28,6 +28,28 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
+      // Phase 7O.4 (2026-05-16): /embed/* widgets must be iframable from
+      // any origin (vendor blogs, newsletters). CSP frame-ancestors: *
+      // makes that explicit; X-Frame-Options is set to an invalid value
+      // so browsers (which prefer the more-recent CSP directive when both
+      // are present) fall through to the permissive default.
+      {
+        source: '/embed/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'none'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https://*.supabase.co https://cdn.rightaichoice.com https://www.google.com https://*.gstatic.com",
+              "font-src 'self'",
+              'frame-ancestors *',
+            ].join('; '),
+          },
+        ],
+      },
     ]
   },
   // Phase 1 (2026-05-05): the empty community surfaces (/reviews,
