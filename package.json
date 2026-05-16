@@ -35,7 +35,9 @@
     "latest:dry": "tsx --env-file=.env.local scripts/refresh-latest-updates.ts --dry-run",
     "latest:apply": "tsx --env-file=.env.local scripts/refresh-latest-updates.ts --apply",
     "audit:indexation:dry": "tsx --env-file=.env.local scripts/audit-gsc-indexation.ts --dry-run",
-    "audit:indexation": "tsx --env-file=.env.local scripts/audit-gsc-indexation.ts --apply"
+    "audit:indexation": "tsx --env-file=.env.local scripts/audit-gsc-indexation.ts --apply",
+    "outreach:draft:dry": "tsx --env-file=.env.local scripts/outreach/draft-tool-founder-emails.ts --dry",
+    "outreach:draft": "tsx --env-file=.env.local scripts/outreach/draft-tool-founder-emails.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
