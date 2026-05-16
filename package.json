@@ -39,7 +39,10 @@
     "outreach:draft:dry": "tsx --env-file=.env.local scripts/outreach/draft-tool-founder-emails.ts --dry",
     "outreach:draft": "tsx --env-file=.env.local scripts/outreach/draft-tool-founder-emails.ts",
     "bing:submit:dry": "tsx --env-file=.env.local scripts/submit-urls-bing.ts --dry",
-    "bing:submit": "tsx --env-file=.env.local scripts/submit-urls-bing.ts"
+    "bing:submit": "tsx --env-file=.env.local scripts/submit-urls-bing.ts",
+    "qa:404:dry": "tsx --env-file=.env.local scripts/qa-404-sweep.ts --dry",
+    "qa:404": "tsx --env-file=.env.local scripts/qa-404-sweep.ts",
+    "qa:404:full": "tsx --env-file=.env.local scripts/qa-404-sweep.ts --full"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
