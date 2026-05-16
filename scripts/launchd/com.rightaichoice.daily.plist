@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RightAIChoice — daily growth orchestrator.
+
+  Runs `npm run daily` every weekday at 09:00 local time. Posts a
+  macOS Notification Center alert when complete. Run output is
+  appended to logs/daily-stdout.log + daily-stderr.log so you can
+  review the morning before opening the laptop.
+
+  INSTALL (one-time):
+    cp scripts/launchd/com.rightaichoice.daily.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.rightaichoice.daily.plist
+
+  TEST FIRE (run once now to verify):
+    launchctl start com.rightaichoice.daily
+
+  UNINSTALL:
+    launchctl unload ~/Library/LaunchAgents/com.rightaichoice.daily.plist
+    rm ~/Library/LaunchAgents/com.rightaichoice.daily.plist
+
+  EDIT SCHEDULE:
+    Hour / Minute keys below. To run multiple times per day, swap the
+    StartCalendarInterval dict for an array of dicts.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.rightaichoice.daily</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/tanmay/Desktop/AI Directory/rightaichoice</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/npm</string>
+    <string>run</string>
+    <string>daily</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <!-- Run at 09:00 Mon-Fri local time. Weekday 0=Sun .. 6=Sat (or 7=Sun depending on macOS version; both work). -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+      <key>Weekday</key><integer>1</integer>
+    </dict>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+      <key>Weekday</key><integer>2</integer>
+    </dict>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+      <key>Weekday</key><integer>3</integer>
+    </dict>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+      <key>Weekday</key><integer>4</integer>
+    </dict>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+      <key>Weekday</key><integer>5</integer>
+    </dict>
+  </array>
+
+  <!-- If the Mac is asleep at 09:00, run as soon as it wakes. -->
+  <key>StartCalendarIntervalMissedFire</key>
+  <true/>
+
+  <!-- Don't run more than one instance concurrently if a slow run overlaps the next firing. -->
+  <key>AbandonProcessGroup</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/tanmay/Desktop/AI Directory/rightaichoice/logs/daily-stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/tanmay/Desktop/AI Directory/rightaichoice/logs/daily-stderr.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>

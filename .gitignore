@@ -43,3 +43,5 @@ next-env.d.ts
 # Generated mining + refresh outputs (Phase 4 SOP + Phase 7A keyword mining)
 scripts/.*-progress.json
 scripts/.*-opportunities.json
+scripts/.bing-submit-checkpoint.json
+scripts/.daily-orchestrator-state.json

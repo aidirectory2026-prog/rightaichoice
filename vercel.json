@@ -32,6 +32,10 @@
     {
       "path": "/api/cron/refresh-tools",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/resubmit-sitemap-gsc",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
