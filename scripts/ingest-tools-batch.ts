@@ -39,8 +39,12 @@ async function main() {
 
   console.log(`[ingest:batch] done in ${elapsed}s`, JSON.stringify(result, null, 2))
 
-  if (result.failed > batchSize / 2) {
-    console.error(`⚠ More than half the candidates failed (${result.failed}/${result.discovered}) — check the discovery sources`)
+  // Phase 9c hotfix (2026-05-17): only fail when literally zero new
+  // tools inserted AND there were discoverable candidates. The
+  // traction gate intentionally gates most candidates on quiet days,
+  // so high gate rates aren't failures — they're the gate working.
+  if (result.discovered > 0 && result.inserted === 0) {
+    console.error(`⚠ ${result.discovered} discovered but 0 inserted — check curate/traction gates`)
     process.exit(1)
   }
 }

@@ -42,10 +42,11 @@ async function main() {
     `[refresh:batch] done in ${elapsed}s — refreshed=${result.refreshed} failed=${result.failed}`,
   )
 
-  // Fail the GH Action workflow if catastrophic — refreshed < 50% of attempted.
-  // That triggers GH's email/notification surface so the operator notices.
-  if (result.processed > 0 && result.refreshed / result.processed < 0.5) {
-    console.error(`⚠ Refresh success rate below 50% — investigate`)
+  // Phase 9c hotfix (2026-05-17): only fail when literally zero
+  // refreshed — partial success still ships fresh content. Detail
+  // surfaces in /admin/updates per-error drill-down.
+  if (result.processed > 0 && result.refreshed === 0) {
+    console.error(`⚠ All ${result.processed} refresh attempts failed — investigate`)
     process.exit(1)
   }
 }

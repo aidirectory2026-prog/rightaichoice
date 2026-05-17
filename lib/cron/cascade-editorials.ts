@@ -15,22 +15,28 @@ import { z } from 'zod'
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 const DEEPSEEK_MODEL = 'deepseek-chat'
 
+// Phase 9c hotfix (2026-05-17): bumped caps after observed DeepSeek
+// natural output lengths blew past prior limits (feature_analysis
+// ~1400-1700 chars, pricing_analysis ~1100-1300). Old caps caused
+// 8/15 = 53% validation failures on a real run, which tripped the
+// batch script's exit threshold and marked the whole job failed in GH
+// Actions. New caps give DeepSeek headroom without bloating the page.
 const editorialSchema = z.object({
   tldr: z.array(z.object({
-    dimension: z.string().max(60),
-    values: z.record(z.string(), z.string().max(180)),
+    dimension: z.string().max(80),
+    values: z.record(z.string(), z.string().max(240)),
   })).max(6),
-  verdict: z.string().max(800),
-  feature_analysis: z.string().max(1200),
-  pricing_analysis: z.string().max(1000),
+  verdict: z.string().max(1000),
+  feature_analysis: z.string().max(2000),
+  pricing_analysis: z.string().max(1500),
   use_cases: z.array(z.object({
-    persona: z.string().max(100),
+    persona: z.string().max(120),
     recommendedSlug: z.string(),
-    reasoning: z.string().max(280),
+    reasoning: z.string().max(400),
   })).max(5),
   faqs: z.array(z.object({
-    question: z.string().max(160),
-    answer: z.string().max(500),
+    question: z.string().max(200),
+    answer: z.string().max(700),
   })).max(8),
 })
 
@@ -89,7 +95,15 @@ function buildPrompt(toolA: ToolFacts, toolB: ToolFacts): string {
   ].join('\n')
 }
 
-async function callDeepSeek(toolA: ToolFacts, toolB: ToolFacts): Promise<string> {
+async function callDeepSeek(
+  toolA: ToolFacts,
+  toolB: ToolFacts,
+  correction?: string,
+): Promise<string> {
+  const userBase = buildPrompt(toolA, toolB)
+  const user = correction
+    ? `${userBase}\n\n---\nPrev attempt failed validation: ${correction}\nReturn STRICT JSON matching the exact schema — fewer chars per field is fine, exceeding the max is not.`
+    : userBase
   const res = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: {
@@ -102,7 +116,7 @@ async function callDeepSeek(toolA: ToolFacts, toolB: ToolFacts): Promise<string>
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildPrompt(toolA, toolB) },
+        { role: 'user', content: user },
       ],
     }),
   })
@@ -131,19 +145,29 @@ async function regenOne(
   }
   const [toolA, toolB] = data as ToolFacts[]
 
-  let raw: string
-  try {
-    raw = await callDeepSeek(toolA, toolB)
-  } catch (err) {
-    return { ok: false, error: (err as Error).message }
+  // Phase 9c hotfix (2026-05-17): single corrective retry on validation
+  // fail. Same pattern as planner + refresh — DeepSeek often returns
+  // valid JSON on attempt 2 when we feed back the specific error.
+  let parsed: EditorialOut | null = null
+  let lastErr = ''
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    let raw: string
+    try {
+      raw = await callDeepSeek(toolA, toolB, attempt === 2 ? lastErr : undefined)
+    } catch (err) {
+      lastErr = (err as Error).message
+      continue
+    }
+    const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
+    try {
+      parsed = editorialSchema.parse(JSON.parse(stripped))
+      break
+    } catch (err) {
+      lastErr = (err as Error).message.slice(0, 300)
+    }
   }
-
-  const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
-  let parsed: EditorialOut
-  try {
-    parsed = editorialSchema.parse(JSON.parse(stripped))
-  } catch (err) {
-    return { ok: false, error: `validation: ${(err as Error).message.slice(0, 200)}` }
+  if (!parsed) {
+    return { ok: false, error: `validation: ${lastErr.slice(0, 200)}` }
   }
 
   const { error: updateErr } = await supabase

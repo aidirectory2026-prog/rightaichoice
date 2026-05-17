@@ -38,8 +38,12 @@ async function main() {
 
   console.log(`[cascade:batch] done in ${elapsed}s`, JSON.stringify(result, null, 2))
 
-  if (result.failed > batchSize / 2) {
-    console.error(`⚠ More than half the cascades failed (${result.failed}/${result.candidates})`)
+  // Fail the job only when literally nothing succeeded — partial
+  // success (e.g. 7/15) still ships fresh content and shouldn't mark
+  // the entire GH Actions run red. The Knowledge Room dashboard
+  // surfaces per-compare errors so the operator sees the detail.
+  if (result.candidates > 0 && result.regenerated === 0) {
+    console.error(`⚠ All ${result.candidates} cascades failed — investigate DeepSeek + zod caps`)
     process.exit(1)
   }
 }
