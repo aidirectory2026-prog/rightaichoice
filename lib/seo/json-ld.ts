@@ -25,7 +25,19 @@ export function organizationJsonLd() {
     '@type': 'Organization',
     name: 'RightAIChoice',
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.svg`,
+    // Phase 9c (2026-05-17): use PNG for the knowledge-panel logo. Google's
+    // Organization-logo schema strongly prefers raster (SVG support is
+    // partial). The full ImageObject shape (with dimensions) maximizes the
+    // chance of the logo appearing in the SERP brand card. Hosted in
+    // /public so /logo-512.png returns 200 (was 404 before this commit —
+    // the JSON-LD pointed at /logo.svg which didn't exist on disk).
+    logo: {
+      '@type': 'ImageObject',
+      url: `${BASE_URL}/logo-512.png`,
+      width: 512,
+      height: 512,
+    },
+    image: `${BASE_URL}/logo-512.png`,
     description:
       'RightAIChoice is the decision engine for AI tools — independent reviews, side-by-side comparisons, viability scores, and a custom-stack planner. Built by editors, not by vendors.',
     sameAs: [

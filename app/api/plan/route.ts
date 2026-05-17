@@ -946,19 +946,17 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
             stack: err instanceof Error ? err.stack?.split('\n').slice(0, 4).join(' | ') : undefined,
             hasDeepSeekKey: Boolean(process.env.DEEPSEEK_API_KEY),
           }))
-          // Phase 9 Stage 5 diag-v2 (2026-05-17): leak the upstream error
-          // into the user-visible response (truncated) so we can diagnose
-          // without Vercel log access. Reverts to opaque messages once
-          // the planner is verified working.
-          const keyTail = (process.env.DEEPSEEK_API_KEY ?? '').slice(-4) || 'NONE'
-          const keyLen = (process.env.DEEPSEEK_API_KEY ?? '').length
-          const diagSuffix = ` [diag: keyLen=${keyLen} keyTail=...${keyTail} err="${rawMessage.slice(0, 180)}"]`
+          // Phase 9c (2026-05-17): user-visible message is opaque (no key
+          // tail / no raw upstream error leaked). The [plan_route_error]
+          // line above is what the operator reads in Vercel logs for
+          // diagnostics. Diag-v2 surface leak removed now that planner
+          // is verified working end-to-end.
           if (rawMessage.includes('missing DEEPSEEK_API_KEY')) {
-            closeWithError(503, `AI service unavailable (config).${diagSuffix}`)
+            closeWithError(503, 'AI service unavailable. Please try again later.')
           } else if (rawMessage.includes('credit balance') || rawMessage.includes('billing') || rawMessage.includes('authentication') || rawMessage.includes('401')) {
-            closeWithError(503, `AI service temporarily unavailable.${diagSuffix}`)
+            closeWithError(503, 'AI service temporarily unavailable. Please try again later.')
           } else {
-            closeWithError(500, `Something went wrong.${diagSuffix}`)
+            closeWithError(500, 'Something went wrong. Please try again.')
           }
         }
       },
