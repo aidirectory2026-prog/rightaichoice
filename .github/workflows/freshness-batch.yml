@@ -1,0 +1,162 @@
+name: Freshness Batch Pipelines
+
+# Phase 9b (2026-05-17): heavy freshness work moved from Vercel cron
+# (bounded by 60s Hobby / 300s Pro function timeout) to GH Actions
+# (6-hour job budget). Same code, same DeepSeek API, same DB writes —
+# just lifted out of the serverless timeout box so we can refresh
+# 200+ tools per nightly job instead of ~10 per Vercel fire.
+#
+# REQUIRED REPO SECRETS (Settings → Secrets and variables → Actions → New repository secret)
+#   - NEXT_PUBLIC_SUPABASE_URL       (same value as Vercel env)
+#   - SUPABASE_SERVICE_ROLE_KEY      (same value as Vercel env)
+#   - DEEPSEEK_API_KEY               (same value as Vercel env)
+#   - ANTHROPIC_API_KEY              (still used by curate gate inside ingest)
+#   - APIFY_TOKEN                    (used by refresh-latest-updates)
+#
+# Manual trigger any job via the "Run workflow" button in the Actions
+# tab — useful when you want to force-fire after operator intervention
+# (vendor URL change, prompt tune, etc).
+
+on:
+  schedule:
+    # Refresh 200 stalest tools — daily 02:00 UTC
+    - cron: '0 2 * * *'
+    # Refresh "Latest from" data for top 50 tools — daily 03:00 UTC
+    - cron: '0 3 * * *'
+    # Ingest 50 trending new tools — daily 04:00 UTC
+    - cron: '0 4 * * *'
+    # Regenerate stale compare editorials — daily 05:00 UTC
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Which pipeline to fire'
+        required: true
+        type: choice
+        options:
+          - refresh-tools-batch
+          - refresh-latest-updates
+          - ingest-tools-batch
+          - cascade-batch
+          - all
+      batch_size:
+        description: 'Override default batch size (optional, blank = pipeline default)'
+        required: false
+        type: string
+        default: ''
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ── Refresh 200 stalest tools nightly ──────────────────────────────
+  refresh-tools:
+    if: >-
+      github.event.schedule == '0 2 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'refresh-tools-batch' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Refresh tools (DeepSeek)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
+        run: |
+          if [ -n "$BATCH_SIZE" ]; then
+            npx tsx scripts/refresh-tools-batch.ts --batch="$BATCH_SIZE"
+          else
+            npx tsx scripts/refresh-tools-batch.ts
+          fi
+
+  # ── Refresh top-50 tools' "Latest from" data nightly ───────────────
+  refresh-latest-updates:
+    if: >-
+      github.event.schedule == '0 3 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'refresh-latest-updates' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Refresh latest-updates
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: npx tsx scripts/refresh-latest-updates.ts --apply
+
+  # ── Ingest 50 trending new tools nightly ───────────────────────────
+  ingest-tools:
+    if: >-
+      github.event.schedule == '0 4 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'ingest-tools-batch' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Ingest new tools (traction-gated)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
+        run: |
+          if [ -n "$BATCH_SIZE" ]; then
+            npx tsx scripts/ingest-tools-batch.ts --batch="$BATCH_SIZE"
+          else
+            npx tsx scripts/ingest-tools-batch.ts
+          fi
+
+  # ── Regenerate stale compare editorials nightly ────────────────────
+  cascade-editorials:
+    if: >-
+      github.event.schedule == '0 5 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'cascade-batch' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Regenerate compare editorials
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
+        run: |
+          if [ -n "$BATCH_SIZE" ]; then
+            npx tsx scripts/refresh-compare-editorials-batch.ts --batch="$BATCH_SIZE"
+          else
+            npx tsx scripts/refresh-compare-editorials-batch.ts
+          fi

@@ -1,11 +1,14 @@
 name: Automation Pipelines
 
+# Phase 9b (2026-05-17): `ingest-tools` and `refresh-tools` jobs moved
+# to .github/workflows/freshness-batch.yml — those now run the batch
+# scripts directly inside GH Actions runners (200-tool batches) rather
+# than curling the Vercel route (capped at ~10 tools by function
+# timeout). This file keeps the lightweight curl-to-Vercel jobs that
+# fit comfortably in the Vercel function budget.
+
 on:
   schedule:
-    # Ingest new tools — daily at 2:00 AM UTC
-    - cron: '0 2 * * *'
-    # Refresh tool data — every 3 days at 4:00 AM UTC
-    - cron: '0 4 */3 * *'
     # Refresh FAQs — every 2 days at 6:00 AM UTC
     - cron: '0 6 */2 * *'
     # Generate editorials — Mondays at 5:00 AM UTC
@@ -25,8 +28,6 @@ on:
         required: true
         type: choice
         options:
-          - ingest-tools
-          - refresh-tools
           - refresh-faqs
           - generate-editorials
           - discover-tutorials
@@ -39,42 +40,6 @@ env:
   BASE_URL: https://rightaichoice.com
 
 jobs:
-  ingest-tools:
-    if: >-
-      github.event.schedule == '0 2 * * *' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'ingest-tools' || github.event.inputs.pipeline == 'all'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ingest new AI tools
-        run: |
-          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/ingest-tools" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          body=$(echo "$result" | sed '$d')
-          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
-          echo "Response code: $code"
-          echo "Response body: $body"
-          if [ "$code" != "200" ]; then exit 1; fi
-
-  refresh-tools:
-    if: >-
-      github.event.schedule == '0 4 */3 * *' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'refresh-tools' || github.event.inputs.pipeline == 'all'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Refresh tool data
-        run: |
-          result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/refresh-tools" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          body=$(echo "$result" | sed '$d')
-          code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
-          echo "Response code: $code"
-          echo "Response body: $body"
-          if [ "$code" != "200" ]; then exit 1; fi
-
   refresh-faqs:
     if: >-
       github.event.schedule == '0 6 */2 * *' ||
@@ -82,10 +47,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Refresh FAQs from social sources
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/refresh-faqs" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/cron/refresh-faqs" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
@@ -100,10 +67,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate editorial content
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/generate-editorials" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/cron/generate-editorials" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
@@ -118,10 +87,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Discover YouTube tutorials
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/discover-tutorials" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/cron/discover-tutorials" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
@@ -136,10 +107,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Submit all URLs to IndexNow
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/indexnow" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/indexnow" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
@@ -154,10 +127,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Submit recently-seeded URLs to IndexNow
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/indexnow-recent" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/cron/indexnow-recent" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
@@ -172,10 +147,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Calculate viability scores
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           result=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
-            "${{ env.BASE_URL }}/api/cron/calculate-viability" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/cron/calculate-viability" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
           body=$(echo "$result" | sed '$d')
           code=$(echo "$result" | grep "HTTP_CODE:" | cut -d: -f2)
