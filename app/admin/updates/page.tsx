@@ -1,164 +1,604 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { TrendingUp, RefreshCw, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
+import {
+  TrendingUp,
+  RefreshCw,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  Search,
+  Bookmark,
+  Mail,
+  GitBranch,
+  ExternalLink,
+  Activity,
+  Layers,
+} from 'lucide-react'
+
+// /admin/updates — the "knowledge room"
+// One page, one purpose: tell the operator what users and pipelines did
+// over the selected period, with full drill-down on errors. Live-fetched
+// on every request (force-dynamic) — no caching. Every section uses
+// indexed Supabase queries; whole page typically renders in <1s.
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Daily updates — Admin' }
+export const revalidate = 0
+export const metadata = { title: 'Knowledge Room — Admin' }
 
-type DailyRow = {
-  utc_date: string
-  tools_refreshed: number
-  tools_refresh_failed: number
-  tools_ingested: number
-  tools_ingest_gated: number
-  tools_ingest_failed: number
-  compares_regenerated: number
-  compares_cascade_failed: number
-  tools_latest_updates_refreshed: number
-  bing_urls_submitted: number
-  refreshed_slugs_sample: string[]
-  ingested_slugs_sample: string[]
-  cascaded_slugs_sample: string[]
-  total_published_tools: number | null
-  oldest_last_verified_at: string | null
-  cascade_backlog: number | null
-  health_flags: Record<string, boolean | string>
+type RangeKey = 'today' | '7d' | '30d'
+const RANGE_LABELS: Record<RangeKey, string> = {
+  today: 'Today (24h)',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+}
+const RANGE_HOURS: Record<RangeKey, number> = {
+  today: 24,
+  '7d': 24 * 7,
+  '30d': 24 * 30,
+}
+
+function pickRange(raw: string | undefined): RangeKey {
+  if (raw === '7d' || raw === '30d') return raw
+  return 'today'
+}
+
+function rangeCutoffISO(range: RangeKey): string {
+  return new Date(Date.now() - RANGE_HOURS[range] * 60 * 60 * 1000).toISOString()
+}
+
+function ago(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const diffMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (diffMin < 1) return 'just now'
+  if (diffMin < 60) return `${diffMin}m ago`
+  const h = Math.floor(diffMin / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  return `${d}d ago`
+}
+
+// ── GitHub Actions runs fetcher (server-side) ──────────────────────
+// Optional: when GITHUB_REPO_TOKEN is set in Vercel env, we pull the
+// last 10 runs per workflow. Without the token we still render the
+// section but link out to GitHub Actions UI.
+type GhRun = {
+  id: number
+  name: string
+  status: string
+  conclusion: string | null
+  display_title: string
+  event: string
   created_at: string
+  updated_at: string
+  html_url: string
 }
 
-function daysAgo(iso: string): string {
-  const diff = (Date.now() - new Date(iso).getTime()) / 86_400_000
-  if (diff < 1) return 'today'
-  if (diff < 2) return 'yesterday'
-  return `${Math.floor(diff)}d ago`
-}
-
-export default async function UpdatesPage() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('daily_update_summaries')
-    .select('*')
-    .order('utc_date', { ascending: false })
-    .limit(60)
-
-  if (error) {
-    return (
-      <div className="text-zinc-300">
-        <h1 className="text-2xl font-bold text-white mb-2">Daily updates</h1>
-        <p className="text-sm text-rose-400">
-          daily_update_summaries table not found — apply migration 089 first.
-        </p>
-      </div>
+async function fetchGhRuns(workflowFile: string, limit = 8): Promise<GhRun[]> {
+  const token = process.env.GITHUB_REPO_TOKEN
+  if (!token) return []
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/aidirectory2026-prog/rightaichoice/actions/workflows/${workflowFile}/runs?per_page=${limit}`,
+      {
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: 'application/vnd.github+json',
+        },
+        next: { revalidate: 0 },
+      },
     )
+    if (!res.ok) return []
+    const json = (await res.json()) as { workflow_runs?: GhRun[] }
+    return json.workflow_runs ?? []
+  } catch {
+    return []
   }
+}
 
-  const rows = (data ?? []) as DailyRow[]
-  const today = rows[0]
+export default async function KnowledgeRoom({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>
+}) {
+  const sp = await searchParams
+  const range = pickRange(sp.range)
+  const cutoff = rangeCutoffISO(range)
+  const supabase = await createClient()
+
+  // ── Parallel-fan-out all queries; every one is small + indexed ───
+  const [
+    catalogStats,
+    pageViewsStats,
+    topTools,
+    searchStats,
+    topSearches,
+    saves,
+    plansSaved,
+    newsletterSignups,
+    referringDomains,
+    outreachStats,
+    refreshLogsByStatus,
+    refreshErrors,
+    ingestionByStatus,
+    ingestionErrors,
+    cascadeRecent,
+    dailyHistory,
+    ghFreshness,
+    ghCronPipelines,
+  ] = await Promise.all([
+    // Catalog
+    (async () => {
+      const [pub, stalest, backlog, neverRefreshed, withLatest] = await Promise.all([
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('is_published', true),
+        supabase.from('tools').select('last_verified_at').eq('is_published', true).not('last_verified_at', 'is', null).order('last_verified_at', { ascending: true }).limit(1).single(),
+        supabase.from('v_stale_comparisons').select('comparison_id', { count: 'exact', head: true }),
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('is_published', true).is('last_verified_at', null),
+        supabase.from('tools').select('id', { count: 'exact', head: true }).eq('is_published', true).not('latest_updates_at', 'is', null),
+      ])
+      return {
+        published: pub.count ?? 0,
+        stalest: (stalest.data as { last_verified_at: string } | null)?.last_verified_at ?? null,
+        cascadeBacklog: backlog.count ?? 0,
+        neverRefreshed: neverRefreshed.count ?? 0,
+        withLatest: withLatest.count ?? 0,
+      }
+    })(),
+
+    // Page views (count + unique tools)
+    supabase
+      .from('page_views')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff)
+      .then((r) => ({ total: r.count ?? 0 })),
+
+    // Top viewed tools (period) — group by tool_id then resolve
+    supabase
+      .from('page_views')
+      .select('tool_id')
+      .gte('created_at', cutoff)
+      .not('tool_id', 'is', null)
+      .limit(2000)
+      .then(async (r) => {
+        const counts: Record<string, number> = {}
+        for (const row of (r.data ?? []) as { tool_id: string }[]) {
+          counts[row.tool_id] = (counts[row.tool_id] ?? 0) + 1
+        }
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8)
+        const ids = top.map((t) => t[0])
+        const tools = ids.length
+          ? await supabase.from('tools').select('id, slug, name').in('id', ids).then((rr) => rr.data ?? [])
+          : []
+        const lookup = new Map((tools as { id: string; slug: string; name: string }[]).map((t) => [t.id, t]))
+        return top.map(([id, count]) => ({ id, count, tool: lookup.get(id) ?? null }))
+      }),
+
+    // Search total
+    supabase
+      .from('search_logs')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff)
+      .then((r) => ({ total: r.count ?? 0 })),
+
+    // Top search queries
+    supabase
+      .from('search_logs')
+      .select('query, result_count')
+      .gte('created_at', cutoff)
+      .limit(2000)
+      .then((r) => {
+        const counts: Record<string, { count: number; zeroResult: number }> = {}
+        for (const row of (r.data ?? []) as { query: string; result_count: number }[]) {
+          const q = (row.query ?? '').trim().toLowerCase()
+          if (!q) continue
+          if (!counts[q]) counts[q] = { count: 0, zeroResult: 0 }
+          counts[q].count++
+          if (!row.result_count || row.result_count === 0) counts[q].zeroResult++
+        }
+        return Object.entries(counts)
+          .sort((a, b) => b[1].count - a[1].count)
+          .slice(0, 10)
+          .map(([q, v]) => ({ query: q, count: v.count, zeroResult: v.zeroResult }))
+      }),
+
+    // Saves
+    supabase
+      .from('user_saved_tools')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff)
+      .then((r) => r.count ?? 0),
+
+    // Plans (saved stacks)
+    supabase
+      .from('saved_stacks')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff)
+      .then((r) => r.count ?? 0),
+
+    // Newsletter signups
+    supabase
+      .from('newsletter_subscribers')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff)
+      .then((r) => r.count ?? 0),
+
+    // Referring domains
+    supabase
+      .from('referring_domains')
+      .select('id', { count: 'exact', head: true })
+      .gte('first_seen_at', cutoff)
+      .then((r) => r.count ?? 0),
+
+    // Outreach stats
+    supabase
+      .from('outreach_log')
+      .select('id, sent_at, response')
+      .gte('drafted_at', cutoff)
+      .limit(1000)
+      .then((r) => {
+        const rows = (r.data ?? []) as Array<{ sent_at: string | null; response: string | null }>
+        return {
+          drafted: rows.length,
+          sent: rows.filter((x) => x.sent_at).length,
+          replies: rows.filter((x) => x.response).length,
+        }
+      }),
+
+    // Refresh logs grouped by status
+    supabase
+      .from('refresh_logs')
+      .select('status')
+      .gte('created_at', cutoff)
+      .limit(5000)
+      .then((r) => {
+        const counts: Record<string, number> = {}
+        for (const row of (r.data ?? []) as { status: string }[]) {
+          counts[row.status] = (counts[row.status] ?? 0) + 1
+        }
+        return counts
+      }),
+
+    // Refresh errors (last 8)
+    supabase
+      .from('refresh_logs')
+      .select('tool_slug, error_message, created_at')
+      .eq('status', 'failed')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(8)
+      .then((r) => (r.data ?? []) as Array<{ tool_slug: string; error_message: string; created_at: string }>),
+
+    // Ingestion stages
+    supabase
+      .from('ingestion_logs')
+      .select('status')
+      .gte('created_at', cutoff)
+      .limit(5000)
+      .then((r) => {
+        const counts: Record<string, number> = {}
+        for (const row of (r.data ?? []) as { status: string }[]) {
+          counts[row.status] = (counts[row.status] ?? 0) + 1
+        }
+        return counts
+      }),
+
+    // Ingestion errors (last 8)
+    supabase
+      .from('ingestion_logs')
+      .select('tool_name, status, error_message, created_at, source')
+      .in('status', ['failed', 'gated'])
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(8)
+      .then((r) => (r.data ?? []) as Array<{ tool_name: string; status: string; error_message: string; source: string; created_at: string }>),
+
+    // Cascade-regenerated compares (recent)
+    supabase
+      .from('tool_comparisons')
+      .select('slug, last_reviewed_at')
+      .eq('is_editorial', true)
+      .gte('last_reviewed_at', cutoff)
+      .order('last_reviewed_at', { ascending: false })
+      .limit(20)
+      .then((r) => (r.data ?? []) as Array<{ slug: string; last_reviewed_at: string }>),
+
+    // Daily history (60 days)
+    supabase
+      .from('daily_update_summaries')
+      .select('*')
+      .order('utc_date', { ascending: false })
+      .limit(60)
+      .then((r) => r.data ?? []),
+
+    // GitHub Actions: Freshness Batch
+    fetchGhRuns('freshness-batch.yml', 8),
+
+    // GitHub Actions: Automation Pipelines (light curl jobs)
+    fetchGhRuns('cron-pipelines.yml', 8),
+  ])
+
+  // ── Pipeline tallies ──────────────────────────────────────────────
+  const refreshOk = refreshLogsByStatus['refreshed'] ?? 0
+  const refreshFailed = refreshLogsByStatus['failed'] ?? 0
+  const ingestOk = ingestionByStatus['discovered'] ?? 0
+  const ingestGated = ingestionByStatus['gated'] ?? 0
+  const ingestFailed = ingestionByStatus['failed'] ?? 0
+  const ingestDup = ingestionByStatus['duplicate'] ?? 0
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Daily updates log</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Every refresh, ingest, and cascade across all Phase 8 pipelines.
-          Written by <code className="text-emerald-400">/api/cron/snapshot-daily-updates</code>{' '}
-          at 23:55 UTC nightly. Counts are UTC-day-scoped (open interval, not 24h sliding).
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Knowledge Room</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Real-time activity + pipeline results + errors. Live-fetched every request.
+          </p>
+        </div>
+        <RangePicker active={range} />
       </div>
 
-      {/* Today's row hero */}
-      {today ? (
-        <section className="mb-10 rounded-xl border border-emerald-800/40 bg-emerald-950/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-emerald-300">
-              Today · {today.utc_date}
-            </h2>
-            <span className="text-xs text-zinc-500">
-              snapshot: {daysAgo(today.created_at)}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-            <Stat icon={<RefreshCw className="h-4 w-4" />} label="Refreshed" value={today.tools_refreshed} sub={`${today.tools_refresh_failed} failed`} />
-            <Stat icon={<Plus className="h-4 w-4" />} label="New tools" value={today.tools_ingested} sub={`${today.tools_ingest_gated} gated`} />
-            <Stat icon={<TrendingUp className="h-4 w-4" />} label="Compares re-edited" value={today.compares_regenerated} sub="cascade" />
-            <Stat icon={<RefreshCw className="h-4 w-4" />} label="Latest-updates" value={today.tools_latest_updates_refreshed} sub="top-50 tools" />
-            <Stat icon={<TrendingUp className="h-4 w-4" />} label="Bing pushed" value={today.bing_urls_submitted} sub="direct API" />
-            <Stat icon={<CheckCircle2 className="h-4 w-4" />} label="Catalog" value={today.total_published_tools ?? 0} sub={`stalest: ${today.oldest_last_verified_at ? daysAgo(today.oldest_last_verified_at) : '—'}`} />
-          </div>
+      {/* ── 1. CATALOG STATE (always today) ─────────────────────── */}
+      <Section title="Catalog state" icon={<Layers className="h-4 w-4 text-emerald-400" />}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+          <Stat label="Published tools" value={catalogStats.published.toLocaleString()} />
+          <Stat label="Stalest tool" value={ago(catalogStats.stalest)} />
+          <Stat label="Cascade backlog" value={catalogStats.cascadeBacklog.toLocaleString()} sub="compares needing review" />
+          <Stat label="Never refreshed" value={catalogStats.neverRefreshed.toLocaleString()} />
+          <Stat label="With latest_updates" value={catalogStats.withLatest.toLocaleString()} sub={`of ${catalogStats.published}`} />
+        </div>
+      </Section>
 
-          {Object.keys(today.health_flags ?? {}).length > 0 && (
-            <div className="mt-4 rounded-lg border border-rose-800/40 bg-rose-950/20 p-3 text-sm text-rose-300 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <div>
-                <strong>Health flags raised:</strong>{' '}
-                {Object.keys(today.health_flags).join(', ')}
+      {/* ── 2. USER ACTIVITY (period-scoped) ──────────────────── */}
+      <Section
+        title={`User activity · ${RANGE_LABELS[range]}`}
+        icon={<Activity className="h-4 w-4 text-cyan-400" />}
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+          <Stat icon={<Eye className="h-4 w-4" />} label="Page views" value={pageViewsStats.total.toLocaleString()} />
+          <Stat icon={<Search className="h-4 w-4" />} label="Searches" value={searchStats.total.toLocaleString()} />
+          <Stat icon={<Bookmark className="h-4 w-4" />} label="Tool saves" value={saves.toLocaleString()} />
+          <Stat icon={<Layers className="h-4 w-4" />} label="Plans saved" value={plansSaved.toLocaleString()} />
+          <Stat icon={<Mail className="h-4 w-4" />} label="Newsletter" value={newsletterSignups.toLocaleString()} />
+          <Stat icon={<TrendingUp className="h-4 w-4" />} label="New RDs" value={referringDomains.toLocaleString()} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Top viewed tools */}
+          <Panel title="Top viewed tools">
+            {topTools.length === 0 ? (
+              <Empty>No page views in this window</Empty>
+            ) : (
+              <ol className="space-y-1.5">
+                {topTools.map((t, i) => (
+                  <li key={t.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] text-zinc-500 tabular-nums w-5">{i + 1}.</span>
+                      {t.tool ? (
+                        <Link href={`/tools/${t.tool.slug}`} target="_blank" className="text-zinc-200 hover:text-emerald-300 truncate">
+                          {t.tool.name}
+                        </Link>
+                      ) : (
+                        <span className="text-zinc-500 italic">unknown tool</span>
+                      )}
+                    </span>
+                    <span className="text-xs text-zinc-400 tabular-nums shrink-0">{t.count}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
+
+          {/* Top searches */}
+          <Panel title="Top search queries">
+            {topSearches.length === 0 ? (
+              <Empty>No searches yet</Empty>
+            ) : (
+              <ol className="space-y-1.5">
+                {topSearches.map((s, i) => (
+                  <li key={s.query} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] text-zinc-500 tabular-nums w-5">{i + 1}.</span>
+                      <Link href={`/search?q=${encodeURIComponent(s.query)}`} target="_blank" className="text-zinc-200 hover:text-emerald-300 truncate">
+                        {s.query}
+                      </Link>
+                      {s.zeroResult > 0 && (
+                        <span className="text-[10px] text-amber-400" title={`${s.zeroResult} zero-result hits`}>
+                          ⚠ {s.zeroResult}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-xs text-zinc-400 tabular-nums shrink-0">{s.count}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
+        </div>
+
+        <div className="mt-4 text-xs text-zinc-500">
+          <strong className="text-zinc-400">Outreach this period:</strong>{' '}
+          {outreachStats.drafted} drafted · {outreachStats.sent} sent · {outreachStats.replies} replies
+        </div>
+      </Section>
+
+      {/* ── 3. PIPELINE RESULTS (period-scoped) ────────────────── */}
+      <Section
+        title={`Pipeline results · ${RANGE_LABELS[range]}`}
+        icon={<RefreshCw className="h-4 w-4 text-amber-400" />}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Panel
+            title="Tool refresh (DeepSeek SOP)"
+            right={
+              <span className="text-xs text-zinc-400">
+                <span className="text-emerald-400">{refreshOk}</span> ok ·{' '}
+                <span className="text-rose-400">{refreshFailed}</span> failed
+              </span>
+            }
+          >
+            {refreshErrors.length === 0 ? (
+              <Empty>{refreshOk > 0 ? '✓ no failures in window' : 'No refresh runs in window'}</Empty>
+            ) : (
+              <ul className="space-y-2">
+                {refreshErrors.map((e, i) => (
+                  <li key={i} className="text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <Link href={`/tools/${e.tool_slug}`} target="_blank" className="text-rose-300 hover:text-rose-200 font-medium">
+                        {e.tool_slug}
+                      </Link>
+                      <span className="text-zinc-600">{ago(e.created_at)}</span>
+                    </div>
+                    <p className="text-zinc-500 mt-0.5 line-clamp-2">{e.error_message}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel
+            title="Ingestion (traction-gated)"
+            right={
+              <span className="text-xs text-zinc-400">
+                {ingestOk} discovered · {ingestDup} dup · <span className="text-amber-400">{ingestGated}</span> gated ·{' '}
+                <span className="text-rose-400">{ingestFailed}</span> failed
+              </span>
+            }
+          >
+            {ingestionErrors.length === 0 ? (
+              <Empty>{ingestOk > 0 ? '✓ no failures in window' : 'No ingestion runs in window'}</Empty>
+            ) : (
+              <ul className="space-y-2">
+                {ingestionErrors.map((e, i) => (
+                  <li key={i} className="text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={e.status === 'failed' ? 'text-rose-300 font-medium' : 'text-amber-300 font-medium'}>
+                        {e.tool_name}
+                      </span>
+                      <span className="text-zinc-600">
+                        {e.status} · {ago(e.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 mt-0.5 line-clamp-2">
+                      {e.error_message ?? '(no message)'} <span className="text-zinc-700">· src: {e.source}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel
+            title="Cascade — compare editorials regenerated"
+            right={<span className="text-xs text-zinc-400">{cascadeRecent.length} in window</span>}
+          >
+            {cascadeRecent.length === 0 ? (
+              <Empty>No cascade activity in this window</Empty>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {cascadeRecent.slice(0, 14).map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/compare/${c.slug}`}
+                    target="_blank"
+                    className="rounded border border-emerald-800/40 bg-emerald-950/20 px-2 py-1 text-[11px] text-emerald-200 hover:border-emerald-600/60 hover:text-emerald-100"
+                    title={`Reviewed ${ago(c.last_reviewed_at)}`}
+                  >
+                    {c.slug}
+                  </Link>
+                ))}
+                {cascadeRecent.length > 14 && (
+                  <span className="text-[11px] text-zinc-500 py-1">+{cascadeRecent.length - 14} more</span>
+                )}
               </div>
+            )}
+          </Panel>
+
+          <Panel title="Pipeline health snapshot">
+            <ul className="space-y-2 text-xs text-zinc-300">
+              <HealthLine ok={refreshOk > 0 || range === 'today'} label="Tool refresh" detail={`${refreshOk}/${refreshOk + refreshFailed} ok`} />
+              <HealthLine ok={ingestOk > 0 || range === 'today'} label="Ingestion" detail={`${ingestOk} discovered, ${ingestFailed} failed`} />
+              <HealthLine ok={cascadeRecent.length > 0 || range === 'today'} label="Cascade" detail={`${cascadeRecent.length} compares regenerated`} />
+              <HealthLine ok={catalogStats.neverRefreshed === 0} label="Never-refreshed catalog" detail={`${catalogStats.neverRefreshed} tools`} />
+              <HealthLine ok={catalogStats.cascadeBacklog < 1000} label="Cascade backlog" detail={`${catalogStats.cascadeBacklog} compares stale`} />
+            </ul>
+          </Panel>
+        </div>
+      </Section>
+
+      {/* ── 4. GITHUB ACTIONS RUNS ─────────────────────────────── */}
+      <Section
+        title="GitHub Actions runs"
+        icon={<GitBranch className="h-4 w-4 text-violet-400" />}
+      >
+        {ghFreshness.length === 0 && ghCronPipelines.length === 0 ? (
+          <Panel title="">
+            <div className="text-sm text-zinc-400">
+              Set the <code className="text-emerald-300">GITHUB_REPO_TOKEN</code> env var in Vercel to live-fetch
+              workflow runs here. Until then, view them on GitHub:{' '}
+              <a
+                href="https://github.com/aidirectory2026-prog/rightaichoice/actions"
+                target="_blank"
+                rel="noopener"
+                className="text-emerald-400 hover:underline"
+              >
+                github.com/aidirectory2026-prog/rightaichoice/actions ↗
+              </a>
             </div>
-          )}
-
-          {today.refreshed_slugs_sample.length > 0 && (
-            <SlugSample title="Refreshed today (sample)" slugs={today.refreshed_slugs_sample} />
-          )}
-          {today.ingested_slugs_sample.length > 0 && (
-            <SlugSample title="Ingested today (sample)" slugs={today.ingested_slugs_sample} />
-          )}
-          {today.cascaded_slugs_sample.length > 0 && (
-            <SlugSample
-              title="Compares re-edited today (sample)"
-              slugs={today.cascaded_slugs_sample}
-              basePath="/compare"
+          </Panel>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WorkflowPanel
+              title="Freshness Batch (heavy jobs)"
+              runs={ghFreshness}
+              fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions/workflows/freshness-batch.yml"
             />
-          )}
-        </section>
-      ) : (
-        <p className="text-sm text-zinc-500 mb-10">
-          No snapshot yet — the first one is written tonight at 23:55 UTC.
-        </p>
-      )}
+            <WorkflowPanel
+              title="Automation Pipelines (light jobs)"
+              runs={ghCronPipelines}
+              fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions/workflows/cron-pipelines.yml"
+            />
+          </div>
+        )}
+      </Section>
 
-      {/* History table */}
-      <section>
-        <h2 className="text-base font-semibold text-white mb-3">Last 60 days</h2>
+      {/* ── 5. DAILY HISTORY TABLE (60 days, existing) ──────────── */}
+      <Section title="Daily history (60 days)" icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}>
         <div className="rounded-lg border border-zinc-800 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-900/60">
+            <thead className="bg-zinc-900/60 text-xs text-zinc-400">
               <tr>
-                <th className="text-left px-4 py-2 text-xs font-medium text-zinc-400">Date</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">Refreshed</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">New</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">Compares</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">Catalog</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">Backlog</th>
-                <th className="text-right px-3 py-2 text-xs font-medium text-zinc-400">Health</th>
+                <th className="text-left px-3 py-2 font-medium">Date</th>
+                <th className="text-right px-2 py-2 font-medium">Refreshed</th>
+                <th className="text-right px-2 py-2 font-medium">New</th>
+                <th className="text-right px-2 py-2 font-medium">Compares</th>
+                <th className="text-right px-2 py-2 font-medium">Catalog</th>
+                <th className="text-right px-2 py-2 font-medium">Backlog</th>
+                <th className="text-right px-2 py-2 font-medium">Flags</th>
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 && (
+              {dailyHistory.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-6 text-center text-zinc-500">
-                    No daily summaries yet.
+                    No daily summaries yet. First snapshot fires nightly at 23:55 UTC.
                   </td>
                 </tr>
               )}
-              {rows.map((r) => {
+              {(dailyHistory as Array<{ utc_date: string; tools_refreshed: number; tools_ingested: number; compares_regenerated: number; total_published_tools: number | null; cascade_backlog: number | null; health_flags: Record<string, unknown> }>).map((r) => {
                 const flagCount = Object.keys(r.health_flags ?? {}).length
                 return (
                   <tr key={r.utc_date} className="border-t border-zinc-800/60 hover:bg-zinc-900/30">
-                    <td className="px-4 py-2 text-zinc-200">{r.utc_date}</td>
-                    <td className="px-3 py-2 text-right text-zinc-300 tabular-nums">{r.tools_refreshed}</td>
-                    <td className="px-3 py-2 text-right text-zinc-300 tabular-nums">{r.tools_ingested}</td>
-                    <td className="px-3 py-2 text-right text-zinc-300 tabular-nums">{r.compares_regenerated}</td>
-                    <td className="px-3 py-2 text-right text-zinc-500 tabular-nums">
-                      {r.total_published_tools?.toLocaleString() ?? '—'}
-                    </td>
-                    <td className="px-3 py-2 text-right text-zinc-500 tabular-nums">
-                      {r.cascade_backlog?.toLocaleString() ?? '—'}
-                    </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-1.5 text-zinc-200">{r.utc_date}</td>
+                    <td className="px-2 py-1.5 text-right text-zinc-300 tabular-nums">{r.tools_refreshed}</td>
+                    <td className="px-2 py-1.5 text-right text-zinc-300 tabular-nums">{r.tools_ingested}</td>
+                    <td className="px-2 py-1.5 text-right text-zinc-300 tabular-nums">{r.compares_regenerated}</td>
+                    <td className="px-2 py-1.5 text-right text-zinc-500 tabular-nums">{r.total_published_tools?.toLocaleString() ?? '—'}</td>
+                    <td className="px-2 py-1.5 text-right text-zinc-500 tabular-nums">{r.cascade_backlog?.toLocaleString() ?? '—'}</td>
+                    <td className="px-2 py-1.5 text-right">
                       {flagCount === 0 ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 ml-auto" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-auto" />
                       ) : (
-                        <span className="text-xs text-rose-400">{flagCount} flag{flagCount > 1 ? 's' : ''}</span>
+                        <span className="text-xs text-rose-400">{flagCount}</span>
                       )}
                     </td>
                   </tr>
@@ -167,14 +607,42 @@ export default async function UpdatesPage() {
             </tbody>
           </table>
         </div>
-      </section>
-
-      <p className="mt-8 text-xs text-zinc-500">
-        Want a static markdown export? Run{' '}
-        <code className="text-emerald-400">npm run daily:log:export</code>{' '}
-        to dump the table as <code>docs/operations/daily-updates-log.md</code>.
-      </p>
+      </Section>
     </div>
+  )
+}
+
+// ── Components ──────────────────────────────────────────────────────
+
+function RangePicker({ active }: { active: RangeKey }) {
+  return (
+    <div className="inline-flex rounded-lg border border-zinc-800 bg-zinc-900/40 p-0.5">
+      {(['today', '7d', '30d'] as RangeKey[]).map((r) => (
+        <Link
+          key={r}
+          href={`/admin/updates?range=${r}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+            active === r
+              ? 'bg-emerald-600 text-white'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+          }`}
+        >
+          {RANGE_LABELS[r]}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="mb-8">
+      <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
+        {icon}
+        {title}
+      </h2>
+      {children}
+    </section>
   )
 }
 
@@ -184,49 +652,99 @@ function Stat({
   value,
   sub,
 }: {
-  icon: React.ReactNode
+  icon?: React.ReactNode
   label: string
-  value: number | string
-  sub: string
+  value: string
+  sub?: string
 }) {
   return (
     <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3">
-      <div className="flex items-center gap-2 text-zinc-400 mb-1">
+      <div className="flex items-center gap-1.5 text-zinc-400">
         {icon}
         <span className="text-[11px] font-medium">{label}</span>
       </div>
-      <div className="text-xl font-bold text-white tabular-nums">
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </div>
-      <div className="text-[11px] text-zinc-500 mt-0.5">{sub}</div>
+      <div className="text-xl font-bold text-white mt-1 tabular-nums">{value}</div>
+      {sub && <div className="text-[11px] text-zinc-500 mt-0.5">{sub}</div>}
     </div>
   )
 }
 
-function SlugSample({
-  title,
-  slugs,
-  basePath = '/tools',
-}: {
-  title: string
-  slugs: string[]
-  basePath?: string
-}) {
+function Panel({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="mt-5">
-      <h3 className="text-xs font-medium text-zinc-400 mb-2">{title}</h3>
-      <div className="flex flex-wrap gap-2">
-        {slugs.map((slug) => (
-          <Link
-            key={slug}
-            href={`${basePath}/${slug}`}
-            target="_blank"
-            className="rounded border border-zinc-800 bg-zinc-900/50 px-2 py-1 text-[11px] text-zinc-300 hover:border-emerald-700 hover:text-emerald-300"
-          >
-            {slug}
-          </Link>
-        ))}
-      </div>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+      {(title || right) && (
+        <div className="flex items-center justify-between gap-2 mb-3">
+          {title && <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{title}</h3>}
+          {right}
+        </div>
+      )}
+      {children}
     </div>
+  )
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs text-zinc-500 italic">{children}</p>
+}
+
+function HealthLine({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+  return (
+    <li className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-2">
+        {ok ? (
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+        ) : (
+          <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+        )}
+        {label}
+      </span>
+      <span className="text-zinc-500 text-[11px]">{detail}</span>
+    </li>
+  )
+}
+
+function WorkflowPanel({ title, runs, fallbackUrl }: { title: string; runs: GhRun[]; fallbackUrl: string }) {
+  return (
+    <Panel
+      title={title}
+      right={
+        <a href={fallbackUrl} target="_blank" rel="noopener" className="text-[11px] text-zinc-400 hover:text-emerald-300 flex items-center gap-1">
+          View all <ExternalLink className="h-3 w-3" />
+        </a>
+      }
+    >
+      {runs.length === 0 ? (
+        <Empty>No runs yet</Empty>
+      ) : (
+        <ul className="space-y-1.5">
+          {runs.map((r) => {
+            const tone =
+              r.status !== 'completed'
+                ? 'text-amber-400'
+                : r.conclusion === 'success'
+                  ? 'text-emerald-400'
+                  : r.conclusion === 'failure'
+                    ? 'text-rose-400'
+                    : 'text-zinc-500'
+            return (
+              <li key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                <a
+                  href={r.html_url}
+                  target="_blank"
+                  rel="noopener"
+                  className="flex items-center gap-2 min-w-0 hover:text-emerald-300"
+                >
+                  <span className={`shrink-0 ${tone}`}>●</span>
+                  <span className="text-zinc-300 truncate">
+                    {r.display_title} <span className="text-zinc-600">· {r.event}</span>
+                  </span>
+                </a>
+                <span className="text-zinc-500 shrink-0 text-[11px]">{ago(r.updated_at)}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Panel>
   )
 }
