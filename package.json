@@ -44,6 +44,9 @@
     "qa:404": "tsx --env-file=.env.local scripts/qa-404-sweep.ts",
     "qa:404:full": "tsx --env-file=.env.local scripts/qa-404-sweep.ts --full",
     "daily:log:export": "tsx --env-file=.env.local scripts/export-daily-log.ts",
+    "refresh:batch": "tsx --env-file=.env.local scripts/refresh-tools-batch.ts",
+    "ingest:batch": "tsx --env-file=.env.local scripts/ingest-tools-batch.ts",
+    "cascade:batch": "tsx --env-file=.env.local scripts/refresh-compare-editorials-batch.ts",
     "daily": "tsx --env-file=.env.local scripts/daily.ts",
     "daily:dry": "tsx --env-file=.env.local scripts/daily.ts --dry"
   },

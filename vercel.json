@@ -2,44 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/indexnow-recent",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/calculate-viability",
-      "schedule": "0 4 * * 1"
-    },
-    {
-      "path": "/api/cron/refresh-faqs",
-      "schedule": "0 5 * * 1"
-    },
-    {
-      "path": "/api/cron/refresh-latest-updates",
-      "schedule": "0 2 * * *"
-    },
-    {
       "path": "/api/cron/scrape-sentiment",
       "schedule": "0 4 * * 0"
-    },
-    {
-      "path": "/api/cron/discover-tutorials",
-      "schedule": "0 5 * * 0"
-    },
-    {
-      "path": "/api/cron/generate-editorials",
-      "schedule": "0 6 * * 0"
-    },
-    {
-      "path": "/api/cron/refresh-tools",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/ingest-tools",
-      "schedule": "0 1,13 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-compare-editorials",
-      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/resubmit-sitemap-gsc",
