@@ -43,9 +43,19 @@ async function main() {
   // tools inserted AND there were discoverable candidates. The
   // traction gate intentionally gates most candidates on quiet days,
   // so high gate rates aren't failures — they're the gate working.
-  if (result.discovered > 0 && result.inserted === 0) {
-    console.error(`⚠ ${result.discovered} discovered but 0 inserted — check curate/traction gates`)
+  //
+  // Phase 8.d.1 tightening (2026-05-18): the original condition
+  // (discovered>0 && inserted===0) over-triggered when every discovered
+  // candidate was a duplicate of an existing tool — that's the catalog
+  // being comprehensive, not a gate misbehaving. Now we only fail when
+  // there were *unique* candidates (after dedup) that the curate/
+  // traction gates rejected. Pure-dedup days exit 0 with a warning.
+  if (result.deduplicated > 0 && result.inserted === 0) {
+    console.error(`⚠ ${result.deduplicated} unique candidates but 0 inserted — check curate/traction gates`)
     process.exit(1)
+  }
+  if (result.discovered > 0 && result.deduplicated === 0) {
+    console.warn(`ℹ ${result.discovered} discovered, all duplicates — catalog is comprehensive today`)
   }
 }
 
