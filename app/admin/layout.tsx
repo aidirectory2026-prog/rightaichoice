@@ -29,17 +29,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 Admin
               </span>
               <div className="flex items-center gap-4">
+                <Link href="/admin/updates" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                  Knowledge Room
+                </Link>
                 <Link href="/admin/tools" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Tools
                 </Link>
-                <Link href="/admin/analytics" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                  Analytics
+                <Link href="/admin/freshness" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                  Freshness
                 </Link>
                 <Link href="/admin/daily" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Daily
-                </Link>
-                <Link href="/admin/updates" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                  Updates
                 </Link>
                 <Link href="/admin/authority" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Authority

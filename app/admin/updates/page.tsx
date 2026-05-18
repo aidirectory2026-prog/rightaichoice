@@ -236,7 +236,14 @@ export default async function KnowledgeRoom({
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(8)
-      .then((r) => (r.data ?? []) as Array<{ tool_slug: string; error_message: string; created_at: string }>),
+      .then(async (r) => {
+        const rows = (r.data ?? []) as Array<{ tool_slug: string; error_message: string; created_at: string }>
+        if (rows.length === 0) return [] as Array<{ tool_slug: string; tool_id: string | null; error_message: string; created_at: string }>
+        const slugs = Array.from(new Set(rows.map((x) => x.tool_slug)))
+        const ids = await supabase.from('tools').select('id, slug').in('slug', slugs)
+        const lookup = new Map(((ids.data ?? []) as Array<{ id: string; slug: string }>).map((t) => [t.slug, t.id]))
+        return rows.map((x) => ({ ...x, tool_id: lookup.get(x.tool_slug) ?? null }))
+      }),
 
     // Ingestion stages
     supabase
@@ -291,42 +298,52 @@ export default async function KnowledgeRoom({
       .then((r) => (r.data ?? []) as unknown as PipelineRunRow[]),
 
     // Activity feed: tools refreshed in window (top 20 by recency).
-    // Joins refresh_logs → tools for the human-readable name.
+    // Joins refresh_logs → tools for name AND tool id (for /admin/tools/<id> edit link).
+    // Includes fields_updated so the operator sees WHAT changed, not just that it ran.
     supabase
       .from('refresh_logs')
-      .select('tool_slug, created_at')
+      .select('tool_slug, created_at, fields_updated')
       .eq('status', 'refreshed')
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(20)
       .then(async (r) => {
-        const rows = (r.data ?? []) as Array<{ tool_slug: string; created_at: string }>
-        if (rows.length === 0) return [] as Array<{ slug: string; name: string; created_at: string }>
+        const rows = (r.data ?? []) as Array<{ tool_slug: string; created_at: string; fields_updated: string[] | null }>
+        if (rows.length === 0) return [] as Array<{ slug: string; id: string | null; name: string; created_at: string; fields_updated: string[] }>
         const slugs = Array.from(new Set(rows.map((x) => x.tool_slug)))
-        const namesRes = await supabase.from('tools').select('slug, name').in('slug', slugs)
-        const lookup = new Map(((namesRes.data ?? []) as Array<{ slug: string; name: string }>).map((t) => [t.slug, t.name]))
-        return rows.map((x) => ({ slug: x.tool_slug, name: lookup.get(x.tool_slug) ?? x.tool_slug, created_at: x.created_at }))
+        const namesRes = await supabase.from('tools').select('id, slug, name').in('slug', slugs)
+        const lookup = new Map(((namesRes.data ?? []) as Array<{ id: string; slug: string; name: string }>).map((t) => [t.slug, t]))
+        return rows.map((x) => {
+          const t = lookup.get(x.tool_slug)
+          return {
+            slug: x.tool_slug,
+            id: t?.id ?? null,
+            name: t?.name ?? x.tool_slug,
+            created_at: x.created_at,
+            fields_updated: x.fields_updated ?? [],
+          }
+        })
       }),
 
-    // Activity feed: newly added tools (published in window).
+    // Activity feed: newly added tools (published in window) — id for edit link.
     supabase
       .from('tools')
-      .select('slug, name, created_at, submitted_by')
+      .select('id, slug, name, created_at, submitted_by')
       .eq('is_published', true)
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(20)
-      .then((r) => (r.data ?? []) as Array<{ slug: string; name: string; created_at: string; submitted_by: string | null }>),
+      .then((r) => (r.data ?? []) as Array<{ id: string; slug: string; name: string; created_at: string; submitted_by: string | null }>),
 
     // Activity feed: tools whose "Latest from" was refreshed in window.
     supabase
       .from('tools')
-      .select('slug, name, latest_updates_at')
+      .select('id, slug, name, latest_updates_at')
       .eq('is_published', true)
       .gte('latest_updates_at', cutoff)
       .order('latest_updates_at', { ascending: false })
       .limit(20)
-      .then((r) => (r.data ?? []) as Array<{ slug: string; name: string; latest_updates_at: string }>),
+      .then((r) => (r.data ?? []) as Array<{ id: string; slug: string; name: string; latest_updates_at: string }>),
 
     // Cost tracker: pipeline_runs in window with per-provider tokens + apify.
     // Aggregated client-side; expected volume <5000 rows even at 30d.
@@ -593,7 +610,14 @@ export default async function KnowledgeRoom({
             ) : (
               <ol className="space-y-1">
                 {toolsRefreshed.slice(0, 8).map((t) => (
-                  <ActivityRow key={t.slug + t.created_at} slug={t.slug} name={t.name} when={t.created_at} />
+                  <ActivityRow
+                    key={t.slug + t.created_at}
+                    slug={t.slug}
+                    id={t.id}
+                    name={t.name}
+                    when={t.created_at}
+                    changedFields={t.fields_updated}
+                  />
                 ))}
               </ol>
             )}
@@ -611,6 +635,7 @@ export default async function KnowledgeRoom({
                   <ActivityRow
                     key={t.slug}
                     slug={t.slug}
+                    id={t.id}
                     name={t.name}
                     when={t.created_at}
                     sub={t.submitted_by ? 'manual' : 'auto-ingested'}
@@ -629,7 +654,7 @@ export default async function KnowledgeRoom({
             ) : (
               <ol className="space-y-1">
                 {toolsLatestRefreshed.slice(0, 8).map((t) => (
-                  <ActivityRow key={t.slug} slug={t.slug} name={t.name} when={t.latest_updates_at} />
+                  <ActivityRow key={t.slug} slug={t.slug} id={t.id} name={t.name} when={t.latest_updates_at} />
                 ))}
               </ol>
             )}
@@ -662,7 +687,18 @@ export default async function KnowledgeRoom({
                       <Link href={`/tools/${e.tool_slug}`} target="_blank" className="text-rose-300 hover:text-rose-200 font-medium">
                         {e.tool_slug}
                       </Link>
-                      <span className="text-zinc-600">{ago(e.created_at)}</span>
+                      <span className="flex items-center gap-2 shrink-0">
+                        {e.tool_id && (
+                          <Link
+                            href={`/admin/tools/${e.tool_id}`}
+                            className="text-[10px] text-emerald-400/80 hover:text-emerald-300"
+                            title="Open in admin to fix"
+                          >
+                            edit
+                          </Link>
+                        )}
+                        <span className="text-[10px] text-zinc-600">{ago(e.created_at)}</span>
+                      </span>
                     </div>
                     <p className="text-zinc-500 mt-0.5 line-clamp-2">{e.error_message}</p>
                   </li>
@@ -1040,26 +1076,58 @@ function HealthLine({ ok, label, detail }: { ok: boolean; label: string; detail:
 
 function ActivityRow({
   slug,
+  id,
   name,
   when,
   sub,
+  changedFields,
 }: {
   slug: string
+  id: string | null
   name: string
   when: string
   sub?: string
+  changedFields?: string[]
 }) {
   return (
-    <li className="flex items-center justify-between gap-2 text-xs py-0.5">
-      <Link
-        href={`/tools/${slug}`}
-        target="_blank"
-        className="text-zinc-200 hover:text-emerald-300 truncate min-w-0 flex-1"
-      >
-        {name}
-        {sub && <span className="text-zinc-600 ml-1.5 text-[10px]">· {sub}</span>}
-      </Link>
-      <span className="text-[10px] text-zinc-500 shrink-0">{ago(when)}</span>
+    <li className="text-xs py-0.5">
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={`/tools/${slug}`}
+          target="_blank"
+          className="text-zinc-200 hover:text-emerald-300 truncate min-w-0 flex-1"
+        >
+          {name}
+          {sub && <span className="text-zinc-600 ml-1.5 text-[10px]">· {sub}</span>}
+        </Link>
+        <span className="flex items-center gap-2 shrink-0">
+          {id && (
+            <Link
+              href={`/admin/tools/${id}`}
+              className="text-[10px] text-emerald-400/80 hover:text-emerald-300"
+              title="Edit in admin"
+            >
+              edit
+            </Link>
+          )}
+          <span className="text-[10px] text-zinc-500">{ago(when)}</span>
+        </span>
+      </div>
+      {changedFields && changedFields.length > 0 && (
+        <div className="ml-0 mt-0.5 flex flex-wrap gap-1">
+          {changedFields.slice(0, 6).map((f) => (
+            <span
+              key={f}
+              className="inline-block text-[9px] uppercase tracking-wider px-1 py-px rounded bg-zinc-800/60 text-zinc-400"
+            >
+              {f}
+            </span>
+          ))}
+          {changedFields.length > 6 && (
+            <span className="text-[9px] text-zinc-600 py-px">+{changedFields.length - 6}</span>
+          )}
+        </div>
+      )}
     </li>
   )
 }
