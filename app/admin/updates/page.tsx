@@ -95,6 +95,7 @@ export default async function KnowledgeRoom({
     toolsLatestRefreshed,
     costRows,
     cost24hRows,
+    healthRows,
   ] = await Promise.all([
     // Catalog
     (async () => {
@@ -344,6 +345,14 @@ export default async function KnowledgeRoom({
       .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .limit(5000)
       .then((r) => (r.data ?? []) as Array<{ pipeline_key: string; estimated_cost_usd: number }>),
+
+    // Health score: pull last 60 days; aggregate 7d/30d windows + trend client-side.
+    supabase
+      .from('pipeline_runs')
+      .select('pipeline_key, status, started_at, duration_ms, error_class')
+      .gte('started_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
+      .limit(10000)
+      .then((r) => (r.data ?? []) as Array<{ pipeline_key: string; status: string; started_at: string; duration_ms: number | null; error_class: string | null }>),
   ])
 
   // ── Cost aggregation (client-side, ~O(n) over ≤5k rows) ──────────
@@ -380,6 +389,79 @@ export default async function KnowledgeRoom({
     cost24hByPipeline.set(row.pipeline_key, (cost24hByPipeline.get(row.pipeline_key) ?? 0) + (Number(row.estimated_cost_usd) || 0))
   }
   const overBudget = Array.from(cost24hByPipeline.entries()).filter(([, v]) => v > 5)
+
+  // ── Health-score aggregation ─────────────────────────────────────
+  type HealthAgg = {
+    pipelineKey: string
+    successRate7d: number | null
+    successRate30d: number | null
+    successRate7dPrior: number | null  // days 8-14
+    successRate30dPrior: number | null // days 31-60
+    meanDuration7d: number | null
+    p95Duration7d: number | null
+    errorClasses30d: Record<string, number>
+    runCount30d: number
+  }
+  const now = Date.now()
+  const ms = (days: number) => days * 24 * 60 * 60 * 1000
+  function inRange(t: string, fromMs: number, toMs: number): boolean {
+    const v = new Date(t).getTime()
+    return v >= fromMs && v < toMs
+  }
+  function rate(rows: typeof healthRows): number | null {
+    if (rows.length === 0) return null
+    const ok = rows.filter((r) => r.status === 'success').length
+    return ok / rows.length
+  }
+  function percentile(values: number[], p: number): number | null {
+    if (values.length === 0) return null
+    const sorted = [...values].sort((a, b) => a - b)
+    const idx = Math.floor(sorted.length * p)
+    return sorted[Math.min(idx, sorted.length - 1)] ?? null
+  }
+  const healthByPipeline = new Map<string, HealthAgg>()
+  for (const r of healthRows) {
+    if (!healthByPipeline.has(r.pipeline_key)) {
+      healthByPipeline.set(r.pipeline_key, {
+        pipelineKey: r.pipeline_key,
+        successRate7d: null,
+        successRate30d: null,
+        successRate7dPrior: null,
+        successRate30dPrior: null,
+        meanDuration7d: null,
+        p95Duration7d: null,
+        errorClasses30d: {},
+        runCount30d: 0,
+      })
+    }
+  }
+  for (const [pk, agg] of healthByPipeline) {
+    const pkRows = healthRows.filter((r) => r.pipeline_key === pk)
+    const last7 = pkRows.filter((r) => inRange(r.started_at, now - ms(7), now))
+    const prior7 = pkRows.filter((r) => inRange(r.started_at, now - ms(14), now - ms(7)))
+    const last30 = pkRows.filter((r) => inRange(r.started_at, now - ms(30), now))
+    const prior30 = pkRows.filter((r) => inRange(r.started_at, now - ms(60), now - ms(30)))
+    agg.successRate7d = rate(last7)
+    agg.successRate7dPrior = rate(prior7)
+    agg.successRate30d = rate(last30)
+    agg.successRate30dPrior = rate(prior30)
+    agg.runCount30d = last30.length
+    const durs7 = last7.map((r) => r.duration_ms).filter((d): d is number => typeof d === 'number')
+    agg.meanDuration7d = durs7.length ? durs7.reduce((a, b) => a + b, 0) / durs7.length : null
+    agg.p95Duration7d = percentile(durs7, 0.95)
+    for (const r of last30) {
+      if (r.status !== 'success' && r.error_class) {
+        agg.errorClasses30d[r.error_class] = (agg.errorClasses30d[r.error_class] ?? 0) + 1
+      }
+    }
+  }
+  const healthList = Array.from(healthByPipeline.values()).sort((a, b) => {
+    // Surface degrading pipelines first.
+    const aDeg = (a.successRate7d ?? 1) < 0.9 ? 0 : 1
+    const bDeg = (b.successRate7d ?? 1) < 0.9 ? 0 : 1
+    if (aDeg !== bDeg) return aDeg - bDeg
+    return (a.successRate30d ?? 1) - (b.successRate30d ?? 1)
+  })
 
   // ── Pipeline tallies ──────────────────────────────────────────────
   const refreshOk = refreshLogsByStatus['refreshed'] ?? 0
@@ -741,6 +823,90 @@ export default async function KnowledgeRoom({
                       <td className="py-1.5 text-right text-zinc-400 tabular-nums">${a.anthropicUsd.toFixed(3)}</td>
                       <td className="py-1.5 text-right text-zinc-400 tabular-nums">${a.apifyUsd.toFixed(3)}</td>
                       <td className="py-1.5 text-right text-zinc-200 font-medium tabular-nums">${a.total.toFixed(2)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </Panel>
+        )}
+      </Section>
+
+      {/* ── 4.7 HEALTH SCORE (always 7d + 30d windows, trend) ──── */}
+      <Section title="Pipeline health (7d + 30d)" icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}>
+        {healthList.length === 0 ? (
+          <Panel title="">
+            <Empty>No pipeline runs in last 60 days. Health scores appear once pipelines start logging.</Empty>
+          </Panel>
+        ) : (
+          <Panel title="">
+            <table className="w-full text-xs">
+              <thead className="text-zinc-500 border-b border-zinc-800">
+                <tr>
+                  <th className="text-left py-1.5 font-medium">Pipeline</th>
+                  <th className="text-right py-1.5 font-medium w-20">7d ok</th>
+                  <th className="text-right py-1.5 font-medium w-12">trend</th>
+                  <th className="text-right py-1.5 font-medium w-20">30d ok</th>
+                  <th className="text-right py-1.5 font-medium w-16">runs</th>
+                  <th className="text-right py-1.5 font-medium w-24">mean (7d)</th>
+                  <th className="text-right py-1.5 font-medium w-24">p95 (7d)</th>
+                  <th className="text-left py-1.5 font-medium pl-3">errors (30d)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {healthList.map((h) => {
+                  const r7 = h.successRate7d
+                  const r7p = h.successRate7dPrior
+                  const r30 = h.successRate30d
+                  const degrading = r7 != null && r7 < 0.9
+                  const trend =
+                    r7 != null && r7p != null
+                      ? r7 > r7p + 0.05
+                        ? { arrow: '↑', tone: 'text-emerald-400' }
+                        : r7 < r7p - 0.05
+                          ? { arrow: '↓', tone: 'text-rose-400' }
+                          : { arrow: '→', tone: 'text-zinc-500' }
+                      : null
+                  const errs = Object.entries(h.errorClasses30d).sort((a, b) => b[1] - a[1])
+                  return (
+                    <tr
+                      key={h.pipelineKey}
+                      className={`border-t border-zinc-800/40 ${degrading ? 'bg-rose-950/15 border-l-2 border-l-rose-700' : ''}`}
+                    >
+                      <td className="py-1.5 pl-2 text-zinc-200">{h.pipelineKey}</td>
+                      <td className={`py-1.5 text-right tabular-nums ${degrading ? 'text-rose-300 font-semibold' : 'text-zinc-300'}`}>
+                        {r7 != null ? `${Math.round(r7 * 100)}%` : '—'}
+                      </td>
+                      <td className={`py-1.5 text-right ${trend?.tone ?? 'text-zinc-700'}`}>
+                        {trend?.arrow ?? '·'}
+                      </td>
+                      <td className="py-1.5 text-right text-zinc-400 tabular-nums">
+                        {r30 != null ? `${Math.round(r30 * 100)}%` : '—'}
+                      </td>
+                      <td className="py-1.5 text-right text-zinc-500 tabular-nums">{h.runCount30d}</td>
+                      <td className="py-1.5 text-right text-zinc-500 tabular-nums">
+                        {h.meanDuration7d != null ? `${(h.meanDuration7d / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                      <td className="py-1.5 text-right text-zinc-500 tabular-nums">
+                        {h.p95Duration7d != null ? `${(h.p95Duration7d / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                      <td className="py-1.5 pl-3 text-zinc-500">
+                        {errs.length === 0 ? (
+                          <span className="text-emerald-600">·</span>
+                        ) : (
+                          <span className="space-x-1">
+                            {errs.slice(0, 4).map(([cls, n]) => (
+                              <span
+                                key={cls}
+                                className="inline-block text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-zinc-800/60 text-zinc-400"
+                                title={`${n} ${cls} errors in last 30d`}
+                              >
+                                {cls} <span className="text-zinc-200">{n}</span>
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   )
                 })}
