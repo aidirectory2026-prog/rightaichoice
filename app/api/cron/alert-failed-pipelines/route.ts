@@ -143,7 +143,12 @@ export const POST = cronRoute({ pipelineKey: 'alert-failed-pipelines' }, async (
   const deliveryErrors: Array<{ run_id: string; channel: string; error: string }> = []
   const hasSlack = !!process.env.SLACK_WEBHOOK_URL
 
+  // Resend free tier = 2 req/sec. 600ms between sends keeps us under that with
+  // headroom. First send fires immediately; only subsequent ones wait.
+  let isFirst = true
   for (const run of toAlert) {
+    if (!isFirst) await new Promise((r) => setTimeout(r, 600))
+    isFirst = false
     const emailRes = await sendEmail(run)
     const slackRes = hasSlack ? await sendSlack(run) : { ok: false, error: 'no_webhook' }
 
