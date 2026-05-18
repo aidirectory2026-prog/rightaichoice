@@ -405,13 +405,21 @@ export default async function KnowledgeRoom({
       </div>
 
       {/* ── 1. CATALOG STATE (always today) ─────────────────────── */}
-      <Section title="Catalog state" icon={<Layers className="h-4 w-4 text-emerald-400" />}>
+      <Section
+        title="Catalog state"
+        icon={<Layers className="h-4 w-4 text-emerald-400" />}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
           <Stat label="Published tools" value={catalogStats.published.toLocaleString()} />
           <Stat label="Stalest tool" value={ago(catalogStats.stalest)} />
           <Stat label="Cascade backlog" value={catalogStats.cascadeBacklog.toLocaleString()} sub="compares needing review" />
           <Stat label="Never refreshed" value={catalogStats.neverRefreshed.toLocaleString()} />
           <Stat label="With latest_updates" value={catalogStats.withLatest.toLocaleString()} sub={`of ${catalogStats.published}`} />
+        </div>
+        <div className="mt-2 text-right">
+          <Link href="/admin/freshness" className="text-[11px] text-emerald-400 hover:text-emerald-300">
+            full freshness map →
+          </Link>
         </div>
       </Section>
 
