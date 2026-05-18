@@ -2,8 +2,13 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('NEXT_PUBLIC_SUPABASE_URL must be a valid URL'),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),
-  NEXT_PUBLIC_APP_URL: z.string().url('NEXT_PUBLIC_APP_URL must be a valid URL'),
+  // Used by web-runtime supabase clients (proxy.ts, lib/supabase/{client,middleware,server}.ts)
+  // and auth server actions. Optional here so backend scripts that run in
+  // GH Actions (where these client-only vars aren't shipped) don't fail
+  // validation at module load. Consumers dereference via `process.env.X!`
+  // and would throw at their own call-site if the var were ever truly missing.
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   // DeepSeek V3 — used for all data-layer synthesis (Phase 4 SOP +
   // Phase 7 generation). OpenAI-compatible endpoint at api.deepseek.com.
