@@ -108,6 +108,9 @@ export default async function KnowledgeRoom({
     cascadeRecent,
     dailyHistory,
     pipelineRuns,
+    toolsRefreshed,
+    toolsNewlyAdded,
+    toolsLatestRefreshed,
   ] = await Promise.all([
     // Catalog
     (async () => {
@@ -301,6 +304,44 @@ export default async function KnowledgeRoom({
       .order('started_at', { ascending: false })
       .limit(200)
       .then((r) => (r.data ?? []) as unknown as PipelineRunRow[]),
+
+    // Activity feed: tools refreshed in window (top 20 by recency).
+    // Joins refresh_logs → tools for the human-readable name.
+    supabase
+      .from('refresh_logs')
+      .select('tool_slug, created_at')
+      .eq('status', 'refreshed')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(async (r) => {
+        const rows = (r.data ?? []) as Array<{ tool_slug: string; created_at: string }>
+        if (rows.length === 0) return [] as Array<{ slug: string; name: string; created_at: string }>
+        const slugs = Array.from(new Set(rows.map((x) => x.tool_slug)))
+        const namesRes = await supabase.from('tools').select('slug, name').in('slug', slugs)
+        const lookup = new Map(((namesRes.data ?? []) as Array<{ slug: string; name: string }>).map((t) => [t.slug, t.name]))
+        return rows.map((x) => ({ slug: x.tool_slug, name: lookup.get(x.tool_slug) ?? x.tool_slug, created_at: x.created_at }))
+      }),
+
+    // Activity feed: newly added tools (published in window).
+    supabase
+      .from('tools')
+      .select('slug, name, created_at, submitted_by')
+      .eq('is_published', true)
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then((r) => (r.data ?? []) as Array<{ slug: string; name: string; created_at: string; submitted_by: string | null }>),
+
+    // Activity feed: tools whose "Latest from" was refreshed in window.
+    supabase
+      .from('tools')
+      .select('slug, name, latest_updates_at')
+      .eq('is_published', true)
+      .gte('latest_updates_at', cutoff)
+      .order('latest_updates_at', { ascending: false })
+      .limit(20)
+      .then((r) => (r.data ?? []) as Array<{ slug: string; name: string; latest_updates_at: string }>),
   ])
 
   // ── Pipeline tallies ──────────────────────────────────────────────
@@ -407,6 +448,65 @@ export default async function KnowledgeRoom({
         <div className="mt-4 text-xs text-zinc-500">
           <strong className="text-zinc-400">Outreach this period:</strong>{' '}
           {outreachStats.drafted} drafted · {outreachStats.sent} sent · {outreachStats.replies} replies
+        </div>
+      </Section>
+
+      {/* ── 2.5 ACTIVITY FEED — tool names, not counts ─────────── */}
+      <Section
+        title={`Activity feed · ${RANGE_LABELS[range]}`}
+        icon={<Activity className="h-4 w-4 text-fuchsia-400" />}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Panel
+            title="Tools refreshed"
+            right={<ActivityCount count={toolsRefreshed.length} more={toolsRefreshed.length >= 20} type="refreshed" />}
+          >
+            {toolsRefreshed.length === 0 ? (
+              <Empty>No refreshes in window</Empty>
+            ) : (
+              <ol className="space-y-1">
+                {toolsRefreshed.slice(0, 8).map((t) => (
+                  <ActivityRow key={t.slug + t.created_at} slug={t.slug} name={t.name} when={t.created_at} />
+                ))}
+              </ol>
+            )}
+          </Panel>
+
+          <Panel
+            title="Tools newly added"
+            right={<ActivityCount count={toolsNewlyAdded.length} more={toolsNewlyAdded.length >= 20} type="added" />}
+          >
+            {toolsNewlyAdded.length === 0 ? (
+              <Empty>No new tools in window</Empty>
+            ) : (
+              <ol className="space-y-1">
+                {toolsNewlyAdded.slice(0, 8).map((t) => (
+                  <ActivityRow
+                    key={t.slug}
+                    slug={t.slug}
+                    name={t.name}
+                    when={t.created_at}
+                    sub={t.submitted_by ? 'manual' : 'auto-ingested'}
+                  />
+                ))}
+              </ol>
+            )}
+          </Panel>
+
+          <Panel
+            title="“Latest from” refreshed"
+            right={<ActivityCount count={toolsLatestRefreshed.length} more={toolsLatestRefreshed.length >= 20} type="latest" />}
+          >
+            {toolsLatestRefreshed.length === 0 ? (
+              <Empty>No latest-updates refreshes in window</Empty>
+            ) : (
+              <ol className="space-y-1">
+                {toolsLatestRefreshed.slice(0, 8).map((t) => (
+                  <ActivityRow key={t.slug} slug={t.slug} name={t.name} when={t.latest_updates_at} />
+                ))}
+              </ol>
+            )}
+          </Panel>
         </div>
       </Section>
 
@@ -683,6 +783,49 @@ function HealthLine({ ok, label, detail }: { ok: boolean; label: string; detail:
       </span>
       <span className="text-zinc-500 text-[11px]">{detail}</span>
     </li>
+  )
+}
+
+function ActivityRow({
+  slug,
+  name,
+  when,
+  sub,
+}: {
+  slug: string
+  name: string
+  when: string
+  sub?: string
+}) {
+  return (
+    <li className="flex items-center justify-between gap-2 text-xs py-0.5">
+      <Link
+        href={`/tools/${slug}`}
+        target="_blank"
+        className="text-zinc-200 hover:text-emerald-300 truncate min-w-0 flex-1"
+      >
+        {name}
+        {sub && <span className="text-zinc-600 ml-1.5 text-[10px]">· {sub}</span>}
+      </Link>
+      <span className="text-[10px] text-zinc-500 shrink-0">{ago(when)}</span>
+    </li>
+  )
+}
+
+function ActivityCount({ count, more, type }: { count: number; more: boolean; type: string }) {
+  return (
+    <span className="text-[11px] text-zinc-400 flex items-center gap-2">
+      <span className="text-zinc-300 tabular-nums">{count}</span>
+      {more && (
+        <Link
+          href={`/admin/activity?type=${type}`}
+          className="text-emerald-400 hover:text-emerald-300"
+          title="View full list"
+        >
+          view all →
+        </Link>
+      )}
+    </span>
   )
 }
 
