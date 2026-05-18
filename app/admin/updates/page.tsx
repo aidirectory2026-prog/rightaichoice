@@ -3,7 +3,6 @@ import Link from 'next/link'
 import {
   TrendingUp,
   RefreshCw,
-  Plus,
   AlertCircle,
   CheckCircle2,
   Eye,
@@ -11,10 +10,11 @@ import {
   Bookmark,
   Mail,
   GitBranch,
-  ExternalLink,
+  Cloud,
   Activity,
   Layers,
 } from 'lucide-react'
+import { PipelineRunRow } from '@/components/admin/pipeline-run-drilldown'
 
 // /admin/updates — the "knowledge room"
 // One page, one purpose: tell the operator what users and pipelines did
@@ -58,42 +58,25 @@ function ago(iso: string | null | undefined): string {
   return `${d}d ago`
 }
 
-// ── GitHub Actions runs fetcher (server-side) ──────────────────────
-// Optional: when GITHUB_REPO_TOKEN is set in Vercel env, we pull the
-// last 10 runs per workflow. Without the token we still render the
-// section but link out to GitHub Actions UI.
-type GhRun = {
-  id: number
-  name: string
-  status: string
-  conclusion: string | null
-  display_title: string
-  event: string
-  created_at: string
-  updated_at: string
-  html_url: string
-}
-
-async function fetchGhRuns(workflowFile: string, limit = 8): Promise<GhRun[]> {
-  const token = process.env.GITHUB_REPO_TOKEN
-  if (!token) return []
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/aidirectory2026-prog/rightaichoice/actions/workflows/${workflowFile}/runs?per_page=${limit}`,
-      {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: 'application/vnd.github+json',
-        },
-        next: { revalidate: 0 },
-      },
-    )
-    if (!res.ok) return []
-    const json = (await res.json()) as { workflow_runs?: GhRun[] }
-    return json.workflow_runs ?? []
-  } catch {
-    return []
-  }
+// ── Pipeline run rows (pipeline_runs is the single source of truth) ──
+// Phase 8.d.5 (2026-05-18): replaced the live GH API fetch with a
+// Supabase query against pipeline_runs. The poll-gh-actions cron syncs
+// GH every 10 min; Vercel crons self-log via withPipelineLogging. This
+// means: page renders in <100ms even if GH API is slow, and we keep
+// error history forever (GH only retains 90 days).
+type PipelineRunRow = {
+  id: string
+  source: 'vercel_cron' | 'gh_actions'
+  pipeline_key: string
+  status: 'running' | 'success' | 'failure' | 'timeout' | 'partial'
+  started_at: string
+  duration_ms: number | null
+  items_processed: number
+  items_succeeded: number
+  items_failed: number
+  error_message: string | null
+  error_class: string | null
+  metadata: Record<string, unknown> | null
 }
 
 export default async function KnowledgeRoom({
@@ -124,8 +107,7 @@ export default async function KnowledgeRoom({
     ingestionErrors,
     cascadeRecent,
     dailyHistory,
-    ghFreshness,
-    ghCronPipelines,
+    pipelineRuns,
   ] = await Promise.all([
     // Catalog
     (async () => {
@@ -310,11 +292,15 @@ export default async function KnowledgeRoom({
       .limit(60)
       .then((r) => r.data ?? []),
 
-    // GitHub Actions: Freshness Batch
-    fetchGhRuns('freshness-batch.yml', 8),
-
-    // GitHub Actions: Automation Pipelines (light curl jobs)
-    fetchGhRuns('cron-pipelines.yml', 8),
+    // Pipeline runs — every Vercel cron + GH Actions run in the window.
+    // Filtered by started_at >= cutoff so date-range picker controls it.
+    supabase
+      .from('pipeline_runs')
+      .select('id, source, pipeline_key, status, started_at, duration_ms, items_processed, items_succeeded, items_failed, error_message, error_class, metadata')
+      .gte('started_at', cutoff)
+      .order('started_at', { ascending: false })
+      .limit(200)
+      .then((r) => (r.data ?? []) as unknown as PipelineRunRow[]),
   ])
 
   // ── Pipeline tallies ──────────────────────────────────────────────
@@ -332,6 +318,9 @@ export default async function KnowledgeRoom({
           <h1 className="text-2xl font-bold text-white">Knowledge Room</h1>
           <p className="text-sm text-zinc-500 mt-1">
             Real-time activity + pipeline results + errors. Live-fetched every request.
+          </p>
+          <p className="text-[11px] text-zinc-600 mt-1 font-mono">
+            data fetched at <span className="text-zinc-500">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</span>
           </p>
         </div>
         <RangePicker active={range} />
@@ -525,37 +514,31 @@ export default async function KnowledgeRoom({
         </div>
       </Section>
 
-      {/* ── 4. GITHUB ACTIONS RUNS ─────────────────────────────── */}
+      {/* ── 4. PIPELINE RUNS (period-scoped, click to drilldown) ─ */}
       <Section
-        title="GitHub Actions runs"
-        icon={<GitBranch className="h-4 w-4 text-violet-400" />}
+        title={`Pipeline runs · ${RANGE_LABELS[range]}`}
+        icon={<Activity className="h-4 w-4 text-violet-400" />}
       >
-        {ghFreshness.length === 0 && ghCronPipelines.length === 0 ? (
+        {pipelineRuns.length === 0 ? (
           <Panel title="">
             <div className="text-sm text-zinc-400">
-              Set the <code className="text-emerald-300">GITHUB_REPO_TOKEN</code> env var in Vercel to live-fetch
-              workflow runs here. Until then, view them on GitHub:{' '}
-              <a
-                href="https://github.com/aidirectory2026-prog/rightaichoice/actions"
-                target="_blank"
-                rel="noopener"
-                className="text-emerald-400 hover:underline"
-              >
-                github.com/aidirectory2026-prog/rightaichoice/actions ↗
-              </a>
+              No pipeline runs recorded in this window yet. New runs will appear here as Vercel
+              crons and GitHub Actions fire (poll-gh-actions syncs every 10 min).
             </div>
           </Panel>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <WorkflowPanel
-              title="Freshness Batch (heavy jobs)"
-              runs={ghFreshness}
-              fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions/workflows/freshness-batch.yml"
+            <RunsPanel
+              title="Vercel crons"
+              icon={<Cloud className="h-4 w-4 text-cyan-400" />}
+              runs={pipelineRuns.filter((r) => r.source === 'vercel_cron')}
+              fallbackUrl={null}
             />
-            <WorkflowPanel
-              title="Automation Pipelines (light jobs)"
-              runs={ghCronPipelines}
-              fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions/workflows/cron-pipelines.yml"
+            <RunsPanel
+              title="GitHub Actions"
+              icon={<GitBranch className="h-4 w-4 text-violet-400" />}
+              runs={pipelineRuns.filter((r) => r.source === 'gh_actions')}
+              fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions"
             />
           </div>
         )}
@@ -669,7 +652,7 @@ function Stat({
   )
 }
 
-function Panel({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
+function Panel({ title, right, children }: { title: React.ReactNode; right?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
       {(title || right) && (
@@ -703,46 +686,64 @@ function HealthLine({ ok, label, detail }: { ok: boolean; label: string; detail:
   )
 }
 
-function WorkflowPanel({ title, runs, fallbackUrl }: { title: string; runs: GhRun[]; fallbackUrl: string }) {
+function RunsPanel({
+  title,
+  icon,
+  runs,
+  fallbackUrl,
+}: {
+  title: string
+  icon: React.ReactNode
+  runs: PipelineRunRow[]
+  fallbackUrl: string | null
+}) {
+  const okCount = runs.filter((r) => r.status === 'success').length
+  const failCount = runs.filter((r) => r.status === 'failure' || r.status === 'timeout').length
+  const partialCount = runs.filter((r) => r.status === 'partial').length
+
   return (
     <Panel
-      title={title}
+      title={
+        <span className="flex items-center gap-2">
+          {icon}
+          {title}
+        </span>
+      }
       right={
-        <a href={fallbackUrl} target="_blank" rel="noopener" className="text-[11px] text-zinc-400 hover:text-emerald-300 flex items-center gap-1">
-          View all <ExternalLink className="h-3 w-3" />
-        </a>
+        <span className="text-[11px] text-zinc-400 flex items-center gap-2">
+          <span className="text-emerald-400">{okCount}</span>·{' '}
+          {partialCount > 0 && (
+            <>
+              <span className="text-amber-400">{partialCount}</span>·{' '}
+            </>
+          )}
+          <span className="text-rose-400">{failCount}</span>
+          {fallbackUrl && (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noopener"
+              className="text-zinc-500 hover:text-emerald-300 ml-2"
+              title="Open on GitHub"
+            >
+              ↗
+            </a>
+          )}
+        </span>
       }
     >
       {runs.length === 0 ? (
-        <Empty>No runs yet</Empty>
+        <Empty>No runs in this window</Empty>
       ) : (
-        <ul className="space-y-1.5">
-          {runs.map((r) => {
-            const tone =
-              r.status !== 'completed'
-                ? 'text-amber-400'
-                : r.conclusion === 'success'
-                  ? 'text-emerald-400'
-                  : r.conclusion === 'failure'
-                    ? 'text-rose-400'
-                    : 'text-zinc-500'
-            return (
-              <li key={r.id} className="flex items-center justify-between gap-2 text-xs">
-                <a
-                  href={r.html_url}
-                  target="_blank"
-                  rel="noopener"
-                  className="flex items-center gap-2 min-w-0 hover:text-emerald-300"
-                >
-                  <span className={`shrink-0 ${tone}`}>●</span>
-                  <span className="text-zinc-300 truncate">
-                    {r.display_title} <span className="text-zinc-600">· {r.event}</span>
-                  </span>
-                </a>
-                <span className="text-zinc-500 shrink-0 text-[11px]">{ago(r.updated_at)}</span>
-              </li>
-            )
-          })}
+        <ul className="space-y-0.5">
+          {runs.slice(0, 30).map((r) => (
+            <PipelineRunRow key={r.id} run={r} />
+          ))}
+          {runs.length > 30 && (
+            <li className="text-[11px] text-zinc-500 italic pt-1">
+              +{runs.length - 30} more in window (refine date range to see specific runs)
+            </li>
+          )}
         </ul>
       )}
     </Panel>
