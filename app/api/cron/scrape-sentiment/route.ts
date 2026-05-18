@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { scrapeAllSources } from '@/lib/scrapers'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
@@ -24,10 +23,7 @@ type CronTool = {
   view_count: number
 }
 
-export async function POST(request: Request) {
-  const unauthorized = validateCronSecret(request)
-  if (unauthorized) return unauthorized
-
+export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = getAdminClient() as any
 
@@ -40,7 +36,7 @@ export async function POST(request: Request) {
     .limit(MAX_TOOLS)) as { data: CronTool[] | null; error: { message: string } | null }
 
   if (toolsError || !tools) {
-    return NextResponse.json({ ok: false, error: 'Failed to fetch tools' }, { status: 500 })
+    throw new Error(`Failed to fetch tools: ${toolsError?.message ?? 'unknown'}`)
   }
 
   // Filter to tools that need scraping (no cache, expired, or failed)
@@ -67,6 +63,7 @@ export async function POST(request: Request) {
   let processed = 0
   let failed = 0
   const errors: string[] = []
+  const succeededSlugs: string[] = []
 
   // Process in batches
   for (let i = 0; i < needsScraping.length; i += BATCH_SIZE) {
@@ -134,6 +131,7 @@ export async function POST(request: Request) {
             )
 
           processed++
+          succeededSlugs.push(tool.slug)
           console.log(`[cron/scrape-sentiment] Done: ${tool.name} (${scrapeResults.totalPosts} posts)`)
         } catch (err) {
           failed++
@@ -152,12 +150,21 @@ export async function POST(request: Request) {
     )
   }
 
-  return NextResponse.json({
+  ctx.recordItems({ processed: needsScraping.length, succeeded: processed, failed })
+  ctx.recordMetadata({
+    total_top_tools: tools.length,
+    needed_scraping: needsScraping.length,
+    succeeded_slugs: succeededSlugs.slice(0, 20),
+    errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
+  })
+  if (failed > 0 && processed > 0) ctx.setStatus('partial')
+
+  return {
     ok: true,
     total: tools.length,
     needed_scraping: needsScraping.length,
     processed,
     failed,
     errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
-  })
-}
+  }
+})

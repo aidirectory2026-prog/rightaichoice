@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { runRefresh } from '@/lib/cron/refresh'
 
@@ -14,33 +13,26 @@ export const maxDuration = 300
 //   curl -H "Authorization: Bearer $CRON_SECRET" \
 //     "https://rightaichoice.com/api/cron/refresh-tools?batch=15"
 
-async function handle(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+const handler = cronRoute({ pipelineKey: 'refresh-tools' }, async (ctx, request) => {
   const url = new URL(request.url)
   const batchParam = Number(url.searchParams.get('batch'))
   const batchSize =
     Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 25 ? batchParam : 10
 
-  try {
-    const supabase = getAdminClient()
-    const result = await runRefresh(supabase, batchSize)
-    return NextResponse.json({ ...result, batchSize })
-  } catch (e) {
-    console.error('Refresh pipeline error:', e)
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Unknown error' },
-      { status: 500 }
-    )
-  }
-}
+  const supabase = getAdminClient()
+  const result = await runRefresh(supabase, batchSize)
 
-export async function POST(request: Request) {
-  return handle(request)
-}
+  type RefreshResult = { processed?: number; refreshed?: number; failed?: number; slugs?: string[] }
+  const r = result as RefreshResult
+  ctx.recordItems({
+    processed: r.processed ?? batchSize,
+    succeeded: r.refreshed,
+    failed: r.failed,
+  })
+  ctx.recordMetadata({ batchSize, slugs: r.slugs?.slice(0, 20) })
 
-// Vercel cron always fires GET; manual triggers can use either.
-export async function GET(request: Request) {
-  return handle(request)
-}
+  return { ...result, batchSize }
+})
+
+export const POST = handler
+export const GET = handler

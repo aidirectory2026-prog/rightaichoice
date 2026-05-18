@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 // Daily Bing direct-submission cron — works regardless of laptop state.
@@ -103,26 +102,9 @@ async function submitChunk(apiKey: string, urls: string[]) {
   }
 }
 
-export async function POST(request: Request) {
-  return handle(request)
-}
-
-// Vercel cron fires GET; manual triggers can use POST. Both behave identically.
-export async function GET(request: Request) {
-  return handle(request)
-}
-
-async function handle(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+const handler = cronRoute({ pipelineKey: 'submit-urls-bing' }, async (ctx) => {
   const apiKey = process.env.BING_WEBMASTER_API_KEY
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: 'BING_WEBMASTER_API_KEY missing in Vercel env' },
-      { status: 500 },
-    )
-  }
+  if (!apiKey) throw new Error('BING_WEBMASTER_API_KEY missing in Vercel env')
 
   const supabase = getAdminClient()
 
@@ -132,19 +114,15 @@ async function handle(request: Request) {
     .eq('id', 1)
     .single()
 
-  if (stateErr || !stateRow) {
-    return NextResponse.json(
-      { error: `state read failed: ${stateErr?.message ?? 'no row'}` },
-      { status: 500 },
-    )
-  }
+  if (stateErr || !stateRow) throw new Error(`state read failed: ${stateErr?.message ?? 'no row'}`)
 
   const state = stateRow as State
   const today = new Date().toISOString().slice(0, 10)
   const lastRunDay = state.last_run_utc?.slice(0, 10) ?? ''
 
   if (lastRunDay === today) {
-    return NextResponse.json({
+    ctx.recordMetadata({ skipped: 'already_ran_today', state })
+    return {
       ok: true,
       skipped: 'already_ran_today',
       state: {
@@ -153,7 +131,7 @@ async function handle(request: Request) {
         last_run_utc: state.last_run_utc,
         lifetime_submitted: state.lifetime_submitted,
       },
-    })
+    }
   }
 
   const quota = (await fetchDailyQuota(apiKey)) ?? 100
@@ -171,25 +149,19 @@ async function handle(request: Request) {
   }
 
   if (pool.length === 0) {
-    return NextResponse.json({ ok: true, skipped: 'no_urls_available' })
+    ctx.recordMetadata({ skipped: 'no_urls_available' })
+    return { ok: true, skipped: 'no_urls_available' }
   }
 
   const slice = pool.slice(offset, offset + cap)
   if (slice.length === 0) {
-    return NextResponse.json({ ok: true, skipped: 'empty_slice', type, offset })
+    ctx.recordMetadata({ skipped: 'empty_slice', type, offset })
+    return { ok: true, skipped: 'empty_slice', type, offset }
   }
 
-  // Submit (split into Bing's per-request cap if needed).
-  try {
-    const requestCap = Math.min(PER_REQUEST_CAP, cap)
-    for (let i = 0; i < slice.length; i += requestCap) {
-      await submitChunk(apiKey, slice.slice(i, i + requestCap))
-    }
-  } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: (err as Error).message, attempted: slice.length, type, offset },
-      { status: 502 },
-    )
+  const requestCap = Math.min(PER_REQUEST_CAP, cap)
+  for (let i = 0; i < slice.length; i += requestCap) {
+    await submitChunk(apiKey, slice.slice(i, i + requestCap))
   }
 
   // Advance cursor — if we exhausted this type's pool, hop to the next type.
@@ -211,7 +183,18 @@ async function handle(request: Request) {
     } as never)
     .eq('id', 1)
 
-  return NextResponse.json({
+  ctx.recordItems({ processed: slice.length, succeeded: slice.length })
+  ctx.recordMetadata({
+    type,
+    offset,
+    next_type: newType,
+    next_offset: newOffsetInPass,
+    exhausted_pass: exhausted,
+    quota,
+    lifetime_submitted: state.lifetime_submitted + slice.length,
+  })
+
+  return {
     ok: true,
     submitted: slice.length,
     type,
@@ -221,5 +204,8 @@ async function handle(request: Request) {
     exhausted_pass: exhausted,
     quota,
     lifetime_submitted: state.lifetime_submitted + slice.length,
-  })
-}
+  }
+})
+
+export const POST = handler
+export const GET = handler

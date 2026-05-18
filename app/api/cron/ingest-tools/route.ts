@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { runIngestion } from '@/lib/cron/ingest'
 import { submitToIndexNow } from '@/lib/indexnow'
@@ -12,40 +11,33 @@ export const maxDuration = 300
 // depends on what discovery sources return; some days hit 50, some
 // fall short, occasional bursts exceed.
 
-async function handle(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+const handler = cronRoute({ pipelineKey: 'ingest-tools' }, async (ctx, request) => {
   const url = new URL(request.url)
   const batchParam = Number(url.searchParams.get('batch'))
   const batchSize =
     Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 50 ? batchParam : 25
 
-  try {
-    const supabase = getAdminClient()
-    const result = await runIngestion(supabase, batchSize)
+  const supabase = getAdminClient()
+  const result = await runIngestion(supabase, batchSize)
 
-    // Notify IndexNow about newly inserted tools so Bing/Yandex see
-    // them within minutes of insert.
-    if (result.inserted > 0 && result.insertedSlugs?.length) {
-      const urls = result.insertedSlugs.map((s) => `/tools/${s}`)
-      await submitToIndexNow(urls)
-    }
+  ctx.recordItems({
+    processed: result.discovered,
+    succeeded: result.inserted,
+    failed: result.failed,
+  })
+  ctx.recordMetadata({
+    batchSize,
+    insertedSlugs: result.insertedSlugs?.slice(0, 20),
+    gated: result.gated,
+  })
 
-    return NextResponse.json({ ...result, batchSize })
-  } catch (e) {
-    console.error('Ingestion pipeline error:', e)
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Unknown error' },
-      { status: 500 }
-    )
+  if (result.inserted > 0 && result.insertedSlugs?.length) {
+    const urls = result.insertedSlugs.map((s) => `/tools/${s}`)
+    await submitToIndexNow(urls)
   }
-}
 
-export async function POST(request: Request) {
-  return handle(request)
-}
+  return { ...result, batchSize }
+})
 
-export async function GET(request: Request) {
-  return handle(request)
-}
+export const POST = handler
+export const GET = handler

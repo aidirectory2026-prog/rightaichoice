@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { runCompareEditorialCascade } from '@/lib/cron/cascade-editorials'
 
@@ -17,32 +16,34 @@ export const maxDuration = 300
 // layer that was generated as text and goes stale when underlying tools
 // change.
 
-async function handle(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+const handler = cronRoute({ pipelineKey: 'refresh-compare-editorials' }, async (ctx, request) => {
   const url = new URL(request.url)
   const batchParam = Number(url.searchParams.get('batch'))
   const batchSize =
     Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 50 ? batchParam : 20
 
-  try {
-    const supabase = getAdminClient()
-    const result = await runCompareEditorialCascade(supabase, batchSize)
-    return NextResponse.json({ ...result, batchSize })
-  } catch (e) {
-    console.error('Cascade editorial error:', e)
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Unknown error' },
-      { status: 500 }
-    )
+  const supabase = getAdminClient()
+  const result = await runCompareEditorialCascade(supabase, batchSize)
+
+  // result shape from runCompareEditorialCascade typically includes
+  // { processed, regenerated, failed, slugs } — defensive optional read.
+  type CascadeResult = {
+    processed?: number
+    regenerated?: number
+    succeeded?: number
+    failed?: number
+    slugs?: string[]
   }
-}
+  const r = result as CascadeResult
+  ctx.recordItems({
+    processed: r.processed ?? r.regenerated ?? batchSize,
+    succeeded: r.succeeded ?? r.regenerated,
+    failed: r.failed,
+  })
+  ctx.recordMetadata({ batchSize, slugs: r.slugs?.slice(0, 20) })
 
-export async function POST(request: Request) {
-  return handle(request)
-}
+  return { ...result, batchSize }
+})
 
-export async function GET(request: Request) {
-  return handle(request)
-}
+export const POST = handler
+export const GET = handler

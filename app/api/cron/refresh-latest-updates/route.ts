@@ -14,8 +14,7 @@
  *
  * Schedule (vercel.json): "0 2 * * *" — daily at 02:00 UTC.
  */
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { discoverChangelog, discoverBlog } from '@/lib/cron/scrape-changelog'
 import { fetchNewsMentions } from '@/lib/cron/scrape-news'
@@ -93,10 +92,7 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
   return { ok: true }
 }
 
-export async function POST(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+export const POST = cronRoute({ pipelineKey: 'refresh-latest-updates' }, async (ctx) => {
   const supa = getAdminClient()
   const { data, error } = await supa
     .from('tools')
@@ -105,34 +101,46 @@ export async function POST(request: Request) {
     .order('latest_updates_at', { ascending: true, nullsFirst: true })
     .limit(BATCH_SIZE)
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    throw new Error(`fetch tools failed: ${error.message}`)
   }
   const tools = (data ?? []) as unknown as ToolRow[]
   if (tools.length === 0) {
-    return NextResponse.json({ ok: true, processed: 0, message: 'no tools to refresh' })
+    ctx.recordItems({ processed: 0, succeeded: 0, failed: 0 })
+    return { ok: true, processed: 0, message: 'no tools to refresh' }
   }
 
   let succeeded = 0
   let failed = 0
   const failures: Array<{ slug: string; error: string }> = []
+  const refreshedSlugs: string[] = []
 
   await pMap(tools, CONCURRENCY, async (tool) => {
     const result = await processOne(tool).catch((err) => ({
       ok: false as const,
       error: err instanceof Error ? err.message : String(err),
     }))
-    if (result.ok) succeeded++
-    else {
+    if (result.ok) {
+      succeeded++
+      refreshedSlugs.push(tool.slug)
+    } else {
       failed++
       failures.push({ slug: tool.slug, error: result.error ?? 'unknown' })
     }
   })
 
-  return NextResponse.json({
+  ctx.recordItems({ processed: tools.length, succeeded, failed })
+  ctx.recordMetadata({
+    batch_size: tools.length,
+    refreshed_slugs: refreshedSlugs.slice(0, 20),
+    failures: failures.slice(0, 10),
+  })
+  if (failed > 0 && succeeded > 0) ctx.setStatus('partial')
+
+  return {
     ok: true,
     batch_size: tools.length,
     succeeded,
     failed,
     failures: failures.slice(0, 5),
-  })
-}
+  }
+})

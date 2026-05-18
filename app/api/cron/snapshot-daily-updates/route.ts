@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 export const maxDuration = 60
@@ -12,13 +11,9 @@ export const dynamic = 'force-dynamic'
 // Counts since 00:00 UTC today (open interval, not 24h sliding window) so
 // each day's number maps exactly to the calendar day.
 
-type SlugRow = { tool_slug?: string | null; slug?: string | null }
 type CompareSlugRow = { slug: string | null }
 
-async function handle(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+const handler = cronRoute({ pipelineKey: 'snapshot-daily-updates' }, async (ctx) => {
   const supabase = getAdminClient()
   const today = new Date().toISOString().slice(0, 10)
   const startISO = `${today}T00:00:00.000Z`
@@ -111,10 +106,10 @@ async function handle(request: Request) {
     tools_ingest_gated: gated,
     tools_ingest_failed: ingestFailed,
     compares_regenerated: cascaded.length,
-    compares_cascade_failed: 0, // cascade route doesn't currently persist failures
+    compares_cascade_failed: 0,
     tools_latest_updates_refreshed: latestRefreshedCount ?? 0,
     bing_urls_submitted: bingToday,
-    indexnow_urls_pinged: 0, // TODO: needs an indexnow_logs table; skipped for v1
+    indexnow_urls_pinged: 0,
     refreshed_slugs_sample: refreshedOk
       .map((r) => r.tool_slug)
       .filter((s): s is string => !!s)
@@ -138,16 +133,12 @@ async function handle(request: Request) {
     .from('daily_update_summaries')
     .upsert(row as never, { onConflict: 'utc_date' })
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
-  }
-  return NextResponse.json({ ok: true, ...row })
-}
+  if (error) throw new Error(`upsert daily_update_summaries: ${error.message}`)
 
-export async function GET(request: Request) {
-  return handle(request)
-}
+  ctx.recordItems({ processed: 1, succeeded: 1 })
+  ctx.recordMetadata({ snapshot: row })
+  return { ok: true, ...row }
+})
 
-export async function POST(request: Request) {
-  return handle(request)
-}
+export const GET = handler
+export const POST = handler

@@ -1,18 +1,11 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { calculateViabilityBatch } from '@/lib/cron/viability'
 
 export const maxDuration = 60
 
-export async function POST(request: Request) {
-  const unauthorized = validateCronSecret(request)
-  if (unauthorized) return unauthorized
-
+export const POST = cronRoute({ pipelineKey: 'calculate-viability' }, async (ctx) => {
   const { processed, errors } = await calculateViabilityBatch(50)
-
-  return NextResponse.json({
-    ok: true,
-    processed,
-    errors: errors.length > 0 ? errors : undefined,
-  })
-}
+  ctx.recordItems({ processed, succeeded: processed - errors.length, failed: errors.length })
+  if (errors.length > 0) ctx.recordMetadata({ errors: errors.slice(0, 10) })
+  return { ok: true, processed, errors: errors.length > 0 ? errors : undefined }
+})

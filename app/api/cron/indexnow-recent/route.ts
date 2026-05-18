@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { validateCronSecret } from '@/lib/cron/auth'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 import { submitToIndexNow } from '@/lib/indexnow'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 
@@ -25,10 +24,7 @@ const WINDOW_DAYS = 7
  *   - User-saved tool_comparisons (is_editorial = false) — private/transient
  *   - Tool *updates* (handled by the weekly full ping)
  */
-export async function POST(request: Request) {
-  const authError = validateCronSecret(request)
-  if (authError) return authError
-
+export const POST = cronRoute({ pipelineKey: 'indexnow-recent' }, async (ctx) => {
   const db = getAdminClient()
   const cutoff = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
   const urls: string[] = []
@@ -53,20 +49,22 @@ export async function POST(request: Request) {
     )
   }
 
+  ctx.recordItems({ processed: urls.length, succeeded: urls.length })
+
   if (urls.length === 0) {
-    return NextResponse.json({
+    return {
       success: true,
       submitted: 0,
       message: `No tools or editorial comparisons created in the last ${WINDOW_DAYS} days`,
-    })
+    }
   }
 
   await submitToIndexNow(urls)
 
-  return NextResponse.json({
+  return {
     success: true,
     submitted: urls.length,
     window_days: WINDOW_DAYS,
     message: `Submitted ${urls.length} recent URLs to IndexNow`,
-  })
-}
+  }
+})

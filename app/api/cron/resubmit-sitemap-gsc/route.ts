@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { OAuth2Client } from 'google-auth-library'
+import { cronRoute } from '@/lib/pipelines/with-logging'
 
 // Weekly GSC sitemap re-submission cron.
 //
@@ -27,52 +27,33 @@ const SITEMAP_URL =
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-export async function GET(req: Request) {
-  // Vercel cron auth — only this route's CRON_SECRET can fire it.
-  const auth = req.headers.get('authorization')
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
+export const GET = cronRoute({ pipelineKey: 'resubmit-sitemap-gsc' }, async (ctx) => {
   const clientId = process.env.GSC_OAUTH_CLIENT_ID
   const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET
   const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN
   if (!clientId || !clientSecret || !refreshToken) {
-    return NextResponse.json(
-      {
-        error:
-          'Missing GSC OAuth env. Set GSC_OAUTH_CLIENT_ID + GSC_OAUTH_CLIENT_SECRET + GSC_OAUTH_REFRESH_TOKEN.',
-      },
-      { status: 500 },
+    throw new Error(
+      'Missing GSC OAuth env. Set GSC_OAUTH_CLIENT_ID + GSC_OAUTH_CLIENT_SECRET + GSC_OAUTH_REFRESH_TOKEN.',
     )
   }
 
-  try {
-    const oauth = new OAuth2Client(clientId, clientSecret)
-    oauth.setCredentials({ refresh_token: refreshToken })
-    const { token } = await oauth.getAccessToken()
-    if (!token) {
-      return NextResponse.json({ error: 'failed to mint access token' }, { status: 500 })
-    }
+  const oauth = new OAuth2Client(clientId, clientSecret)
+  oauth.setCredentials({ refresh_token: refreshToken })
+  const { token } = await oauth.getAccessToken()
+  if (!token) throw new Error('failed to mint access token')
 
-    const url = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE)}/sitemaps/${encodeURIComponent(SITEMAP_URL)}`
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-    })
+  const url = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE)}/sitemaps/${encodeURIComponent(SITEMAP_URL)}`
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+  })
 
-    if (!res.ok) {
-      const body = await res.text()
-      return NextResponse.json(
-        { ok: false, status: res.status, body: body.slice(0, 500) },
-        { status: 502 },
-      )
-    }
-    return NextResponse.json({ ok: true, sitemap: SITEMAP_URL, site: SITE })
-  } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: (err as Error).message },
-      { status: 500 },
-    )
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`GSC submit HTTP ${res.status}: ${body.slice(0, 500)}`)
   }
-}
+
+  ctx.recordItems({ processed: 1, succeeded: 1 })
+  ctx.recordMetadata({ sitemap: SITEMAP_URL, site: SITE })
+  return { ok: true, sitemap: SITEMAP_URL, site: SITE }
+})
