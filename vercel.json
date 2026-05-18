@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/snapshot-daily-updates",
       "schedule": "55 23 * * *"
+    },
+    {
+      "path": "/api/cron/poll-gh-actions",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
