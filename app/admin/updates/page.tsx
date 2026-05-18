@@ -93,6 +93,8 @@ export default async function KnowledgeRoom({
     toolsRefreshed,
     toolsNewlyAdded,
     toolsLatestRefreshed,
+    costRows,
+    cost24hRows,
   ] = await Promise.all([
     // Catalog
     (async () => {
@@ -324,7 +326,60 @@ export default async function KnowledgeRoom({
       .order('latest_updates_at', { ascending: false })
       .limit(20)
       .then((r) => (r.data ?? []) as Array<{ slug: string; name: string; latest_updates_at: string }>),
+
+    // Cost tracker: pipeline_runs in window with per-provider tokens + apify.
+    // Aggregated client-side; expected volume <5000 rows even at 30d.
+    supabase
+      .from('pipeline_runs')
+      .select('pipeline_key, estimated_cost_usd, deepseek_tokens_in, deepseek_tokens_out, anthropic_tokens_in, anthropic_tokens_out, apify_usd')
+      .gte('started_at', cutoff)
+      .limit(5000)
+      .then((r) => (r.data ?? []) as Array<{ pipeline_key: string; estimated_cost_usd: number; deepseek_tokens_in: number; deepseek_tokens_out: number; anthropic_tokens_in: number; anthropic_tokens_out: number; apify_usd: number }>),
+
+    // Per-pipeline trailing-24h cost for the "$5/day red flag" check.
+    // Always 24h regardless of selected range (red-flag is about now, not history).
+    supabase
+      .from('pipeline_runs')
+      .select('pipeline_key, estimated_cost_usd')
+      .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(5000)
+      .then((r) => (r.data ?? []) as Array<{ pipeline_key: string; estimated_cost_usd: number }>),
   ])
+
+  // ── Cost aggregation (client-side, ~O(n) over ≤5k rows) ──────────
+  type CostAgg = {
+    pipelineKey: string
+    total: number
+    deepseekUsd: number
+    anthropicUsd: number
+    apifyUsd: number
+    runCount: number
+  }
+  const costByPipeline = new Map<string, CostAgg>()
+  for (const row of costRows) {
+    const k = row.pipeline_key
+    if (!costByPipeline.has(k)) {
+      costByPipeline.set(k, { pipelineKey: k, total: 0, deepseekUsd: 0, anthropicUsd: 0, apifyUsd: 0, runCount: 0 })
+    }
+    const agg = costByPipeline.get(k)!
+    agg.total += Number(row.estimated_cost_usd) || 0
+    agg.apifyUsd += Number(row.apify_usd) || 0
+    // Token costs are already rolled into estimated_cost_usd by the wrapper;
+    // we recompute the per-provider split for the breakdown bar.
+    const dsCost = ((row.deepseek_tokens_in || 0) * 0.27 + (row.deepseek_tokens_out || 0) * 1.1) / 1_000_000
+    const anCost = Number(row.estimated_cost_usd || 0) - dsCost - Number(row.apify_usd || 0)
+    agg.deepseekUsd += dsCost
+    agg.anthropicUsd += Math.max(0, anCost)
+    agg.runCount++
+  }
+  const costAggList = Array.from(costByPipeline.values()).sort((a, b) => b.total - a.total)
+  const costTotal = costAggList.reduce((sum, a) => sum + a.total, 0)
+
+  const cost24hByPipeline = new Map<string, number>()
+  for (const row of cost24hRows) {
+    cost24hByPipeline.set(row.pipeline_key, (cost24hByPipeline.get(row.pipeline_key) ?? 0) + (Number(row.estimated_cost_usd) || 0))
+  }
+  const overBudget = Array.from(cost24hByPipeline.entries()).filter(([, v]) => v > 5)
 
   // ── Pipeline tallies ──────────────────────────────────────────────
   const refreshOk = refreshLogsByStatus['refreshed'] ?? 0
@@ -623,6 +678,67 @@ export default async function KnowledgeRoom({
               fallbackUrl="https://github.com/aidirectory2026-prog/rightaichoice/actions"
             />
           </div>
+        )}
+      </Section>
+
+      {/* ── 4.5 COST TRACKER (period-scoped) ──────────────────── */}
+      <Section
+        title={`Cost · ${RANGE_LABELS[range]}`}
+        icon={<TrendingUp className="h-4 w-4 text-yellow-400" />}
+      >
+        <div className="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
+          <div>
+            <span className="text-2xl font-bold text-white tabular-nums">${costTotal.toFixed(2)}</span>
+            <span className="text-xs text-zinc-500 ml-2">total across {costAggList.length} pipelines, {costRows.length} runs</span>
+          </div>
+          {overBudget.length > 0 && (
+            <div className="text-xs px-2 py-1 rounded border border-amber-700/60 bg-amber-950/40 text-amber-200">
+              ⚠ {overBudget.length} pipeline{overBudget.length === 1 ? '' : 's'} over $5/day:{' '}
+              {overBudget.map(([k, v]) => `${k} ($${v.toFixed(2)})`).join(', ')}
+            </div>
+          )}
+        </div>
+        {costAggList.length === 0 ? (
+          <Panel title="">
+            <Empty>No cost data in this window yet. Once pipelines start logging via withPipelineLogging, totals appear here.</Empty>
+          </Panel>
+        ) : (
+          <Panel title="">
+            <table className="w-full text-xs">
+              <thead className="text-zinc-500 border-b border-zinc-800">
+                <tr>
+                  <th className="text-left py-1.5 font-medium">Pipeline</th>
+                  <th className="text-right py-1.5 font-medium w-16">Runs</th>
+                  <th className="text-right py-1.5 font-medium w-20">DeepSeek</th>
+                  <th className="text-right py-1.5 font-medium w-20">Anthropic</th>
+                  <th className="text-right py-1.5 font-medium w-20">Apify</th>
+                  <th className="text-right py-1.5 font-medium w-20">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costAggList.map((a) => {
+                  const today = cost24hByPipeline.get(a.pipelineKey) ?? 0
+                  const overFlag = today > 5
+                  return (
+                    <tr
+                      key={a.pipelineKey}
+                      className={`border-t border-zinc-800/40 ${overFlag ? 'bg-amber-950/20' : ''}`}
+                    >
+                      <td className="py-1.5 text-zinc-300">
+                        {a.pipelineKey}
+                        {overFlag && <span className="text-[10px] text-amber-400 ml-2">⚠ ${today.toFixed(2)} today</span>}
+                      </td>
+                      <td className="py-1.5 text-right text-zinc-500 tabular-nums">{a.runCount}</td>
+                      <td className="py-1.5 text-right text-zinc-400 tabular-nums">${a.deepseekUsd.toFixed(3)}</td>
+                      <td className="py-1.5 text-right text-zinc-400 tabular-nums">${a.anthropicUsd.toFixed(3)}</td>
+                      <td className="py-1.5 text-right text-zinc-400 tabular-nums">${a.apifyUsd.toFixed(3)}</td>
+                      <td className="py-1.5 text-right text-zinc-200 font-medium tabular-nums">${a.total.toFixed(2)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </Panel>
         )}
       </Section>
 
