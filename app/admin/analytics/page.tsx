@@ -1,19 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { Eye, MousePointerClick, Search, Star, MessageSquare, GitBranch, TrendingUp, Users } from 'lucide-react'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 
+// Phase 8.d.6 — force-dynamic + shared range picker. No more 30-day cache.
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 export const metadata = { title: 'Analytics' }
 
-async function getAnalyticsData() {
+async function getAnalyticsData(cutoff: string) {
   const supabase = await createClient()
-
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const cutoff = thirtyDaysAgo.toISOString()
 
   const [
     totalViewsRes,
     recentViewsRes,
     totalClicksRes,
+    recentClicksRes,
     topToolsRes,
     topSearchesRes,
     totalsRes,
@@ -21,6 +23,7 @@ async function getAnalyticsData() {
     supabase.from('page_views').select('id', { count: 'exact', head: true }),
     supabase.from('page_views').select('id', { count: 'exact', head: true }).gte('created_at', cutoff),
     supabase.from('click_logs').select('id', { count: 'exact', head: true }),
+    supabase.from('click_logs').select('id', { count: 'exact', head: true }).gte('created_at', cutoff),
     supabase
       .from('tools')
       .select('id, name, slug, view_count, review_count, avg_rating')
@@ -41,7 +44,6 @@ async function getAnalyticsData() {
     ]),
   ])
 
-  // Aggregate top search queries
   const searchCounts: Record<string, number> = {}
   ;(topSearchesRes.data ?? []).forEach(({ query }: { query: string }) => {
     if (!query) return
@@ -59,6 +61,7 @@ async function getAnalyticsData() {
     totalViews: totalViewsRes.count ?? 0,
     recentViews: recentViewsRes.count ?? 0,
     totalClicks: totalClicksRes.count ?? 0,
+    recentClicks: recentClicksRes.count ?? 0,
     topTools: topToolsRes.data ?? [],
     topSearches,
     counts: {
@@ -71,14 +74,23 @@ async function getAnalyticsData() {
   }
 }
 
-export default async function AnalyticsPage() {
-  const data = await getAnalyticsData()
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string; from?: string; to?: string }>
+}) {
+  const sp = await searchParams
+  const sel = parseRange(sp)
+  const data = await getAnalyticsData(sel.cutoffISO)
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-sm text-zinc-500 mt-1">Platform-wide metrics</p>
+      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Analytics</h1>
+          <p className="text-sm text-zinc-500 mt-1">Platform-wide metrics · window: {sel.label}</p>
+        </div>
+        <RangePicker active={sel.key} />
       </div>
 
       {/* Summary cards */}
@@ -90,7 +102,7 @@ export default async function AnalyticsPage() {
         <StatCard icon={<GitBranch className="h-4 w-4" />} label="Workflows" value={data.counts.workflows} color="cyan" />
       </div>
 
-      {/* Traffic cards */}
+      {/* Traffic cards — all 3 windowed */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <TrafficCard
           icon={<Eye className="h-5 w-5 text-zinc-400" />}
@@ -100,15 +112,15 @@ export default async function AnalyticsPage() {
         />
         <TrafficCard
           icon={<Eye className="h-5 w-5 text-emerald-400" />}
-          label="Page Views (30d)"
+          label={`Page Views · ${sel.label}`}
           value={data.recentViews}
-          sub="last 30 days"
+          sub={sel.label.toLowerCase()}
         />
         <TrafficCard
           icon={<MousePointerClick className="h-5 w-5 text-blue-400" />}
-          label="Tool Click-throughs"
-          value={data.totalClicks}
-          sub="all time"
+          label={`Clicks · ${sel.label}`}
+          value={data.recentClicks}
+          sub={sel.label.toLowerCase()}
         />
       </div>
 
@@ -117,7 +129,7 @@ export default async function AnalyticsPage() {
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-emerald-400" />
-            Top Tools by Views
+            Top Tools by Views (all time)
           </h2>
           <div className="space-y-2">
             {data.topTools.map((tool: { id: string; name: string; slug: string; view_count: number; review_count: number; avg_rating: number }, i) => (
@@ -151,7 +163,7 @@ export default async function AnalyticsPage() {
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
             <Search className="h-4 w-4 text-purple-400" />
-            Top Search Queries (30d)
+            Top Search Queries · {sel.label}
           </h2>
           <div className="space-y-2">
             {data.topSearches.map(({ query, count }, i) => {
@@ -173,7 +185,7 @@ export default async function AnalyticsPage() {
               )
             })}
             {data.topSearches.length === 0 && (
-              <p className="text-xs text-zinc-600">No searches recorded yet.</p>
+              <p className="text-xs text-zinc-600">No searches recorded in this window.</p>
             )}
           </div>
         </div>

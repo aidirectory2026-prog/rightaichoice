@@ -15,6 +15,8 @@ import {
   Layers,
 } from 'lucide-react'
 import { PipelineRunRow } from '@/components/admin/pipeline-run-drilldown'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange, RANGE_LABELS, type RangeKey } from '@/lib/admin/range'
 
 // /admin/updates — the "knowledge room"
 // One page, one purpose: tell the operator what users and pipelines did
@@ -25,27 +27,6 @@ import { PipelineRunRow } from '@/components/admin/pipeline-run-drilldown'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Knowledge Room — Admin' }
-
-type RangeKey = 'today' | '7d' | '30d'
-const RANGE_LABELS: Record<RangeKey, string> = {
-  today: 'Today (24h)',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-}
-const RANGE_HOURS: Record<RangeKey, number> = {
-  today: 24,
-  '7d': 24 * 7,
-  '30d': 24 * 30,
-}
-
-function pickRange(raw: string | undefined): RangeKey {
-  if (raw === '7d' || raw === '30d') return raw
-  return 'today'
-}
-
-function rangeCutoffISO(range: RangeKey): string {
-  return new Date(Date.now() - RANGE_HOURS[range] * 60 * 60 * 1000).toISOString()
-}
 
 function ago(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -82,11 +63,12 @@ type PipelineRunRow = {
 export default async function KnowledgeRoom({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string }>
+  searchParams: Promise<{ range?: string; from?: string; to?: string }>
 }) {
   const sp = await searchParams
-  const range = pickRange(sp.range)
-  const cutoff = rangeCutoffISO(range)
+  const sel = parseRange(sp)
+  const range: RangeKey = sel.key
+  const cutoff = sel.cutoffISO
   const supabase = await createClient()
 
   // ── Parallel-fan-out all queries; every one is small + indexed ───
@@ -696,26 +678,6 @@ export default async function KnowledgeRoom({
 }
 
 // ── Components ──────────────────────────────────────────────────────
-
-function RangePicker({ active }: { active: RangeKey }) {
-  return (
-    <div className="inline-flex rounded-lg border border-zinc-800 bg-zinc-900/40 p-0.5">
-      {(['today', '7d', '30d'] as RangeKey[]).map((r) => (
-        <Link
-          key={r}
-          href={`/admin/updates?range=${r}`}
-          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-            active === r
-              ? 'bg-emerald-600 text-white'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-          }`}
-        >
-          {RANGE_LABELS[r]}
-        </Link>
-      ))}
-    </div>
-  )
-}
 
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (

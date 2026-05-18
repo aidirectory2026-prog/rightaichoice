@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { Link as LinkIcon, TrendingUp, Globe } from 'lucide-react'
 import { AddReferringDomainForm } from '@/components/admin/add-referring-domain-form'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export const metadata = { title: 'Authority — Admin' }
 
@@ -34,7 +37,13 @@ function daysAgo(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
 
-export default async function AuthorityPage() {
+export default async function AuthorityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string; from?: string; to?: string }>
+}) {
+  const sp = await searchParams
+  const sel = parseRange(sp)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('referring_domains')
@@ -55,9 +64,9 @@ export default async function AuthorityPage() {
 
   const rows = (data ?? []) as Row[]
 
-  // Per-channel totals (last 30d + all-time)
-  const now = Date.now()
-  const last30 = rows.filter((r) => now - new Date(r.first_seen_at).getTime() < 30 * 86_400_000)
+  // Per-channel totals + window-scoped count
+  const cutoffMs = new Date(sel.cutoffISO).getTime()
+  const inWindow = rows.filter((r) => new Date(r.first_seen_at).getTime() >= cutoffMs)
   const channelCounts = rows.reduce<Record<string, number>>((acc, r) => {
     acc[r.source_channel] = (acc[r.source_channel] ?? 0) + 1
     return acc
@@ -72,12 +81,14 @@ export default async function AuthorityPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Authority</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Referring-domain tracker. Powers weekly 7O outreach review — open every
-          Monday and decide which channel to invest in next.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Authority</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Referring-domain tracker · window: {sel.label}. Powers weekly 7O outreach review.
+          </p>
+        </div>
+        <RangePicker active={sel.key} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
@@ -89,9 +100,9 @@ export default async function AuthorityPage() {
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="New in last 30 days"
-          value={last30.length.toLocaleString()}
-          sub={last30.length >= 5 ? 'on pace' : 'below target (5+/mo)'}
+          label={`New · ${sel.label}`}
+          value={inWindow.length.toLocaleString()}
+          sub={inWindow.length >= 5 ? 'on pace' : 'below target (5+/window)'}
         />
         <StatCard
           icon={<Globe className="h-4 w-4" />}

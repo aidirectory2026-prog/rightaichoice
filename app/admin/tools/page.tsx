@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ToolActions } from './tool-actions'
 
+// Phase 8.d.6 — admin tools page now force-dynamic; no more cached stale lists.
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 export const metadata = { title: 'Manage Tools' }
 
 type SearchParams = Promise<{ filter?: string }>
