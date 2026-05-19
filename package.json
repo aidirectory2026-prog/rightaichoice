@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "mixpanel:verify": "tsx --env-file=.env.local scripts/mixpanel/verify.ts",
+    "mixpanel:verify:full": "tsx --env-file=.env.local scripts/mixpanel/verify.ts --full",
     "mixpanel:lexicon:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts --dry-run",
     "mixpanel:lexicon": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts",
     "mixpanel:dashboards:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-dashboards.ts --dry-run",
