@@ -117,4 +117,89 @@ export const serverAnalytics = {
       properties: { milestone, source: 'server' },
     })
   },
+
+  // ── Phase 8.g.3 — new server-side mirrors ──────────────────────
+  // Pattern for client/server pairs: deterministicInsertId() so the same
+  // logical event fired from both sides de-dups in Mixpanel within its
+  // 5-day insert_id window.
+
+  planCompletedServer(distinctId: string, useCase: string, toolCount: number, recommendedSlugs: string[], ip?: string) {
+    return trackServer({
+      event: 'plan_completed',
+      distinctId,
+      ip,
+      insertId: deterministicInsertId('plan_completed', distinctId, useCase),
+      properties: {
+        use_case: useCase.slice(0, 200),
+        tool_count: toolCount,
+        recommended_tool_slugs: recommendedSlugs.slice(0, 30),
+        source: 'server',
+      },
+    })
+  },
+
+  recommendationRequestedServer(distinctId: string, useCase: string, budget: string, skillLevel: string, resultSlugs: string[], ip?: string) {
+    return trackServer({
+      event: 'recommendation_requested',
+      distinctId,
+      ip,
+      insertId: deterministicInsertId('recommendation_requested', distinctId, useCase + budget + skillLevel),
+      properties: {
+        use_case: useCase.slice(0, 200),
+        budget,
+        skill_level: skillLevel,
+        result_count: resultSlugs.length,
+        result_tool_slugs: resultSlugs.slice(0, 30),
+        source: 'server',
+      },
+    })
+  },
+
+  toolSavedServer(distinctId: string, toolId: string, toolSlug: string, ip?: string) {
+    return trackServer({
+      event: 'tool_saved',
+      distinctId,
+      ip,
+      insertId: deterministicInsertId('tool_saved', distinctId, toolId),
+      properties: { tool_id: toolId, tool_slug: toolSlug, source: 'server' },
+    })
+  },
+
+  passwordResetCompletedServer(distinctId: string, ip?: string) {
+    return trackServer({
+      event: 'password_reset_completed',
+      distinctId,
+      ip,
+      properties: { method: 'email', source: 'server' },
+    })
+  },
+
+  newsletterSubscribedServer(distinctId: string, emailDomain: string, source: string, pagePath: string, ip?: string) {
+    return trackServer({
+      event: 'newsletter_subscribed',
+      distinctId,
+      ip,
+      insertId: deterministicInsertId('newsletter_subscribed', distinctId, emailDomain),
+      properties: {
+        email_domain: emailDomain,
+        source,
+        page_path_at_subscribe: pagePath,
+        source_kind: 'server',
+      },
+    })
+  },
+}
+
+// ── Internal: deterministic insert_id for client/server de-dup ────
+// Hash collapses event name + distinct_id + payload signature into one stable
+// id. The client fires the same event with the same signature → both land
+// with the same $insert_id → Mixpanel keeps exactly one within its 5-day
+// dedup window. SHA-256 truncated to 16 bytes (32 hex chars) is plenty for
+// uniqueness at our scale.
+function deterministicInsertId(event: string, distinctId: string, payloadSignature: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(`${event}|${distinctId}|${payloadSignature}`)
+    .digest('hex')
+    .slice(0, 32)
 }

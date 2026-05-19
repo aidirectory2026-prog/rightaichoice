@@ -318,6 +318,18 @@ export async function toggleSave(toolId: string): Promise<{ saved: boolean; erro
   if (!user) return { saved: false, error: 'Not authenticated' }
 
   const saved = await toggleSaveTool(toolId, user.id)
+  // Phase 8.g.3 — server-side mirror for tool_saved (ad-blocker resilient).
+  // Saves are the #1 retention signal; client also fires analytics.toolSaved
+  // — deterministic insert_id de-dups them in Mixpanel within 5 days.
+  if (saved) {
+    const { serverAnalytics } = await import('@/lib/mixpanel-server')
+    const { data: tool } = await supabase
+      .from('tools')
+      .select('slug')
+      .eq('id', toolId)
+      .single()
+    void serverAnalytics.toolSavedServer(user.id, toolId, (tool as { slug?: string } | null)?.slug ?? '')
+  }
   return { saved, error: null }
 }
 

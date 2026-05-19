@@ -62,5 +62,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Phase 8.g.3 — server-side mirror for newsletter_subscribed. Uses email
+  // as distinct_id when no signed-in user is available — vendor-segment
+  // signal via email_domain is the key property regardless.
+  try {
+    const { serverAnalytics } = await import('@/lib/mixpanel-server')
+    const { data: { user } } = await supabase.auth.getUser()
+    const distinctId = user?.id ?? email
+    const emailDomain = email.split('@')[1] ?? 'unknown'
+    void serverAnalytics.newsletterSubscribedServer(
+      distinctId,
+      emailDomain,
+      source,
+      sourceEntity ?? '',
+      req.headers.get('x-forwarded-for') ?? undefined,
+    )
+  } catch {
+    // Never block the signup on analytics failure.
+  }
+
   return NextResponse.json({ ok: true })
 }

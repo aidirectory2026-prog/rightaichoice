@@ -137,6 +137,19 @@ export async function updatePassword(_prevState: AuthState, formData: FormData):
     return { error: error.message }
   }
 
+  // Phase 8.g.3 — server-side fire for password_reset_completed. Reset
+  // flows often happen in a fresh session/browser where no client SDK has
+  // initialized yet, so server fire is the authoritative one.
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id) {
+      const { serverAnalytics } = await import('@/lib/mixpanel-server')
+      void serverAnalytics.passwordResetCompletedServer(user.id)
+    }
+  } catch {
+    // Never block the password reset on analytics failure.
+  }
+
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
