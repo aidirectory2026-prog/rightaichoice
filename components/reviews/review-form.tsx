@@ -1,18 +1,61 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Star } from 'lucide-react'
 import { submitReview } from '@/actions/reviews'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useAuthHref } from '@/lib/hooks/use-auth-href'
+import { analytics } from '@/lib/analytics'
 import Link from 'next/link'
 
-export function ReviewForm({ toolId }: { toolId: string }) {
+export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: string }) {
   const { user } = useAuth()
   const loginHref = useAuthHref('/login')
   const [state, action, isPending] = useActionState(submitReview, null)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
+  // Phase 8.g.2 — engagement timing + full-payload capture on success.
+  const mountedAtRef = useRef<number>(0)
+  const ratingSetAtRef = useRef<number | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const submittedRef = useRef(false)
+
+  // Fire review_form_opened once on mount when authed (user sees the form).
+  useEffect(() => {
+    if (!user || mountedAtRef.current) return
+    mountedAtRef.current = Date.now()
+    analytics.reviewFormOpened(toolId, toolSlug ?? '', 'tool_page')
+  }, [user, toolId, toolSlug])
+
+  // After submit succeeds, fire reviewSubmittedRich with the full text payload.
+  useEffect(() => {
+    if (!state?.success || submittedRef.current) return
+    submittedRef.current = true
+    // Read final form values from the controlled-ish DOM at submit time.
+    const fd = formRef.current ? new FormData(formRef.current) : null
+    const pros = String(fd?.get('pros') ?? '')
+    const cons = String(fd?.get('cons') ?? '')
+    const useCase = String(fd?.get('use_case') ?? '')
+    const fullText = [pros, cons, useCase].filter(Boolean).join('\n\n')
+    analytics.reviewSubmittedRich({
+      tool_id: toolId,
+      tool_slug: toolSlug ?? '',
+      rating,
+      text: fullText,
+      pros_text: pros,
+      cons_text: cons,
+      recommended: rating >= 4,
+      use_case_tag: useCase.slice(0, 80),
+      time_to_submit_ms: mountedAtRef.current ? Date.now() - mountedAtRef.current : 0,
+    })
+  }, [state, toolId, toolSlug, rating])
+
+  function handleStarClick(star: number) {
+    setRating(star)
+    const now = Date.now()
+    analytics.reviewRatingSet(toolId, star, ratingSetAtRef.current ? now - ratingSetAtRef.current : now - mountedAtRef.current)
+    ratingSetAtRef.current = now
+  }
 
   if (!user) {
     return (
@@ -36,7 +79,7 @@ export function ReviewForm({ toolId }: { toolId: string }) {
   }
 
   return (
-    <form action={action} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-5">
+    <form ref={formRef} action={action} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-5">
       <input type="hidden" name="tool_id" value={toolId} />
       <input type="hidden" name="rating" value={rating} />
 
@@ -50,7 +93,7 @@ export function ReviewForm({ toolId }: { toolId: string }) {
             <button
               key={star}
               type="button"
-              onClick={() => setRating(star)}
+              onClick={() => handleStarClick(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
               className="p-0.5 transition-transform hover:scale-110"
