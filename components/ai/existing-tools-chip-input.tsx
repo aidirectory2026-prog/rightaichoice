@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X, Plus } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 // Phase 9 Stage 2 (2026-05-16): chip-based existing-tools input for the
 // intake modal. Replaces the comma-separated free-text field so:
@@ -51,7 +52,11 @@ export function ExistingToolsChipInput({
     }
   }, [query, value])
 
-  function add(name: string) {
+  // Phase 8.g.2 — add() now takes an optional `matchedSlug` so callers from
+  // the autocomplete dropdown can pass the catalog match; free-text path
+  // passes null. Captured into analytics for vendor-data segmentation
+  // ("which of my competitors did users name-drop?").
+  function add(name: string, matchedSlug: string | null = null, source: 'autocomplete' | 'free_text' | 'pasted' = 'free_text') {
     const trimmed = name.trim()
     if (!trimmed) return
     if (value.some((v) => v.toLowerCase() === trimmed.toLowerCase())) {
@@ -59,13 +64,23 @@ export function ExistingToolsChipInput({
       return
     }
     onChange([...value, trimmed])
+    analytics.planExistingToolAdded({
+      tool_name: trimmed,
+      matched_tool_slug: matchedSlug,
+      total_count: value.length + 1,
+      source,
+    })
     setQuery('')
     setSuggestions([])
     inputRef.current?.focus()
   }
 
   function remove(idx: number) {
+    const removed = value[idx]
     onChange(value.filter((_, i) => i !== idx))
+    if (removed) {
+      analytics.planExistingToolRemoved(removed, null, value.length - 1)
+    }
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -73,9 +88,9 @@ export function ExistingToolsChipInput({
       e.preventDefault()
       // Prefer the first suggestion if open, else accept raw text.
       if (suggestions[0] && open) {
-        add(suggestions[0].name)
+        add(suggestions[0].name, suggestions[0].slug, 'autocomplete')
       } else if (query.trim()) {
-        add(query)
+        add(query, null, 'free_text')
       }
     } else if (e.key === 'Backspace' && !query && value.length > 0) {
       remove(value.length - 1)
@@ -132,7 +147,7 @@ export function ExistingToolsChipInput({
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault()
-                  add(s.name)
+                  add(s.name, s.slug, 'autocomplete')
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-900"
               >

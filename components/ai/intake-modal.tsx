@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { X, Sparkles } from 'lucide-react'
 import type { UserProfile, SkillLevel, Budget, TeamSize, Industry, GoalType } from '@/lib/plan/user-profile'
 import { ExistingToolsChipInput } from './existing-tools-chip-input'
@@ -11,6 +11,7 @@ import {
   INDUSTRY_LABELS,
   GOAL_LABELS,
 } from '@/lib/plan/user-profile'
+import { analytics } from '@/lib/analytics'
 
 type Props = {
   initial?: UserProfile | null
@@ -31,9 +32,48 @@ const DEFAULT_PROFILE: UserProfile = {
 export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
   const [profile, setProfile] = useState<UserProfile>(initial ?? DEFAULT_PROFILE)
   const [existingTools, setExistingTools] = useState<string[]>(initial?.existingTools ?? [])
+  // Phase 8.g.2 — capture time-to-complete for the intake (engagement signal).
+  const mountedAtRef = useRef<number>(Date.now())
+
+  // Phase 8.g.2 — tracked chip-change wrapper. Captures the step + value +
+  // index + cumulative time. Replaces direct setProfile in each Field below.
+  function makeChipChangeHandler<T extends string>(
+    step: 'skill' | 'budget' | 'team' | 'industry' | 'goal_type',
+    stepIndex: number,
+    options: [T, string][],
+    setField: (v: T) => void,
+  ) {
+    return (v: T) => {
+      const idx = options.findIndex(([opt]) => opt === v)
+      const label = options[idx]?.[1] ?? String(v)
+      setField(v)
+      analytics.planChipSelected({
+        step,
+        step_index: stepIndex,
+        chip_value: String(v),
+        chip_label: label,
+        chip_index: idx,
+        multi_select_count: 1,
+        all_selected_values: [String(v)],
+        time_to_select_ms: Date.now() - mountedAtRef.current,
+      })
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    // Phase 8.g.2 — capture FULL intake payload for vendor-segment analysis.
+    analytics.planIntakeSubmitted({
+      skill_level: profile.skill,
+      budget: profile.budget,
+      team_size: profile.team,
+      industry: profile.industry,
+      goal_type: profile.goalType,
+      goal_text: '', // intake has no free-text goal yet; planner page asks goal separately
+      existing_tools: existingTools,
+      time_to_complete_intake_ms: Date.now() - mountedAtRef.current,
+      source: 'intake_modal',
+    })
     onSubmit({ ...profile, existingTools })
   }
 
@@ -68,7 +108,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             <ChipRow<SkillLevel>
               value={profile.skill}
               options={Object.entries(SKILL_LABELS) as [SkillLevel, string][]}
-              onChange={(v) => setProfile({ ...profile, skill: v })}
+              onChange={makeChipChangeHandler('skill', 0, Object.entries(SKILL_LABELS) as [SkillLevel, string][], (v) => setProfile({ ...profile, skill: v }))}
             />
           </Field>
 
@@ -77,7 +117,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             <ChipRow<Budget>
               value={profile.budget}
               options={Object.entries(BUDGET_LABELS) as [Budget, string][]}
-              onChange={(v) => setProfile({ ...profile, budget: v })}
+              onChange={makeChipChangeHandler('budget', 1, Object.entries(BUDGET_LABELS) as [Budget, string][], (v) => setProfile({ ...profile, budget: v }))}
             />
           </Field>
 
@@ -86,7 +126,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             <ChipRow<TeamSize>
               value={profile.team}
               options={Object.entries(TEAM_LABELS) as [TeamSize, string][]}
-              onChange={(v) => setProfile({ ...profile, team: v })}
+              onChange={makeChipChangeHandler('team', 2, Object.entries(TEAM_LABELS) as [TeamSize, string][], (v) => setProfile({ ...profile, team: v }))}
             />
           </Field>
 
@@ -95,7 +135,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             <ChipRow<Industry>
               value={profile.industry}
               options={Object.entries(INDUSTRY_LABELS) as [Industry, string][]}
-              onChange={(v) => setProfile({ ...profile, industry: v })}
+              onChange={makeChipChangeHandler('industry', 3, Object.entries(INDUSTRY_LABELS) as [Industry, string][], (v) => setProfile({ ...profile, industry: v }))}
             />
           </Field>
 
@@ -104,7 +144,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
             <ChipRow<GoalType>
               value={profile.goalType}
               options={Object.entries(GOAL_LABELS) as [GoalType, string][]}
-              onChange={(v) => setProfile({ ...profile, goalType: v })}
+              onChange={makeChipChangeHandler('goal_type', 4, Object.entries(GOAL_LABELS) as [GoalType, string][], (v) => setProfile({ ...profile, goalType: v }))}
             />
           </Field>
 

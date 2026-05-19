@@ -264,8 +264,17 @@ export function ProjectPlanner({
           setLoading(false) // flip from WaitingState to Plan view as soon as structure is known
         } else if (evt.type === 'enriched') {
           setPlan((prev) => (prev ? { ...prev, stages: evt.stages } : prev))
-          const toolCount = evt.stages.flatMap((s) => s.tools ?? []).length
+          const allTools = evt.stages.flatMap((s) => s.tools ?? [])
+          const toolCount = allTools.length
           analytics.planCompleted(searchQuery.slice(0, 100), toolCount)
+          // Phase 8.g.2 — capture the FULL recommendation set, not just count.
+          // This is the vendor-data payload: "we recommended [X, Y, Z] for use
+          // case 'replace my CMS'" — purchasable insight.
+          analytics.planResultsDisplayed({
+            recommended_tool_slugs: allTools.map((t) => t.slug).filter(Boolean),
+            stages_count: evt.stages.length,
+            use_case: searchQuery,
+          })
           for (const stage of evt.stages) {
             if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
           }

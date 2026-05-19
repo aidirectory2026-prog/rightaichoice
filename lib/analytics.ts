@@ -8,7 +8,18 @@
  * schema auditable. See docs/marketing/tracking-mechanisms-and-goals.md.
  */
 
-type EventProperties = Record<string, string | number | boolean | null | undefined | string[]>
+// Phase 8.g.2 — widened to accept nested objects (Mixpanel stores them as JSON)
+// for events like `recommendation_step_completed` that ship `all_values_so_far`.
+type EventPropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | string[]
+  | number[]
+  | Record<string, string | number | boolean | null>
+type EventProperties = Record<string, EventPropertyValue>
 
 function capture(event: string, properties?: EventProperties) {
   if (typeof window === 'undefined') return
@@ -365,4 +376,421 @@ export const analytics = {
   perfMark(marker: string, duration_ms: number, context?: string) {
     capture('perf_mark', { marker, duration_ms, context: context ?? '' })
   },
+
+  // ── Phase 8.g.2 — MAX-CAPTURE EVENTS ────────────────────────────
+  // Driving principle: capture the actual VALUE the user entered, not just
+  // "they completed a step." Every event carries enough context to be
+  // joinable into per-user behavioural profiles (the vendor-data artifact).
+
+  // ── Tool-page rich interactions ─────────────────────────────────
+  toolTabSwitched(toolSlug: string, tab: string, source: string, timeOnPreviousTabMs?: number) {
+    capture('tool_tab_switched', { tool_slug: toolSlug, tab, source, time_on_previous_tab_ms: timeOnPreviousTabMs ?? 0 })
+  },
+  toolFaqOpened(toolSlug: string, questionIndex: number, questionText: string) {
+    capture('tool_faq_opened', { tool_slug: toolSlug, question_index: questionIndex, question_text: questionText.slice(0, 200) })
+  },
+  toolPricingTierHovered(toolSlug: string, tierName: string, tierPrice: string, position: number) {
+    capture('tool_pricing_tier_hovered', { tool_slug: toolSlug, tier_name: tierName, tier_price: tierPrice, position })
+  },
+  toolAlternativeClicked(toolSlug: string, alternativeSlug: string, position: number) {
+    capture('tool_alternative_clicked', { tool_slug: toolSlug, alternative_slug: alternativeSlug, position })
+  },
+  toolShowMoreAlternatives(toolSlug: string, currentCount: number) {
+    capture('tool_show_more_alternatives', { tool_slug: toolSlug, current_count: currentCount })
+  },
+  toolIntegrationLinkClicked(toolSlug: string, integrationName: string, integrationTargetUrl: string) {
+    capture('tool_integration_link_clicked', { tool_slug: toolSlug, integration_name: integrationName, integration_target_url: integrationTargetUrl })
+  },
+  toolScreenshotOpened(toolSlug: string, index: number) {
+    capture('tool_screenshot_opened', { tool_slug: toolSlug, index })
+  },
+  toolShareClicked(toolSlug: string, channel: string) {
+    capture('tool_share_clicked', { tool_slug: toolSlug, channel })
+  },
+  viabilityBadgeClicked(toolSlug: string, badge: 'safe_bet' | 'at_risk' | 'rising') {
+    capture('viability_badge_clicked', { tool_slug: toolSlug, badge })
+  },
+  viabilityPageViewed(slug: string, pageType: 'index' | 'at_risk' | 'safe_bets') {
+    capture('viability_page_viewed', { slug, page_type: pageType })
+  },
+
+  // ── Plan flow — every input value captured ───────────────────────
+  planIntakeSubmitted(props: {
+    skill_level: string
+    budget: string
+    team_size: string
+    industry: string
+    goal_type: string
+    goal_text: string
+    existing_tools: string[]
+    existing_tools_matched_slugs?: string[]
+    existing_tools_unmatched?: string[]
+    time_to_complete_intake_ms: number
+    source: string
+  }) {
+    capture('plan_intake_submitted', {
+      skill_level: props.skill_level,
+      budget: props.budget,
+      team_size: props.team_size,
+      industry: props.industry,
+      goal_type: props.goal_type,
+      goal_text: props.goal_text.slice(0, 500),
+      goal_text_word_count: props.goal_text.split(/\s+/).filter(Boolean).length,
+      existing_tools: props.existing_tools.slice(0, 25),
+      existing_tools_count: props.existing_tools.length,
+      existing_tools_matched_slugs: (props.existing_tools_matched_slugs ?? []).slice(0, 25),
+      existing_tools_unmatched: (props.existing_tools_unmatched ?? []).slice(0, 25),
+      time_to_complete_intake_ms: props.time_to_complete_intake_ms,
+      source: props.source,
+    })
+    // People-property union — accumulate tools/intent across sessions.
+    peopleUnion({
+      existing_tools_history: props.existing_tools.slice(0, 25),
+      plan_use_cases_submitted: [props.goal_text.slice(0, 200)].filter(Boolean),
+    })
+    peopleSet({
+      plan_budget_segment: props.budget,
+      plan_team_segment: props.team_size,
+      plan_industry_segment: props.industry,
+      plan_skill_segment: props.skill_level,
+    })
+  },
+  planChipSelected(props: {
+    step: string
+    step_index: number
+    chip_value: string
+    chip_label: string
+    chip_index: number
+    multi_select_count: number
+    all_selected_values: string[]
+    time_to_select_ms: number
+  }) {
+    capture('plan_chip_selected', { ...props })
+  },
+  planExistingToolAdded(props: {
+    tool_name: string
+    matched_tool_slug?: string | null
+    matched_tool_id?: string | null
+    total_count: number
+    source: 'autocomplete' | 'free_text' | 'pasted'
+    time_to_add_ms?: number
+  }) {
+    capture('plan_existing_tool_added', { ...props })
+    peopleUnion({ existing_tools_history: [props.tool_name] })
+  },
+  planExistingToolRemoved(toolName: string, matchedToolSlug: string | null, totalCount: number) {
+    capture('plan_existing_tool_removed', { tool_name: toolName, matched_tool_slug: matchedToolSlug, total_count: totalCount })
+  },
+  planGoalTextChanged(currentLength: number, currentWordCount: number, isFirstInput: boolean) {
+    capture('plan_goal_text_changed', { current_length: currentLength, current_word_count: currentWordCount, is_first_input: isFirstInput })
+  },
+  planGoalTextSubmitted(text: string, editedCount: number) {
+    const truncated = text.length > 500
+    capture('plan_goal_text_submitted', {
+      text: text.slice(0, 500),
+      full_length: text.length,
+      word_count: text.split(/\s+/).filter(Boolean).length,
+      edited_count: editedCount,
+      truncated,
+    })
+  },
+  planResultsDisplayed(props: {
+    recommended_tool_slugs: string[]
+    recommended_tool_ids?: string[]
+    stages_count: number
+    total_estimated_cost_usd_per_month?: number
+    use_case: string
+    matches_existing_tools?: string[]
+    replaces_existing_tools?: string[]
+    source_intake_id?: string
+  }) {
+    capture('plan_results_displayed', {
+      recommended_tool_slugs: props.recommended_tool_slugs.slice(0, 30),
+      recommended_tool_ids: (props.recommended_tool_ids ?? []).slice(0, 30),
+      recommendation_count: props.recommended_tool_slugs.length,
+      stages_count: props.stages_count,
+      total_estimated_cost_usd_per_month: props.total_estimated_cost_usd_per_month ?? 0,
+      use_case: props.use_case.slice(0, 200),
+      matches_existing_tools: (props.matches_existing_tools ?? []).slice(0, 15),
+      replaces_existing_tools: (props.replaces_existing_tools ?? []).slice(0, 15),
+      source_intake_id: props.source_intake_id ?? '',
+    })
+  },
+  planResultsToolClicked(props: {
+    tool_slug: string
+    tool_id?: string
+    position: number
+    recommendation_tier: 'top' | 'alt' | 'budget'
+    stage_id?: string
+    user_intake_use_case?: string
+    user_intake_skill?: string
+    user_intake_budget?: string
+    user_intake_team?: string
+    total_recommended_count: number
+  }) {
+    capture('plan_results_tool_clicked', { ...props })
+  },
+  planResultsToolSaved(toolSlug: string, position: number) {
+    capture('plan_results_tool_saved', { tool_slug: toolSlug, position })
+  },
+  planResultsShared(planId: string, channel: string) {
+    capture('plan_results_shared', { plan_id: planId, channel })
+  },
+  planStepBack(fromStep: string, toStep: string, timeOnStepMs: number, fieldsFilledInFromStep: number) {
+    capture('plan_step_back', { from_step: fromStep, to_step: toStep, time_on_step_ms: timeOnStepMs, fields_filled_in_from_step: fieldsFilledInFromStep })
+  },
+
+  // ── Recommend wizard — every input ──────────────────────────────
+  recommendationStepCompleted(step: 'use_case' | 'budget' | 'skill_level', value: string, allValuesSoFar: Record<string, string>, timeOnStepMs: number) {
+    capture('recommendation_step_completed', { step, value, all_values_so_far: allValuesSoFar, time_on_step_ms: timeOnStepMs })
+  },
+  recommendationResultClicked(toolSlug: string, position: number, useCase: string, budget: string, skillLevel: string) {
+    capture('recommendation_result_clicked', { tool_slug: toolSlug, position, use_case: useCase, budget, skill_level: skillLevel })
+  },
+
+  // ── Search progression ─────────────────────────────────────────
+  searchTyping(currentQuery: string, source: string) {
+    capture('search_typing', { current_query: currentQuery.slice(0, 200), current_length: currentQuery.length, source })
+  },
+  searchResultClickedRich(props: {
+    query: string
+    tool_slug: string
+    tool_id?: string
+    position: number
+    total_results: number
+    page_number?: number
+  }) {
+    capture('search_result_clicked', {
+      query: props.query.slice(0, 100),
+      tool_slug: props.tool_slug,
+      tool_id: props.tool_id ?? '',
+      position: props.position,
+      total_results: props.total_results,
+      page_number: props.page_number ?? 1,
+    })
+    peopleUnion({ all_search_queries_recent: [props.query.slice(0, 100)] })
+  },
+
+  // ── AI chat — every prompt + every tool mention ─────────────────
+  aiChatMessageRich(props: {
+    intent?: string | null
+    message_text: string
+    mentioned_tool_slugs?: string[]
+    conversation_turn: number
+    is_follow_up: boolean
+  }) {
+    capture('ai_chat_message', {
+      intent: props.intent ?? null,
+      message_text: props.message_text.slice(0, 500),
+      message_length: props.message_text.length,
+      message_word_count: props.message_text.split(/\s+/).filter(Boolean).length,
+      mentioned_tool_slugs: (props.mentioned_tool_slugs ?? []).slice(0, 20),
+      conversation_turn: props.conversation_turn,
+      is_follow_up: props.is_follow_up,
+    })
+    if (props.mentioned_tool_slugs?.length) {
+      peopleUnion({ ai_chat_tools_mentioned: props.mentioned_tool_slugs })
+    }
+  },
+  aiChatResponseReceived(toolCountSuggested: number, suggestedToolSlugs: string[], responseLength: number, latencyMs: number) {
+    capture('ai_chat_response_received', {
+      tool_count_suggested: toolCountSuggested,
+      suggested_tool_slugs: suggestedToolSlugs.slice(0, 20),
+      response_length: responseLength,
+      latency_ms: latencyMs,
+    })
+  },
+  aiChatToolClickedRich(toolSlug: string, positionInResponse: number, userMessageText: string, conversationTurn: number) {
+    capture('ai_chat_tool_clicked', {
+      tool_slug: toolSlug,
+      position_in_response: positionInResponse,
+      user_message_text: userMessageText.slice(0, 300),
+      conversation_turn: conversationTurn,
+    })
+  },
+
+  // ── Review form — full text captured ────────────────────────────
+  reviewFormOpened(toolId: string, toolSlug: string, source: string) {
+    capture('review_form_opened', { tool_id: toolId, tool_slug: toolSlug, source })
+  },
+  reviewRatingSet(toolId: string, rating: number, timeToRateMs: number) {
+    capture('review_rating_set', { tool_id: toolId, rating, time_to_rate_ms: timeToRateMs })
+  },
+  reviewTextChanged(toolId: string, length: number, wordCount: number) {
+    capture('review_text_changed', { tool_id: toolId, length, word_count: wordCount })
+  },
+  reviewSubmittedRich(props: {
+    tool_id: string
+    tool_slug: string
+    rating: number
+    text: string
+    pros_text?: string | null
+    cons_text?: string | null
+    recommended?: boolean
+    use_case_tag?: string | null
+    time_to_submit_ms: number
+  }) {
+    capture('review_submitted', {
+      tool_id: props.tool_id,
+      tool_slug: props.tool_slug,
+      rating: props.rating,
+      text: props.text.slice(0, 1000),
+      text_length: props.text.length,
+      word_count: props.text.split(/\s+/).filter(Boolean).length,
+      pros_text: (props.pros_text ?? '').slice(0, 500),
+      cons_text: (props.cons_text ?? '').slice(0, 500),
+      has_pros: !!props.pros_text,
+      has_cons: !!props.cons_text,
+      recommended: props.recommended ?? false,
+      use_case_tag: props.use_case_tag ?? '',
+      time_to_submit_ms: props.time_to_submit_ms,
+    })
+    peopleUnion({ reviews_submitted_for: [props.tool_slug] })
+  },
+
+  // ── Newsletter — segment signal via email_domain ────────────────
+  newsletterSubscribedRich(source: string, emailDomain: string, pagePath: string, toolSlugContext?: string | null) {
+    capture('newsletter_subscribed', {
+      source,
+      email_domain: emailDomain,
+      page_path_at_subscribe: pagePath,
+      tool_slug_context: toolSlugContext ?? '',
+    })
+    peopleSet({ newsletter_subscribed: true })
+  },
+
+  // ── Sign-up — pre-auth email-domain capture ─────────────────────
+  signupEmailEntered(emailDomain: string, methodIntent: 'email' | 'google' | 'github', source: string) {
+    capture('signup_email_entered', { email_domain: emailDomain, method_intent: methodIntent, source })
+  },
+  signupMethodSelected(method: 'email' | 'google' | 'github', source: string) {
+    capture('signup_method_selected', { method, source })
+  },
+
+  // ── Compare — full state captured ───────────────────────────────
+  compareToolAddedRich(toolSlug: string, source: string, trayCountBefore: number, allToolsInTray: string[], addedFromToolPage: boolean) {
+    capture('compare_tool_added', {
+      tool_slug: toolSlug,
+      source,
+      tray_count_before: trayCountBefore,
+      tray_count_after: trayCountBefore + 1,
+      all_tools_in_tray: allToolsInTray,
+      added_from_tool_page: addedFromToolPage,
+    })
+  },
+  comparisonViewedRich(toolSlugs: string[], isEditorialCompare: boolean, compareSlug: string | null, categoriesRepresented: string[]) {
+    capture('comparison_viewed', {
+      tools: toolSlugs,
+      tools_count: toolSlugs.length,
+      is_editorial_compare: isEditorialCompare,
+      compare_slug: compareSlug ?? '',
+      categories_represented: categoriesRepresented.slice(0, 10),
+    })
+    if (toolSlugs.length >= 2) {
+      const pair = [...toolSlugs].sort().join('-vs-')
+      peopleUnion({ tools_compared_with: [pair] })
+    }
+  },
+  compareAttributeRowExpanded(attributeName: string, tools: string[], expandedValue?: string) {
+    capture('compare_attribute_row_expanded', {
+      attribute_name: attributeName,
+      tools,
+      expanded_value: (expandedValue ?? '').slice(0, 200),
+    })
+  },
+  compareTrayOpened(trayCount: number) {
+    capture('compare_tray_opened', { tray_count: trayCount })
+  },
+  compareCsvExported(toolSlugs: string[]) {
+    capture('compare_csv_exported', { tools: toolSlugs, count: toolSlugs.length })
+  },
+
+  // ── Saved stacks — capture full contents ────────────────────────
+  stackSavedRich(props: {
+    stack_slug?: string | null
+    stack_name: string
+    tool_slugs: string[]
+    tool_ids?: string[]
+    total_estimated_cost_usd?: number
+    source: 'plan_flow' | 'manual_builder' | 'compare_page'
+  }) {
+    capture('stack_saved', {
+      stack_slug: props.stack_slug ?? '',
+      stack_name: props.stack_name.slice(0, 200),
+      tool_slugs: props.tool_slugs.slice(0, 50),
+      tool_ids: (props.tool_ids ?? []).slice(0, 50),
+      tool_count: props.tool_slugs.length,
+      total_estimated_cost_usd: props.total_estimated_cost_usd ?? 0,
+      source: props.source,
+    })
+  },
+
+  // ── Dashboard / Profile / Saved ─────────────────────────────────
+  dashboardViewed(hasSaves: boolean, savesCount: number, hasPlans: boolean) {
+    capture('dashboard_viewed', { has_saves: hasSaves, saves_count: savesCount, has_plans: hasPlans })
+  },
+  dashboardWidgetClicked(widgetId: string) {
+    capture('dashboard_widget_clicked', { widget_id: widgetId })
+  },
+  savedListViewed(count: number) {
+    capture('saved_list_viewed', { count })
+  },
+  savedListFiltered(filterType: string, value: string) {
+    capture('saved_list_filtered', { filter_type: filterType, value })
+  },
+  savedToolRemovedFromList(toolSlug: string, position: number) {
+    capture('saved_tool_removed_from_list', { tool_slug: toolSlug, position })
+  },
+  profileViewed(username: string, isOwnProfile: boolean) {
+    capture('profile_viewed', { username, is_own_profile: isOwnProfile })
+  },
+  profileToolClicked(profileUsername: string, toolSlug: string, position: number) {
+    capture('profile_tool_clicked', { profile_username: profileUsername, tool_slug: toolSlug, position })
+  },
+
+  // ── Auth (forgot/reset password — server too) ───────────────────
+  passwordResetRequested(method: 'email') {
+    capture('password_reset_requested', { method })
+  },
+  passwordResetCompleted(method: 'email') {
+    capture('password_reset_completed', { method })
+  },
+
+  // ── Catch-all form events (covers anything not specifically wired) ──
+  formFieldChanged(props: { form_id: string; field_name: string; field_type: 'text' | 'select' | 'checkbox' | 'textarea'; has_value: boolean; value_length: number; page_path: string }) {
+    capture('form_field_changed', { ...props })
+  },
+  formSubmitted(formId: string, allFieldNamesFilled: string[], fieldCountSkipped: number, timeToSubmitMs: number) {
+    capture('form_submitted', {
+      form_id: formId,
+      all_field_names_filled: allFieldNamesFilled,
+      field_count_filled: allFieldNamesFilled.length,
+      field_count_skipped: fieldCountSkipped,
+      time_to_submit_ms: timeToSubmitMs,
+    })
+  },
+}
+
+// ── People-property helpers (used by max-capture events) ─────────
+// Lazy-imports mixpanel-browser so server-side bundle stays clean.
+function peopleSet(props: Record<string, unknown>) {
+  if (typeof window === 'undefined') return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    try {
+      mixpanel.people.set(props)
+    } catch {
+      // Swallow — never let analytics break the app.
+    }
+  })
+}
+
+function peopleUnion(props: Record<string, unknown[]>) {
+  if (typeof window === 'undefined') return
+  import('mixpanel-browser').then(({ default: mixpanel }) => {
+    try {
+      mixpanel.people.union(props)
+    } catch {
+      // Swallow.
+    }
+  })
 }
