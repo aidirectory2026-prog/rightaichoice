@@ -15,10 +15,35 @@ const MIXPANEL_API_HOST =
   process.env.NEXT_PUBLIC_MIXPANEL_API_HOST ||
   'https://api-eu.mixpanel.com'
 
-const REPLAY_EXCLUDED_PATHS = ['/auth', '/login', '/signup', '/account', '/admin', '/api']
+// Phase 8.g.1 — session replay moved to Microsoft Clarity (free, unlimited).
+// All record_* config dropped below. REPLAY_EXCLUDED_PATHS no longer used.
 
-function shouldReplayOnPath(pathname: string): boolean {
-  return !REPLAY_EXCLUDED_PATHS.some((p) => pathname.startsWith(p))
+// Compute device_type from viewport so every event splits mobile / tablet /
+// desktop without joining other tables.
+function computeDeviceType(): 'mobile' | 'tablet' | 'desktop' {
+  if (typeof window === 'undefined') return 'desktop'
+  const w = window.innerWidth
+  if (w < 640) return 'mobile'
+  if (w < 1024) return 'tablet'
+  return 'desktop'
+}
+
+// sessionStorage-backed session counter. Tab open → fresh session number,
+// reload → same number. Counter persists across tabs via localStorage so the
+// nth-session attribution is stable per device.
+function nextSessionN(): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const KEY = 'rac_mp_session_n'
+    const prev = Number(sessionStorage.getItem(KEY) || '0')
+    if (prev > 0) return prev
+    const n = Number(localStorage.getItem(KEY) || '0') + 1
+    localStorage.setItem(KEY, String(n))
+    sessionStorage.setItem(KEY, String(n))
+    return n
+  } catch {
+    return 0
+  }
 }
 
 function parseUtm(searchParams: URLSearchParams) {
@@ -39,13 +64,14 @@ function initMixpanelOnce() {
     track_pageview: false,
     persistence: 'localStorage',
     ignore_dnt: false,
-    // Session Replay — 5% of sessions (~1500/mo at 30k). Mask text inputs +
-    // password/email-type inputs by default. Replay excluded on auth/account
-    // paths (see onRouteChange below which toggles start_recording).
-    record_sessions_percent: 5,
-    record_mask_text_selector: 'input, textarea, [data-private]',
-    record_block_selector: '[data-private-block], [data-mp-block]',
-    record_collect_fonts: false,
+    // Phase 8.g.1 — anon→known identity merge is configured at the PROJECT
+    // level in Mixpanel (Project Settings → Identity Merge → "Simplified").
+    // New projects default to Simplified, so identify() alone reliably merges
+    // the anon distinct_id into the user_id profile — no explicit alias() needed.
+    // Verify the project setting once at https://eu.mixpanel.com/project/4014921/settings.
+    //
+    // Session replay disabled here — handled by Microsoft Clarity (free,
+    // unlimited). All record_* config removed.
     // Batching — reduces event loss to network blips; 10s flush is snappy
     // enough for funnel analysis and well within free-tier volume.
     batch_requests: true,
@@ -59,7 +85,9 @@ function initMixpanelOnce() {
         first_touch_referrer: ref || 'direct',
         first_touch_landing: typeof window !== 'undefined' ? window.location.pathname : '',
       })
-      // Every-session super properties — attached to every event.
+      // Every-session super properties — attached to every event. Phase 8.g.1
+      // adds device_type, session_n (per-tab counter), and auth_state
+      // (toggled by AuthProvider on identify/reset).
       mp.register({
         app: 'rightaichoice',
         app_version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
@@ -68,6 +96,9 @@ function initMixpanelOnce() {
             ? `${window.innerWidth}x${window.innerHeight}`
             : 'unknown',
         env: process.env.NODE_ENV,
+        device_type: computeDeviceType(),
+        session_n: nextSessionN(),
+        auth_state: 'anon',
       })
     },
   })
@@ -97,13 +128,9 @@ function PageViewCapture() {
       )
     }
 
-    // Toggle session replay per-path so we never record auth/account flows
-    // even at 5% sampling.
-    if (shouldReplayOnPath(pathname)) {
-      mixpanel.start_session_recording?.()
-    } else {
-      mixpanel.stop_session_recording?.()
-    }
+    // Phase 8.g.1 — update page_path super-prop on every route change so
+    // EVERY subsequent event carries the current page without manual passing.
+    mixpanel.register({ page_path: pathname })
 
     mixpanel.track('page_viewed', {
       path: pathname,

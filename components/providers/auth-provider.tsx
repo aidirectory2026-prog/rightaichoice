@@ -34,6 +34,9 @@ export function AuthProvider({
 }) {
   useEffect(() => {
     if (user?.id) {
+      // Phase 8.g.1 — with project-level Identity Merge set to "Simplified"
+      // in Mixpanel, identify() automatically merges the current anon
+      // distinct_id into the user_id profile. One human = one profile.
       analytics.identify(user.id, {
         email: user.email,
         plan: 'free',
@@ -41,10 +44,13 @@ export function AuthProvider({
       analytics.registerSuperProperties({
         user_plan: 'free',
         is_admin: profile?.is_admin ?? false,
+        auth_state: 'known', // flips every subsequent event to known-user
       })
       analytics.setPlanGroup('free')
     } else {
       analytics.reset()
+      // After reset, re-register auth_state so anon events still carry it.
+      analytics.registerSuperProperties({ auth_state: 'anon' })
     }
   }, [user?.id, user?.email, profile?.is_admin])
 

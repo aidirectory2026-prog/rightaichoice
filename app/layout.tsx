@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
+import { ClarityProvider } from "@/components/providers/clarity-provider";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
@@ -99,6 +100,7 @@ export default async function RootLayout({
             entity signal. Helps Google build the knowledge-panel entity
             once authority builds. */}
         <script {...jsonLdScriptProps([organizationJsonLd(), websiteJsonLd()])} />
+        <ClarityProvider />
         <MixpanelProvider>
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}

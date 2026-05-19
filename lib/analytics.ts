@@ -92,6 +92,12 @@ export const analytics = {
     user_role?: string
     is_admin?: boolean
     experiment_bucket?: string
+    // Phase 8.g.1 — auth_state flips to 'known' on identify, back to 'anon'
+    // on reset. Every event then splits logged-in vs anonymous without joins.
+    auth_state?: 'anon' | 'known'
+    // page_path super-prop is updated by MixpanelProvider on every route
+    // change — listed here for type-safety when callers want to override.
+    page_path?: string
   }) {
     registerSuperPropertiesInternal(props as EventProperties)
   },
