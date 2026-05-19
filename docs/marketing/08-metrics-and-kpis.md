@@ -44,34 +44,34 @@
 | Newsletter subscribers | 200 | 600 | 1,000+ | Beehiiv |
 | X/Twitter followers | 500 | 1,500 | 3,000+ | X Analytics |
 | LinkedIn followers | 100 | 300 | 500+ | LinkedIn |
-| Direct traffic (monthly) | 500 | 2,000 | 5,000+ | PostHog |
-| Referral traffic (monthly) | 1,000 | 3,000 | 8,000+ | PostHog |
+| Direct traffic (monthly) | 500 | 2,000 | 5,000+ | Mixpanel |
+| Referral traffic (monthly) | 1,000 | 3,000 | 8,000+ | Mixpanel |
 
 ### 2. Engagement Metrics (Are people using the product?)
 
 | Metric | Day 30 | Day 60 | Day 90 | Source |
 |---|---|---|---|---|
-| Stack plans generated | 200 | 1,000 | 3,000+ | Supabase / PostHog |
-| AI chats initiated | 100 | 500 | 2,000+ | Supabase / PostHog |
-| Tool comparisons made | 300 | 1,500 | 5,000+ | PostHog |
+| Stack plans generated | 200 | 1,000 | 3,000+ | Supabase / Mixpanel |
+| AI chats initiated | 100 | 500 | 2,000+ | Supabase / Mixpanel |
+| Tool comparisons made | 300 | 1,500 | 5,000+ | Mixpanel |
 | Reviews written | 20 | 80 | 200+ | Supabase |
 | Questions asked | 30 | 100 | 300+ | Supabase |
 | Questions answered | 20 | 80 | 250+ | Supabase |
 | Tools saved | 100 | 500 | 2,000+ | Supabase |
-| Outbound clicks (to tool websites) | 500 | 2,000 | 8,000+ | PostHog |
-| Avg. session duration | 2 min | 3 min | 3.5+ min | PostHog |
-| Pages per session | 2.5 | 3.5 | 4+ | PostHog |
-| Bounce rate | <65% | <55% | <50% | PostHog |
+| Outbound clicks (to tool websites) | 500 | 2,000 | 8,000+ | Mixpanel |
+| Avg. session duration | 2 min | 3 min | 3.5+ min | Mixpanel |
+| Pages per session | 2.5 | 3.5 | 4+ | Mixpanel |
+| Bounce rate | <65% | <55% | <50% | Mixpanel |
 
 ### 3. Retention Metrics (Are people coming back?)
 
 | Metric | Target | Source |
 |---|---|---|
-| Week 1 return rate | 15%+ | PostHog cohorts |
-| Month 1 return rate | 8%+ | PostHog cohorts |
+| Week 1 return rate | 15%+ | Mixpanel cohorts |
+| Month 1 return rate | 8%+ | Mixpanel cohorts |
 | Newsletter open rate | 40%+ | Beehiiv |
 | Newsletter click rate | 5%+ | Beehiiv |
-| Repeat MADM (% of MADM who were MADM last month) | 30%+ | Supabase + PostHog |
+| Repeat MADM (% of MADM who were MADM last month) | 30%+ | Supabase + Mixpanel |
 
 ### 4. SEO-Specific Metrics
 
@@ -94,7 +94,7 @@
 
 | Tool | Purpose | Setup |
 |---|---|---|
-| **PostHog** (free tier) | Product analytics, funnels, cohorts, session replay | Already integrated |
+| **Mixpanel** (free tier) | Product analytics, funnels, cohorts, session replay | Already integrated |
 | **Google Search Console** | SEO: impressions, clicks, positions, indexation | Verify domain |
 | **Bing Webmaster Tools** | Bing/Perplexity indexing, AEO tracking | Verify domain |
 | **Beehiiv** | Newsletter analytics: subs, opens, clicks | Built-in dashboard |
@@ -107,7 +107,7 @@ Every Monday morning, check these 10 numbers:
 
 1. **Organic visits this week** (GSC) — trending up?
 2. **New pages indexed** (GSC) — are new pages being picked up?
-3. **MADM this week** (PostHog) — are people making decisions?
+3. **MADM this week** (Mixpanel) — are people making decisions?
 4. **Stack plans generated** (Supabase) — is the hero feature being used?
 5. **New signups** (Supabase) — acquisition health
 6. **Newsletter subscribers** (Beehiiv) — list growth
@@ -249,19 +249,10 @@ Examples:
 - Product Hunt → ?utm_source=producthunt&utm_medium=launch&utm_campaign=ph-launch-day
 ```
 
-### PostHog Event Tracking
-Ensure these custom events fire:
+### Event Tracking
 
-| Event | Trigger | Properties |
-|---|---|---|
-| `stack_generated` | User completes stack plan | goal, tool_count, total_cost |
-| `tool_compared` | User opens comparison view | tool_slugs |
-| `tool_saved` | User saves a tool | tool_slug |
-| `review_submitted` | User writes a review | tool_slug, rating |
-| `question_asked` | User asks a question | tool_slug |
-| `outbound_click` | User clicks to tool website | tool_slug, destination_url |
-| `ai_chat_initiated` | User starts AI chat | query_text |
-| `newsletter_signup` | User subscribes | source_page |
-| `share_stack` | User shares a stack plan | platform (twitter/linkedin) |
+Authoritative references:
+- [`mixpanel-events.md`](mixpanel-events.md) — every event captured, properties, and vendor-data relevance
+- [`mixpanel-plan.md`](mixpanel-plan.md) — implementation, identity hygiene, dashboard structure, cost projection
 
-These events power the MADM calculation and all engagement metrics.
+The KPI tables above reference "Mixpanel" as the data source for many metrics. Those metrics correspond directly to events in the catalog (e.g., "Outbound clicks" → `tool_visit_redirected` event).

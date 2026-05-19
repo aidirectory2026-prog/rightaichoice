@@ -39,7 +39,7 @@ Auto-generate a branded card for every stack plan result:
 │  Design      → Midjourney     $10/mo     │
 │  Code        → Cursor         $20/mo     │
 │  Deploy      → Vercel         $0/mo      │
-│  Analytics   → PostHog        $0/mo      │
+│  Analytics   → Mixpanel        $0/mo      │
 │                                          │
 │  Total: $50/mo                           │
 │                                          │
@@ -222,7 +222,7 @@ A branded result card:
 │  Your Recommended Stack:                 │
 │  ✍️ Writing: Claude ($20/mo)             │
 │  🎨 Design: Canva AI (Free)             │
-│  📊 Analytics: PostHog (Free)            │
+│  📊 Analytics: Mixpanel (Free)            │
 │  🤖 Automation: Zapier ($20/mo)          │
 │                                          │
 │  Total: $40/mo                           │
@@ -298,3 +298,11 @@ Low-friction referral system focused on recognition, not rewards.
 4. **Tool creator badges** — Create SVG badge template + email outreach. Medium effort, massive long-term impact.
 5. **Referral mechanic** — Simple to implement, moderate ongoing impact.
 6. **Quiz** — Highest development effort but potentially highest viral coefficient. Build after proving other loops work.
+
+---
+
+## Analytics & tracking
+
+The "Mixpanel (free)" mentions above refer to our event tracking and dashboard setup. Canonical references:
+- [mixpanel-events.md](mixpanel-events.md) — every event we capture, properties, and why it matters
+- [mixpanel-plan.md](mixpanel-plan.md) — implementation, identity hygiene, dashboard structure, cost
