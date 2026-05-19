@@ -1,20 +1,37 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Scale, Trash2 } from 'lucide-react'
 import { useCompare } from '@/components/providers/compare-provider'
 import { CompareToolSearch } from '@/components/compare/compare-tool-search'
 import { ToolLogo } from '@/components/tools/tool-logo'
+import { analytics } from '@/lib/analytics'
 
 export function CompareTray() {
   const { items, remove, clear } = useCompare()
   const router = useRouter()
+  // Phase 8.g.2 — fire compare_tray_opened once per session when tray
+  // first appears (items.length >= 1). Captures "user started a compare
+  // intent" funnel step before they hit the actual /compare page.
+  const trayOpenFiredRef = useRef(false)
+
+  useEffect(() => {
+    if (items.length > 0 && !trayOpenFiredRef.current) {
+      trayOpenFiredRef.current = true
+      analytics.compareTrayOpened(items.length)
+    }
+    if (items.length === 0) trayOpenFiredRef.current = false
+  }, [items.length])
 
   if (items.length === 0) return null
 
   const handleCompare = () => {
-    const slugs = items.map((i) => i.slug).join(',')
-    router.push(`/compare?tools=${slugs}`)
+    const slugs = items.map((i) => i.slug)
+    // Phase 8.g.2 — fire the share_clicked equivalent: user-initiated
+    // navigation to the compare page with their selected tools.
+    analytics.compareShareClicked(slugs)
+    router.push(`/compare?tools=${slugs.join(',')}`)
   }
 
   // Phase 6.8 (2026-05-12): once 2+ tools are selected, the Compare Now
