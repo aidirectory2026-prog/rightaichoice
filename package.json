@@ -10,6 +10,8 @@
     "mixpanel:verify": "tsx --env-file=.env.local scripts/mixpanel/verify.ts",
     "mixpanel:lexicon:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts --dry-run",
     "mixpanel:lexicon": "tsx --env-file=.env.local scripts/mixpanel/provision-lexicon.ts",
+    "mixpanel:dashboards:dry": "tsx --env-file=.env.local scripts/mixpanel/provision-dashboards.ts --dry-run",
+    "mixpanel:dashboards": "tsx --env-file=.env.local scripts/mixpanel/provision-dashboards.ts",
     "preflight:fetch-logos:dry": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --dry-run",
     "preflight:fetch-logos": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts",
     "refresh:dry": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --dry-run",
