@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Search, ArrowRight, Tag, FolderOpen } from 'lucide-react'
 import { autocompleteSearch } from '@/actions/search'
 import { ToolLogo } from '@/components/tools/tool-logo'
+import { analytics } from '@/lib/analytics'
 
 type SearchResult = {
   tools: { id: string; name: string; slug: string; tagline: string; logo_url: string | null; website_url?: string | null; pricing_type: string }[]
@@ -52,6 +53,11 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         const data = await autocompleteSearch(value)
         setResults(data)
         setIsOpen(true)
+        // Phase 8.g.2 — fire search_typing on the SAME debounce boundary
+        // as the autocomplete fetch (250ms after last keystroke). Captures
+        // what users were exploring even if they don't hit Enter — the
+        // "they were searching for X but bailed" funnel.
+        analytics.searchTyping(value, 'navbar')
       }, 250)
     },
     []
