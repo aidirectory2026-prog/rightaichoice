@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { HelpCircle, ChevronDown } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 type Faq = {
   id: string
@@ -10,7 +11,7 @@ type Faq = {
   source: string | null
 }
 
-export function FaqSection({ faqs, toolName }: { faqs: Faq[]; toolName: string }) {
+export function FaqSection({ faqs, toolName, toolSlug }: { faqs: Faq[]; toolName: string; toolSlug?: string }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   if (!faqs || faqs.length === 0) return null
@@ -29,7 +30,17 @@ export function FaqSection({ faqs, toolName }: { faqs: Faq[]; toolName: string }
             className="rounded-lg border border-border bg-card overflow-hidden"
           >
             <button
-              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+              onClick={() => {
+                const next = openIndex === i ? null : i
+                setOpenIndex(next)
+                // Phase 8.g.2 — fire only on OPEN (not close). Captures which
+                // questions users actually need answered — content gold for
+                // SEO and vendor-pitch (e.g. "users keep asking 'does X
+                // integrate with Y?' on TOOL_X's page").
+                if (next === i && toolSlug) {
+                  analytics.toolFaqOpened(toolSlug, i, faq.question)
+                }
+              }}
               className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
             >
               <span className="font-medium text-sm pr-4">{faq.question}</span>

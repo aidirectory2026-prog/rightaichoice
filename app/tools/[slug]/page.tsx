@@ -835,7 +835,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
               />
 
               {/* ── FAQs ──────────────────────────────────────── */}
-              <FaqSection faqs={faqs} toolName={tool.name} />
+              <FaqSection faqs={faqs} toolName={tool.name} toolSlug={tool.slug} />
 
               {/* Phase 3: Stack-pairing recommendations — composes well with this tool */}
               <StackPairings

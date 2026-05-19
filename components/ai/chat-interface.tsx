@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Sparkles, RotateCcw } from 'lucide-react'
 import { ChatMessage } from './chat-message'
+import { analytics } from '@/lib/analytics'
 
 type ToolMention = {
   slug: string
@@ -52,6 +53,21 @@ export function ChatInterface() {
       content: message,
     }
 
+    // Phase 8.g.2 — capture the FULL user prompt + conversation context.
+    // This is the highest-signal data in the chat: what users actually
+    // want from AI tools, in their own words. Vendor pitch: "users
+    // searching for 'cheap alternative to notion' on our chat" is a list.
+    const conversationTurn = messages.filter((m) => m.role === 'user').length + 1
+    const mentionedToolSlugsInPrompt = extractToolSlugs(message)
+    analytics.aiChatMessageRich({
+      intent: null,
+      message_text: message,
+      mentioned_tool_slugs: mentionedToolSlugsInPrompt,
+      conversation_turn: conversationTurn,
+      is_follow_up: messages.length > 0,
+    })
+    const requestStartMs = Date.now()
+
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
@@ -92,6 +108,14 @@ export function ChatInterface() {
         content: data.content,
         toolMentions: toolMentions.length > 0 ? toolMentions : apiTools.slice(0, 5),
       }
+
+      // Phase 8.g.2 — capture which tools we suggested back + latency.
+      analytics.aiChatResponseReceived(
+        assistantMessage.toolMentions?.length ?? 0,
+        (assistantMessage.toolMentions ?? []).map((t) => t.slug),
+        data.content?.length ?? 0,
+        Date.now() - requestStartMs,
+      )
 
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
