@@ -57,6 +57,26 @@ function parseUtm(searchParams: URLSearchParams) {
 
 let initialized = false
 
+// Phase 8.g.1 fix (2026-05-20) — exported so AuthProvider can re-register
+// the full static super-prop set after a real logout. mixpanel.reset()
+// clears ALL super-properties; loaded() only fires once per SDK init, so
+// callers that reset() must call this helper to restore the static set.
+export function registerAnonSuperProps() {
+  if (!initialized) return
+  mixpanel.register({
+    app: 'rightaichoice',
+    app_version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
+    viewport:
+      typeof window !== 'undefined'
+        ? `${window.innerWidth}x${window.innerHeight}`
+        : 'unknown',
+    env: process.env.NODE_ENV,
+    device_type: computeDeviceType(),
+    session_n: nextSessionN(),
+    auth_state: 'anon',
+  })
+}
+
 function initMixpanelOnce() {
   if (initialized || !MIXPANEL_TOKEN) return
   mixpanel.init(MIXPANEL_TOKEN, {
