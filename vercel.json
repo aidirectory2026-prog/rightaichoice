@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/refresh-freshness-view",
       "schedule": "45 23 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-user-events",
+      "schedule": "15 3 * * *"
     }
   ]
 }

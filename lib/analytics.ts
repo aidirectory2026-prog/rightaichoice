@@ -21,11 +21,136 @@ type EventPropertyValue =
   | Record<string, string | number | boolean | null>
 type EventProperties = Record<string, EventPropertyValue>
 
+// ── Phase 8.h — Supabase mirror batching ─────────────────────────
+// Every event captured client-side is also POSTed to /api/track-mirror in
+// batches so it lands in public.user_events + drives the per-user behavioural
+// profile (public.user_intent_profile). Mirror is fire-and-forget: never
+// blocks Mixpanel send, never throws if the endpoint is down.
+//
+// Batching: events queue in-memory, flush every MIRROR_FLUSH_MS or on
+// pagehide (whichever first). sendBeacon used for unload so the last events
+// make it even when the page is closing.
+
+type MirrorEvent = {
+  event_name: string
+  distinct_id: string
+  user_id?: string | null
+  auth_state?: 'anon' | 'known'
+  properties?: Record<string, unknown>
+  page_path?: string
+  referrer?: string
+  device_type?: 'mobile' | 'tablet' | 'desktop'
+  first_touch_utm_source?: string
+  first_touch_referrer?: string
+  first_touch_landing?: string
+  insert_id?: string
+  client_time_ms?: number
+}
+
+const MIRROR_QUEUE: MirrorEvent[] = []
+const MIRROR_MAX_QUEUE = 100
+const MIRROR_FLUSH_MS = 8_000
+let mirrorFlushTimer: ReturnType<typeof setTimeout> | null = null
+let mirrorUnloadHooked = false
+
+function mirrorEnqueue(ev: MirrorEvent) {
+  if (typeof window === 'undefined') return
+  MIRROR_QUEUE.push(ev)
+  if (MIRROR_QUEUE.length >= MIRROR_MAX_QUEUE) {
+    void mirrorFlush()
+    return
+  }
+  if (!mirrorFlushTimer) {
+    mirrorFlushTimer = setTimeout(() => {
+      mirrorFlushTimer = null
+      void mirrorFlush()
+    }, MIRROR_FLUSH_MS)
+  }
+  if (!mirrorUnloadHooked) {
+    mirrorUnloadHooked = true
+    // pagehide fires more reliably than beforeunload on mobile Safari and
+    // works during BFCache restore — last events get flushed via sendBeacon.
+    window.addEventListener('pagehide', () => {
+      const events = MIRROR_QUEUE.splice(0)
+      if (events.length === 0) return
+      try {
+        const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' })
+        navigator.sendBeacon('/api/track-mirror', blob)
+      } catch {
+        // Swallow — never break unload.
+      }
+    })
+  }
+}
+
+async function mirrorFlush() {
+  if (MIRROR_QUEUE.length === 0) return
+  const events = MIRROR_QUEUE.splice(0)
+  try {
+    await fetch('/api/track-mirror', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({ events }),
+    })
+  } catch {
+    // Drop the batch on network failure — never throw to the caller.
+  }
+}
+
+// Pull super-prop snapshot from mixpanel-browser so each mirrored event
+// carries the same context Mixpanel has. Lazy — only on flush, not on every
+// enqueue, so we don't import mixpanel-browser repeatedly.
+async function mirrorContext(eventName: string, properties?: EventProperties): Promise<MirrorEvent | null> {
+  if (typeof window === 'undefined') return null
+  const mod = await import('mixpanel-browser').catch(() => null)
+  if (!mod) return null
+  const mp = mod.default
+  let distinctId: string
+  let propsSnapshot: Record<string, unknown> = {}
+  try {
+    distinctId = mp.get_distinct_id() as string
+    // get_property reaches into the persisted super-props store.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyMp = mp as any
+    propsSnapshot = {
+      auth_state: anyMp.get_property?.('auth_state'),
+      device_type: anyMp.get_property?.('device_type'),
+      page_path: anyMp.get_property?.('page_path'),
+      first_touch_utm_source: anyMp.get_property?.('first_touch_utm_source'),
+      first_touch_referrer: anyMp.get_property?.('first_touch_referrer'),
+      first_touch_landing: anyMp.get_property?.('first_touch_landing'),
+    }
+  } catch {
+    return null
+  }
+  return {
+    event_name: eventName,
+    distinct_id: distinctId,
+    auth_state: (propsSnapshot.auth_state as 'anon' | 'known' | undefined) ?? 'anon',
+    device_type: propsSnapshot.device_type as 'mobile' | 'tablet' | 'desktop' | undefined,
+    page_path: propsSnapshot.page_path as string | undefined,
+    first_touch_utm_source: propsSnapshot.first_touch_utm_source as string | undefined,
+    first_touch_referrer: propsSnapshot.first_touch_referrer as string | undefined,
+    first_touch_landing: propsSnapshot.first_touch_landing as string | undefined,
+    referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+    properties: properties as Record<string, unknown>,
+    insert_id: typeof crypto !== 'undefined' ? crypto.randomUUID() : undefined,
+    client_time_ms: Date.now(),
+  }
+}
+
 function capture(event: string, properties?: EventProperties) {
   if (typeof window === 'undefined') return
   if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
   import('mixpanel-browser').then(({ default: mixpanel }) => {
     mixpanel.track(event, properties)
+  })
+  // Phase 8.h — also mirror to our own Supabase backend so data is queryable
+  // via SQL (Mixpanel free tier blocks the Query API). Fire-and-forget —
+  // never blocks the Mixpanel send, never throws.
+  void mirrorContext(event, properties).then((ev) => {
+    if (ev) mirrorEnqueue(ev)
   })
 }
 

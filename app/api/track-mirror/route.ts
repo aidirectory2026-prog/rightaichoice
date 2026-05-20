@@ -1,0 +1,206 @@
+// Phase 8.h (2026-05-20) — Supabase mirror of all captured analytics events.
+//
+// Endpoint that lib/analytics.ts pings (in batch) alongside Mixpanel. Writes
+// every event to public.user_events and updates the per-user behavioural
+// record (public.user_intent_profile) via the upsert_user_intent RPC.
+//
+// Why this exists: Mixpanel free tier blocks the Query API, so programmatic
+// export of event data isn't possible without paying. This endpoint stores
+// the same data in OUR database where we have unlimited SQL access — the
+// salable per-user record lives here, not in Mixpanel.
+//
+// Privacy: same rules as the rest of the stack — never log passwords or
+// payment data; truncate free-text properties at the call site. Email is
+// reduced to email_domain only on every event.
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
+
+// One client event payload, exactly as sent from lib/analytics.ts.
+type MirrorEvent = {
+  event_name: string
+  distinct_id: string
+  user_id?: string | null
+  auth_state?: 'anon' | 'known'
+  properties?: Record<string, unknown>
+  page_path?: string
+  referrer?: string
+  device_type?: 'mobile' | 'tablet' | 'desktop'
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  first_touch_utm_source?: string
+  first_touch_referrer?: string
+  first_touch_landing?: string
+  insert_id?: string
+  client_time_ms?: number
+}
+
+// ── Profile-update routing ──────────────────────────────────────
+// For each event, decide which arrays / counters / segments to push into
+// user_intent_profile. Returns the args to pass to the upsert_user_intent RPC.
+function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
+  const props = (e.properties ?? {}) as Record<string, unknown>
+  const updates: Record<string, unknown> = {}
+  const arr = (key: string): string[] | undefined => {
+    const v = props[key]
+    if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string').slice(0, 50)
+    if (typeof v === 'string' && v.length > 0) return [v]
+    return undefined
+  }
+  const str = (key: string): string | undefined => {
+    const v = props[key]
+    return typeof v === 'string' && v.length > 0 ? v : undefined
+  }
+  switch (e.event_name) {
+    case 'plan_intake_submitted': {
+      const segs = {
+        p_plan_budget: str('budget'),
+        p_plan_team: str('team_size'),
+        p_plan_industry: str('industry'),
+        p_plan_skill: str('skill_level'),
+      }
+      Object.assign(updates, segs, {
+        p_arr_existing_tools: arr('existing_tools'),
+        p_arr_plan_use_cases: arr('goal_text'),
+        p_inc_plans_completed: 0, // counted on plan_completed
+      })
+      break
+    }
+    case 'plan_existing_tool_added':
+      updates.p_arr_existing_tools = arr('tool_name')
+      break
+    case 'plan_completed':
+      updates.p_inc_plans_completed = 1
+      updates.p_arr_plan_use_cases = arr('use_case')
+      break
+    case 'plan_results_displayed':
+      updates.p_arr_plan_use_cases = arr('use_case')
+      break
+    case 'search_query_submitted':
+      updates.p_inc_searches = 1
+      updates.p_arr_search_queries = arr('query')
+      break
+    case 'search_result_clicked':
+      updates.p_arr_search_queries = arr('query')
+      break
+    case 'tool_saved':
+      updates.p_inc_saves = 1
+      break
+    case 'tool_visit_clicked':
+    case 'tool_visit_redirected':
+      updates.p_inc_tools_visited = 1
+      updates.p_arr_tools_visited = arr('tool_slug')
+      break
+    case 'comparison_viewed': {
+      const tools = arr('tools')
+      if (tools && tools.length >= 2) {
+        const sorted = [...tools].sort()
+        const pair = `${sorted[0]}-vs-${sorted[1]}`
+        updates.p_arr_tools_compared = [pair]
+      }
+      updates.p_inc_comparisons = 1
+      break
+    }
+    case 'review_submitted':
+      updates.p_inc_reviews = 1
+      updates.p_arr_reviews_for = arr('tool_slug')
+      break
+    case 'ai_chat_message':
+      updates.p_inc_chat_messages = 1
+      updates.p_arr_chat_tools = arr('mentioned_tool_slugs')
+      break
+    case 'newsletter_subscribed':
+      // email_domain is set as a top-level column; no array-update here
+      break
+    case 'signup_completed': {
+      const sa = str('signup_at')
+      if (sa) updates.p_signup_at = sa
+      break
+    }
+  }
+  return updates
+}
+
+export async function POST(req: NextRequest) {
+  let body: { events?: MirrorEvent[] }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Bad JSON' }, { status: 400 })
+  }
+  const events = (body.events ?? []).slice(0, 100) // hard cap per batch
+  if (events.length === 0) {
+    return NextResponse.json({ ok: true, written: 0 })
+  }
+
+  const db = getAdminClient()
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null
+  const ua = (req.headers.get('user-agent') ?? '').slice(0, 300)
+
+  // ── Insert all events in one shot ────────────────────────────
+  const rows = events.map((e) => ({
+    distinct_id: e.distinct_id,
+    user_id: e.user_id ?? null,
+    auth_state: e.auth_state ?? 'anon',
+    event_name: e.event_name,
+    properties: e.properties ?? {},
+    page_path: e.page_path ?? null,
+    referrer: e.referrer ?? null,
+    device_type: e.device_type ?? null,
+    source_kind: 'client',
+    utm_source: e.utm_source ?? null,
+    utm_medium: e.utm_medium ?? null,
+    utm_campaign: e.utm_campaign ?? null,
+    first_touch_utm_source: e.first_touch_utm_source ?? null,
+    ip,
+    user_agent: ua,
+    insert_id: e.insert_id ?? null,
+    created_at: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
+  }))
+
+  // Use onConflict: 'insert_id' to dedup retried beacons.
+  const { error: insertErr } = await db
+    .from('user_events')
+    .upsert(rows as never, { onConflict: 'insert_id', ignoreDuplicates: true })
+  if (insertErr) {
+    console.error('[track-mirror] user_events insert failed:', insertErr.message)
+    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  }
+
+  // ── Update user_intent_profile per event ─────────────────────
+  // Sequential because each event may union arrays into the same row.
+  // Volume is small (max 100 per batch), so the round-trip cost is fine.
+  for (const e of events) {
+    const updates = profileUpdatesFor(e)
+    if (Object.keys(updates).length === 0 && !e.user_id) {
+      // Even with no profile updates, still upsert the bare distinct_id row
+      // so we count this user as "seen" — but skip if no value to add.
+      continue
+    }
+    const args: Record<string, unknown> = {
+      p_distinct_id: e.distinct_id,
+      p_user_id: e.user_id ?? null,
+      p_page_path: e.page_path ?? null,
+      p_first_touch_utm_source: e.first_touch_utm_source ?? null,
+      p_first_touch_utm_medium: null,
+      p_first_touch_utm_campaign: null,
+      p_first_touch_referrer: e.first_touch_referrer ?? null,
+      p_first_touch_landing: e.first_touch_landing ?? null,
+      ...updates,
+    }
+    // Pull email_domain from newsletter_subscribed payload.
+    if (e.event_name === 'newsletter_subscribed') {
+      const ed = (e.properties as Record<string, unknown> | undefined)?.email_domain
+      if (typeof ed === 'string') args.p_email_domain = ed
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcErr } = await (db as any).rpc('upsert_user_intent', args)
+    if (rpcErr) {
+      console.warn(`[track-mirror] upsert_user_intent for ${e.event_name} failed:`, rpcErr.message)
+      // Never fail the batch — events are already written.
+    }
+  }
+
+  return NextResponse.json({ ok: true, written: events.length })
+}
