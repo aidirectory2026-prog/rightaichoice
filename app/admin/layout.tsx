@@ -35,6 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Link href="/admin/tools" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Tools
                 </Link>
+                <Link href="/admin/insights" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                  Insights
+                </Link>
                 <Link href="/admin/freshness" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Freshness
                 </Link>
