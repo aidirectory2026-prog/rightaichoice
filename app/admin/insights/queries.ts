@@ -522,6 +522,94 @@ export async function getUserProfile(distinctId: string): Promise<UserProfile | 
   return (data ?? null) as UserProfile | null
 }
 
+// ── KPI goals + event health (Phase 8.g.9) ─────────────────────────
+
+export interface KpiGoal {
+  kpi_key: string
+  display_name: string
+  category: string
+  goal_value: number
+  unit: string
+  description: string | null
+}
+
+export interface KpiRow extends KpiGoal {
+  current_value: number
+  pct_of_goal: number
+}
+
+export async function getKpiRows(): Promise<KpiRow[]> {
+  const db = getAdminClient()
+  const [goals, values] = await Promise.all([
+    db.from('insights_goals').select('*').order('category'),
+    rpc(db, 'insights_kpi_values', { p_days: 7 }),
+  ])
+  const valueByKey = new Map<string, number>()
+  for (const v of ((values.data as Array<{ kpi_key: string; current_value: number }>) ?? [])) {
+    valueByKey.set(v.kpi_key, Number(v.current_value))
+  }
+  return ((goals.data as KpiGoal[]) ?? []).map((g) => {
+    const current = Number(valueByKey.get(g.kpi_key) ?? 0)
+    const pct = g.goal_value > 0 ? Math.round((current / Number(g.goal_value)) * 1000) / 10 : 0
+    return {
+      ...g,
+      goal_value: Number(g.goal_value),
+      current_value: current,
+      pct_of_goal: pct,
+    }
+  })
+}
+
+export interface EventHealthRow {
+  event_name: string
+  last_fire: string | null
+  fires_24h: number
+  fires_7d: number
+  fires_30d: number
+  total_in_window: number
+  pct_device_type: number
+  pct_page_path: number
+  pct_auth_state: number
+}
+
+export async function getEventHealth(days: 7 | 30 | 90 = 30): Promise<{
+  fired: EventHealthRow[]
+  deadEventNames: string[]
+  freshnessPct: number
+}> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_event_health', { p_days: days })
+  const rows = ((data as Array<{
+    event_name: string
+    last_fire: string | null
+    fires_24h: number
+    fires_7d: number
+    fires_30d: number
+    total_in_window: number
+    pct_device_type: number
+    pct_page_path: number
+    pct_auth_state: number
+  }>) ?? []).map((r) => ({
+    ...r,
+    fires_24h: Number(r.fires_24h),
+    fires_7d: Number(r.fires_7d),
+    fires_30d: Number(r.fires_30d),
+    total_in_window: Number(r.total_in_window),
+    pct_device_type: Number(r.pct_device_type),
+    pct_page_path: Number(r.pct_page_path),
+    pct_auth_state: Number(r.pct_auth_state),
+  }))
+  // Import the catalog to detect dead events. Lazy-load to avoid circular.
+  const { EVENTS } = await import('@/scripts/mixpanel/config/events')
+  const fired7d = new Set(rows.filter((r) => r.fires_7d > 0).map((r) => r.event_name))
+  const allCatalogNames = EVENTS.map((e: { name: string }) => e.name)
+  const deadEventNames = allCatalogNames.filter((n: string) => !fired7d.has(n))
+  const freshnessPct = allCatalogNames.length > 0
+    ? Math.round((fired7d.size / allCatalogNames.length) * 1000) / 10
+    : 0
+  return { fired: rows, deadEventNames, freshnessPct }
+}
+
 // ── Reconciliation: explainer numbers for Mixpanel-vs-admin delta ──
 
 export interface ReconciliationStats {

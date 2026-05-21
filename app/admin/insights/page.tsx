@@ -4,7 +4,7 @@
 // ?include_bots=1.
 
 import Link from 'next/link'
-import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows } from 'lucide-react'
+import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
 import {
   type DayWindow,
   getBotShare,
@@ -115,6 +115,20 @@ export default async function InsightsPage({
         <div className="flex items-center gap-3">
           {/* Sub-page nav */}
           <div className="flex gap-1">
+            <Link
+              href="/admin/insights/goals"
+              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
+            >
+              <Target className="h-3 w-3" />
+              Goals
+            </Link>
+            <Link
+              href="/admin/insights/health"
+              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
+            >
+              <ShieldCheck className="h-3 w-3" />
+              Health
+            </Link>
             <Link
               href={`/admin/insights/events${queryString({ days, include_bots: includeBots })}`}
               className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
