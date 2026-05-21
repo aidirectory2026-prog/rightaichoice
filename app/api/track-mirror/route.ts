@@ -148,28 +148,43 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null
   const ua = (req.headers.get('user-agent') ?? '').slice(0, 300)
   const botLikely = isBotUserAgent(ua)
+  // Phase 8.g.10 — Vercel auto-populates these on every edge request.
+  // Free, no third-party geo lookup needed.
+  const country = req.headers.get('x-vercel-ip-country') ?? null
+  const city = req.headers.get('x-vercel-ip-city') ? decodeURIComponent(req.headers.get('x-vercel-ip-city')!) : null
+  const region = req.headers.get('x-vercel-ip-country-region') ?? null
 
   // ── Insert all events in one shot ────────────────────────────
-  const rows = events.map((e) => ({
-    distinct_id: e.distinct_id,
-    user_id: e.user_id ?? null,
-    auth_state: e.auth_state ?? 'anon',
-    event_name: e.event_name,
-    properties: e.properties ?? {},
-    page_path: e.page_path ?? null,
-    referrer: e.referrer ?? null,
-    device_type: e.device_type ?? null,
-    source_kind: 'client',
-    utm_source: e.utm_source ?? null,
-    utm_medium: e.utm_medium ?? null,
-    utm_campaign: e.utm_campaign ?? null,
-    first_touch_utm_source: e.first_touch_utm_source ?? null,
-    ip,
-    user_agent: ua,
-    insert_id: e.insert_id ?? null,
-    bot_likely: botLikely,
-    created_at: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
-  }))
+  const rows = events.map((e) => {
+    const props = (e.properties ?? {}) as Record<string, unknown>
+    // Clarity session ID rides along inside event properties; lift it to
+    // a column for fast filter + JOIN to the replay deep-link.
+    const claritySid = typeof props.clarity_session_id === 'string' ? props.clarity_session_id : null
+    return {
+      distinct_id: e.distinct_id,
+      user_id: e.user_id ?? null,
+      auth_state: e.auth_state ?? 'anon',
+      event_name: e.event_name,
+      properties: props,
+      page_path: e.page_path ?? null,
+      referrer: e.referrer ?? null,
+      device_type: e.device_type ?? null,
+      source_kind: 'client',
+      utm_source: e.utm_source ?? null,
+      utm_medium: e.utm_medium ?? null,
+      utm_campaign: e.utm_campaign ?? null,
+      first_touch_utm_source: e.first_touch_utm_source ?? null,
+      ip,
+      user_agent: ua,
+      country,
+      city,
+      region,
+      clarity_session_id: claritySid,
+      insert_id: e.insert_id ?? null,
+      bot_likely: botLikely,
+      created_at: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
+    }
+  })
 
   // Use onConflict: 'insert_id' to dedup retried beacons.
   const { error: insertErr } = await db

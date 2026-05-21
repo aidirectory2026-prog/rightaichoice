@@ -49,6 +49,36 @@ function loadClarity(projectId: string) {
   loaded = true
 }
 
+// Phase 8.g.10 — once Clarity loads, ask for the session ID and forward
+// it to Mixpanel as a super-prop so EVERY event carries clarity_session_id.
+// /api/track-mirror then lifts it from properties to its own column, so
+// the per-user timeline page can deep-link to the Clarity replay.
+function bridgeClaritySessionToMixpanel() {
+  if (typeof window === 'undefined') return
+  const w = window as unknown as Record<string, unknown>
+  const clarity = w['clarity'] as ((cmd: string, key: string, cb: (val: string) => void) => void) | undefined
+  if (typeof clarity !== 'function') return
+  try {
+    clarity('get', 'session', (sessionId: string) => {
+      if (!sessionId) return
+      // Lazy-import mixpanel-browser so non-Mixpanel pages don't load it.
+      import('mixpanel-browser').then(({ default: mp }) => {
+        try {
+          mp.register({ clarity_session_id: sessionId })
+        } catch {
+          // Mixpanel not initialised yet — try once on next tick.
+          setTimeout(() => {
+            try { mp.register({ clarity_session_id: sessionId }) } catch { /* swallow */ }
+          }, 500)
+        }
+      }).catch(() => { /* mixpanel-browser unavailable, ignore */ })
+    })
+  } catch {
+    // Clarity not fully loaded yet — try once more after a delay.
+    setTimeout(bridgeClaritySessionToMixpanel, 1000)
+  }
+}
+
 export function ClarityProvider() {
   const pathname = usePathname()
 
@@ -56,6 +86,11 @@ export function ClarityProvider() {
     if (!CLARITY_ID) return
     if (EXCLUDED_PATHS.some((p) => pathname.startsWith(p))) return
     loadClarity(CLARITY_ID)
+    // Wait for Clarity's <script> to finish loading before asking for the
+    // session ID. The 2s delay is generous — Clarity usually finishes
+    // bootstrapping in ~800ms even on slow connections.
+    const t = setTimeout(bridgeClaritySessionToMixpanel, 2000)
+    return () => clearTimeout(t)
   }, [pathname])
 
   return null

@@ -120,9 +120,19 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
       first_touch_utm_source: anyMp.get_property?.('first_touch_utm_source'),
       first_touch_referrer: anyMp.get_property?.('first_touch_referrer'),
       first_touch_landing: anyMp.get_property?.('first_touch_landing'),
+      // Phase 8.g.10 — Clarity session id registered as a super-prop by
+      // ClarityProvider once the Clarity SDK boots. Folded into properties
+      // below so /api/track-mirror can lift it to its own column.
+      clarity_session_id: anyMp.get_property?.('clarity_session_id'),
     }
   } catch {
     return null
+  }
+  // Merge clarity_session_id into the outgoing properties so the mirror
+  // endpoint sees it on every event.
+  const mergedProps: Record<string, unknown> = { ...(properties ?? {}) }
+  if (typeof propsSnapshot.clarity_session_id === 'string' && propsSnapshot.clarity_session_id.length > 0) {
+    mergedProps.clarity_session_id = propsSnapshot.clarity_session_id
   }
   return {
     event_name: eventName,
@@ -134,7 +144,7 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
     first_touch_referrer: propsSnapshot.first_touch_referrer as string | undefined,
     first_touch_landing: propsSnapshot.first_touch_landing as string | undefined,
     referrer: typeof document !== 'undefined' ? document.referrer : undefined,
-    properties: properties as Record<string, unknown>,
+    properties: mergedProps,
     insert_id: typeof crypto !== 'undefined' ? crypto.randomUUID() : undefined,
     client_time_ms: Date.now(),
   }

@@ -483,6 +483,38 @@ export async function getEventsForDistinctId(distinctId: string, limit = 200): P
   return (data ?? []) as RawEventRow[]
 }
 
+// ── Sessions (Phase 8.g.10) ────────────────────────────────────────
+
+export interface UserSession {
+  session_num: number
+  started_at: string
+  ended_at: string
+  duration_sec: number
+  event_count: number
+  entry_page: string | null
+  exit_page: string | null
+  pages_visited: number
+  event_types: string[]
+  country: string | null
+  city: string | null
+  region: string | null
+  referrer: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  device_type: string | null
+  clarity_session_id: string | null
+}
+
+export async function getUserSessions(distinctId: string, limit = 50): Promise<UserSession[]> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_user_sessions', {
+    p_distinct_id: distinctId,
+    p_limit: limit,
+  })
+  return (data ?? []) as UserSession[]
+}
+
 // ── User profile (header on the timeline page) ─────────────────────
 
 export interface UserProfile {
