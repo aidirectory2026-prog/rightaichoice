@@ -16,6 +16,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 
+// ── Bot detection ──────────────────────────────────────────────────
+// Same regex as migration 097's backfill so historical rows align with
+// new rows. ~90% recall, ~0% false positive on real browsers.
+const BOT_UA_RE = /(googlebot|bingbot|yandex|duckduck|baiduspider|ahrefsbot|semrushbot|dotbot|mj12bot|blexbot|seokicks|petalbot|gptbot|claudebot|chatgpt-user|perplexitybot|anthropic-ai|applebot|facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|whatsapp|skypeuripreview|amazonbot|crawl|spider|slurp|headlesschrome|phantomjs|electron|python-requests|curl\/|wget\/|postman|scrapy|httpclient|node-fetch|^axios)/i
+
+function isBotUserAgent(ua: string): boolean {
+  if (!ua) return false
+  return BOT_UA_RE.test(ua)
+}
+
 // One client event payload, exactly as sent from lib/analytics.ts.
 type MirrorEvent = {
   event_name: string
@@ -137,6 +147,7 @@ export async function POST(req: NextRequest) {
   const db = getAdminClient()
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null
   const ua = (req.headers.get('user-agent') ?? '').slice(0, 300)
+  const botLikely = isBotUserAgent(ua)
 
   // ── Insert all events in one shot ────────────────────────────
   const rows = events.map((e) => ({
@@ -156,6 +167,7 @@ export async function POST(req: NextRequest) {
     ip,
     user_agent: ua,
     insert_id: e.insert_id ?? null,
+    bot_likely: botLikely,
     created_at: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
   }))
 

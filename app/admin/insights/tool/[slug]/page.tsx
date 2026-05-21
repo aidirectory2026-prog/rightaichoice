@@ -1,6 +1,5 @@
-// Phase 8.g.7 (2026-05-20) — per-tool audience snapshot for vendor pitching.
-// "Notion's audience on RAC last 30d: 247 views, 89 click-outs, 23 saves,
-//  most-compared with: Airtable, Coda, ClickUp, Roam."
+// Phase 8.g.7 — per-tool audience snapshot.
+// Phase 8.g.8 — bot filter propagated from caller.
 
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
@@ -21,21 +20,23 @@ export default async function ToolAudiencePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ days?: string }>
+  searchParams: Promise<{ days?: string; include_bots?: string }>
 }) {
   const { slug } = await params
   const sp = await searchParams
   const requested = Number(sp.days ?? '30') as DayWindow
   const days: DayWindow = ([7, 30, 90] as DayWindow[]).includes(requested) ? requested : 30
+  const includeBots = sp.include_bots === '1'
 
-  const detail = await getToolAudienceDetail(slug, days)
+  const detail = await getToolAudienceDetail(slug, days, includeBots)
+  const qs = (d: DayWindow) => `?days=${d}${includeBots ? '&include_bots=1' : ''}`
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
-            href={`/admin/insights?days=${days}`}
+            href={`/admin/insights${qs(days)}`}
             className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <ChevronLeft className="h-3 w-3" />
@@ -50,7 +51,7 @@ export default async function ToolAudiencePage({
           {WINDOWS.map((w) => (
             <Link
               key={w.value}
-              href={`/admin/insights/tool/${encodeURIComponent(slug)}?days=${w.value}`}
+              href={`/admin/insights/tool/${encodeURIComponent(slug)}${qs(w.value)}`}
               className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                 w.value === days
                   ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800'
@@ -64,8 +65,8 @@ export default async function ToolAudiencePage({
       </div>
 
       <p className="mb-4 text-xs text-zinc-500">
-        The vendor pitch in one screen: usage, intent-to-purchase signal, and brand-adjacency.
-        Use the share count + click-out count to set a price (~$5-50 / engaged user for high-intent verticals).
+        Vendor pitch in one screen: usage, intent-to-purchase signal, brand-adjacency.
+        {includeBots ? ' Bots included.' : ' Bots excluded.'}
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -80,7 +81,7 @@ export default async function ToolAudiencePage({
           title="Most-compared against this tool"
           rows={detail.compared_with}
           emptyHint="No comparisons including this tool yet"
-          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}?days=${days}`}
+          rowHrefBuilder={(s) => `/admin/insights/tool/${encodeURIComponent(s)}${qs(days)}`}
         />
       </div>
 
