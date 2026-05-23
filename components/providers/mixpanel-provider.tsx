@@ -63,6 +63,13 @@ let initialized = false
 // callers that reset() must call this helper to restore the static set.
 export function registerAnonSuperProps() {
   if (!initialized) return
+  let networkType: string = 'unknown'
+  try {
+    const conn = (navigator as unknown as { connection?: { effectiveType?: string } }).connection
+    if (conn?.effectiveType) networkType = conn.effectiveType
+  } catch {
+    // ignore
+  }
   mixpanel.register({
     app: 'rightaichoice',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
@@ -74,6 +81,7 @@ export function registerAnonSuperProps() {
     device_type: computeDeviceType(),
     session_n: nextSessionN(),
     auth_state: 'anon',
+    network_type: networkType,
   })
 }
 
@@ -108,6 +116,16 @@ function initMixpanelOnce() {
       // Every-session super properties — attached to every event. Phase 8.g.1
       // adds device_type, session_n (per-tab counter), and auth_state
       // (toggled by AuthProvider on identify/reset).
+      // Phase 8.g.11.d — read network type for slow-connection segmentation.
+      // navigator.connection is experimental in Safari but widely supported
+      // in Chromium browsers; falls back to 'unknown' otherwise.
+      let networkType: string = 'unknown'
+      try {
+        const conn = (navigator as unknown as { connection?: { effectiveType?: string } }).connection
+        if (conn?.effectiveType) networkType = conn.effectiveType
+      } catch {
+        // ignore — Safari throws on access
+      }
       mp.register({
         app: 'rightaichoice',
         app_version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
@@ -119,6 +137,7 @@ function initMixpanelOnce() {
         device_type: computeDeviceType(),
         session_n: nextSessionN(),
         auth_state: 'anon',
+        network_type: networkType,
       })
     },
   })

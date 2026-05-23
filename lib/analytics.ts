@@ -925,6 +925,32 @@ export const analytics = {
       time_to_submit_ms: timeToSubmitMs,
     })
   },
+
+  // ── Phase 8.g.11.d — passive browser-API capture ────────────────
+  // Wired by components/analytics/global-interaction-tracker.tsx
+  // mounted from the root layout. All throttled inside the tracker
+  // (1/5s for visibility, 1/3s for context-menu) so volume stays sane.
+  copyTextEvent(props: { selection_length: number; page_path: string }) {
+    capture('copy_text_event', props)
+  },
+  pasteTextEvent(props: { target_element_id: string; page_path: string }) {
+    capture('paste_text_event', props)
+  },
+  contextMenuOpened(props: { target_element_id: string; page_path: string }) {
+    capture('context_menu_opened', props)
+  },
+  tabVisibilityChanged(props: { state: 'hidden' | 'visible'; duration_ms?: number }) {
+    capture('tab_visibility_changed', props)
+  },
+  navigationBack(props: { from_path: string }) {
+    capture('navigation_back', props)
+  },
+  formValidationFailed(props: { form_id: string; field_name: string; error_code: string }) {
+    capture('form_validation_failed', props)
+  },
+  elementDwell(props: { element_id: string; dwell_ms: number; page_path: string }) {
+    capture('element_dwell', props)
+  },
 }
 
 // ── People-property helpers (used by max-capture events) ─────────
