@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 type Category = { id: string; name: string; slug: string; icon: string | null }
 
@@ -78,6 +79,12 @@ export function ToolFilters({
       // Reset page when filters change
       params.delete('page')
       const qs = params.toString()
+      // Phase 8.g.11.c — wire filter_applied on every chip/sort change.
+      // Fires on both set AND clear so we know which facets users explore vs
+      // back away from. Source = current path (e.g. /tools, /categories/x).
+      if (value) {
+        analytics.filterApplied(key, value, pathname)
+      }
       router.push(qs ? `${pathname}?${qs}` : pathname)
     },
     [router, searchParams, pathname]

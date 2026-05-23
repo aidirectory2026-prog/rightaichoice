@@ -19,12 +19,16 @@ type EventKind =
   | 'saved_list_viewed'
   | 'profile_viewed'
   | 'viability_page_viewed'
+  | 'category_viewed'
+  | 'collection_viewed'
 
 type EventProps =
   | { event: 'dashboard_viewed'; props: { has_saves: boolean; saves_count: number; has_plans: boolean } }
   | { event: 'saved_list_viewed'; props: { count: number } }
   | { event: 'profile_viewed'; props: { username: string; is_own_profile: boolean } }
   | { event: 'viability_page_viewed'; props: { slug: string; page_type: 'index' | 'at_risk' | 'safe_bets' } }
+  | { event: 'category_viewed'; props: { slug: string } }
+  | { event: 'collection_viewed'; props: { slug: string } }
 
 export function PageEventTracker(spec: EventProps & { event: EventKind }) {
   // Refs guard against double-fire from React strict-mode dev re-renders +
@@ -46,6 +50,12 @@ export function PageEventTracker(spec: EventProps & { event: EventKind }) {
         break
       case 'viability_page_viewed':
         analytics.viabilityPageViewed(spec.props.slug, spec.props.page_type)
+        break
+      case 'category_viewed':
+        analytics.categoryViewed(spec.props.slug)
+        break
+      case 'collection_viewed':
+        analytics.collectionViewed(spec.props.slug)
         break
     }
   }, [spec])

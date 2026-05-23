@@ -11,6 +11,7 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { ToolFilters } from '@/components/tools/tool-filters'
 import { ToolPagination } from '@/components/tools/tool-pagination'
 import { ToolGridSkeleton } from '@/components/tools/tool-card-skeleton'
+import { PageEventTracker } from '@/components/analytics/page-event-tracker'
 import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
 import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
@@ -196,6 +197,7 @@ async function CategoryResults({
   return (
     <>
       <script {...jsonLdScriptProps(itemList)} />
+      <PageEventTracker event="category_viewed" props={{ slug }} />
       <p className="-mt-4 mb-6 text-xs text-zinc-500">
         {total} tool{total !== 1 ? 's' : ''} found
       </p>
