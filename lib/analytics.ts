@@ -687,6 +687,27 @@ export const analytics = {
   searchTyping(currentQuery: string, source: string) {
     capture('search_typing', { current_query: currentQuery.slice(0, 200), current_length: currentQuery.length, source })
   },
+
+  // ── Phase 8.g.11.b — universal field-keystroke capture ──────────
+  // Driven by lib/hooks/use-debounced-text-tracking.ts. Six variants so
+  // each surface has a stable event_name in the schema, even though they
+  // all carry the same payload shape.
+  fieldTextChanged(payload: {
+    event_name: 'search_query_typed' | 'plan_goal_typed' | 'plan_free_text_typed' | 'profile_field_typed' | 'newsletter_email_typed' | 'compare_search_typed'
+    field_id: string
+    char_count: number
+    word_count: number
+    current_text?: string
+    final_blur?: boolean
+  }) {
+    capture(payload.event_name, {
+      field_id: payload.field_id,
+      char_count: payload.char_count,
+      word_count: payload.word_count,
+      ...(payload.current_text !== undefined ? { current_text: payload.current_text } : {}),
+      ...(payload.final_blur ? { final_blur: true } : {}),
+    })
+  },
   searchResultClickedRich(props: {
     query: string
     tool_slug: string

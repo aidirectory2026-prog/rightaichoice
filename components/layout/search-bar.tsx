@@ -6,6 +6,7 @@ import { Search, ArrowRight, Tag, FolderOpen } from 'lucide-react'
 import { autocompleteSearch } from '@/actions/search'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { analytics } from '@/lib/analytics'
+import { useDebouncedTextTracking } from '@/lib/hooks/use-debounced-text-tracking'
 
 type SearchResult = {
   tools: { id: string; name: string; slug: string; tagline: string; logo_url: string | null; website_url?: string | null; pricing_type: string }[]
@@ -23,6 +24,16 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const isLarge = size === 'lg'
+
+  // Phase 8.g.11.b — capture full search-bar typing in addition to the
+  // existing searchTyping(250ms) event. fieldTextChanged commits on 1s
+  // idle so we get a stronger "user finished typing this exact query"
+  // signal alongside the per-keystroke autocomplete fetches.
+  const searchTracker = useDebouncedTextTracking({
+    fieldId: 'navbar_search',
+    capturePolicy: 'text',
+    onCommit: (p) => analytics.fieldTextChanged({ event_name: 'search_query_typed', ...p }),
+  })
   const hasResults =
     results && (results.tools.length > 0 || results.categories.length > 0 || results.tags.length > 0)
 
@@ -128,7 +139,11 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         <input
           type="text"
           value={query}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => {
+            handleChange(e.target.value)
+            searchTracker.handleChange(e.target.value)
+          }}
+          onBlur={(e) => searchTracker.handleBlur(e.target.value)}
           onFocus={() => hasResults && setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="What do you want to do? e.g. &quot;edit videos with AI&quot;"

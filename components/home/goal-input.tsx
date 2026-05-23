@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
+import { useDebouncedTextTracking } from '@/lib/hooks/use-debounced-text-tracking'
 
 const MIN_CHARS = 10
 
@@ -50,6 +51,15 @@ export function GoalInput() {
   const trimmed = goal.trim()
   const canSubmit = trimmed.length >= MIN_CHARS && !submitting
 
+  // Phase 8.g.11.b — capture every typed pause in the goal input.
+  // capturePolicy='text' so the actual goal text rides along (user-explicit
+  // request for plan goals + search).
+  const goalTracker = useDebouncedTextTracking({
+    fieldId: 'home_goal_input',
+    capturePolicy: 'text',
+    onCommit: (p) => analytics.fieldTextChanged({ event_name: 'plan_goal_typed', ...p }),
+  })
+
   // Rotate placeholder while textarea is empty + unfocused.
   useEffect(() => {
     if (goal.length > 0) return
@@ -85,7 +95,11 @@ export function GoalInput() {
           <textarea
             ref={textareaRef}
             value={goal}
-            onChange={(e) => setGoal(e.target.value)}
+            onChange={(e) => {
+              setGoal(e.target.value)
+              goalTracker.handleChange(e.target.value)
+            }}
+            onBlur={(e) => goalTracker.handleBlur(e.target.value)}
             placeholder={PLACEHOLDERS[placeholderIdx]}
             rows={3}
             aria-label="Describe what you're trying to build"
