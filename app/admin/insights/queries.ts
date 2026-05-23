@@ -604,6 +604,34 @@ export interface EventHealthRow {
   pct_auth_state: number
 }
 
+export interface VolumeProjection {
+  today_events: number
+  mtd_events: number
+  rolling_30d_avg: number
+  days_in_month: number
+  day_of_month: number
+  projected_month_end: number
+  free_tier_cap: number
+  pct_of_cap: number
+}
+
+export async function getVolumeProjection(): Promise<VolumeProjection | null> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_event_volume_projection', {}).maybeSingle()
+  if (!data) return null
+  const r = data as Partial<VolumeProjection>
+  return {
+    today_events: Number(r.today_events ?? 0),
+    mtd_events: Number(r.mtd_events ?? 0),
+    rolling_30d_avg: Number(r.rolling_30d_avg ?? 0),
+    days_in_month: Number(r.days_in_month ?? 30),
+    day_of_month: Number(r.day_of_month ?? 1),
+    projected_month_end: Number(r.projected_month_end ?? 0),
+    free_tier_cap: Number(r.free_tier_cap ?? 20_000_000),
+    pct_of_cap: Number(r.pct_of_cap ?? 0),
+  }
+}
+
 export async function getEventHealth(days: 7 | 30 | 90 = 30): Promise<{
   fired: EventHealthRow[]
   deadEventNames: string[]

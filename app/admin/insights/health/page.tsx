@@ -3,7 +3,7 @@
 
 import Link from 'next/link'
 import { ChevronLeft, ShieldCheck } from 'lucide-react'
-import { getEventHealth } from '../queries'
+import { getEventHealth, getVolumeProjection } from '../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -33,10 +33,20 @@ function pctColor(pct: number): string {
 }
 
 export default async function HealthPage() {
-  const { fired, deadEventNames, freshnessPct } = await getEventHealth(30)
+  const [{ fired, deadEventNames, freshnessPct }, volume] = await Promise.all([
+    getEventHealth(30),
+    getVolumeProjection(),
+  ])
 
   const liveCount = fired.length
   const totalCatalog = liveCount + deadEventNames.length
+
+  // Volume budget color
+  const capStatus = !volume ? 'gray'
+    : volume.pct_of_cap >= 95 ? 'red'
+    : volume.pct_of_cap >= 85 ? 'amber'
+    : volume.pct_of_cap >= 70 ? 'yellow'
+    : 'green'
 
   return (
     <div>
@@ -66,6 +76,59 @@ export default async function HealthPage() {
         for an event with high volume, the instrumentation at that call site likely doesn&apos;t pass the super-prop
         bridge correctly.
       </p>
+
+      {/* ── Volume budget tile ────────────────────────────────────── */}
+      {volume && (
+        <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm font-medium text-zinc-200">Mixpanel free-tier volume budget</div>
+            <span className={`rounded px-2 py-0.5 text-xs font-mono ${
+              capStatus === 'red' ? 'bg-red-900/40 text-red-300'
+              : capStatus === 'amber' ? 'bg-amber-900/40 text-amber-300'
+              : capStatus === 'yellow' ? 'bg-yellow-900/40 text-yellow-300'
+              : 'bg-emerald-900/40 text-emerald-300'
+            }`}>
+              {volume.pct_of_cap}% of cap
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Today</div>
+              <div className="text-lg font-mono text-zinc-100">{volume.today_events.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Month-to-date</div>
+              <div className="text-lg font-mono text-zinc-100">{volume.mtd_events.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">30d avg/day</div>
+              <div className="text-lg font-mono text-zinc-100">{Math.round(volume.rolling_30d_avg).toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Projected month-end</div>
+              <div className="text-lg font-mono text-emerald-300">{volume.projected_month_end.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Free-tier cap</div>
+              <div className="text-lg font-mono text-zinc-400">{(volume.free_tier_cap / 1_000_000).toFixed(0)}M / mo</div>
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded bg-zinc-950">
+            <div
+              className={
+                capStatus === 'red' ? 'h-full bg-red-700'
+                : capStatus === 'amber' ? 'h-full bg-amber-700'
+                : capStatus === 'yellow' ? 'h-full bg-yellow-700'
+                : 'h-full bg-emerald-700'
+              }
+              style={{ width: `${Math.min(100, volume.pct_of_cap)}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[10px] text-zinc-500">
+            Projection = month-to-date + (30-day rolling avg × remaining days in month). Mixpanel free tier resets monthly.
+          </p>
+        </div>
+      )}
 
       {/* ── Live events table ──────────────────────────────────────── */}
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
