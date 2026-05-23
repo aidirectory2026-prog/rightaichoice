@@ -27,6 +27,7 @@ import {
   getTopViewedTools,
 } from './queries'
 import { BarList, FunnelStrip, LineMini, MetricCard, MetricRow, SectionHeading } from './charts'
+import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -182,6 +183,11 @@ export default async function InsightsPage({
         ({botShare.bot_pct}%) in this window. {includeBots ? 'Charts include bots.' : 'Charts exclude bots.'}{' '}
         <Link href={`/admin/insights/reconciliation${queryString({ days })}`} className="text-emerald-400 hover:underline">Why this differs from Mixpanel →</Link>
       </p>
+
+      {/* ── Live event stream ──────────────────────────────── */}
+      <div className="mb-4">
+        <LiveEventsTicker />
+      </div>
 
       {/* ── Bot-share tile row ─────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

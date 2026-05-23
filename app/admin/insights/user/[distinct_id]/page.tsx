@@ -6,6 +6,7 @@
 import Link from 'next/link'
 import { ChevronLeft, ExternalLink, Globe, MapPin, PlayCircle } from 'lucide-react'
 import { getEventsForDistinctId, getUserProfile, getUserSessions, type RawEventRow, type UserProfile, type UserSession } from '../../queries'
+import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -295,6 +296,12 @@ export default async function UserTimelinePage({
       </div>
 
       <ProfileSection profile={profile} latestSession={sessions[0] ?? null} distinctId={distinctId} />
+
+      {/* Phase 8.g.11.e — live stream filtered to this user only. Watch
+          their actions arrive in real time. */}
+      <div className="mb-6">
+        <LiveEventsTicker filterDistinctId={distinctId} />
+      </div>
 
       {/* ── Sessions ─────────────────────────────────── */}
       <div className="mb-6">
