@@ -123,27 +123,15 @@ async function synthesize(toolName: string, websiteUrl: string, pageText: string
   throw new Error('unreachable')
 }
 
-export async function runRefresh(
+type ToolRow = { id: string; slug: string; name: string; website_url: string; github_url: string | null }
+
+async function processTools(
   supabase: SupabaseClient,
-  batchSize = 10,
-): Promise<RefreshResult> {
-  const runId = crypto.randomUUID()
-  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
-
-  // Stalest-first ordering. nullsFirst → tools never refreshed jump the queue.
-  const { data: tools, error } = await supabase
-    .from('tools')
-    .select('id, slug, name, website_url, github_url')
-    .eq('is_published', true)
-    .order('last_verified_at', { ascending: true, nullsFirst: true })
-    .limit(batchSize)
-
-  if (error || !tools) {
-    console.error('Failed to fetch tools for refresh:', error)
-    return result
-  }
-
-  for (const tool of tools as Array<{ id: string; slug: string; name: string; website_url: string; github_url: string | null }>) {
+  tools: ToolRow[],
+  runId: string,
+  result: RefreshResult,
+): Promise<void> {
+  for (const tool of tools) {
     const start = Date.now()
     result.processed++
 
@@ -218,7 +206,73 @@ export async function runRefresh(
       } as never)
     }
   }
+}
+
+export async function runRefresh(
+  supabase: SupabaseClient,
+  batchSize = 10,
+): Promise<RefreshResult> {
+  const runId = crypto.randomUUID()
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
+
+  // Stalest-first ordering. nullsFirst → tools never refreshed jump the queue.
+  const { data: tools, error } = await supabase
+    .from('tools')
+    .select('id, slug, name, website_url, github_url')
+    .eq('is_published', true)
+    .order('last_verified_at', { ascending: true, nullsFirst: true })
+    .limit(batchSize)
+
+  if (error || !tools) {
+    console.error('Failed to fetch tools for refresh:', error)
+    return result
+  }
+
+  await processTools(supabase, tools as ToolRow[], runId, result)
 
   console.log(`[refresh:${runId}] Done: ${result.refreshed} refreshed, ${result.failed} failed`)
+  return result
+}
+
+// Retry path for an explicit slug list. Used by the one-off
+// retry-failed-tools workflow that targets prior validation/scrape
+// failures rather than the stalest-first queue.
+export async function runRefreshForSlugs(
+  supabase: SupabaseClient,
+  slugs: string[],
+): Promise<RefreshResult> {
+  const runId = crypto.randomUUID()
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
+
+  if (slugs.length === 0) {
+    console.log(`[refresh:${runId}] no slugs provided`)
+    return result
+  }
+
+  // Supabase .in() caps at ~1000 elements; chunk to stay safe.
+  const CHUNK = 200
+  for (let i = 0; i < slugs.length; i += CHUNK) {
+    const chunk = slugs.slice(i, i + CHUNK)
+    const { data: tools, error } = await supabase
+      .from('tools')
+      .select('id, slug, name, website_url, github_url')
+      .eq('is_published', true)
+      .in('slug', chunk)
+
+    if (error || !tools) {
+      console.error(`[refresh:${runId}] fetch failed for chunk ${i}:`, error)
+      continue
+    }
+
+    const found = new Set((tools as ToolRow[]).map((t) => t.slug))
+    const missing = chunk.filter((s) => !found.has(s))
+    if (missing.length) {
+      console.warn(`[refresh:${runId}] ${missing.length} slugs not found / unpublished: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '…' : ''}`)
+    }
+
+    await processTools(supabase, tools as ToolRow[], runId, result)
+  }
+
+  console.log(`[refresh:${runId}] Done: ${result.refreshed} refreshed, ${result.failed} failed (of ${slugs.length} requested)`)
   return result
 }

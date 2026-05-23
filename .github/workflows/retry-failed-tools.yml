@@ -1,0 +1,48 @@
+name: Retry Failed Tools
+
+# One-off retry workflow for tools that previously failed refresh
+# (validation/scrape errors logged to logs/refresh-failures.md). Manual
+# trigger only — no schedule. Same code path as the nightly
+# refresh-tools-batch but operates on an explicit slug list instead of
+# the stalest-first queue.
+#
+# USAGE
+#   1. Update data/retry-tool-failures.txt with the slug list to retry
+#      (one slug per line; # comments allowed)
+#   2. Push to main
+#   3. Actions tab → "Retry Failed Tools" → Run workflow
+#
+# Same secrets as freshness-batch.yml:
+#   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug_file:
+        description: 'Path to slug list (relative to repo root)'
+        required: false
+        type: string
+        default: 'data/retry-tool-failures.txt'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Retry failed tools
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          SLUG_FILE: ${{ github.event.inputs.slug_file }}
+        run: npx tsx scripts/refresh-tools-batch.ts --slugs-from="$SLUG_FILE"
