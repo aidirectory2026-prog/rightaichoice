@@ -57,6 +57,23 @@ export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: st
     ratingSetAtRef.current = now
   }
 
+  // Phase 8.g.11.a — wire reviewTextChanged on each textarea, debounced 2s so
+  // we capture engagement signal (length + word_count) without per-keystroke
+  // noise. Fires once per pause across the 3 textareas (pros/cons/use_case).
+  const textChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function handleTextChange(_field: 'pros' | 'cons' | 'use_case') {
+    if (textChangeTimerRef.current) clearTimeout(textChangeTimerRef.current)
+    textChangeTimerRef.current = setTimeout(() => {
+      const fd = formRef.current ? new FormData(formRef.current) : null
+      const combined = ['pros', 'cons', 'use_case']
+        .map((k) => String(fd?.get(k) ?? ''))
+        .join(' ')
+      const length = combined.length
+      const wordCount = combined.trim() ? combined.trim().split(/\s+/).length : 0
+      analytics.reviewTextChanged(toolId, length, wordCount)
+    }, 2000)
+  }
+
   if (!user) {
     return (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center">
@@ -124,6 +141,7 @@ export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: st
           rows={3}
           required
           minLength={10}
+          onChange={() => handleTextChange('pros')}
           className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 resize-none"
           placeholder="What did you like about this tool?"
         />
@@ -140,6 +158,7 @@ export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: st
           rows={3}
           required
           minLength={10}
+          onChange={() => handleTextChange('cons')}
           className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 resize-none"
           placeholder="What could be improved?"
         />
@@ -156,6 +175,7 @@ export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: st
           rows={2}
           required
           minLength={10}
+          onChange={() => handleTextChange('use_case')}
           className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 resize-none"
           placeholder="Describe your use case..."
         />

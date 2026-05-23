@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Bookmark, Check, LogIn } from 'lucide-react'
 import { saveStack } from '@/actions/stacks'
+import { analytics } from '@/lib/analytics'
 
 const PENDING_KEY = 'pending_stack_save_v1'
 
@@ -54,6 +55,8 @@ export function SaveStackButton({
         if (result.id) {
           setSaved(true)
           setSavedId(result.id)
+          // Phase 8.g.11.a — wire stackSavedRich on auto-save-after-login.
+          fireStackSavedRich(pending, result.id)
         }
       })
     } catch {
@@ -89,7 +92,36 @@ export function SaveStackButton({
       if (result.id) {
         setSaved(true)
         setSavedId(result.id)
+        fireStackSavedRich(payload, result.id)
       }
+    })
+  }
+
+  // Phase 8.g.11.a — derive tool list + estimated total cost from the
+  // stages payload and fire the rich save event.
+  function fireStackSavedRich(payload: SaveStackPayload, stackSlug: string) {
+    const stages = (payload.stages ?? []) as Array<{ tools?: Array<{ slug?: string; id?: string; pricing_details?: Array<{ price?: string | number }> }> }>
+    const tools = stages.flatMap((s) => s.tools ?? [])
+    const tool_slugs = tools.map((t) => t.slug ?? '').filter(Boolean)
+    const tool_ids = tools.map((t) => t.id ?? '').filter(Boolean)
+    // Crude cost extraction — first price seen per tool, summed; tolerates
+    // strings like "$29/mo" by parsing leading number.
+    let total = 0
+    for (const t of tools) {
+      const price = t.pricing_details?.[0]?.price
+      if (typeof price === 'number') total += price
+      else if (typeof price === 'string') {
+        const n = parseFloat(price.replace(/[^\d.]/g, ''))
+        if (!Number.isNaN(n)) total += n
+      }
+    }
+    analytics.stackSavedRich({
+      stack_slug: stackSlug,
+      stack_name: payload.title,
+      tool_slugs,
+      tool_ids,
+      total_estimated_cost_usd: Math.round(total),
+      source: payload.source === 'curated' ? 'compare_page' : payload.source === 'planner' ? 'plan_flow' : 'manual_builder',
     })
   }
 
