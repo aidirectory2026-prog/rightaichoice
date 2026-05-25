@@ -52,7 +52,15 @@
     "ingest:batch": "tsx --env-file=.env.local scripts/ingest-tools-batch.ts",
     "cascade:batch": "tsx --env-file=.env.local scripts/refresh-compare-editorials-batch.ts",
     "daily": "tsx --env-file=.env.local scripts/daily.ts",
-    "daily:dry": "tsx --env-file=.env.local scripts/daily.ts --dry"
+    "daily:dry": "tsx --env-file=.env.local scripts/daily.ts --dry",
+    "sync:mentions:code": "tsx --env-file=.env.local scripts/sync-page-mentions-from-code.ts",
+    "sync:mentions:code:dry": "tsx --env-file=.env.local scripts/sync-page-mentions-from-code.ts --dry-run",
+    "sync:mentions:blog": "tsx --env-file=.env.local scripts/sync-page-mentions-from-blog.ts",
+    "sync:mentions:blog:dry": "tsx --env-file=.env.local scripts/sync-page-mentions-from-blog.ts --dry-run",
+    "backfill:freshness": "tsx --env-file=.env.local scripts/backfill-pages-freshness.ts",
+    "backfill:freshness:dry": "tsx --env-file=.env.local scripts/backfill-pages-freshness.ts --dry-run",
+    "tracking:e2e": "tsx --env-file=.env.local scripts/audit/e2e-tracking-verification.ts",
+    "tracking:watchdog": "tsx --env-file=.env.local scripts/audit/tracking-watchdog.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -79,10 +87,13 @@
     "@tailwindcss/postcss": "^4",
     "@types/mixpanel-browser": "^2.60.0",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "pg": "^8.21.0",
+    "puppeteer-core": "^25.0.4",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
