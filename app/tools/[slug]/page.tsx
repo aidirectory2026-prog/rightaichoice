@@ -782,22 +782,29 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   main-column flow between commitment band and tutorials. Tags
                   still feed search via the right-rail entries. */}
 
-              {/* Written Tutorials — curated URLs (from tool.tutorial_urls). TutorialVideos handles YouTube separately. */}
-              {Array.isArray(tool.tutorial_urls) && tool.tutorial_urls.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-blue-400" />
-                    Tutorials & Guides
-                  </h2>
-                  <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {tool.tutorial_urls.map((url: string, i: number) => (
-                      <li key={i}>
-                        <TutorialLink item={url} toolName={tool.name} />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {/* Written Tutorials — prefer enriched tutorial_links (real page titles + descriptions),
+                  fall back to bare tutorial_urls. TutorialVideos handles YouTube separately. */}
+              {(() => {
+                const enriched = Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []
+                const bare = Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []
+                const items = enriched.length > 0 ? enriched : bare
+                if (items.length === 0) return null
+                return (
+                  <section>
+                    <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-blue-400" />
+                      Tutorials & Guides
+                    </h2>
+                    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {items.map((it, i) => (
+                        <li key={i}>
+                          <TutorialLink item={it} toolName={tool.name} />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )
+              })()}
 
               {/* ── Tutorial Videos ───────────────────────────── */}
               <TutorialVideos tutorials={tool.tutorial_videos ?? []} />
