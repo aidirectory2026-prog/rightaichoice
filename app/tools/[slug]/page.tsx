@@ -40,6 +40,7 @@ import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
 import { MobileActionBar } from '@/components/tools/mobile-action-bar'
+import { TutorialLink } from '@/components/tools/tutorial-link'
 // Phase 3 density-replacement sections
 import { SkipIfLine } from '@/components/tools/skip-if-line'
 import { CostCalculator } from '@/components/tools/cost-calculator'
@@ -233,7 +234,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   return (
     <>
       <Navbar />
-      <PageViewTracker path={`/tools/${slug}`} toolId={tool.id} />
+      <PageViewTracker path={`/tools/${slug}`} toolId={tool.id} toolSlug={tool.slug} />
       {/* Phase 6.4 (2026-05-11): cookie-set sibling that powers the
           "Recently viewed" rail on homepage + /tools index. Pure side-
           effect; renders nothing. */}
@@ -788,24 +789,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     <BookOpen className="h-5 w-5 text-blue-400" />
                     Tutorials & Guides
                   </h2>
-                  <ul className="space-y-2">
-                    {tool.tutorial_urls.map((url: string, i: number) => {
-                      let host = url
-                      try { host = new URL(url).hostname.replace(/^www\./, '') } catch {}
-                      return (
-                        <li key={i}>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
-                          >
-                            <span className="truncate">{host}</span>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-                          </a>
-                        </li>
-                      )
-                    })}
+                  <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {tool.tutorial_urls.map((url: string, i: number) => (
+                      <li key={i}>
+                        <TutorialLink item={url} toolName={tool.name} />
+                      </li>
+                    ))}
                   </ul>
                 </section>
               )}

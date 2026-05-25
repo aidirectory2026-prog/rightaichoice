@@ -11,9 +11,46 @@
  */
 
 import crypto from 'node:crypto'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 const TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
 const UPSTREAM = process.env.MIXPANEL_DATA_API_HOST || 'https://api-eu.mixpanel.com'
+
+// Fire-and-forget mirror into public.user_events so server-side events
+// (signup_completed, login_completed, tool_visit_redirected, …) land in
+// the same table as client events. Without this, /admin/insights only
+// counts the client half and our funnel maths is broken.
+async function mirrorServerEvent(args: {
+  event: string
+  distinctId: string
+  userId?: string | null
+  properties?: ServerEventProperties
+  ip?: string | null
+  pagePath?: string | null
+  insertId?: string
+}): Promise<void> {
+  try {
+    const db = getAdminClient()
+    await db.from('user_events').upsert(
+      [{
+        distinct_id: args.distinctId,
+        user_id: args.userId ?? null,
+        auth_state: args.userId ? 'known' : 'anon',
+        event_name: args.event,
+        properties: (args.properties ?? {}) as Record<string, unknown>,
+        page_path: args.pagePath ?? null,
+        source_kind: 'server',
+        ip: args.ip ?? null,
+        bot_likely: false,
+        insert_id: args.insertId ?? crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+      }] as never,
+      { onConflict: 'insert_id', ignoreDuplicates: true },
+    )
+  } catch {
+    // Mirror failures must never break the auth/redirect flow.
+  }
+}
 
 type ServerEventProperties = Record<
   string,
@@ -75,6 +112,13 @@ export async function trackServer(args: TrackArgs): Promise<boolean> {
  */
 export const serverAnalytics = {
   signupCompleted(distinctId: string, method: string, ip?: string) {
+    void mirrorServerEvent({
+      event: 'signup_completed',
+      distinctId,
+      userId: distinctId,
+      ip,
+      properties: { method, source: 'server' },
+    })
     return trackServer({
       event: 'signup_completed',
       distinctId,
@@ -83,6 +127,13 @@ export const serverAnalytics = {
     })
   },
   loginCompleted(distinctId: string, method: string, ip?: string) {
+    void mirrorServerEvent({
+      event: 'login_completed',
+      distinctId,
+      userId: distinctId,
+      ip,
+      properties: { method, source: 'server' },
+    })
     return trackServer({
       event: 'login_completed',
       distinctId,
@@ -102,11 +153,19 @@ export const serverAnalytics = {
     // Fires from the server-side /api/tools/[slug]/visit affiliate redirect
     // handler — this is the authoritative revenue event. Client also fires
     // tool_visit_clicked; Mixpanel de-dupes via $insert_id on the server call.
+    const props = { tool_slug: toolSlug, referrer_path: referrerPath, source: 'server' }
+    void mirrorServerEvent({
+      event: 'tool_visit_redirected',
+      distinctId,
+      ip,
+      pagePath: referrerPath,
+      properties: props,
+    })
     return trackServer({
       event: 'tool_visit_redirected',
       distinctId,
       ip,
-      properties: { tool_slug: toolSlug, referrer_path: referrerPath, source: 'server' },
+      properties: props,
     })
   },
   activationMilestoneServer(distinctId: string, milestone: string, ip?: string) {

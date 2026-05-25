@@ -1,6 +1,7 @@
 'use client'
 
 import { ExternalLink } from 'lucide-react'
+import mixpanel from 'mixpanel-browser'
 import { analytics } from '@/lib/analytics'
 
 type Props = {
@@ -10,13 +11,25 @@ type Props = {
   source?: string
 }
 
+function buildVisitHref(slug: string, source: string): string {
+  try {
+    const did = mixpanel.get_distinct_id?.()
+    const params = new URLSearchParams({
+      ref: typeof window !== 'undefined' ? window.location.pathname : '',
+      src: source,
+      ...(did ? { d: String(did) } : {}),
+    })
+    return `/api/tools/${slug}/visit?${params.toString()}`
+  } catch {
+    return `/api/tools/${slug}/visit?src=${encodeURIComponent(source)}`
+  }
+}
+
 export function VisitWebsiteButton({ slug, url: _url, toolId, source = 'tool_page' }: Props) {
   // Route through the visit endpoint — logs the click + redirects to affiliate_url if set, else website_url
-  const href = `/api/tools/${slug}/visit`
-
   return (
     <a
-      href={href}
+      href={buildVisitHref(slug, source)}
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => analytics.toolVisitClicked(toolId ?? slug, slug, source)}

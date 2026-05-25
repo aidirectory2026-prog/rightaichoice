@@ -810,8 +810,12 @@ export const EVENTS: EventDef[] = [
     whyItMatters: 'Reveals decision indecision (multiple chip flips before submit) and chip popularity per step.',
     properties: [
       { name: 'step', type: 'string', description: 'skill|budget|team|industry|goal_type.' },
-      { name: 'chip_value', type: 'string', description: 'Selected value.' },
+      { name: 'step_index', type: 'number', description: '0-based index of the step in the intake flow.' },
+      { name: 'chip_value', type: 'string', description: 'Selected value (canonical id).' },
       { name: 'chip_label', type: 'string', description: 'Displayed label user saw.' },
+      { name: 'chip_index', type: 'number', description: '0-based index of the chip within the step.' },
+      { name: 'multi_select_count', type: 'number', description: 'How many chips are currently selected on this step.' },
+      { name: 'all_selected_values', type: 'array', description: 'Full current selection state for this step (array of strings).' },
       { name: 'time_to_select_ms', type: 'number', description: 'Time from step-mount to chip click.' },
     ],
   },
