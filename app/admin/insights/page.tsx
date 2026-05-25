@@ -1,7 +1,6 @@
-// Phase 8.g.7 (2026-05-20) — /admin/insights — analytics dashboard
-// Phase 8.g.8 (2026-05-21) — bot filter + bot-share tile + nav to /events
-// + /reconciliation. Default behaviour: bots EXCLUDED. Toggle via
-// ?include_bots=1.
+// /admin/insights — analytics dashboard. Simplified render: avoids the
+// client-side Realtime ticker (which was the suspected blocker) and
+// uses straight HTML cards for every section. Same data path as before.
 
 import Link from 'next/link'
 import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
@@ -25,9 +24,9 @@ import {
   getTopSearches,
   getTopUseCases,
   getTopViewedTools,
+  type BarRow,
+  type MetricResult,
 } from './queries'
-import { BarList, FunnelStrip, LineMini, MetricCard, MetricRow, SectionHeading } from './charts'
-import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -40,6 +39,148 @@ const WINDOWS: { value: DayWindow; label: string }[] = [
   { value: 90, label: '90d' },
 ]
 
+function fmt(n: number): string {
+  if (!Number.isFinite(n)) return '0'
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K'
+  return Number.isInteger(n) ? String(n) : n.toFixed(1)
+}
+
+function MetricCard({ label, value, suffix }: { label: string; value: number; suffix?: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-white">
+        {fmt(value)}
+        {suffix ? <span className="ml-1 text-sm text-zinc-400">{suffix}</span> : null}
+      </div>
+    </div>
+  )
+}
+
+function MetricRow({ metrics, suffixes }: { metrics: MetricResult[]; suffixes?: Record<string, string> }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {metrics.map((m, i) => (
+        <MetricCard key={`${m.label}-${i}`} label={m.label} value={m.value} suffix={suffixes?.[m.label]} />
+      ))}
+    </div>
+  )
+}
+
+function BarList({
+  title, rows, emptyHint, rowHrefBuilder,
+}: {
+  title: string
+  rows: BarRow[]
+  emptyHint?: string
+  rowHrefBuilder?: (label: string) => string | null
+}) {
+  const max = rows.reduce((m, r) => Math.max(m, r.value), 0)
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="mb-3 text-sm font-medium text-zinc-300">{title}</div>
+      {rows.length === 0 ? (
+        <div className="py-6 text-center text-xs text-zinc-500">{emptyHint || 'No data in selected window'}</div>
+      ) : (
+        <ul className="space-y-1.5">
+          {rows.map((r, i) => {
+            const pct = max > 0 ? (r.value / max) * 100 : 0
+            const href = rowHrefBuilder?.(r.label) ?? null
+            const inner = (
+              <div className="relative z-10 flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+                <span className="truncate text-zinc-200">{r.label || '(empty)'}</span>
+                <span className="font-mono text-zinc-400">{fmt(r.value)}</span>
+              </div>
+            )
+            return (
+              <li key={`${r.label}-${i}`} className="relative overflow-hidden rounded bg-zinc-950">
+                <div className="absolute inset-y-0 left-0 bg-emerald-900/40" style={{ width: `${pct}%` }} aria-hidden />
+                {href ? <a href={href} className="block hover:bg-zinc-800/40">{inner}</a> : inner}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function FunnelStrip({ title, steps }: { title: string; steps: MetricResult[] }) {
+  const max = steps.reduce((m, s) => Math.max(m, s.value), 1)
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="mb-3 text-sm font-medium text-zinc-300">{title}</div>
+      <div className="space-y-2">
+        {steps.map((s, i) => {
+          const pctOfMax = max > 0 ? (s.value / max) * 100 : 0
+          const prev = i === 0 ? 0 : steps[i - 1].value
+          const pctOfPrev = i === 0 ? 100 : prev > 0 ? (s.value / prev) * 100 : 0
+          return (
+            <div key={`${s.label}-${i}`}>
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="capitalize text-zinc-200">{s.label}</span>
+                <span className="font-mono text-zinc-400">
+                  {fmt(s.value)}
+                  {i > 0 ? (
+                    <span className={`ml-2 ${pctOfPrev >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                      {pctOfPrev.toFixed(0)}%
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <div className="mt-0.5 h-2 overflow-hidden rounded bg-zinc-950">
+                <div className="h-full bg-emerald-700" style={{ width: `${pctOfMax}%` }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function DailyChart({ title, points }: { title: string; points: { date: string; value: number }[] }) {
+  if (points.length < 2) {
+    return (
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+        <div className="mb-2 text-sm font-medium text-zinc-300">{title}</div>
+        <div className="py-6 text-center text-xs text-zinc-500">Need ≥2 days of data</div>
+      </div>
+    )
+  }
+  const max = Math.max(...points.map((p) => p.value), 1)
+  const total = points.reduce((s, p) => s + p.value, 0)
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="mb-2 flex items-baseline justify-between">
+        <div className="text-sm font-medium text-zinc-300">{title}</div>
+        <div className="text-xs text-zinc-500">{fmt(total)} total · max {fmt(max)}</div>
+      </div>
+      <div className="flex items-end gap-1 h-20">
+        {points.map((p, i) => {
+          const h = max > 0 ? (p.value / max) * 100 : 0
+          return (
+            <div key={`${p.date}-${i}`} className="flex-1 flex flex-col items-center justify-end gap-1" title={`${p.date}: ${p.value}`}>
+              <div className="w-full bg-emerald-700/70 rounded-sm" style={{ height: `${h}%` }} />
+              <span className="text-[9px] text-zinc-600">{p.date.slice(5)}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="mb-3 mt-8 border-b border-zinc-800 pb-2">
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
+      {subtitle ? <p className="text-xs text-zinc-500">{subtitle}</p> : null}
+    </div>
+  )
+}
+
 export default async function InsightsPage({
   searchParams,
 }: {
@@ -50,26 +191,11 @@ export default async function InsightsPage({
   const days: DayWindow = ([1, 7, 30, 90] as DayWindow[]).includes(requested) ? requested : 7
   const includeBots = sp.include_bots === '1'
 
-  // Fire all queries in parallel.
   const [
-    botShare,
-    overview,
-    dailyActive,
-    deviceBreakdown,
-    referrers,
-    planFunnel,
-    topExistingTools,
-    topUseCases,
-    engagement,
-    topEvents,
-    searchMetrics,
-    topSearches,
-    chatMetrics,
-    topChatTools,
-    topViewedTools,
-    topClickedTools,
-    topSavedTools,
-    topComparedTools,
+    botShare, overview, dailyActive, deviceBreakdown, referrers,
+    planFunnel, topExistingTools, topUseCases, engagement, topEvents,
+    searchMetrics, topSearches, chatMetrics, topChatTools,
+    topViewedTools, topClickedTools, topSavedTools, topComparedTools,
   ] = await Promise.all([
     getBotShare(days),
     getOverviewMetrics(days, includeBots),
@@ -91,7 +217,7 @@ export default async function InsightsPage({
     getTopComparedTools(days, includeBots),
   ])
 
-  const queryString = (opts: { days?: DayWindow; include_bots?: boolean }) => {
+  const qs = (opts: { days?: DayWindow; include_bots?: boolean }) => {
     const parts: string[] = []
     if (opts.days) parts.push(`days=${opts.days}`)
     if (opts.include_bots) parts.push('include_bots=1')
@@ -100,12 +226,10 @@ export default async function InsightsPage({
 
   return (
     <div>
-      {/* ── Top bar: title + date filter + bot toggle + back to admin ── */}
       <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-            <ChevronLeft className="h-3 w-3" />
-            Admin
+          <Link href="/admin" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+            <ChevronLeft className="h-3 w-3" />Admin
           </Link>
           <span className="text-zinc-700">/</span>
           <h1 className="flex items-center gap-2 text-lg font-semibold text-white">
@@ -114,59 +238,36 @@ export default async function InsightsPage({
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          {/* Sub-page nav */}
           <div className="flex gap-1">
-            <Link
-              href="/admin/insights/goals"
-              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
-            >
-              <Target className="h-3 w-3" />
-              Goals
+            <Link href="/admin/insights/goals" className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
+              <Target className="h-3 w-3" />Goals
             </Link>
-            <Link
-              href="/admin/insights/health"
-              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
-            >
-              <ShieldCheck className="h-3 w-3" />
-              Health
+            <Link href="/admin/insights/health" className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
+              <ShieldCheck className="h-3 w-3" />Health
             </Link>
-            <Link
-              href={`/admin/insights/events${queryString({ days, include_bots: includeBots })}`}
-              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
-            >
-              <Eye className="h-3 w-3" />
-              Raw events
+            <Link href={`/admin/insights/events${qs({ days, include_bots: includeBots })}`} className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
+              <Eye className="h-3 w-3" />Raw events
             </Link>
-            <Link
-              href={`/admin/insights/reconciliation${queryString({ days })}`}
-              className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200"
-            >
-              <GitCompareArrows className="h-3 w-3" />
-              vs Mixpanel
+            <Link href={`/admin/insights/reconciliation${qs({ days })}`} className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
+              <GitCompareArrows className="h-3 w-3" />vs Mixpanel
             </Link>
           </div>
-          {/* Bot toggle */}
           <Link
-            href={`/admin/insights${queryString({ days, include_bots: !includeBots })}`}
-            className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium border transition-colors ${
-              includeBots
-                ? 'bg-amber-950/40 text-amber-300 border-amber-800'
-                : 'text-zinc-400 hover:text-zinc-200 border-zinc-800'
+            href={`/admin/insights${qs({ days, include_bots: !includeBots })}`}
+            className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium border ${
+              includeBots ? 'bg-amber-950/40 text-amber-300 border-amber-800' : 'text-zinc-400 hover:text-zinc-200 border-zinc-800'
             }`}
           >
             <Bot className="h-3 w-3" />
             {includeBots ? 'Including bots' : 'Humans only'}
           </Link>
-          {/* Date window */}
           <div className="flex gap-1">
             {WINDOWS.map((w) => (
               <Link
                 key={w.value}
-                href={`/admin/insights${queryString({ days: w.value, include_bots: includeBots })}`}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                  w.value === days
-                    ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800'
-                    : 'text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                href={`/admin/insights${qs({ days: w.value, include_bots: includeBots })}`}
+                className={`rounded px-2.5 py-1 text-xs font-medium ${
+                  w.value === days ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800' : 'text-zinc-400 hover:text-zinc-200 border border-zinc-800'
                 }`}
               >
                 {w.label}
@@ -177,40 +278,30 @@ export default async function InsightsPage({
       </div>
 
       <p className="mb-4 text-xs text-zinc-500">
-        Data from <span className="text-zinc-400">user_events</span> + <span className="text-zinc-400">user_intent_profile</span>. Bot-detection (user-agent regex) flagged{' '}
-        <span className="text-zinc-300">{botShare.bot_events.toLocaleString()}</span> of{' '}
-        <span className="text-zinc-300">{botShare.total_events.toLocaleString()}</span> events
-        ({botShare.bot_pct}%) in this window. {includeBots ? 'Charts include bots.' : 'Charts exclude bots.'}{' '}
-        <Link href={`/admin/insights/reconciliation${queryString({ days })}`} className="text-emerald-400 hover:underline">Why this differs from Mixpanel →</Link>
+        Bot-detection flagged <span className="text-zinc-300">{fmt(botShare.bot_events)}</span> of{' '}
+        <span className="text-zinc-300">{fmt(botShare.total_events)}</span> events ({botShare.bot_pct}%) in this window.{' '}
+        {includeBots ? 'Charts include bots.' : 'Charts exclude bots.'}
       </p>
 
-      {/* ── Live event stream ──────────────────────────────── */}
-      <div className="mb-4">
-        <LiveEventsTicker />
-      </div>
-
-      {/* ── Bot-share tile row ─────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <MetricCard label="Bot events" value={botShare.bot_events} suffix={`${botShare.bot_pct}%`} />
         <MetricCard label="Bot visitors" value={botShare.bot_visitors} suffix={`${botShare.bot_visitor_pct}%`} />
         <MetricCard label="Total events" value={botShare.total_events} />
-        <MetricCard label="Total visitors (all)" value={botShare.total_visitors} />
+        <MetricCard label="Total visitors" value={botShare.total_visitors} />
         <MetricCard label="Human events" value={botShare.total_events - botShare.bot_events} />
         <MetricCard label="Human visitors" value={botShare.total_visitors - botShare.bot_visitors} />
       </div>
 
-      {/* ── 1. Acquisition ─────────────────────────────── */}
       <SectionHeading title="Acquisition" subtitle="How visitors enter and how many convert" />
       <MetricRow metrics={overview} />
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <LineMini title={`Daily active users · ${days}d`} points={dailyActive} />
+        <DailyChart title={`Daily active users · ${days}d`} points={dailyActive} />
         <BarList title="Page views by device" rows={deviceBreakdown} />
       </div>
       <div className="mt-3">
         <BarList title="Top first-touch referrers" rows={referrers} emptyHint="No referrer data yet" />
       </div>
 
-      {/* ── 2. Plan Funnel ─────────────────────────────── */}
       <SectionHeading title="Plan Funnel" subtitle="Highest-intent vendor signal — where users drop off" />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <FunnelStrip title="Plan flow conversion" steps={planFunnel} />
@@ -218,53 +309,42 @@ export default async function InsightsPage({
         <BarList title="Top use cases entered" rows={topUseCases} emptyHint="No use cases yet" />
       </div>
 
-      {/* ── 3. Engagement ──────────────────────────────── */}
       <SectionHeading title="Engagement" subtitle="Active users + top events" />
       <MetricRow metrics={engagement} />
       <div className="mt-4">
         <BarList title={`Top events · ${days}d`} rows={topEvents} />
       </div>
 
-      {/* ── 4. Search ──────────────────────────────────── */}
       <SectionHeading title="Search" subtitle="Query progression, zero-result gaps, click-through" />
       <MetricRow metrics={searchMetrics} suffixes={{ 'Zero-result rate': '%', 'CTR %': '%' }} />
       <div className="mt-4">
         <BarList title="Top searched queries" rows={topSearches} emptyHint="No searches yet" />
       </div>
 
-      {/* ── 5. AI Chat ─────────────────────────────────── */}
       <SectionHeading title="AI Chat" subtitle="Usage, tool mentions, conversion" />
       <MetricRow metrics={chatMetrics} />
       <div className="mt-4">
         <BarList title="Tools mentioned in chat" rows={topChatTools} emptyHint="No chat tool-mentions yet" />
       </div>
 
-      {/* ── 6. Vendor Audience Snapshot ─────────────────── */}
-      <SectionHeading
-        title="Vendor Audience Snapshot"
-        subtitle="THE SALABLE ARTIFACT — per-tool audience. Click any tool name for its full snapshot."
-      />
+      <SectionHeading title="Vendor Audience Snapshot" subtitle="Per-tool audience. Click any tool name for its full snapshot." />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <BarList
           title="Most viewed tools"
           rows={topViewedTools}
-          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${queryString({ days, include_bots: includeBots })}`}
+          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${qs({ days, include_bots: includeBots })}`}
         />
         <BarList
           title="Most clicked-out (affiliate visits)"
           rows={topClickedTools}
-          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${queryString({ days, include_bots: includeBots })}`}
+          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${qs({ days, include_bots: includeBots })}`}
         />
         <BarList
           title="Most saved tools"
           rows={topSavedTools}
-          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${queryString({ days, include_bots: includeBots })}`}
+          rowHrefBuilder={(slug) => `/admin/insights/tool/${encodeURIComponent(slug)}${qs({ days, include_bots: includeBots })}`}
         />
-        <BarList
-          title="Most-compared pairs"
-          rows={topComparedTools}
-          emptyHint="No comparisons yet"
-        />
+        <BarList title="Most-compared pairs" rows={topComparedTools} emptyHint="No comparisons yet" />
       </div>
     </div>
   )
