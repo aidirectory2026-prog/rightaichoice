@@ -32,7 +32,7 @@ async function getToolStats(id: string) {
     supabase.from('page_views').select('id', { count: 'exact', head: true }).eq('tool_id', id).gte('created_at', cutoff),
     supabase.from('click_logs').select('id', { count: 'exact', head: true }).eq('tool_id', id),
     supabase.from('click_logs').select('id', { count: 'exact', head: true }).eq('tool_id', id).gte('created_at', cutoff),
-    supabase.from('user_saved_tools').select('id', { count: 'exact', head: true }).eq('tool_id', id),
+    supabase.from('user_saved_tools').select('user_id', { count: 'exact', head: true }).eq('tool_id', id),
     supabase.from('click_logs').select('id', { count: 'exact', head: true })
       .eq('tool_id', id)
       .eq('source', 'affiliate_redirect'),

@@ -171,10 +171,11 @@ export default async function KnowledgeRoom({
           .map(([q, v]) => ({ query: q, count: v.count, zeroResult: v.zeroResult }))
       }),
 
-    // Saves
+    // Saves — user_saved_tools is a composite-PK join table (user_id, tool_id),
+    // no `id` column. PostgREST needs an existing column for count:exact.
     supabase
       .from('user_saved_tools')
-      .select('id', { count: 'exact', head: true })
+      .select('user_id', { count: 'exact', head: true })
       .gte('created_at', cutoff)
       .then((r) => r.count ?? 0),
 
