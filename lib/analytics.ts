@@ -258,6 +258,12 @@ export const analytics = {
     resetInternal()
   },
 
+  // Generic page view — fires on every route change from MixpanelProvider.
+  // Goes through capture() so it dual-writes to Mixpanel + user_events mirror.
+  pageViewed(path: string, url: string, referrer: string) {
+    capture('page_viewed', { path, url, referrer })
+  },
+
   // ──────────────────────────────────────────────────────────────
   // Tool interactions (core decision actions)
   // ──────────────────────────────────────────────────────────────

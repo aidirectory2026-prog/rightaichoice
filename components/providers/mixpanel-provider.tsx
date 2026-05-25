@@ -171,11 +171,11 @@ function PageViewCapture() {
     // EVERY subsequent event carries the current page without manual passing.
     mixpanel.register({ page_path: pathname })
 
-    mixpanel.track('page_viewed', {
-      path: pathname,
+    analytics.pageViewed(
+      pathname,
       url,
-      referrer: typeof document !== 'undefined' ? document.referrer : '',
-    })
+      typeof document !== 'undefined' ? document.referrer : '',
+    )
   }, [pathname, searchParams])
 
   return null
