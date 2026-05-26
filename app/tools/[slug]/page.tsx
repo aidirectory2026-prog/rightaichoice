@@ -782,18 +782,34 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   main-column flow between commitment band and tutorials. Tags
                   still feed search via the right-rail entries. */}
 
-              {/* Written Tutorials — prefer enriched tutorial_links (real page titles + descriptions),
-                  fall back to bare tutorial_urls. TutorialVideos handles YouTube separately. */}
+              {/* Tutorials & Guides — always renders so the page-flow is consistent.
+                  Order of preference: enriched tutorial_links (real <title>) →
+                  bare tutorial_urls → fallback derived from docs_url / changelog_url /
+                  github_url / community links / website. Worst case: a single
+                  Visit Website card so every tool has SOMETHING actionable here. */}
               {(() => {
                 const enriched = Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []
                 const bare = Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []
-                const items = enriched.length > 0 ? enriched : bare
+                let items: Array<string | { url: string; title?: string | null; description?: string | null }> = enriched.length > 0 ? enriched : bare
+                if (items.length === 0) {
+                  // Synthesize a resources list from sibling URL fields
+                  const cl = (tool.community_links ?? {}) as Record<string, unknown>
+                  const fallback: string[] = []
+                  const add = (u: unknown) => { if (typeof u === 'string' && /^https?:\/\//.test(u) && !fallback.includes(u)) fallback.push(u) }
+                  add(tool.docs_url)
+                  add(tool.changelog_url)
+                  add(tool.github_url)
+                  add(cl.g2_url)
+                  add(cl.producthunt_url)
+                  add(tool.website_url)
+                  items = fallback
+                }
                 if (items.length === 0) return null
                 return (
                   <section>
                     <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                       <BookOpen className="h-5 w-5 text-blue-400" />
-                      Tutorials & Guides
+                      Resources & Guides
                     </h2>
                     <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {items.map((it, i) => (

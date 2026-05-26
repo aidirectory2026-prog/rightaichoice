@@ -46,7 +46,17 @@ import { z } from 'zod'
 import { getAdminClient } from '../lib/cron/supabase-admin'
 import { fetchPageText } from '../lib/cron/scrape'
 
-const PROGRESS_FILE = join(process.cwd(), 'scripts', '.refresh-progress.json')
+// Checkpoint file is per-shard so parallel workers don't trample each other.
+const PROGRESS_FILE = (() => {
+  const shardArg = process.argv.find((a) => a.startsWith('--shard='))
+  const shardsArg = process.argv.find((a) => a.startsWith('--shards='))
+  if (shardArg && shardsArg) {
+    const s = shardArg.split('=')[1]
+    const t = shardsArg.split('=')[1]
+    return join(process.cwd(), 'scripts', `.refresh-progress.shard${s}of${t}.json`)
+  }
+  return join(process.cwd(), 'scripts', '.refresh-progress.json')
+})()
 const REVIEW_LOG = join(process.cwd(), 'docs', 'preflight', 'needs_manual_review.txt')
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
@@ -127,6 +137,40 @@ const sopOutputSchema = z.object({
     .min(7)
     .max(10),
   seo_keywords: z.array(z.string().min(3).max(60)).min(8).max(20),
+
+  // Phase 8.h+ (2026-05-26) — depth fields previously written by
+  // lib/cron/enrich.ts. Folding here so a single SOP pass fills EVERY
+  // section on the tool page, not just SEO/density. User explicit ask:
+  // "every section should be present in all the 2k tools".
+  tutorial_urls: z.array(z.string().url().max(500)).max(10).default([]),
+  models: z.array(z.string().max(80)).max(10).default([]),
+  community_links: z
+    .object({
+      g2_url: z.string().url().nullable().optional(),
+      g2_rating: z.number().min(0).max(5).nullable().optional(),
+      producthunt_url: z.string().url().nullable().optional(),
+      reddit_threads: z.array(z.string().url()).max(5).optional(),
+    })
+    .default({}),
+  pricing_details: z
+    .array(z.object({
+      plan: z.string().min(1).max(60),
+      price: z.string().min(1).max(60),
+      features: z.array(z.string().max(160)).max(8).default([]),
+    }))
+    .max(8)
+    .default([]),
+  latest_updates: z
+    .array(z.object({
+      date: z.string().max(40),
+      source: z.enum(['changelog', 'blog', 'news', 'reddit', 'hackernews', 'twitter']),
+      type: z.enum(['feature', 'pricing', 'launch', 'discussion', 'news', 'changelog']),
+      title: z.string().max(200),
+      url: z.string().url().max(500),
+      summary: z.string().max(280),
+    }))
+    .max(5)
+    .default([]),
 })
 
 type SopOutput = z.infer<typeof sopOutputSchema>
@@ -142,6 +186,14 @@ const BATCH = (() => {
 })()
 const ONE_SLUG = argv.find((a) => a.startsWith('--slug='))?.split('=')[1] ?? null
 const FORCE = argv.includes('--force')
+const SHARD = (() => {
+  const f = argv.find((a) => a.startsWith('--shard='))
+  return f ? parseInt(f.split('=')[1], 10) : null
+})()
+const SHARDS = (() => {
+  const f = argv.find((a) => a.startsWith('--shards='))
+  return f ? parseInt(f.split('=')[1], 10) : null
+})()
 const SKIP_SCRAPE = argv.includes('--skip-scrape')
 
 if (!DRY_RUN && !APPLY) {
@@ -340,6 +392,16 @@ async function scrapeVendor(websiteUrl: string): Promise<{ text: string; status:
     `${origin}/releases`,
     `${origin}/whats-new`,
     `${origin}/blog`,
+    `${origin}/docs`,
+    `${origin}/documentation`,
+    `${origin}/tutorials`,
+    `${origin}/guides`,
+    `${origin}/help`,
+    `${origin}/support`,
+    `${origin}/academy`,
+    `${origin}/resources`,
+    `${origin}/learn`,
+    `${origin}/getting-started`,
   ]
 
   const chunks: string[] = []
@@ -423,6 +485,19 @@ D. SEO
   Each answer is 40-600 chars, references specific facts, ends with a clear take.
 - seo_keywords (8-20 short keyword phrases, 3-60 chars each): tool name + ["pricing", "alternatives", "vs [top competitor]", "review", "free trial", "for [persona]", "limitations"]
 
+E. DEPTH FIELDS (Phase 8.h+ 2026-05-26 — ensures every section on the tool page renders for every tool):
+- tutorial_urls (0-10 absolute URLs): ANY learning/support resources the tool surfaces — /docs, /guides, /tutorials, /help, /support, /academy, /university, /learn, /resources, /knowledge-base, /how-to, /getting-started, /api, /developers. For enterprise SaaS that hides docs behind login, include the public help center, the academy/university, or the developer portal homepage. Prefer specific guide pages; for tools with no documentation hub of any kind, include the main /resources or /support page rather than returning an empty array. Empty array ONLY if literally nothing of this kind exists on the site.
+- models (0-10 short labels, ≤80 chars each): named LLMs/AI models this tool uses ("GPT-5.5", "Claude Opus 4.7", "Gemini 2.5 Pro", "Llama 3.3 70B", "proprietary"). Empty if not an LLM consumer.
+- community_links: object {g2_url, g2_rating, producthunt_url, reddit_threads[]} — only include keys whose URL/value is real and surfaced in scrape. All keys optional.
+- pricing_details (0-8 items, ordered cheapest→priciest): one item per published tier — {plan: "Free"|"Pro"|"Team"|"Enterprise"|exact tier name, price: "$0/mo"|"$20/mo"|"Custom"|exact, features: 3-8 concrete capabilities}. Empty for contact-sales-only tools where no tier list is visible.
+- latest_updates (0-5 items, sorted newest-first): ONLY from real dated entries in the scraped /changelog, /blog, /release-notes, /whats-new. Each item REQUIRES every field:
+  - date: YYYY-MM-DD (skip entries with no real date — never invent)
+  - source: "changelog" | "blog" | "news"
+  - type: "feature" | "pricing" | "launch" | "changelog" | "news"
+  - title: ≤200 char headline as worded on the page
+  - url: ABSOLUTE URL to the specific entry (NOT the section index — include the entry slug)
+  - summary: 1-2 sentence plain-language summary (≤280 chars) of what the update actually does
+
 Return ONLY a JSON object of this exact shape — no prose, no code fences, no commentary.`
 
 function buildUserPrompt(tool: ToolRow, scraped: string): string {
@@ -497,7 +572,7 @@ async function callDeepSeek(tool: ToolRow, scraped: string, correction?: string)
     },
     body: JSON.stringify({
       model: DEEPSEEK_MODEL,
-      max_tokens: 4096,
+      max_tokens: 8192,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -556,6 +631,60 @@ function sanitizeNestedArrays(obj: Record<string, unknown>): void {
   if (Array.isArray(obj.integrations) && (obj.integrations as unknown[]).length > 25) {
     obj.integrations = (obj.integrations as string[]).slice(0, 25)
   }
+
+  // Phase 8.h+ depth fields — coerce null → [] / {} so .default() kicks in,
+  // and filter invalid nested items so Zod's required fields don't reject
+  // the whole tool when DeepSeek emits one bad row.
+  for (const f of ['tutorial_urls', 'models', 'pricing_details', 'latest_updates']) {
+    if (obj[f] === null) obj[f] = []
+  }
+  if (obj.community_links === null) obj.community_links = {}
+  if (Array.isArray(obj.tutorial_urls)) {
+    obj.tutorial_urls = (obj.tutorial_urls as unknown[]).filter((u) => typeof u === 'string' && /^https?:\/\//.test(u))
+  }
+  if (Array.isArray(obj.models)) {
+    obj.models = (obj.models as unknown[]).filter((m) => typeof m === 'string' && (m as string).length > 0 && (m as string).length <= 80)
+  }
+  if (Array.isArray(obj.pricing_details)) {
+    obj.pricing_details = (obj.pricing_details as Array<Record<string, unknown>>)
+      .filter((p) => p && typeof p === 'object' && typeof p.plan === 'string' && p.plan.length > 0 && typeof p.price === 'string' && p.price.length > 0)
+      .map((p) => ({
+        plan: (p.plan as string).slice(0, 60),
+        price: (p.price as string).slice(0, 60),
+        features: Array.isArray(p.features) ? (p.features as unknown[]).filter((x) => typeof x === 'string' && (x as string).length > 0).map((x) => (x as string).slice(0, 160)).slice(0, 8) : [],
+      }))
+      .slice(0, 8)
+  }
+  if (Array.isArray(obj.latest_updates)) {
+    const validSource = new Set(['changelog', 'blog', 'news', 'reddit', 'hackernews', 'twitter'])
+    const validType = new Set(['feature', 'pricing', 'launch', 'discussion', 'news', 'changelog'])
+    obj.latest_updates = (obj.latest_updates as Array<Record<string, unknown>>)
+      .filter((u) => u && typeof u === 'object')
+      .map((u) => {
+        const source = validSource.has(u.source as string) ? (u.source as string) : 'blog'
+        const type = validType.has(u.type as string) ? (u.type as string) : (source === 'changelog' ? 'changelog' : 'news')
+        return {
+          date: typeof u.date === 'string' ? (u.date as string).slice(0, 40) : '',
+          source,
+          type,
+          title: typeof u.title === 'string' ? (u.title as string).slice(0, 200) : '',
+          url: typeof u.url === 'string' && /^https?:\/\//.test(u.url) ? (u.url as string).slice(0, 500) : '',
+          summary: typeof u.summary === 'string' ? (u.summary as string).slice(0, 280) : '',
+        }
+      })
+      .filter((u) => u.title && u.url && u.date)
+      .slice(0, 5)
+  }
+  if (obj.community_links && typeof obj.community_links === 'object') {
+    const cl = obj.community_links as Record<string, unknown>
+    const isUrl = (x: unknown) => typeof x === 'string' && /^https?:\/\//.test(x)
+    const next: Record<string, unknown> = {}
+    if (isUrl(cl.g2_url)) next.g2_url = cl.g2_url
+    if (typeof cl.g2_rating === 'number') next.g2_rating = cl.g2_rating
+    if (isUrl(cl.producthunt_url)) next.producthunt_url = cl.producthunt_url
+    if (Array.isArray(cl.reddit_threads)) next.reddit_threads = (cl.reddit_threads as unknown[]).filter(isUrl).slice(0, 5)
+    obj.community_links = next
+  }
 }
 
 const SAFE_MIN: Partial<Record<keyof SopOutput, (tool: ToolRow) => unknown>> = {
@@ -582,9 +711,32 @@ async function synthesizeTool(tool: ToolRow, scraped: string): Promise<SopOutput
     try {
       parsed = JSON.parse(stripped)
     } catch {
-      if (attempt === 2) throw new Error(`Non-JSON response: ${stripped.slice(0, 300)}`)
-      correction = 'Output was not valid JSON. Return only a JSON object.'
-      continue
+      // Defensive sanitization — DeepSeek emits raw control chars (\n \t)
+      // inside string literals + trailing commas + occasionally truncates at
+      // the token limit. Try one in-place repair before failing the attempt.
+      try {
+        let cleaned = stripped
+          .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ')
+          .replace(/,\s*([}\]])/g, '$1')
+        // If the JSON is truncated (unbalanced braces/brackets), try to close it
+        const openBraces = (cleaned.match(/\{/g) || []).length
+        const closeBraces = (cleaned.match(/\}/g) || []).length
+        const openBrackets = (cleaned.match(/\[/g) || []).length
+        const closeBrackets = (cleaned.match(/\]/g) || []).length
+        if (openBraces > closeBraces || openBrackets > closeBrackets) {
+          // Cut off any trailing partial string literal
+          const lastQuote = cleaned.lastIndexOf('"')
+          if (lastQuote > 0 && cleaned.length - lastQuote < 1000) cleaned = cleaned.slice(0, lastQuote + 1)
+          cleaned = cleaned.replace(/,\s*$/, '')
+          cleaned += ']'.repeat(Math.max(0, openBrackets - closeBrackets))
+          cleaned += '}'.repeat(Math.max(0, openBraces - closeBraces))
+        }
+        parsed = JSON.parse(cleaned)
+      } catch {
+        if (attempt === 2) throw new Error(`Non-JSON response: ${stripped.slice(0, 300)}`)
+        correction = 'Output was not valid JSON. Return only a JSON object with no truncation.'
+        continue
+      }
     }
 
     // Smart safe minimum substitution for INSUFFICIENT_DATA values
@@ -670,6 +822,26 @@ async function writeAtomically(
     last_verified_at: new Date().toISOString(),
   }
 
+  // Phase 8.h+ (2026-05-26) depth fields — only OVERWRITE if DeepSeek
+  // returned non-empty values. Empty arrays from the synthesis must not
+  // clobber pre-existing populated data on a tool.
+  if (Array.isArray(output.tutorial_urls) && output.tutorial_urls.length > 0) {
+    updatePayload.tutorial_urls = output.tutorial_urls
+  }
+  if (Array.isArray(output.models) && output.models.length > 0) {
+    updatePayload.models = output.models
+  }
+  if (output.community_links && Object.keys(output.community_links).length > 0) {
+    updatePayload.community_links = output.community_links
+  }
+  if (Array.isArray(output.pricing_details) && output.pricing_details.length > 0) {
+    updatePayload.pricing_details = output.pricing_details
+  }
+  if (Array.isArray(output.latest_updates) && output.latest_updates.length > 0) {
+    updatePayload.latest_updates = output.latest_updates
+    updatePayload.latest_updates_at = new Date().toISOString()
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updErr = await (supabase.from('tools') as any).update(updatePayload).eq('id', tool.id)
   if (updErr.error) throw new Error(`tools update failed: ${updErr.error.message}`)
@@ -700,35 +872,69 @@ async function main() {
   const supabase = getAdminClient()
   const checkpoint = FORCE ? new Set<string>() : loadCheckpoint()
 
-  let q = supabase
-    .from('tools')
-    .select(
-      // Phase 4 (2026-05-07): added docs_url, github_url, changelog_url,
-      // tutorial_urls, community_links so we can audit them for third-party
-      // affiliate redirect URLs and log findings to needs_manual_review.txt.
-      // Phase 8.next SOP-v2 (2026-05-13): added latest_updates so the
-      // Tier 2 timeline (news, HN, Reddit, changelog signal) can feed
-      // the description synthesis as fresher context than the vendor
-      // homepage alone.
-      'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at, docs_url, github_url, changelog_url, tutorial_urls, community_links, latest_updates'
-    )
-    .eq('is_published', true)
-    .order('last_full_refresh_at', { ascending: true, nullsFirst: true })
+  const selectCols =
+    'id, slug, name, tagline, description, website_url, pricing_type, pricing_details, features, integrations, use_cases, best_for, not_for, limitations, editorial_verdict, our_views, view_count, last_full_refresh_at, docs_url, github_url, changelog_url, tutorial_urls, community_links, latest_updates'
 
-  if (ONE_SLUG) q = q.eq('slug', ONE_SLUG)
-
-  const { data, error } = await q
-  if (error) {
-    console.error('DB read failed:', error.message)
-    process.exit(1)
+  // Paginate past the default 1000-row PostgREST cap. Catalog is >2000 tools
+  // and the SOP needs to see the FULL set before sharding partitions deterministically.
+  let allRows: ToolRow[] = []
+  if (ONE_SLUG) {
+    const { data, error } = await supabase
+      .from('tools')
+      .select(selectCols)
+      .eq('is_published', true)
+      .eq('slug', ONE_SLUG)
+    if (error) {
+      console.error('DB read failed:', error.message)
+      process.exit(1)
+    }
+    allRows = (data ?? []) as unknown as ToolRow[]
+  } else {
+    // Initial lightweight scan — only id + slug, used for sharding and
+    // checkpoint filtering. Full rows are fetched lazily per-tool below.
+    // This avoids 4-shard parallel jsonb reads tripping Postgres statement
+    // timeout at startup.
+    const PAGE = 1000
+    let from = 0
+    const lightRows: Array<{ id: string; slug: string }> = []
+    while (true) {
+      const { data, error } = await supabase
+        .from('tools')
+        .select('id, slug')
+        .eq('is_published', true)
+        .order('id')
+        .range(from, from + PAGE - 1)
+      if (error) {
+        console.error('DB read failed:', error.message)
+        process.exit(1)
+      }
+      const batch = (data ?? []) as Array<{ id: string; slug: string }>
+      if (batch.length === 0) break
+      for (const r of batch) lightRows.push(r)
+      if (batch.length < PAGE) break
+      from += PAGE
+    }
+    // Map to ToolRow shape with placeholders — real row hydrated in per-tool loop
+    allRows = lightRows.map((r) => ({ ...r, name: '', tagline: null, description: null, website_url: '', pricing_type: null, pricing_details: null, features: null, integrations: null, use_cases: null, best_for: null, not_for: null, limitations: null, editorial_verdict: null, our_views: null, view_count: null, last_full_refresh_at: null, docs_url: null, github_url: null, changelog_url: null, tutorial_urls: null, community_links: null, latest_updates: null })) as unknown as ToolRow[]
   }
-  const allRows = (data ?? []) as unknown as ToolRow[]
   if (allRows.length === 0) {
     console.error('No matching published tools found.')
     process.exit(1)
   }
 
-  const candidates = ONE_SLUG ? allRows : allRows.filter((r) => !checkpoint.has(r.slug))
+  let candidates = ONE_SLUG ? allRows : allRows.filter((r) => !checkpoint.has(r.slug))
+  // Shard partitioning: deterministic split by slug hash so parallel workers
+  // never collide on the same tool. --shard=N --shards=M → this worker
+  // processes rows where (hash(slug) % M) === N.
+  if (SHARD !== null && SHARDS !== null && SHARDS > 0) {
+    const hash = (s: string) => {
+      let h = 0
+      for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
+      return Math.abs(h)
+    }
+    candidates = candidates.filter((r) => hash(r.slug) % SHARDS === SHARD)
+    console.log(`[shard ${SHARD}/${SHARDS}] ${candidates.length} tools assigned to this worker`)
+  }
   const toProcess = BATCH ? candidates.slice(0, BATCH) : candidates
 
   console.log(
@@ -738,10 +944,19 @@ async function main() {
   let ok = 0
   let failed = 0
 
-  for (const [i, tool] of toProcess.entries()) {
-    const prefix = `[${i + 1}/${toProcess.length}] ${tool.slug}`
+  for (const [i, lightTool] of toProcess.entries()) {
+    const prefix = `[${i + 1}/${toProcess.length}] ${lightTool.slug}`
     const t0 = Date.now()
     try {
+      // Hydrate full row just-in-time (avoids upfront 2k-row jsonb fetch
+      // that trips Postgres statement timeout when 4 shards start in parallel).
+      const { data: hydrated, error: hydErr } = await supabase
+        .from('tools')
+        .select(selectCols)
+        .eq('id', lightTool.id)
+        .single()
+      if (hydErr || !hydrated) throw new Error(`hydrate failed: ${hydErr?.message ?? 'no data'}`)
+      const tool = hydrated as unknown as ToolRow
       // Step A — URL hygiene
       const cleanWebsite = cleanUrl(tool.website_url)
       if (isAffiliateRedirect(cleanWebsite)) {
@@ -792,7 +1007,7 @@ async function main() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       console.log(`${prefix} ✗ ${msg.slice(0, 200)}`)
-      logForReview(tool.slug, 'sop_run', `failed: ${msg.slice(0, 100)}`)
+      logForReview(lightTool.slug, 'sop_run', `failed: ${msg.slice(0, 100)}`)
       failed++
     }
   }
