@@ -60,7 +60,8 @@
     "backfill:freshness": "tsx --env-file=.env.local scripts/backfill-pages-freshness.ts",
     "backfill:freshness:dry": "tsx --env-file=.env.local scripts/backfill-pages-freshness.ts --dry-run",
     "tracking:e2e": "tsx --env-file=.env.local scripts/audit/e2e-tracking-verification.ts",
-    "tracking:watchdog": "tsx --env-file=.env.local scripts/audit/tracking-watchdog.ts"
+    "tracking:watchdog": "tsx --env-file=.env.local scripts/audit/tracking-watchdog.ts",
+    "verify:boards": "tsx --env-file=.env.local scripts/audit/verify-smart-boards.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
