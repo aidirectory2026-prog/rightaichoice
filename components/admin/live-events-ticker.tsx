@@ -48,31 +48,39 @@ export function LiveEventsTicker({ filterDistinctId }: { filterDistinctId?: stri
 
   useEffect(() => {
     const supabase = createClient()
-    const channel = supabase
-      .channel('user_events:admin-live')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_events',
-        },
-        (payload) => {
-          if (pausedRef.current) return
-          const row = payload.new as LiveEvent
-          // Default-exclude bot events from the live view
-          if (row.bot_likely) return
-          // Optional distinct_id filter (per-user timeline subscriber)
-          if (filterDistinctId && row.distinct_id !== filterDistinctId) return
-          setEvents((prev) => [row, ...prev].slice(0, MAX_VISIBLE))
-        },
-      )
-      .subscribe((status) => {
-        setConnected(status === 'SUBSCRIBED')
-      })
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    // Safari may throw "The operation is insecure" when ITP blocks the
+    // WebSocket constructor. Degrade gracefully — the ticker just stays
+    // in its "waiting" state instead of crashing the page.
+    try {
+      channel = supabase
+        .channel('user_events:admin-live')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'user_events',
+          },
+          (payload) => {
+            if (pausedRef.current) return
+            const row = payload.new as LiveEvent
+            if (row.bot_likely) return
+            if (filterDistinctId && row.distinct_id !== filterDistinctId) return
+            setEvents((prev) => [row, ...prev].slice(0, MAX_VISIBLE))
+          },
+        )
+        .subscribe((status) => {
+          setConnected(status === 'SUBSCRIBED')
+        })
+    } catch {
+      setConnected(false)
+    }
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) {
+        try { supabase.removeChannel(channel) } catch { /* noop */ }
+      }
     }
   }, [filterDistinctId])
 

@@ -35,25 +35,35 @@ export function LiveFeed({
       setLastTick(new Date())
     }
 
-    // Supabase Realtime — subscribe to INSERTs on user_events for instant updates
-    const channel = supabase
-      .channel('live-insights')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_events' }, () => {
-        refresh()
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') setRealtimeStatus('live')
-        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setRealtimeStatus('polling')
-      })
+    // Supabase Realtime — subscribe to INSERTs on user_events for instant updates.
+    // Safari can throw "WebSocket not available: The operation is insecure" when
+    // the socket constructor is blocked by ITP. Catch and degrade to polling.
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    try {
+      channel = supabase
+        .channel('live-insights')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_events' }, () => {
+          refresh()
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') setRealtimeStatus('live')
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setRealtimeStatus('polling')
+        })
+    } catch {
+      setRealtimeStatus('polling')
+    }
 
     // Polling fallback — 5s. Works regardless of Realtime, doubles as a watchdog
     // for the "seconds since last event" timers to advance even without inserts.
+    refresh()
     const pollId = setInterval(refresh, 5_000)
 
     return () => {
       cancelled = true
       clearInterval(pollId)
-      supabase.removeChannel(channel)
+      if (channel) {
+        try { supabase.removeChannel(channel) } catch { /* noop */ }
+      }
     }
   }, [])
 
