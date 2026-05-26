@@ -27,11 +27,23 @@ let oauthClient: OAuth2Client | null = null
 
 function getOAuthClient(): OAuth2Client {
   if (oauthClient) return oauthClient
+
+  // Vercel cron path — no filesystem; creds come from individual env vars.
+  // Local CLI path — keep the existing file-based flow.
+  const envClientId = process.env.GSC_OAUTH_CLIENT_ID
+  const envClientSecret = process.env.GSC_OAUTH_CLIENT_SECRET
+  const envRefreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN
+  if (envClientId && envClientSecret && envRefreshToken) {
+    oauthClient = new OAuth2Client(envClientId, envClientSecret)
+    oauthClient.setCredentials({ refresh_token: envRefreshToken })
+    return oauthClient
+  }
+
   const clientPath = process.env.GSC_OAUTH_CLIENT_PATH
   const tokenPath = process.env.GSC_OAUTH_TOKEN_PATH
   if (!clientPath || !tokenPath) {
     throw new Error(
-      'GSC OAuth not set up. Set GSC_OAUTH_CLIENT_PATH and GSC_OAUTH_TOKEN_PATH in .env.local, then run `npm run gsc:oauth:bootstrap`. See docs/marketing/10-gsc-keyword-mining.md.'
+      'GSC OAuth not set up. Either (a) set GSC_OAUTH_CLIENT_ID + GSC_OAUTH_CLIENT_SECRET + GSC_OAUTH_REFRESH_TOKEN (Vercel cron path), or (b) set GSC_OAUTH_CLIENT_PATH + GSC_OAUTH_TOKEN_PATH and run `npm run gsc:oauth:bootstrap` (local CLI path).'
     )
   }
   const clientJson = JSON.parse(readFileSync(clientPath, 'utf-8'))

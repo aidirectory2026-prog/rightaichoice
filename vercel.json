@@ -10,6 +10,10 @@
       "schedule": "0 6 * * 1"
     },
     {
+      "path": "/api/cron/snapshot-gsc",
+      "schedule": "30 6 * * 1"
+    },
+    {
       "path": "/api/cron/submit-urls-bing",
       "schedule": "0 9 * * *"
     },
