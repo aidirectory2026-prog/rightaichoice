@@ -73,17 +73,21 @@ export function PlanCTASticky() {
           <Sparkles className="h-4 w-4 text-emerald-300" aria-hidden />
         </div>
 
-        {/* Text + CTA inline so the bar stays compact. */}
+        {/* Title + tiny description + CTA — stays compact so the bar
+            doesn't fight whatever the user is actually reading. */}
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-semibold text-white leading-tight">
-            Pick the right AI stack in 60s
+            Not sure which AI to pick?
+          </div>
+          <div className="text-[11px] text-zinc-400 leading-snug truncate">
+            Tell us the goal — we&apos;ll match the stack.
           </div>
           <PlanCTAButton surface="sticky_bar" pagePath={pathname ?? ''}>
             {({ onClick }) => (
               <button
                 type="button"
                 onClick={onClick}
-                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition-colors"
+                className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 transition-colors"
               >
                 Plan my stack →
               </button>
