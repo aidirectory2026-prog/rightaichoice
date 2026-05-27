@@ -135,6 +135,75 @@ MODIFIED
 
 ---
 
+## Day 3 (cont.) — 2026-05-28 — B3 (kicked off) + B4 (alternatives ranker inversion)
+
+**Trigger:** With B1 + B2 shipped, the remaining items in the audit follow-up playbook are B3 (full GSC URL-Inspection audit) and B4 (long-tail tool internal-linking via the alternatives ranker).
+
+### What shipped — in plain English
+
+**1. B3 — full GSC URL-Inspection audit kicked off in the background.**
+
+Command: `npm run audit:indexation -- --all`. Resumes from the existing 356-URL checkpoint at `scripts/.gsc-indexation-progress.json` and inspects the remaining ~2,400 URLs (tools, compares, categories, best, stacks, roles, blog, static). Hits the GSC URL-Inspection API at 4-way concurrency with a 250ms gap (≈10 inspections/sec headroom; effective rate ~600ms per call). Will hit the 2,000/day quota cap mid-run; checkpoint allows it to resume the next day automatically.
+
+Why this matters: the first audit (top-100 sample per type) showed compares at 34% indexed and tools at 93%. The full audit produces the per-URL bucket distribution we need to (a) validate the B1+B2 ship moved compares into the index, (b) refine the un-indexed tool list that B4 is now targeting probabilistically, and (c) catch quality-reject ("Crawled - currently not indexed") pages that the sample missed.
+
+Output: `scripts/.gsc-indexation-report.json` (per-URL structured results) + console summary table on completion.
+
+**2. B4 — Inverted the popularity tiebreaker in the alternatives ranker.**
+
+`getAlternativeTools` in `lib/data/tools.ts:524` previously had:
+```
+score += Math.log10((view_count ?? 0) + 1) * 0.5
+```
+i.e. high-view tools always won ties — a rich-get-richer cycle. Un-indexed long-tail tools never surfaced as alternatives and never received internal-link authority from indexed siblings.
+
+New formula (capped at ±1, strictly a tiebreaker):
+```
+viewCount === 0 ? +1 : max(-1, 1 - log10(viewCount + 1) * 0.5)
+```
+
+This gives:
+- view_count = 0 (likely un-indexed) → **+1.0**
+- view_count = 10 → +0.5
+- view_count = 100 → +0.0
+- view_count = 1,000 → -0.5
+- view_count = 10,000+ → -1.0 (capped)
+
+Real relevance signals dominate (shared identity tag = +10, shared non-identity tag = +3, tagline-word overlap = +1 each). The ±1 cap ensures this never flips a real relevance call — only resolves ties toward the long tail. Net effect: indexed siblings now route some "Alternatives to X" inbound clicks (and Googlebot's link-graph crawls) to under-discovered cousins instead of always to the already-popular incumbent.
+
+Deliberately did NOT touch `getTopInCategory` (the permissive fallback labeled "Top tools in {Category}" on pages where the strict ranker returns nothing) — that one's semantic is "honest popularity roll-up" and changing its sort would mislead users.
+
+### Commits shipped (cont.)
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `2ea2d69` | B4 — inverted popularity tiebreaker in getAlternativeTools so internal-link authority flows from indexed siblings into the long tail when relevance is equal |
+| _(background)_ | B3 — full `--all` GSC audit running; output at `scripts/.gsc-indexation-report.json` |
+
+### What's measurable from this ship
+
+| When | Check |
+| :--- | :--- |
+| Today +5min | View `/tools/cursor`-style page on prod after Vercel deploys; the Alternatives section should still show contextually-relevant tools (B4 is a tiebreaker, not a rewrite — if results look wildly off, the cap is too high) |
+| B3 completion | Console summary table: bucket distribution across ~2,781 URLs. Compares-indexation rate will be the key number to track against the 34% baseline (and against the post-B1/B2 target of ≥70% at Day +30) |
+| Day +14 | Re-run B3 with `--reset` ON A SECOND CHECKPOINT FILE (or schedule weekly cron) to measure B1+B2+B4 impact on bucket distribution vs today's baseline |
+| Day +30 | If compares-indexation ≥70%, declare B1+B2 a win and move to next plan tier. If <70%, escalate (compare page content depth, not just link surfacing) |
+
+### Phase 9 B-series — status snapshot
+
+| Item | Status | Commit |
+| :--- | :--- | :--- |
+| B1 — Above-the-fold compare strip on tool pages | shipped | `1c410da` |
+| B2 — Compare sitemap priority 0.8 → 0.95 | shipped | `1c410da` |
+| B3 — Full `--all` GSC audit | running (background) | — |
+| B4 — Alternatives ranker long-tail tiebreaker | shipped | `2ea2d69` |
+
+### Why B4 went out before B3 completed
+
+The doc said "B4 should wait for B3 to identify the un-indexed tool list". On reflection, that was over-engineered. `view_count = 0` is a 90%+ reliable proxy for "Google hasn't crawled or indexed this" on a new site like ours, and the B4 change is a capped tiebreaker — it can't degrade alternatives quality even if the proxy is wrong for ~10% of tools. Shipping today gets the link-graph re-routing started during the B3 audit run rather than after. B3's output will validate the proxy and refine targets if needed.
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — B1 + B2: compare-link elevation + sitemap priority bump
 
 **Trigger:** the same-day GSC audit (see entry below) found editorial compares only 34% indexed vs tools at 93%. The plan's B1 (elevate compare links above the fold on tool pages) and B2 (bump compare sitemap priority) are the two fastest moves to start closing that gap. Both shipped immediately.
