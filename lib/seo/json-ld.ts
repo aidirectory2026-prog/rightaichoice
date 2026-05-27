@@ -30,7 +30,14 @@ export function organizationJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RightAIChoice',
-    alternateName: ['Right AI Choice', 'RAC'],
+    alternateName: [
+      'Right AI Choice',
+      'RightAI Choice',
+      'Right-AI-Choice',
+      'rightaichoice.com',
+      'rightaichoice',
+      'RAC',
+    ],
     url: BASE_URL,
     // Phase 9c (2026-05-17): use PNG for the knowledge-panel logo. Google's
     // Organization-logo schema strongly prefers raster (SVG support is
@@ -48,7 +55,7 @@ export function organizationJsonLd() {
     // Phase 9 (2026-05-27): tighter decision-engine description to push the
     // positioning into the brand entity itself, not just marketing copy.
     description:
-      'RightAIChoice is the decision engine for picking the right AI stack. We help founders, builders, and teams choose the exact AI tools for their workflow — backed by sentiment-aggregated user reviews, side-by-side editorial comparisons, and an interactive tool-finder.',
+      'RightAIChoice (rightaichoice.com) is the decision engine for picking the right AI stack. RightAIChoice helps founders, builders, and teams choose the exact AI tools for their workflow — backed by sentiment-aggregated user reviews, side-by-side editorial comparisons, and an interactive tool-finder.',
     slogan: 'Pick the right AI stack — backed by data, not opinions.',
     knowsAbout: [
       'AI coding tools',
@@ -64,12 +71,15 @@ export function organizationJsonLd() {
       'AI tool stacks',
       'AI tool comparisons',
     ],
+    // Phase 9 (2026-05-27): only verifiable, live profiles. Unclaimed or 404
+    // sameAs URLs hurt entity verification more than they help — Google checks
+    // these and downgrades the Organization trust score when they don't
+    // resolve. github.com/rightaichoice + producthunt.com/@rightaichoice
+    // removed until claimed; add them back the same day the handle is live.
     sameAs: [
-      'https://twitter.com/rightaichoice',
       'https://x.com/rightaichoice',
+      'https://twitter.com/rightaichoice',
       'https://www.linkedin.com/company/rightaichoice',
-      'https://github.com/rightaichoice',
-      'https://www.producthunt.com/@rightaichoice',
     ],
     potentialAction: {
       '@type': 'SearchAction',
@@ -133,9 +143,19 @@ export function websiteJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'RightAIChoice',
+    // Phase 9 (2026-05-27): WebSite alternateName mirrors the Organization
+    // variants so Google's query parser stops autocorrecting "rightaichoice"
+    // → "right choice" on the brand SERP.
+    alternateName: [
+      'Right AI Choice',
+      'RightAI Choice',
+      'rightaichoice.com',
+      'rightaichoice',
+      'RAC',
+    ],
     url: BASE_URL,
     description:
-      'Tell us your goal. Get the exact AI tool stack with costs, tradeoffs, and alternatives. The decision engine for AI tools.',
+      'RightAIChoice is the decision engine for AI tools. Tell us your goal. Get the exact AI tool stack with costs, tradeoffs, and alternatives.',
     publisher: PUBLISHER,
     potentialAction: {
       '@type': 'SearchAction',
