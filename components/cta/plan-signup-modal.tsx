@@ -65,10 +65,19 @@ export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAft
     return q ? `/plan?q=${encodeURIComponent(q)}&source=${sourceSurface}` : `/plan?source=${sourceSurface}`
   }
 
+  // Capture the page the user was on BEFORE any OAuth navigation. Used by
+  // both branches so plan_intents.source_path reflects the original CTA-click
+  // page even when the OAuth round-trip rewrites Referer.
+  function currentPagePath(): string {
+    if (typeof window === 'undefined') return ''
+    return window.location.pathname || ''
+  }
+
   function handleOAuth(provider: 'google' | 'linkedin') {
     analytics.planSignupModalOAuthClicked({ provider })
-    // Stash goal so auth-provider can persist it after the OAuth round-trip.
-    if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface)
+    // Stash goal + original page so auth-provider can persist them after
+    // the OAuth round-trip with full provenance intact.
+    if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface, currentPagePath())
     sessionStorage.setItem('plan_signup_provider', provider)
 
     const fd = new FormData()
@@ -84,6 +93,7 @@ export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAft
         typed_goal: typedGoal,
         source_surface: sourceSurface,
         signup_outcome: 'skipped',
+        page_path: currentPagePath(),
       })
     }
     onAfterSkip?.()

@@ -80,6 +80,10 @@ export function AuthProvider({
             typed_goal: pending.typed_goal,
             source_surface: pending.source_surface,
             signup_outcome: provider === 'linkedin' ? 'completed_linkedin' : 'completed_google',
+            // CRITICAL: pass the ORIGINAL CTA-click page (stashed before the
+            // OAuth round-trip). Without this, the API route would fall back
+            // to the Referer header which now reads /auth/callback or /plan.
+            page_path: pending.page_path,
           }).finally(() => {
             clearPendingIntent()
             sessionStorage.removeItem('plan_signup_provider')

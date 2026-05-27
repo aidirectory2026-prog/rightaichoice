@@ -24,16 +24,22 @@ const SESSION_KEY = 'plan_intent_pending'
 type PendingIntent = {
   typed_goal: string
   source_surface: Surface
+  /** Page the user was on when they clicked the CTA. Stashed because the
+   *  OAuth round-trip clobbers Referer with the callback URL — without
+   *  this, plan_intents.source_path would always be /auth/callback or /plan
+   *  for OAuth-completed rows. */
+  page_path: string
 }
 
 /**
  * Stash the goal in sessionStorage before redirecting away for OAuth.
- * After the round-trip, restorePendingIntent() picks it up and POSTs.
+ * After the round-trip, readPendingIntent() picks it up and POSTs with
+ * the ORIGINAL page_path (not the post-callback URL).
  */
-export function stashPendingIntent(typed_goal: string, source_surface: Surface): void {
+export function stashPendingIntent(typed_goal: string, source_surface: Surface, page_path: string): void {
   if (typeof window === 'undefined') return
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ typed_goal, source_surface }))
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ typed_goal, source_surface, page_path }))
   } catch {
     /* quota/private mode — ignore */
   }
@@ -68,6 +74,11 @@ export async function persistPlanIntent(opts: {
   typed_goal: string
   source_surface: Surface
   signup_outcome: Outcome
+  /** Page the user was on when they clicked the CTA. REQUIRED for the
+   *  OAuth path (where Referer no longer reflects the original page).
+   *  For the Skip path, pass window.location.pathname — the request will
+   *  match Referer anyway, but explicit > implicit. */
+  page_path?: string
 }): Promise<void> {
   if (typeof window === 'undefined') return
   const distinctId = getMixpanelDistinctId() ?? ''
@@ -81,6 +92,7 @@ export async function persistPlanIntent(opts: {
         typed_goal: opts.typed_goal,
         source_surface: opts.source_surface,
         signup_outcome: opts.signup_outcome,
+        source_path: opts.page_path,
       }),
       keepalive: true, // survive unload navigations (Skip→/plan redirect)
     })

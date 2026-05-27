@@ -24,6 +24,10 @@ type PostBody = {
   typed_goal?: string
   source_surface?: string
   signup_outcome?: string | null
+  /** Original CTA-click page. Explicitly passed so it survives OAuth
+   *  redirects (where Referer becomes the callback URL, not the original
+   *  page). When absent, falls back to the Referer header. */
+  source_path?: string | null
 }
 
 const VALID_SURFACES = new Set(['sticky_bar', 'inline_card', 'navbar', 'homepage'])
@@ -65,8 +69,16 @@ export async function POST(req: Request) {
   const referer = h.get('referer') ?? null
   const userAgent = h.get('user-agent')?.slice(0, 400) ?? null
   const country = h.get('x-vercel-ip-country') ?? null
+
+  // Source path priority:
+  //   1. body.source_path explicitly passed by the client (always-correct
+  //      for both Skip and post-OAuth paths)
+  //   2. Referer header pathname (fallback for older clients / direct curl)
   let sourcePath: string | null = null
-  if (referer) {
+  const explicit = typeof body.source_path === 'string' ? body.source_path.trim() : ''
+  if (explicit && explicit.startsWith('/')) {
+    sourcePath = explicit.slice(0, 200)
+  } else if (referer) {
     try {
       sourcePath = new URL(referer).pathname.slice(0, 200)
     } catch {
