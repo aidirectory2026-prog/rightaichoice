@@ -73,7 +73,8 @@
     "tier1:candidates:dry": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts --dry --no-titles",
     "tier1:candidates": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts",
     "tier1:rewrite:dry": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts --dry-run",
-    "tier1:rewrite": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts"
+    "tier1:rewrite": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts",
+    "gsc:inspect": "tsx --env-file=.env.local scripts/inspect-homepage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

@@ -1,6 +1,20 @@
 // Revalidate homepage every 60 seconds (ISR)
 export const revalidate = 60
 
+// Phase 9 (2026-05-27): GSC URL Inspection on 2026-05-17 reported
+// "Duplicate without user-selected canonical" — Google picked
+// https://www.rightaichoice.com/ even though the site is served on
+// the bare domain (www → bare 308 redirect is in place). Without an
+// explicit canonical, ranking signals split between two URLs. Setting
+// alternates.canonical = '/' resolves to https://rightaichoice.com/
+// (metadataBase from app/layout.tsx) and tells Google which version
+// to consolidate signals on.
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
+
 import Link from 'next/link'
 import {
   ArrowRight,
