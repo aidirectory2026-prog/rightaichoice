@@ -162,7 +162,7 @@ export default async function PlanPage({ searchParams }: PageProps) {
               </div>
               <div>
                 <p className="text-3xl font-bold text-white">Free</p>
-                <p className="text-xs text-zinc-500 mt-1">Always, no signup</p>
+                <p className="text-xs text-zinc-500 mt-1">Always free to use</p>
               </div>
             </div>
 
