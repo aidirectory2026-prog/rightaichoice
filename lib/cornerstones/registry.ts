@@ -1,5 +1,6 @@
 import type { Cornerstone } from './types'
 import { codeDevelopmentCornerstone } from './code-development'
+import { imageGenerationCornerstone } from './image-generation'
 
 /**
  * Cornerstone registry — keyed by category slug.
@@ -12,6 +13,7 @@ import { codeDevelopmentCornerstone } from './code-development'
  */
 const CORNERSTONES: Record<string, Cornerstone> = {
   'code-development': codeDevelopmentCornerstone,
+  'image-generation': imageGenerationCornerstone,
 }
 
 export function getCornerstone(slug: string): Cornerstone | null {

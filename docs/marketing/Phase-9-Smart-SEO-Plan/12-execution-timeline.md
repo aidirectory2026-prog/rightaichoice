@@ -67,13 +67,15 @@ The full priority order from the README, expanded:
 - **Ship new homepage title + meta + H1** with decision-engine positioning (doc 13 Part 2)
 - **Ship footer "About RightAIChoice" block with brand-anchor link** to homepage (doc 13 Part 6)
 - Push next 20 Tier-1 title rewrites
-- Build first cornerstone page (highest-impression cluster — AI Coding Tools given current GSC data) — **shipped 2026-05-28** as `/categories/code-development` via the new `lib/cornerstones/` registry pattern (1,500+ words, 6 picks, 6 top compares, FAQ, Article + FAQPage JSON-LD). Next cornerstone candidates: `/categories/image-design`, `/categories/writing-content`, `/categories/education-learning`.
+- Build first cornerstone page (highest-impression cluster — AI Coding Tools given current GSC data) — **shipped 2026-05-28** as `/categories/code-development` via the new `lib/cornerstones/` registry pattern (1,500+ words, 6 picks, 6 top compares, FAQ, Article + FAQPage JSON-LD).
+- **Second cornerstone shipped 2026-05-28** — `/categories/image-generation` (actual DB slug; doc 07 originally listed `image-design`). Picks: Midjourney, DALL-E 3, Flux, Ideogram, Recraft, Stable Diffusion. Next cornerstone candidates: `/categories/writing-content`, `/categories/education-learning`, `/categories/research-search`.
 
 ### Day 2
 
 - Push next 20 Tier-1 title rewrites (cumulative 50)
 - Ship `<RelatedContent>` widget; deploy across tools template
-- **Build first stack pillar page** (`/stacks/ai-stack-for-early-stage-saas`) per doc 13 — **shipped 2026-05-28**. Uses new optional `pillar` field on `StackConfig`; renders editorial above the existing stages template, emits Article + FAQPage JSON-LD. Stages: Cursor → Claude API → Intercom Fin → Apollo → Claude → PostHog → Canva → Notion AI. Next pillars queued: `/stacks/ai-stack-for-content-creators`, `/stacks/ai-stack-for-solo-developers`, `/stacks/ai-stack-for-marketing-teams`.
+- **Build first stack pillar page** (`/stacks/ai-stack-for-early-stage-saas`) per doc 13 — **shipped 2026-05-28**. Uses new optional `pillar` field on `StackConfig`; renders editorial above the existing stages template, emits Article + FAQPage JSON-LD. Stages: Cursor → Claude API → Intercom Fin → Apollo → Claude → PostHog → Canva → Notion AI.
+- **Second pillar shipped 2026-05-28** — `/stacks/ai-stack-for-content-creators`. Stages: Perplexity → Claude → Canva → Opus Clip → Descript → ElevenLabs → Publer → Beehiiv. Free path ~$40/mo, paid path $150–250/mo for a solo creator. Next pillars queued: `/stacks/ai-stack-for-solo-developers`, `/stacks/ai-stack-for-marketing-teams`, `/stacks/ai-stack-for-product-teams`.
 
 ### Day 3
 

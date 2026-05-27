@@ -4,6 +4,72 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — Pillar #2: AI Stack for Content Creators (`/stacks/ai-stack-for-content-creators`)
+
+**Trigger:** doc 07 pillar queue had this as the next pillar after `/stacks/ai-stack-for-early-stage-saas`. Target query family ("ai stack for content creators", "ai tools for creators", "ai workflow for youtubers") is high-intent and underserved — most creator-tool roundups are SEO listicles, not opinionated stacks with monthly-cost rollups.
+
+**Approach:** reuse the `StackPillar` field added during pillar #1. New file at `lib/data/stack-pillars/ai-stack-for-content-creators.tsx` registers an 8-stage stack with a hand-written pillar layer (~1,300 words + 7 FAQs). Existing `app/stacks/[slug]/page.tsx` automatically renders the pillar above the stages and emits Article + FAQPage JSON-LD — no app-router changes needed.
+
+### What shipped
+
+- **`lib/data/stack-pillars/ai-stack-for-content-creators.tsx`** — the second pillar stack. Stages: Perplexity (research), Claude (writing), Canva (graphics), Opus Clip (short-form video), Descript (long-form video), ElevenLabs (voice), Publer (social scheduling), Beehiiv (newsletter). Pillar covers: who the stack is for, how we picked (3 rules: $200/mo budget, ≥1 hour/week saved per tool, no platform lock-in), when to swap a pick out (5 scenarios: YouTube-first, podcaster, brand-voice, LinkedIn-primary, courses), free path ($40/mo) vs paid path ($150–250/mo) math.
+- **`lib/data/stacks.ts`** — appended `aiStackForContentCreators` to the STACKS array and imported it at the top.
+- All referenced tool slugs verified live in `tools` (querying `tool_categories` joins for image-generation + spot-checking specific slugs like `opus-clip`, `submagic`, `klap`, `publer`, `taplio`, `hypefury`, `beehiiv`, `kit`).
+
+### Why this pillar order
+
+Doc 07 pillar table queues content-creators second because the persona is distinct from early-stage SaaS (consumer creator vs B2B operator) — different tools, different stages, different decision rules. The SaaS pillar tested the new `StackPillar` mechanism; this pillar validates it generalizes to a totally different persona.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Second decision-engine stack pillar — /stacks/ai-stack-for-content-creators with full pillar layer + Article/FAQPage schema |
+
+### Next pillars (Day 4+)
+
+Per doc 07 pillar table, still queued:
+1. `/stacks/ai-stack-for-solo-developers`
+2. `/stacks/ai-stack-for-marketing-teams`
+3. `/stacks/ai-stack-for-product-teams`
+
+---
+
+## Day 3 (cont.) — 2026-05-28 — Cornerstone #2: AI Image Generators (`/categories/image-generation`)
+
+**Trigger:** cornerstone queue from doc 07 had image-generation second after code-development. The plan doc said `/categories/image-design` but the actual DB category slug is `image-generation` — pivoted to the real slug. 6 indexed compares already in the cluster (ideogram-vs-midjourney, midjourney-vs-tensor-art, chatgpt-vs-ideogram, etc.) provide above-the-fold authority-transfer targets.
+
+**Approach:** reuse the `lib/cornerstones/` registry shipped with cornerstone #1. New file `lib/cornerstones/image-generation.tsx` registers a Cornerstone object; `lib/cornerstones/registry.ts` adds the entry. `app/categories/[slug]/page.tsx` automatically renders the editorial above the listing and emits Article + FAQPage JSON-LD — no app-router changes.
+
+### What shipped
+
+- **`lib/cornerstones/image-generation.tsx`** — the second cornerstone. Picks: Midjourney (artistic), DALL-E 3 (easiest entry / inside ChatGPT), Flux (photoreal), Ideogram (text-in-image), Recraft (designers / vectors), Stable Diffusion (open-source). Top compares: ideogram-vs-midjourney, bing-image-creator-vs-midjourney, chatgpt-vs-ideogram, midjourney-vs-tensor-art, leonardo-ai-vs-tensor-art, krea-ai-vs-leonardo-ai — all already indexed and now elevated. Body covers: how we picked (real-prompt blind testing), 4 use-case categories (artistic, photoreal, text-rendering, open-source), 2026 shifts (open-weight gap closed, text rendering fixed, real-time canvases), decision rules by use case, pricing in plain English.
+- **`lib/cornerstones/registry.ts`** — added `'image-generation': imageGenerationCornerstone` entry.
+
+### Why this is leveraged
+
+The `/categories/image-generation` URL was a generic templated listing. Now it has:
+
+1. A 1,500-word page targeting "best AI image generators" / "AI image generators" head-on.
+2. 6 outbound internal links to top compares — moves crawl-priority authority from the cornerstone (about to gain authority on a high-volume query) to already-ranking compares.
+3. 6 outbound internal links to the cornerstone picks (Midjourney, DALL-E 3, Flux, Ideogram, Recraft, Stable Diffusion) — each gets an inbound link from a thematically-relevant editorial hub.
+4. Article + FAQPage schema — eligible for AI Overview citation and FAQ-rich-result SERP treatment.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Second cornerstone — /categories/image-generation with full editorial + Article/FAQPage schema |
+
+### Next cornerstones (Day 4+)
+
+Per doc 07 cornerstone table, priority queue:
+1. `/categories/writing-content` — Notion AI, Jasper, Copy.ai, Writesonic (need to verify slug — may be different in DB)
+2. `/categories/education-learning` — Duolingo, Loora, TalkPal, Speak (we already rank for these compares)
+3. `/categories/research-search` — Perplexity, Kagi, AlphaSense, Claude
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — Plan-doc refresh from B3 `--all` audit (1996 URLs)
 
 **Trigger:** the `--all` re-run of `audit-gsc-indexation.ts` completed (hit the 2000/day quota at 1996 URLs). The numbers materially changed the indexation picture vs the first 356-URL sample. Plan docs needed to reflect reality before we picked the next workstream.

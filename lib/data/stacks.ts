@@ -6,6 +6,7 @@
 
 import type { ReactNode } from 'react'
 import { aiStackForEarlyStageSaas } from './stack-pillars/ai-stack-for-early-stage-saas'
+import { aiStackForContentCreators } from './stack-pillars/ai-stack-for-content-creators'
 
 export type StackTool = {
   name: string
@@ -1941,9 +1942,10 @@ export const STACKS: StackConfig[] = [
     ],
     summary: { freePath: '$0/mo (Perplexity free)', paidPath: '$20–40/mo', skillLevel: 'Beginner', setupTime: '1 day' },
   },
-  // Phase 9 (2026-05-28) — first decision-engine pillar stack. Lives in
+  // Phase 9 (2026-05-28) — decision-engine pillar stacks. Each lives in
   // a separate .tsx so the editorial intro can contain JSX.
   aiStackForEarlyStageSaas,
+  aiStackForContentCreators,
 ]
 
 export function getStackBySlug(slug: string): StackConfig | undefined {
