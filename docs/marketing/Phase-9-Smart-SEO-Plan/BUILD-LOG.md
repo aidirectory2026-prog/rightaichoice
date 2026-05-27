@@ -4,6 +4,47 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — Tool-indexation long-tail sweep (B4)
+
+**Trigger:** the B3 `--all` audit (1996 URLs) surfaced **540 "Discovered - currently not indexed" tool URLs** plus 9 "Crawled - not indexed" plus 109 "URL unknown to Google". 540 ≫ 9 is the crawl-budget signature, not a quality problem. Compare elevation (B1, doc 07) addresses 66 un-indexed compares; B4 attacks the much bigger absolute-volume tool bucket using the **two halves doc-05 always called for** — internal linking (humans + crawlers re-find them) and IndexNow re-pinging (crawler gets a fresh nudge).
+
+**Approach:** the audit JSON at `scripts/.gsc-indexation-report.json` is ephemeral — every run overwrites it, and runtime code can't read it. Persist per-URL inspections in Postgres so the sibling-tools rail can bias toward un-indexed siblings and a new cron can re-ping IndexNow on a schedule.
+
+### What shipped
+
+- **`supabase/migrations/114_gsc_url_inspections.sql`** — new table `gsc_url_inspections (url PK, page_type, coverage_state, verdict, indexing_state, page_fetch_state, google_canonical, user_canonical, last_crawl_time, inspected_at, created_at)` + indexes on `(page_type, coverage_state)` and `(inspected_at)`. RLS enabled with no policies = service-role-only. Applied remotely via Supabase MCP.
+- **`scripts/audit-gsc-indexation.ts`** — added `persistInspections()` helper that chunked-upserts (500/chunk) into `gsc_url_inspections` after the JSON write, plus a new `--ingest-only` flag that skips the API hits and just upserts the existing progress file. Ran `npm run audit:indexation -- --ingest-only` once to backfill all 1996 rows from the latest snapshot.
+- **`lib/data/tools.ts`** — new module-level `getUnindexedToolSlugs()` with 5-min cache, parses `/tools/{slug}` from `url`, filters to UNINDEXED_STATES (`Discovered - currently not indexed`, `Crawled - currently not indexed`, `URL is unknown to Google`, `Duplicate without user-selected canonical`). Wired into two places:
+  1. **`getTopInCategory` Path 1** — fetches `Math.max(limit * 5, 40)` candidates instead of `limit`, then interleaves un-indexed first (2 of them) followed by indexed siblings. Falls back to old order if cache empty.
+  2. **`getAlternativeTools`** — scoring loop now adds +1 if slug is un-indexed (cap before category/popularity bonus), -1..0 (scaled by view_count percentile) if indexed. Falls back to view_count proxy when cache empty (preserves prior behavior on cold start).
+- **`app/api/cron/indexnow-unindexed/route.ts`** — new cron route. Queries `gsc_url_inspections` for `page_type='tool'` and `coverage_state IN (UNINDEXED_STATES)`, ordered by `inspected_at ASC` (oldest first, so freshly re-inspected URLs aren't re-pinged before older stale ones), capped at `MAX_PER_RUN=200` (Bing IndexNow throttle). Submits via `submitToIndexNow()`. Wrapped in `cronRoute({ pipelineKey: 'indexnow-unindexed' }, ...)` so it shows up in the pipeline-runs log.
+- **`vercel.json`** — added `{ "path": "/api/cron/indexnow-unindexed", "schedule": "0 10 * * 2" }` (weekly Tuesday 10:00 UTC, day after the Monday GSC snapshot so the table is freshly refreshed each week).
+
+### Why this matters
+
+The 540 discovered-not-indexed tools are the **single biggest absolute-volume SEO drag** Phase 9 has surfaced. Cornerstones + Tier-1 rewrites raise the ceiling on already-indexed pages; B4 raises the floor by getting un-indexed pages discovered. Two reinforcing nudges, neither sufficient alone:
+
+- **Internal-link nudge (sibling-rail bias):** every time a human visits an indexed sibling tool, the rail now puts an un-indexed sibling in front of them — and equally important, in front of Googlebot when it re-crawls the indexed page. New internal links are the cleanest Google signal "this URL is important, please crawl it."
+- **Crawler nudge (IndexNow weekly re-ping):** IndexNow is idempotent across days, so re-pinging weekly is harmless. Bing and Yandex respond directly; Google reads the IndexNow ping as a hint via Bing's data exchange.
+
+### Measurement plan
+
+Next audit run (Monday 2026-06-01) re-inspects the same 1996 URLs and persists to the same table — upsert on `url` means we'll see coverage_state transitions in place. If B4 works, the `Discovered - not indexed` count should fall and `Submitted and indexed` should rise. Track week-over-week.
+
+### Trade-offs / known limitations
+
+- **Generated Database types are stale** for `gsc_url_inspections` — used type-cast workaround in both the audit script and the cron route. Documented inline; `supabase gen types` is the proper fix when convenient.
+- **`MAX_PER_RUN=200` ≪ 540 un-indexed tools** — full bucket takes ~3 weeks to fully re-ping. That's fine: IndexNow signals decay, so spreading reminders across weeks is more effective than one big blast.
+- **No de-dup against `/api/cron/indexnow-recent`** — if a tool was un-indexed *and* recently updated, both crons may ping it the same week. IndexNow handles duplicates; not worth the complexity.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Tool-indexation long-tail sweep (B4) — gsc_url_inspections table, audit persistence, sibling-rail un-indexed bias, IndexNow weekly re-ping cron |
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — Pillar #2: AI Stack for Content Creators (`/stacks/ai-stack-for-content-creators`)
 
 **Trigger:** doc 07 pillar queue had this as the next pillar after `/stacks/ai-stack-for-early-stage-saas`. Target query family ("ai stack for content creators", "ai tools for creators", "ai workflow for youtubers") is high-intent and underserved — most creator-tool roundups are SEO listicles, not opinionated stacks with monthly-cost rollups.

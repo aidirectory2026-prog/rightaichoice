@@ -366,6 +366,56 @@ const TAGLINE_STOP_WORDS = new Set([
 ])
 
 /**
+ * Phase 9 B4 (2026-05-28): cached read of un-indexed tool slugs from
+ * gsc_url_inspections. Used to bias the sibling-rail toward tool pages
+ * Google has crawled but not indexed (or hasn't discovered yet), so
+ * crawl-priority authority flows from the popular hubs into the long
+ * tail.
+ *
+ * Buckets we treat as "needs help":
+ *   - Discovered - currently not indexed   (crawl budget)
+ *   - Crawled - currently not indexed      (quality)
+ *   - URL is unknown to Google             (never discovered)
+ *   - Duplicate without user-selected canonical
+ *
+ * Refreshed in-memory with a 5-minute TTL — the underlying audit only
+ * runs weekly so a soft cache is plenty.
+ */
+const UNINDEXED_STATES = new Set([
+  'Discovered - currently not indexed',
+  'Crawled - currently not indexed',
+  'URL is unknown to Google',
+  'Duplicate without user-selected canonical',
+])
+
+const UNINDEXED_CACHE_TTL_MS = 5 * 60 * 1000
+let unindexedToolSlugsCache: { slugs: Set<string>; loadedAt: number } | null = null
+
+async function getUnindexedToolSlugs(): Promise<Set<string>> {
+  const now = Date.now()
+  if (
+    unindexedToolSlugsCache &&
+    now - unindexedToolSlugsCache.loadedAt < UNINDEXED_CACHE_TTL_MS
+  ) {
+    return unindexedToolSlugsCache.slugs
+  }
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('gsc_url_inspections')
+    .select('url')
+    .eq('page_type', 'tool')
+    .in('coverage_state', Array.from(UNINDEXED_STATES))
+  const slugs = new Set<string>()
+  for (const row of (data ?? []) as Array<{ url: string }>) {
+    // url shape: https://rightaichoice.com/tools/<slug>
+    const match = row.url.match(/\/tools\/([^/?#]+)/)
+    if (match) slugs.add(match[1])
+  }
+  unindexedToolSlugsCache = { slugs, loadedAt: now }
+  return slugs
+}
+
+/**
  * Phase 4.5 audit fix (2026-05-09): Loose category-based "tools you might
  * also like" fallback used by the page handler when getAlternativeTools'
  * strict identity-tag ranker returns nothing. This is intentionally
@@ -390,6 +440,10 @@ export async function getTopInCategory(
       .neq('tool_id', excludeToolId)
     if (relatedIds && relatedIds.length > 0) {
       const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
+      // Phase 9 B4 (2026-05-28): fetch a wider pool (up to 60) so we can
+      // re-rank by indexation state before slicing to `limit`. Otherwise
+      // top-by-view_count always wins and un-indexed siblings never get
+      // surfaced for crawl-priority transfer.
       const { data } = await supabase
         .from('tools')
         .select(
@@ -398,8 +452,28 @@ export async function getTopInCategory(
         .eq('is_published', true)
         .in('id', uniqueIds)
         .order('view_count', { ascending: false })
-        .limit(limit)
-      if (data && data.length > 0) return data
+        .limit(Math.max(limit * 5, 40))
+      if (data && data.length > 0) {
+        const unindexed = await getUnindexedToolSlugs()
+        // Promote un-indexed siblings into the first slots while keeping
+        // the relative view_count order within each tier. Result: ~half
+        // of the `limit` slots tend to be un-indexed when there are
+        // enough candidates, while a popular cluster never returns 0
+        // recognizable picks.
+        const needHelp = data.filter((t) => unindexed.has(t.slug))
+        const alreadyIndexed = data.filter((t) => !unindexed.has(t.slug))
+        const interleaved: typeof data = []
+        let i = 0
+        let j = 0
+        // Lead with 2 un-indexed picks (if available), then alternate.
+        while (interleaved.length < limit && (i < needHelp.length || j < alreadyIndexed.length)) {
+          const wantUnindexed = interleaved.length < 2 || interleaved.length % 2 === 0
+          if (wantUnindexed && i < needHelp.length) interleaved.push(needHelp[i++])
+          else if (j < alreadyIndexed.length) interleaved.push(alreadyIndexed[j++])
+          else if (i < needHelp.length) interleaved.push(needHelp[i++])
+        }
+        return interleaved.slice(0, limit)
+      }
     }
   }
 
@@ -493,6 +567,9 @@ export async function getAlternativeTools(
   // LLM-tag check uses the unfiltered source set since GENERAL_LLM_TAG is not
   // a stop word — both Supabase-class and Claude-class sources route correctly.
   const sourceIsGeneralLLM = sourceTagsRaw.has(GENERAL_LLM_TAG)
+  // Phase 9 B4 (2026-05-28): authoritative un-indexed signal from
+  // gsc_url_inspections (replaces the view_count=0 proxy below).
+  const unindexedSlugs = await getUnindexedToolSlugs()
 
   const scored = (data as unknown as Row[])
     .map((row) => {
@@ -519,20 +596,28 @@ export async function getAlternativeTools(
       }
       score += wordOverlap
 
-      // Phase 9 B4 (2026-05-28): inverted the popularity tiebreaker.
-      // OLD: `+Math.log10((view_count ?? 0) + 1) * 0.5` — high-view tools always
-      // won ties (rich-get-richer; long-tail likely-un-indexed tools never
-      // surfaced as alternatives). The 2026-05-28 GSC audit identified
-      // long-tail tool indexation as a secondary bottleneck.
-      // NEW: small INVERTED boost. Un-indexed (view_count=0) tools get +1;
-      // high-view tools get a small penalty (down to -1). Capped at ±1 so
-      // it remains strictly a tiebreaker — a single shared identity tag
-      // scores 10pts and a shared non-identity tag scores 3pts, so this
-      // never overpowers a real relevance signal. Internal-link authority
-      // now flows from indexed siblings into the long tail when relevance
-      // is equal.
+      // Phase 9 B4 (2026-05-28): un-indexed tiebreaker, now driven by
+      // the real GSC URL Inspection signal (gsc_url_inspections) instead
+      // of a view_count=0 proxy.
+      //
+      // Un-indexed (any of: discovered-not-indexed, crawled-not-indexed,
+      // unknown-to-Google, dup-without-canonical) gets +1. Already-
+      // indexed tools get a small penalty scaled by view_count, capped
+      // at -1. Tools not yet inspected fall back to the view_count
+      // proxy. Cap at ±1 keeps this strictly a tiebreaker — a single
+      // shared identity tag is worth 10pts.
       const viewCount = row.view_count ?? 0
-      score += viewCount === 0 ? 1 : Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
+      if (unindexedSlugs.has(row.slug)) {
+        score += 1
+      } else if (unindexedSlugs.size > 0) {
+        // The cache is loaded (we have data) and this slug isn't in
+        // the un-indexed set → treat as indexed.
+        score += Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
+      } else {
+        // Cache miss / empty (e.g. table not yet populated). Fall back
+        // to the view_count proxy so the function still works.
+        score += viewCount === 0 ? 1 : Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
+      }
 
       return { row, score, sharedIdentity, sharedAnyTag, candTagSetRaw }
     })
