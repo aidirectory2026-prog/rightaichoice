@@ -40,7 +40,8 @@ type ToolRow = {
 
 type CompareRow = {
   slug: string
-  tldr: string | null
+  // tldr is JSONB (a table of {dimension, values} rows per migration 038),
+  // not a one-liner. We render only verdict, which is plain text.
   verdict: string | null
 }
 
@@ -104,7 +105,7 @@ async function fetchTools(supabase: any): Promise<ToolRow[]> {
 async function fetchCompares(supabase: any): Promise<CompareRow[]> {
   const { data, error } = await supabase
     .from('tool_comparisons')
-    .select('slug, tldr, verdict')
+    .select('slug, verdict')
     .eq('is_editorial', true)
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
@@ -187,7 +188,6 @@ function render(input: {
     lines.push(`### ${humanize(c.slug)}`)
     lines.push('')
     lines.push(`- URL: ${BASE_URL}/compare/${c.slug}`)
-    if (c.tldr) lines.push(`- TL;DR: ${oneLine(c.tldr).slice(0, 400)}`)
     if (c.verdict) lines.push(`- Verdict: ${oneLine(c.verdict).slice(0, 400)}`)
     lines.push('')
   }
@@ -195,8 +195,15 @@ function render(input: {
   return lines.join('\n')
 }
 
-function oneLine(s: string): string {
-  return s.replace(/\s+/g, ' ').trim()
+function oneLine(s: unknown): string {
+  // Defensive: Supabase columns typed `text` in this script may actually be
+  // jsonb upstream (e.g. tldr in tool_comparisons). Coerce to string so a
+  // type drift doesn't crash the whole dump.
+  if (typeof s !== 'string') {
+    if (s == null) return ''
+    s = JSON.stringify(s)
+  }
+  return (s as string).replace(/\s+/g, ' ').trim()
 }
 
 function humanize(slug: string): string {
