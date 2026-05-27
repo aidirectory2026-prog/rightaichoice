@@ -9,6 +9,12 @@ const PUBLISHER = {
   '@type': 'Organization' as const,
   name: 'RightAIChoice',
   url: BASE_URL,
+  logo: {
+    '@type': 'ImageObject' as const,
+    url: `${BASE_URL}/logo-512.png`,
+    width: 512,
+    height: 512,
+  },
 }
 
 // ── Organization (root layout) ─────────────────────────────────────
@@ -24,6 +30,7 @@ export function organizationJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RightAIChoice',
+    alternateName: ['Right AI Choice', 'RAC'],
     url: BASE_URL,
     // Phase 9c (2026-05-17): use PNG for the knowledge-panel logo. Google's
     // Organization-logo schema strongly prefers raster (SVG support is
@@ -38,13 +45,84 @@ export function organizationJsonLd() {
       height: 512,
     },
     image: `${BASE_URL}/logo-512.png`,
+    // Phase 9 (2026-05-27): tighter decision-engine description to push the
+    // positioning into the brand entity itself, not just marketing copy.
     description:
-      'RightAIChoice is the decision engine for AI tools — independent reviews, side-by-side comparisons, viability scores, and a custom-stack planner. Built by editors, not by vendors.',
+      'RightAIChoice is the decision engine for picking the right AI stack. We help founders, builders, and teams choose the exact AI tools for their workflow — backed by sentiment-aggregated user reviews, side-by-side editorial comparisons, and an interactive tool-finder.',
+    slogan: 'Pick the right AI stack — backed by data, not opinions.',
+    knowsAbout: [
+      'AI coding tools',
+      'AI image generators',
+      'AI writing tools',
+      'AI video and audio tools',
+      'AI voice and speech tools',
+      'AI marketing and SEO tools',
+      'AI automation and agents',
+      'AI research and education tools',
+      'AI productivity tools',
+      'AI design and UI tools',
+      'AI tool stacks',
+      'AI tool comparisons',
+    ],
     sameAs: [
       'https://twitter.com/rightaichoice',
+      'https://x.com/rightaichoice',
       'https://www.linkedin.com/company/rightaichoice',
+      'https://github.com/rightaichoice',
+      'https://www.producthunt.com/@rightaichoice',
     ],
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${BASE_URL}/tools?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
     foundingDate: '2026',
+  }
+}
+
+// ── Service (homepage) ─────────────────────────────────────────────
+//
+// Phase 9 (2026-05-27): emit Service schema on the homepage to make the
+// decision-engine positioning machine-readable. Anchored to the brand
+// Organization via `provider` so Google reads it as a first-party offering,
+// not a generic page about a service. Pair with the AI Tool Finder / Plan
+// surface — both are different framings of the same Service.
+
+export function decisionEngineServiceJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: 'AI Stack Decision Engine',
+    serviceType: 'AI Tool Recommendation',
+    provider: {
+      '@type': 'Organization',
+      name: 'RightAIChoice',
+      url: BASE_URL,
+    },
+    areaServed: 'Worldwide',
+    description:
+      'Tell us your goal, persona, and budget. Get a complete recommended AI stack — tools, costs, tradeoffs, and alternatives for every stage of your workflow. Independent, editorial, free to use.',
+    audience: {
+      '@type': 'Audience',
+      audienceType: [
+        'Founders',
+        'Builders',
+        'Product teams',
+        'Marketing teams',
+        'Content creators',
+        'Developers',
+      ],
+    },
+    url: BASE_URL,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
   }
 }
 

@@ -67,7 +67,11 @@
     "backfill:freshness:dry": "tsx --env-file=.env.local scripts/backfill-pages-freshness.ts --dry-run",
     "tracking:e2e": "tsx --env-file=.env.local scripts/audit/e2e-tracking-verification.ts",
     "tracking:watchdog": "tsx --env-file=.env.local scripts/audit/tracking-watchdog.ts",
-    "verify:boards": "tsx --env-file=.env.local scripts/audit/verify-smart-boards.ts"
+    "verify:boards": "tsx --env-file=.env.local scripts/audit/verify-smart-boards.ts",
+    "llms:full:dry": "tsx --env-file=.env.local scripts/build-llms-full.ts --dry",
+    "llms:full": "tsx --env-file=.env.local scripts/build-llms-full.ts",
+    "tier1:candidates:dry": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts --dry --no-titles",
+    "tier1:candidates": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

@@ -40,11 +40,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://rightaichoice.com"),
   title: {
-    default: "RightAIChoice — Build Anything with AI",
+    default: "RightAIChoice — Find the Right AI Stack for Your Workflow",
     template: "%s | RightAIChoice",
   },
   description:
-    "Tell us your goal. Get the exact AI tool stack with costs, tradeoffs, and alternatives. The decision engine for AI tools.",
+    "Stop guessing which AI tools to use. Get a personalized AI stack in 60 seconds — compare 2,000+ tools by feature, price, and real user sentiment.",
   keywords: [
     "AI tools",
     "AI stack",

@@ -8,6 +8,8 @@ import { Footer } from '@/components/layout/footer'
 import { getAllPosts, getPostBySlug } from '@/lib/data/blog'
 import { mdxComponents } from '@/components/blog/mdx-components'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { LastUpdated } from '@/components/seo/last-updated'
+import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
@@ -144,6 +146,10 @@ export default async function BlogPostPage({ params }: PageProps) {
                 <User className="h-4 w-4" />
                 {meta.author}
               </span>
+              <LastUpdated date={new Date(meta.updatedAt ?? meta.publishedAt)} />
+            </div>
+            <div className="mt-3">
+              <ReviewedByOurTeam date={new Date(meta.updatedAt ?? meta.publishedAt)} />
             </div>
             {meta.categories.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">

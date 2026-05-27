@@ -7,6 +7,8 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { getToolBySlug, getAlternativeTools } from '@/lib/data/tools'
 import { buildAlternativesPageMeta } from '@/lib/seo/metadata'
+import { LastUpdated } from '@/components/seo/last-updated'
+import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 
 export const revalidate = 300
 
@@ -72,6 +74,12 @@ export default async function AlternativesPage({ params }: PageProps) {
               <>We don&apos;t have other tools curated as direct alternatives to {tool.name} yet.</>
             )}
           </p>
+          {(tool.last_verified_at || tool.updated_at) && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <LastUpdated date={new Date(tool.last_verified_at ?? tool.updated_at)} />
+              <ReviewedByOurTeam date={new Date(tool.last_verified_at ?? tool.updated_at)} />
+            </div>
+          )}
         </header>
 
         {alternatives.length > 0 ? (

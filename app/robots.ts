@@ -27,6 +27,17 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'cohere-ai', allow: '/' },           // Cohere training
       { userAgent: 'Meta-ExternalAgent', allow: '/' },  // Meta AI
       { userAgent: 'YouBot', allow: '/' },              // You.com
+      // Phase 9 (2026-05-27): expanded AI-crawler allowlist. Bytespider
+      // (TikTok/ByteDance), DuckAssistBot (DuckDuckGo AI Chat), Diffbot
+      // (citation graphs feeding several LLMs), Amazonbot (Alexa+),
+      // MistralAI-User (Le Chat) — all explicitly listed so we never get
+      // accidentally blocked by a default-deny intermediary.
+      { userAgent: 'Bytespider', allow: '/' },          // ByteDance / TikTok / Doubao
+      { userAgent: 'DuckAssistBot', allow: '/' },       // DuckDuckGo AI Chat
+      { userAgent: 'Diffbot', allow: '/' },             // Diffbot Knowledge Graph (feeds many LLMs)
+      { userAgent: 'Amazonbot', allow: '/' },           // Alexa+ / Amazon AI
+      { userAgent: 'MistralAI-User', allow: '/' },      // Mistral Le Chat
+      { userAgent: 'Timpibot', allow: '/' },            // Timpi search/AI
     ],
     // Phase 7I (2026-05-16): point at the sitemap index, not the
     // monolithic sitemap. /sitemap-index.xml lists 8 per-type subsitemaps;

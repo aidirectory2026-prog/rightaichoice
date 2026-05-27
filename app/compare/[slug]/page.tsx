@@ -13,6 +13,8 @@ import {
   getToolsForComparisonByIds,
 } from '@/lib/data/comparisons'
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
+import { LastUpdated } from '@/components/seo/last-updated'
+import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 import { buildComparePageMeta } from '@/lib/seo/metadata'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
@@ -196,6 +198,16 @@ export default async function ComparisonSlugPage({ params }: Props) {
                 <p className="mt-1 text-sm text-zinc-500">
                   Side-by-side comparison of features, pricing, and ratings
                 </p>
+                {editorial.is_editorial && (editorial.last_reviewed_at || editorial.published_at) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <LastUpdated
+                      date={new Date((editorial.last_reviewed_at ?? editorial.published_at) as string)}
+                    />
+                    <ReviewedByOurTeam
+                      date={new Date((editorial.last_reviewed_at ?? editorial.published_at) as string)}
+                    />
+                  </div>
+                )}
               </div>
               <ComparePageActions
                 toolSlugs={toolSlugs}

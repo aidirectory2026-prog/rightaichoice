@@ -27,6 +27,7 @@ import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
 import { categoryIconFor } from '@/lib/icons/category-icon'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
+import { decisionEngineServiceJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 const EXAMPLE_STACKS = [
   {
@@ -68,6 +69,11 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Phase 9 (2026-05-27): Service schema on the homepage makes the
+          decision-engine positioning machine-readable for Google + AI
+          crawlers. Organization + WebSite already emitted globally in the
+          root layout. */}
+      <script {...jsonLdScriptProps(decisionEngineServiceJsonLd())} />
       <Navbar />
 
       <main className="flex-1">
@@ -84,13 +90,13 @@ export default async function HomePage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
-              <span className="hero-shimmer">Build anything</span> with AI.
+              Pick the <span className="hero-shimmer">right AI stack</span>
               <br />
-              We&apos;ll give you the exact stack.
+              in 60 seconds, not 6 weeks.
             </h1>
 
             <p className="mt-5 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Tell us your goal. Get a complete tool stack with costs, tradeoffs, and alternatives for every stage.
+              We compare 2,000+ AI tools on what actually matters: real user sentiment, side-by-side features, and total cost. Tell us your goal — we&apos;ll give you the exact stack.
             </p>
 
             {/* Goal input → planner (textarea + chips inside the component) */}
