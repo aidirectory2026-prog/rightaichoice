@@ -14,11 +14,18 @@ import { ToolGridSkeleton } from '@/components/tools/tool-card-skeleton'
 import { PageEventTracker } from '@/components/analytics/page-event-tracker'
 import { getCategoryBySlug, getCategories } from '@/lib/data/categories'
 import { getTools } from '@/lib/data/tools'
-import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import {
+  articleJsonLd,
+  breadcrumbJsonLd,
+  faqPageJsonLd,
+  jsonLdScriptProps,
+} from '@/lib/seo/json-ld'
 import { buildCategoryPageMeta } from '@/lib/seo/metadata'
 import { getRelatedComparesForCategory } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
+import { CornerstoneSection } from '@/components/seo/cornerstone-section'
+import { getCornerstone } from '@/lib/cornerstones/registry'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -48,6 +55,33 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     : null
 
   const base = buildCategoryPageMeta(category.name, slug, page, longDesc)
+
+  // Phase 9 (2026-05-28): cornerstone-aware metadata. When a hand-written
+  // editorial cornerstone exists for this slug, override the templated
+  // title + description on page 1 so the SERP snippet reflects the
+  // editorial framing ("Best AI Coding Tools 2026: Cursor, Copilot…")
+  // instead of the generic "Best <Category> AI Tools" template.
+  const cornerstone = getCornerstone(slug)
+  if (cornerstone && page === 1) {
+    return {
+      ...base,
+      title: cornerstone.metaTitle,
+      description: cornerstone.metaDescription,
+      keywords: [
+        `best ${category.name} AI tools`,
+        `${category.name} AI`,
+        `${category.name} tools 2026`,
+        `compare ${category.name} tools`,
+        category.name,
+      ],
+      openGraph: {
+        title: cornerstone.metaTitle,
+        description: cornerstone.metaDescription,
+        url: base.alternates.canonical,
+        type: 'article',
+      },
+    }
+  }
 
   return {
     ...base,
@@ -83,10 +117,29 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     { name: category.name, url: `https://rightaichoice.com/categories/${slug}` },
   ])
 
+  // Phase 9 (2026-05-28): cornerstone editorial layer. When the slug has a
+  // registered cornerstone, render the long-form editorial above the
+  // listing AND emit Article + FAQPage JSON-LD so the page can rank for
+  // its broad short-tail query, not just as a listing.
+  const cornerstone = page === 1 ? getCornerstone(slug) : null
+  const jsonLdPayload: Record<string, unknown>[] = [breadcrumbs]
+  if (cornerstone) {
+    jsonLdPayload.push(
+      articleJsonLd({
+        headline: cornerstone.metaTitle,
+        description: cornerstone.metaDescription,
+        url: `/categories/${slug}`,
+        datePublished: cornerstone.publishedISO,
+        dateModified: cornerstone.lastReviewedISO,
+      }),
+      faqPageJsonLd(cornerstone.faqs),
+    )
+  }
+
   return (
     <>
       <Navbar />
-      <script {...jsonLdScriptProps(breadcrumbs)} />
+      <script {...jsonLdScriptProps(jsonLdPayload)} />
 
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
@@ -99,30 +152,41 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             <span className="text-zinc-300">{category.name}</span>
           </nav>
 
-          {/* Header — paints immediately. Tool count moved into the
-              streamed CategoryResults child so the page-shell renders
-              before the DB aggregate completes. */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              {category.icon && <span className="text-4xl">{category.icon}</span>}
-              <div>
-                <h1 className="text-3xl font-bold text-white">
-                  Best {category.name} AI Tools
-                </h1>
-                <p className="mt-1 text-zinc-400">Ranked by community</p>
+          {cornerstone ? (
+            // Cornerstone replaces the generic header — the editorial h1,
+            // subtitle, byline, picks, top compares, prose, and FAQ all
+            // render inline. The "Browse all tools" sub-header sits at the
+            // bottom of CornerstoneSection, leading into the listing.
+            <>
+              <CornerstoneSection cornerstone={cornerstone} />
+              <PlanCTAInline context={`${category.name} AI tools`} />
+            </>
+          ) : (
+            // Generic header — paints immediately. Tool count moved into
+            // the streamed CategoryResults child so the page-shell renders
+            // before the DB aggregate completes.
+            <div className="mb-8">
+              <div className="flex items-center gap-3">
+                {category.icon && <span className="text-4xl">{category.icon}</span>}
+                <div>
+                  <h1 className="text-3xl font-bold text-white">
+                    Best {category.name} AI Tools
+                  </h1>
+                  <p className="mt-1 text-zinc-400">Ranked by community</p>
+                </div>
               </div>
-            </div>
-            {category.description && (
-              <p className="mt-4 max-w-2xl text-sm text-zinc-400 leading-relaxed">
-                {category.description}
-              </p>
-            )}
+              {category.description && (
+                <p className="mt-4 max-w-2xl text-sm text-zinc-400 leading-relaxed">
+                  {category.description}
+                </p>
+              )}
 
-            {/* Phase 9 — inline CTA after category intro paragraph. Highest
-                conversion intent on a category page is right after the user
-                reads "what is this category" copy. */}
-            <PlanCTAInline context={`${category.name} AI tools`} />
-          </div>
+              {/* Phase 9 — inline CTA after category intro paragraph. Highest
+                  conversion intent on a category page is right after the user
+                  reads "what is this category" copy. */}
+              <PlanCTAInline context={`${category.name} AI tools`} />
+            </div>
+          )}
 
           {/* Phase 6.5 (2026-05-12): grid + filters streamed via Suspense
               with a shared skeleton fallback so the page paints fast and

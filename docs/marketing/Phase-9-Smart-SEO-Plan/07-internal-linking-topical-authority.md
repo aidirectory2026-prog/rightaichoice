@@ -50,6 +50,24 @@ the single highest-leverage internal-link change in Phase 9.
 Note: the linking query already filters `.eq('noindex', false)` so the
 22 noindex'd compares won't get authority injected into them.
 
+## 2026-05-28 status — first cornerstone shipped
+
+`/categories/code-development` is now a 1,500-word hand-written
+editorial cornerstone (Article + FAQPage JSON-LD, 6 curated picks, 6
+top compares above the fold). Implementation lives in
+`lib/cornerstones/` — a registry pattern where any category can opt
+in by registering a `Cornerstone` object.
+
+To add the next cornerstone (e.g. `/categories/image-design`):
+
+1. Create `lib/cornerstones/image-design.tsx` exporting a Cornerstone.
+2. Register it in `lib/cornerstones/registry.ts`.
+3. Ship — `app/categories/[slug]/page.tsx` automatically renders the
+   editorial above the existing listing and emits the right schema.
+
+Categories without a registered cornerstone are unchanged (generic
+templated header + tool grid).
+
 ## The hub-and-spoke model
 
 Pick a small set of **cornerstone pages** (5–7). Every related

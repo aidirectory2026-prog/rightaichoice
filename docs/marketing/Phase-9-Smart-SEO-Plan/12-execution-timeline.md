@@ -67,7 +67,7 @@ The full priority order from the README, expanded:
 - **Ship new homepage title + meta + H1** with decision-engine positioning (doc 13 Part 2)
 - **Ship footer "About RightAIChoice" block with brand-anchor link** to homepage (doc 13 Part 6)
 - Push next 20 Tier-1 title rewrites
-- Build first cornerstone page (highest-impression cluster — AI Coding Tools given current GSC data)
+- Build first cornerstone page (highest-impression cluster — AI Coding Tools given current GSC data) — **shipped 2026-05-28** as `/categories/code-development` via the new `lib/cornerstones/` registry pattern (1,500+ words, 6 picks, 6 top compares, FAQ, Article + FAQPage JSON-LD). Next cornerstone candidates: `/categories/image-design`, `/categories/writing-content`, `/categories/education-learning`.
 
 ### Day 2
 

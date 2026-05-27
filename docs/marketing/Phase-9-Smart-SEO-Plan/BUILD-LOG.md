@@ -4,6 +4,46 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — Cornerstone #1: AI Coding Tools (`/categories/code-development`)
+
+**Trigger:** doc 07 (internal linking) calls cornerstones the highest-leverage SEO work for a directory site. We had 30+ coding tools and 6 already-trafficked compares (cline-vs-aider-vs-continue at 778 views, openhands-vs-devin at 671) but no hub URL that concentrated authority on the broad query "best AI coding tools." `/categories/code-development` was a generic templated listing — h1 "Best Code & Development AI Tools", one sentence of intro, then a tool grid. Nothing to rank.
+
+**Approach:** ship a reusable `lib/cornerstones/` registry pattern so any category can opt into an editorial layer rendered above the listing. First entry: `/categories/code-development` becomes a 1,500+ word hand-written editorial (hero, 6 curated picks, top 6 head-to-head compares, 5 long-form sections, FAQ) with Article + FAQPage JSON-LD emitted alongside the existing BreadcrumbList. Generic listing keeps rendering below as "Browse every tool in this category." Categories without a registered cornerstone are unchanged.
+
+### What shipped
+
+- **`lib/cornerstones/types.ts`** — `Cornerstone` shape (metaTitle, metaDescription, h1, subtitle, lastReviewed*, picks[], topCompares[], body, faqs[]). Body is `ReactNode` so each cornerstone authors its own semantic HTML.
+- **`lib/cornerstones/registry.ts`** — `getCornerstone(slug)` + `hasCornerstone(slug)`. Adding a new cornerstone = create one .tsx, register it, done.
+- **`lib/cornerstones/code-development.tsx`** — the first cornerstone. Picks: Cursor (best AI-native IDE), Claude Code (best terminal-first agent), GitHub Copilot (best for existing GitHub teams), Cline (best open-source agent), Devin (best autonomous engineer), Windsurf (best for long agentic tasks). Top compares: cline-vs-aider-vs-continue, openhands-vs-devin, claude-code-vs-cursor, cursor-vs-windsurf, claude-vs-github-copilot, aider-vs-cursor — all already getting traffic and now elevated above-the-fold on the cornerstone. Body covers: how we picked, 5 sub-categories that matter in 2026, what changed in 2026, decision rules by persona, pricing in plain English, what's not covered.
+- **`components/seo/cornerstone-section.tsx`** — pure presentational renderer. Hero with byline + reviewed-by + last-updated; popular-compares strip; "Our picks" grid (6 cards, each linking to /tools/<slug> with anchor text = pick name); long-form body; FAQ rendered as semantic `dl` pairs; divider into the listing below. Element-level Tailwind classes inline so we don't depend on `@tailwindcss/typography` (not installed in this project).
+- **`app/categories/[slug]/page.tsx`** — modified:
+  - `generateMetadata`: when a cornerstone exists for the slug AND page=1, override the templated title/description with the cornerstone's `metaTitle` + `metaDescription`. Pagination (page≥2) keeps the generic templated meta.
+  - Page body: render `<CornerstoneSection>` above the listing when present; emit `articleJsonLd` + `faqPageJsonLd` alongside `breadcrumbJsonLd`. Generic header still renders when no cornerstone is registered.
+
+### Why this is leveraged
+
+The `/categories/code-development` URL was indexed but had no editorial content to rank. Now it has:
+
+1. A 1,500-word page targeting "best AI coding tools" directly.
+2. 6 outbound internal links to top-trafficked compares — moves crawl-priority authority from the cornerstone (about to gain authority via the broad query) directly to the already-ranking compares.
+3. 6 outbound internal links to the cornerstone picks (Cursor, Claude, Copilot, Cline, Devin, Windsurf) — each gets an inbound link from a thematically-relevant editorial hub, with anchor text = tool name (per the doc 07 anchor-text strategy table).
+4. Article + FAQPage schema — eligible for AI Overview citation and FAQ-rich-result SERP treatment.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Cornerstone registry pattern + first cornerstone for /categories/code-development |
+
+### Next cornerstones (Day 4–5)
+
+Per doc 07 cornerstone table, priority queue:
+1. `/categories/image-design` — Midjourney, DALL-E, Flux, Stable Diffusion
+2. `/categories/writing-content` — Notion AI, Jasper, Copy.ai, Writesonic
+3. `/categories/education-learning` — Duolingo, Loora, TalkPal, Speak (we already rank for these compares)
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — CTA + Conversion: global Plan-Your-Stack CTA, signup gate, durable intent capture, admin funnel
 
 **Trigger:** every page except the homepage was a conversion dead-end. Visitors landing on `/tools/[slug]`, `/categories/[slug]`, `/blog/[slug]`, `/best/[slug]` etc. from Google had no direct prompt to use the actual product (the stack planner). Conversion from long-tail traffic was incidental at best. We also had zero durable record of what users typed into the goal box — anything that lived only in `?q=` URL params or `plan_goal_typed` keystroke events evaporated when users bounced.
