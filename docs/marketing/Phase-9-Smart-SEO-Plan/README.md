@@ -115,6 +115,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | File                                                          | What it covers                                              |
 | :------------------------------------------------------------ | :---------------------------------------------------------- |
 | [`README.md`](./README.md)                                    | This file — the master index                                |
+| [`BUILD-LOG.md`](./BUILD-LOG.md)                              | Chronological record of what's shipped vs the plan          |
 | [`01-diagnosis-and-baseline.md`](./01-diagnosis-and-baseline.md) | Why current rankings suck + root causes                   |
 | [`02-today-foundation-fixes.md`](./02-today-foundation-fixes.md) | llms.txt, robots, E-E-A-T components, schema audit       |
 | [`03-tier-1-quick-wins.md`](./03-tier-1-quick-wins.md)        | 101 pages, CTR-optimized title/meta rewrites                |
