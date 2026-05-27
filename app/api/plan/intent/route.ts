@@ -30,7 +30,7 @@ type PostBody = {
   source_path?: string | null
 }
 
-const VALID_SURFACES = new Set(['sticky_bar', 'inline_card', 'navbar', 'homepage'])
+const VALID_SURFACES = new Set(['sticky_bar', 'inline_card', 'navbar', 'homepage', 'plan_page'])
 const VALID_OUTCOMES = new Set(['completed_google', 'completed_linkedin', 'skipped', 'unknown'])
 
 /** PII scrubber — mirrors the policy from use-debounced-text-tracking.ts. */

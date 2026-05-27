@@ -415,7 +415,7 @@ export const analytics = {
     capture('plan_cta_impression', { surface: props.surface, page_path: props.page_path })
   },
   /** Fires when the user clicks the CTA button (before any signup gate). */
-  planCtaClicked(props: { surface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage'; page_path: string }) {
+  planCtaClicked(props: { surface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'; page_path: string }) {
     capture('plan_cta_clicked', { surface: props.surface, page_path: props.page_path })
   },
   /** Fires when the user dismisses (×) the sticky bar. */

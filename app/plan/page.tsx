@@ -14,12 +14,36 @@ export const metadata: Metadata = {
 }
 
 type PageProps = {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; source?: string; from?: string }>
 }
+
+type CtaSurface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
+const VALID_SURFACES: ReadonlySet<CtaSurface> = new Set([
+  'sticky_bar',
+  'inline_card',
+  'navbar',
+  'homepage',
+  'plan_page',
+])
 
 export default async function PlanPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const initialQuery = sp.q ?? ''
+
+  // Phase 9 (2026-05-28) — CTA provenance carried in the URL by
+  // PlanCTAButton (?source=sticky_bar&from=/tools/leena-ai). Used by the
+  // ProjectPlanner to attribute the anon user's typed goal in plan_intents
+  // back to the original CTA page rather than /plan itself.
+  const rawSurface = sp.source as CtaSurface | undefined
+  const sourceSurface: CtaSurface =
+    rawSurface && VALID_SURFACES.has(rawSurface) ? rawSurface : 'plan_page'
+  // Only accept absolute paths to avoid open-redirect-style mischief on the
+  // attribution path.
+  const fromRaw = typeof sp.from === 'string' ? sp.from.trim() : ''
+  const originalPagePath =
+    fromRaw && fromRaw.startsWith('/') && !fromRaw.startsWith('//')
+      ? fromRaw.slice(0, 200)
+      : undefined
 
   const supabase = await createClient()
   const {
@@ -73,7 +97,12 @@ export default async function PlanPage({ searchParams }: PageProps) {
               </p>
             </div>
 
-            <ProjectPlanner initialQuery={initialQuery} isLoggedIn={!!user} />
+            <ProjectPlanner
+              initialQuery={initialQuery}
+              isLoggedIn={!!user}
+              sourceSurface={sourceSurface}
+              {...(originalPagePath ? { originalPagePath } : {})}
+            />
           </div>
         </div>
 

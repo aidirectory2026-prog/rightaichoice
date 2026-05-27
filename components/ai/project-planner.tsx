@@ -25,6 +25,7 @@ import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { IntakeModal } from '@/components/ai/intake-modal'
+import { PlanSignupModal } from '@/components/cta/plan-signup-modal'
 import { PlanWaitingState } from '@/components/ai/plan-waiting-state'
 import { loadProfile, saveProfile, profileSummary, type UserProfile } from '@/lib/plan/user-profile'
 import { analytics } from '@/lib/analytics'
@@ -116,12 +117,24 @@ const RELATED_PLANS = [
   { label: 'Create an online course', query: 'Create and sell an online course' },
 ]
 
+type CtaSurface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
+
 export function ProjectPlanner({
   initialQuery,
   isLoggedIn = false,
+  sourceSurface,
+  originalPagePath,
 }: {
   initialQuery?: string
   isLoggedIn?: boolean
+  /** CTA surface that sent the user here (from /plan?source=...). Defaults
+   *  to 'plan_page' for direct visits, used to attribute the typed goal in
+   *  plan_intents when the anon user submits. */
+  sourceSurface?: CtaSurface
+  /** Original CTA-click page (from /plan?from=...). Used as
+   *  plan_intents.source_path so attribution points back to the content
+   *  page rather than /plan or /auth/callback. */
+  originalPagePath?: string
 }) {
   const [query, setQuery] = useState(initialQuery ?? '')
   const [plan, setPlan] = useState<Plan | null>(null)
@@ -130,10 +143,16 @@ export function ProjectPlanner({
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showIntake, setShowIntake] = useState(false)
+  // Phase 9 (2026-05-28): anonymous signup gate. Opens on submit when the
+  // user isn't logged in; Skip continues to intake, OAuth bounces away and
+  // resumes post-auth via the existing auto-submit useEffect.
+  const [showSignupModal, setShowSignupModal] = useState(false)
   // Phase 9 Stage 4 (2026-05-16): active variation pill. null = default plan.
   const [activeVariant, setActiveVariant] = useState<PlanVariant | null>(null)
   const pendingQueryRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const effectiveSurface: CtaSurface = sourceSurface ?? 'plan_page'
 
   // Load saved profile on mount
   useEffect(() => {
@@ -185,11 +204,41 @@ export function ProjectPlanner({
 
     analytics.planStarted('plan_page')
 
-    // Always confirm the decisions that shape the recommendation before running.
-    // Pre-fills from any saved profile so returning users can confirm in one click.
     setQuery(searchQuery)
     pendingQueryRef.current = searchQuery
+
+    // Phase 9 (2026-05-28) — anonymous signup gate. The user has now typed
+    // a goal AND tapped Plan it; this is the high-intent moment. Open the
+    // modal; either Skip (continues to intake) or OAuth (bounces away and
+    // returns post-auth) will resume the plan. The typed goal is persisted
+    // to plan_intents either way so we never lose what they wanted.
+    //
+    // Exception: if this is the auto-submit of an initial-from-URL query,
+    // the upstream flow (homepage modal Skip → /plan?q=…) already gated
+    // signup. Suppress the second modal so anon users aren't asked twice.
+    const isAutoSubmitOfInitialQuery =
+      !!initialQuery && searchQuery === initialQuery.trim()
+    if (!isLoggedIn && !isAutoSubmitOfInitialQuery) {
+      setShowSignupModal(true)
+      return
+    }
+
     setShowIntake(true)
+  }
+
+  function handleSignupSkip() {
+    setShowSignupModal(false)
+    // pendingQueryRef still holds the just-submitted query — continue the
+    // intake flow as if signup had never been gated.
+    if (pendingQueryRef.current) setShowIntake(true)
+  }
+
+  function handleSignupClose() {
+    // X / Esc / backdrop — user cancelled BOTH signup AND submit. Reset the
+    // pending query so they can edit the input freely without an old submit
+    // re-firing through the intake on next interaction.
+    setShowSignupModal(false)
+    pendingQueryRef.current = null
   }
 
   async function runPlan(
@@ -360,6 +409,19 @@ export function ProjectPlanner({
 
   return (
     <div className="w-full">
+      {/* Phase 9 (2026-05-28) — anonymous signup gate. Opens on submit for
+          logged-out users; redirectOnSkip=false because the parent
+          handleSignupSkip continues the intake flow in-place. */}
+      <PlanSignupModal
+        open={showSignupModal}
+        onClose={handleSignupClose}
+        typedGoal={pendingQueryRef.current ?? query}
+        sourceSurface={effectiveSurface}
+        originalPagePath={originalPagePath ?? '/plan'}
+        redirectOnSkip={false}
+        onAfterSkip={handleSignupSkip}
+      />
+
       {/* Intake modal */}
       {showIntake && (
         <IntakeModal

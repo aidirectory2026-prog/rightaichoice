@@ -29,12 +29,32 @@ type Props = {
   open: boolean
   onClose: () => void
   typedGoal: string
-  sourceSurface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage'
-  /** Called after Skip persist completes, before router.push. */
+  sourceSurface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
+  /** Called after Skip persist completes, before any internal navigation. */
   onAfterSkip?: () => void
+  /**
+   * When false, the modal's Skip handler does NOT router.push to /plan —
+   * the parent (e.g. ProjectPlanner on /plan itself) takes over via
+   * onAfterSkip. Defaults to true for the homepage/CTA-popup callers.
+   */
+  redirectOnSkip?: boolean
+  /**
+   * Original page the user was on when they entered the funnel — used as
+   * plan_intents.source_path so attribution survives the OAuth round-trip
+   * and the /plan landing. Falls back to window.location.pathname.
+   */
+  originalPagePath?: string
 }
 
-export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAfterSkip }: Props) {
+export function PlanSignupModal({
+  open,
+  onClose,
+  typedGoal,
+  sourceSurface,
+  onAfterSkip,
+  redirectOnSkip = true,
+  originalPagePath,
+}: Props) {
   const router = useRouter()
   const shownFiredRef = useRef(false)
 
@@ -67,8 +87,11 @@ export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAft
 
   // Capture the page the user was on BEFORE any OAuth navigation. Used by
   // both branches so plan_intents.source_path reflects the original CTA-click
-  // page even when the OAuth round-trip rewrites Referer.
-  function currentPagePath(): string {
+  // page even when the OAuth round-trip rewrites Referer. If the parent
+  // already knows the original page (e.g. ProjectPlanner read ?from= from
+  // the URL), prefer that — otherwise fall back to window.location.
+  function effectivePagePath(): string {
+    if (originalPagePath) return originalPagePath
     if (typeof window === 'undefined') return ''
     return window.location.pathname || ''
   }
@@ -77,7 +100,7 @@ export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAft
     analytics.planSignupModalOAuthClicked({ provider })
     // Stash goal + original page so auth-provider can persist them after
     // the OAuth round-trip with full provenance intact.
-    if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface, currentPagePath())
+    if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
     sessionStorage.setItem('plan_signup_provider', provider)
 
     const fd = new FormData()
@@ -93,12 +116,16 @@ export function PlanSignupModal({ open, onClose, typedGoal, sourceSurface, onAft
         typed_goal: typedGoal,
         source_surface: sourceSurface,
         signup_outcome: 'skipped',
-        page_path: currentPagePath(),
+        page_path: effectivePagePath(),
       })
     }
     onAfterSkip?.()
     onClose()
-    router.push(nextUrl())
+    // When invoked from the /plan ProjectPlanner the parent continues the
+    // submit flow in onAfterSkip — no navigation needed. When invoked from
+    // a CTA popup (homepage hero, etc.) we still send the user to /plan
+    // with their typed goal pre-filled.
+    if (redirectOnSkip) router.push(nextUrl())
   }
 
   return (

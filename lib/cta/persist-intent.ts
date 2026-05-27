@@ -16,7 +16,7 @@
 
 import { analytics, getMixpanelDistinctId } from '@/lib/analytics'
 
-type Surface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage'
+type Surface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
 type Outcome = 'completed_google' | 'completed_linkedin' | 'skipped' | 'unknown'
 
 const SESSION_KEY = 'plan_intent_pending'

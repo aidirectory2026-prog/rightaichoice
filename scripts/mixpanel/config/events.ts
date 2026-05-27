@@ -493,7 +493,7 @@ export const EVENTS: EventDef[] = [
     firesOn: 'Sticky bar, inline card, homepage hero, navbar.',
     whyItMatters: 'Numerator for funnel; per-surface attribution for the planner.',
     properties: [
-      { name: 'surface', type: 'string', description: 'sticky_bar | inline_card | navbar | homepage.' },
+      { name: 'surface', type: 'string', description: 'sticky_bar | inline_card | navbar | homepage | plan_page.' },
       { name: 'page_path', type: 'string', description: 'Page the click originated on.' },
     ],
   },

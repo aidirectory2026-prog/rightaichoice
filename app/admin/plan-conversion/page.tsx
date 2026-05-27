@@ -133,7 +133,7 @@ export default async function PlanConversionPage({ searchParams }: { searchParam
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold text-zinc-200">Per-surface conversion</h2>
         <p className="mb-2 text-xs text-zinc-500">
-          Which CTA surface (homepage hero / sticky bar / inline card / navbar) actually pulls clicks + signups.
+          Which CTA surface (homepage hero / sticky bar / inline card / navbar / plan_page) actually pulls clicks + signups. <em>plan_page</em> = goal typed directly on /plan without arriving via an upstream CTA.
         </p>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 overflow-hidden">
           <table className="w-full text-sm">

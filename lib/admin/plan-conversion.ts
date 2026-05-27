@@ -73,7 +73,7 @@ export async function getPlanFunnel(sel: RangeSelection): Promise<FunnelStep[]> 
 /** Per-surface impressions vs clicks vs signups (computed from event props). */
 export async function getSurfaceBreakdown(sel: RangeSelection): Promise<SurfaceStat[]> {
   const db = getAdminClient()
-  const surfaces = ['sticky_bar', 'inline_card', 'navbar', 'homepage'] as const
+  const surfaces = ['sticky_bar', 'inline_card', 'navbar', 'homepage', 'plan_page'] as const
   const out: SurfaceStat[] = []
   for (const surface of surfaces) {
     const [impr, click, sig] = await Promise.all([
