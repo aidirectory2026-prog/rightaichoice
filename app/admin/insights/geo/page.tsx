@@ -1,5 +1,7 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { BigNumber, Card, EmptyState, RangePicker, countryFlag, fmt, parseDays } from '../_ui/primitives'
+import { BigNumber, Card, EmptyState, countryFlag, fmt } from '../_ui/primitives'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -96,9 +98,10 @@ async function getUtms(days: number): Promise<UtmRow[]> {
     .slice(0, 20)
 }
 
-export default async function GeoPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+export default async function GeoPage({ searchParams }: { searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string }> }) {
   const sp = await searchParams
-  const days = parseDays(sp.days, 7)
+  const sel = parseRange(sp)
+  const days = sel.days
 
   const [geo, referrers, utms] = await Promise.all([
     getGeo(days),
@@ -118,7 +121,7 @@ export default async function GeoPage({ searchParams }: { searchParams: Promise<
           <h2 className="text-lg font-semibold text-white">Where visitors come from</h2>
           <p className="text-xs text-zinc-500 mt-0.5">Country, city, referrer host, and UTM source.</p>
         </div>
-        <RangePicker current={days} basePath="/admin/insights/geo" />
+        <RangePicker active={sel.key} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

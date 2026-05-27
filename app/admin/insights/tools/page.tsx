@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { ArrowUpRight, ExternalLink, Search } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { BigNumber, Card, EmptyState, RangePicker, fmt, parseDays, relativeTime } from '../_ui/primitives'
+import { BigNumber, Card, EmptyState, fmt, relativeTime } from '../_ui/primitives'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -55,10 +57,11 @@ function viewsBgClass(views: number, max: number): string {
 export default async function ToolsHeatmap({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; q?: string }>
+  searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string; q?: string }>
 }) {
   const sp = await searchParams
-  const days = parseDays(sp.days, 7)
+  const sel = parseRange(sp)
+  const days = sel.days
   const q = (sp.q ?? '').trim()
   const rows = await getHeatmap(days, q)
 
@@ -87,7 +90,7 @@ export default async function ToolsHeatmap({
             />
             <input type="hidden" name="days" value={days} />
           </form>
-          <RangePicker current={days} basePath="/admin/insights/tools" />
+          <RangePicker active={sel.key} />
         </div>
       </div>
 

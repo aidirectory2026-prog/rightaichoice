@@ -1,5 +1,7 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { BigNumber, Card, EmptyState, RangePicker, fmt, parseDays, pct } from '../_ui/primitives'
+import { BigNumber, Card, EmptyState, fmt, pct } from '../_ui/primitives'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -85,9 +87,10 @@ async function getBrowsersAndOs(days: number): Promise<{ browsers: BrowserRow[];
   }
 }
 
-export default async function DevicesPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+export default async function DevicesPage({ searchParams }: { searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string }> }) {
   const sp = await searchParams
-  const days = parseDays(sp.days, 7)
+  const sel = parseRange(sp)
+  const days = sel.days
 
   const [devices, { browsers, oses }] = await Promise.all([
     getDevices(days),
@@ -113,7 +116,7 @@ export default async function DevicesPage({ searchParams }: { searchParams: Prom
           <h2 className="text-lg font-semibold text-white">Devices, browsers, ad-block</h2>
           <p className="text-xs text-zinc-500 mt-0.5">Bucket counts from user_agent + Vercel device-type header.</p>
         </div>
-        <RangePicker current={days} basePath="/admin/insights/devices" />
+        <RangePicker active={sel.key} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

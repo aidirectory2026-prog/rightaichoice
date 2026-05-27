@@ -50,6 +50,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Link href="/admin/tier1-review" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Tier-1
                 </Link>
+                <Link href="/admin/data-audit" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                  Audit
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">

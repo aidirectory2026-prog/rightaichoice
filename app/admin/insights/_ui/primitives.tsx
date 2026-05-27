@@ -80,6 +80,12 @@ export function BigNumber({
   )
 }
 
+/**
+ * Legacy days-only picker, kept for backwards compat. New code should use
+ * `<UnifiedRangePicker />` (re-exported from components/admin/range-picker)
+ * which supports Today / Yesterday / 7d / 14d / 30d / 90d / WTD / MTD /
+ * Custom calendar — all URL-driven.
+ */
 export function RangePicker({
   current, basePath, includeBots,
 }: {
@@ -101,7 +107,7 @@ export function RangePicker({
               : 'text-zinc-400 hover:text-white'
           }`}
         >
-          {w === 1 ? '24h' : `${w}d`}
+          {w === 1 ? 'Today (24h)' : `${w}d`}
         </Link>
       ))}
     </div>

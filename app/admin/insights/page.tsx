@@ -4,6 +4,8 @@
 
 import Link from 'next/link'
 import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
+import { RangePicker as UnifiedRangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 import {
   type DayWindow,
   getBotShare,
@@ -31,13 +33,6 @@ import {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Insights — Admin' }
-
-const WINDOWS: { value: DayWindow; label: string }[] = [
-  { value: 1, label: '24h' },
-  { value: 7, label: '7d' },
-  { value: 30, label: '30d' },
-  { value: 90, label: '90d' },
-]
 
 function fmt(n: number): string {
   if (!Number.isFinite(n)) return '0'
@@ -184,11 +179,14 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
 export default async function InsightsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; include_bots?: string }>
+  searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string; include_bots?: string }>
 }) {
   const sp = await searchParams
-  const requested = Number(sp.days ?? '7') as DayWindow
-  const days: DayWindow = ([1, 7, 30, 90] as DayWindow[]).includes(requested) ? requested : 7
+  const sel = parseRange(sp)
+  // RPCs take a literal day count; map sel.days (1/7/14/30/90/etc) to the
+  // nearest legacy window so existing RPC contracts hold.
+  const candidate = [1, 7, 30, 90].includes(sel.days) ? sel.days : (sel.days <= 7 ? 7 : sel.days <= 30 ? 30 : 90)
+  const days: DayWindow = candidate as DayWindow
   const includeBots = sp.include_bots === '1'
 
   const [
@@ -261,19 +259,7 @@ export default async function InsightsPage({
             <Bot className="h-3 w-3" />
             {includeBots ? 'Including bots' : 'Humans only'}
           </Link>
-          <div className="flex gap-1">
-            {WINDOWS.map((w) => (
-              <Link
-                key={w.value}
-                href={`/admin/insights${qs({ days: w.value, include_bots: includeBots })}`}
-                className={`rounded px-2.5 py-1 text-xs font-medium ${
-                  w.value === days ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800' : 'text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-                }`}
-              >
-                {w.label}
-              </Link>
-            ))}
-          </div>
+          <UnifiedRangePicker active={sel.key} />
         </div>
       </div>
 

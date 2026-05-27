@@ -1,5 +1,7 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { BigNumber, Card, EmptyState, RangePicker, fmt, parseDays, pct } from '../_ui/primitives'
+import { BigNumber, Card, EmptyState, fmt, pct } from '../_ui/primitives'
+import { RangePicker } from '@/components/admin/range-picker'
+import { parseRange } from '@/lib/admin/range'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -50,10 +52,11 @@ async function getFilterOptions(days: number): Promise<{ countries: string[]; de
 export default async function FunnelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; country?: string; device?: string }>
+  searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string; country?: string; device?: string }>
 }) {
   const sp = await searchParams
-  const days = parseDays(sp.days, 7)
+  const sel = parseRange(sp)
+  const days = sel.days
   const country = sp.country?.trim() || null
   const device = sp.device?.trim() || null
 
@@ -75,7 +78,7 @@ export default async function FunnelPage({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <FilterForm days={days} country={country} device={device} options={options} />
-          <RangePicker current={days} basePath="/admin/insights/funnel" />
+          <RangePicker active={sel.key} />
         </div>
       </div>
 
