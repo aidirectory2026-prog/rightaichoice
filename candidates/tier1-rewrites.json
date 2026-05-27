@@ -1,20 +1,16 @@
 {
-  "generatedAt": "2026-05-27T09:28:01.509Z",
+  "generatedAt": "2026-05-27T09:36:46.003Z",
   "sourceFile": "candidates/tier1-candidates.json",
   "totals": {
-    "processed": 100,
-    "newSucceeded": 98,
-    "newFailed": 2,
-    "totalInOutput": 98
+    "processed": 2,
+    "newSucceeded": 1,
+    "newFailed": 1,
+    "totalInOutput": 99
   },
   "failures": [
     {
-      "page": "/tools/stripe-radar",
-      "error": "DeepSeek output not valid JSON: Expected ',' or '}' after property value in JSON at position 136 (line 5 column 39)"
-    },
-    {
       "page": "/tools/multion",
-      "error": "DeepSeek output not valid JSON: Expected ':' after property name in JSON at position 99 (line 5 column 19)"
+      "error": "DeepSeek output not valid JSON: Expected ':' after property name in JSON at position 122 (line 5 column 19)"
     }
   ],
   "rewrites": [
@@ -137,6 +133,30 @@
         }
       ],
       "generatedAt": "2026-05-27T09:27:03.475Z"
+    },
+    {
+      "page": "/tools/stripe-radar",
+      "bucket": "1C",
+      "currentTitle": "Stripe Radar: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 26.57,
+      "totalImpressions": 58,
+      "totalClicks": 0,
+      "topQuery": "stripe radar",
+      "suggestions": [
+        {
+          "title": "Stripe Radar Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Leads with the top query 'Stripe Radar pricing' and includes alternatives."
+        },
+        {
+          "title": "Radar for Fraud Teams: Pricing in 2026 | RightAIChoice",
+          "rationale": "Matches the high-volume query 'radar for fraud teams pricing' exactly."
+        },
+        {
+          "title": "Stripe Radar: Features, Pricing & More 2026 | RightAIChoice",
+          "rationale": "Broadens appeal by highlighting features alongside pricing."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:36:45.723Z"
     },
     {
       "page": "/blog/how-much-do-ai-coding-assistants-cost-2026-real-usage-math",
