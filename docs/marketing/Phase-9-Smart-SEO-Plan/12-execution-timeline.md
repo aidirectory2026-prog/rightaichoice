@@ -73,7 +73,7 @@ The full priority order from the README, expanded:
 
 - Push next 20 Tier-1 title rewrites (cumulative 50)
 - Ship `<RelatedContent>` widget; deploy across tools template
-- **Build first stack pillar page** (`/stacks/ai-stack-for-early-stage-saas`) per doc 13
+- **Build first stack pillar page** (`/stacks/ai-stack-for-early-stage-saas`) per doc 13 — **shipped 2026-05-28**. Uses new optional `pillar` field on `StackConfig`; renders editorial above the existing stages template, emits Article + FAQPage JSON-LD. Stages: Cursor → Claude API → Intercom Fin → Apollo → Claude → PostHog → Canva → Notion AI. Next pillars queued: `/stacks/ai-stack-for-content-creators`, `/stacks/ai-stack-for-solo-developers`, `/stacks/ai-stack-for-marketing-teams`.
 
 ### Day 3
 

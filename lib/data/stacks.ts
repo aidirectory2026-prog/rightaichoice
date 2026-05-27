@@ -4,6 +4,9 @@
  * Tool slugs link to /tools/[slug] pages where they exist.
  */
 
+import type { ReactNode } from 'react'
+import { aiStackForEarlyStageSaas } from './stack-pillars/ai-stack-for-early-stage-saas'
+
 export type StackTool = {
   name: string
   slug: string
@@ -18,6 +21,37 @@ export type StackStage = {
   bestPick: StackTool
   alternatives: StackTool[]
   costEstimate: string
+}
+
+/**
+ * Phase 9 — optional editorial pillar layer on a stack page.
+ *
+ * When present, /stacks/[slug] renders the pillar editorial ABOVE the
+ * stages template and emits Article + FAQPage JSON-LD. Pillar pages
+ * are the decision-engine crystallized: 1,200-2,000 words of hand-
+ * written guidance, decision rules, FAQ. Existing stacks without a
+ * pillar render unchanged.
+ */
+export type StackPillarFaq = {
+  question: string
+  answer: string
+}
+
+export type StackPillar = {
+  /** SEO <title> override. Bypass the templated `title` field. */
+  metaTitle: string
+  /** Meta description override (150–160 chars, includes primary keyword). */
+  metaDescription: string
+  /** ISO date for Article schema datePublished. */
+  publishedISO: string
+  /** ISO date for Article schema dateModified — bump on every edit. */
+  lastReviewedISO: string
+  /** Human-readable "Last reviewed" label (e.g. "May 28, 2026"). */
+  lastReviewed: string
+  /** Long-form editorial intro rendered above the stages (TSX). */
+  intro: ReactNode
+  /** FAQ entries — emitted as FAQPage JSON-LD and rendered below stages. */
+  faqs: StackPillarFaq[]
 }
 
 export type StackConfig = {
@@ -37,6 +71,12 @@ export type StackConfig = {
    * and emit <meta name="robots" content="noindex,follow">.
    */
   noindex?: boolean
+  /**
+   * Phase 9 (2026-05-28) — optional editorial pillar. Stacks with a
+   * pillar are the decision-engine crystallized into a long-form
+   * editorial. See StackPillar above for the shape.
+   */
+  pillar?: StackPillar
 }
 
 export const STACKS: StackConfig[] = [
@@ -1901,6 +1941,9 @@ export const STACKS: StackConfig[] = [
     ],
     summary: { freePath: '$0/mo (Perplexity free)', paidPath: '$20–40/mo', skillLevel: 'Beginner', setupTime: '1 day' },
   },
+  // Phase 9 (2026-05-28) — first decision-engine pillar stack. Lives in
+  // a separate .tsx so the editorial intro can contain JSX.
+  aiStackForEarlyStageSaas,
 ]
 
 export function getStackBySlug(slug: string): StackConfig | undefined {

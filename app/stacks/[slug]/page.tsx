@@ -12,7 +12,18 @@ import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { STACKS, getStackBySlug } from '@/lib/data/stacks'
 import { createClient } from '@/lib/supabase/server'
-import { howToJsonLd, itemListJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import {
+  articleJsonLd,
+  breadcrumbJsonLd,
+  faqPageJsonLd,
+  howToJsonLd,
+  itemListJsonLd,
+  jsonLdScriptProps,
+} from '@/lib/seo/json-ld'
+import {
+  StackPillarFaqs,
+  StackPillarSection,
+} from '@/components/stacks/stack-pillar-section'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -27,20 +38,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const ogImage = `/api/og/stack?type=curated&slug=${slug}`
 
+  // Phase 9 (2026-05-28): pillar stacks override the templated meta with
+  // the hand-written editorial title/description so the SERP snippet
+  // reflects the long-form pillar framing instead of the generic
+  // "<title>". Non-pillar stacks unchanged.
+  const title = stack.pillar?.metaTitle ?? stack.title
+  const description = stack.pillar?.metaDescription ?? stack.description
+
   return {
-    title: stack.title,
-    description: stack.description,
+    title,
+    description,
     openGraph: {
-      title: stack.title,
-      description: stack.description,
+      title,
+      description,
       type: 'article',
       url: `https://rightaichoice.com/stacks/${slug}`,
       images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
-      title: stack.title,
-      description: stack.description,
+      title,
+      description,
       images: [ogImage],
     },
     ...(stack.noindex && { robots: { index: false, follow: true } }),
@@ -84,7 +102,24 @@ export default async function StackPage({ params }: Props) {
     { name: stack.title, url: `/stacks/${slug}` },
   ])
 
-  const jsonLd = [howTo, toolList, breadcrumbs]
+  const jsonLd: Record<string, unknown>[] = [howTo, toolList, breadcrumbs]
+
+  // Phase 9 (2026-05-28): pillar stacks emit Article + FAQPage JSON-LD
+  // so the page is eligible for AI Overview citation and FAQ-rich-result
+  // SERP treatment, on top of the existing HowTo + ItemList + Breadcrumb
+  // schema the template already carries.
+  if (stack.pillar) {
+    jsonLd.push(
+      articleJsonLd({
+        headline: stack.pillar.metaTitle,
+        description: stack.pillar.metaDescription,
+        url: `/stacks/${slug}`,
+        datePublished: stack.pillar.publishedISO,
+        dateModified: stack.pillar.lastReviewedISO,
+      }),
+      faqPageJsonLd(stack.pillar.faqs),
+    )
+  }
 
   return (
     <>
@@ -132,6 +167,11 @@ export default async function StackPage({ params }: Props) {
           </div>
         </section>
 
+        {/* Phase 9 (2026-05-28): pillar stacks render the long-form
+            editorial intro between the hero and the stages. Existing
+            non-pillar stacks skip this section entirely. */}
+        {stack.pillar && <StackPillarSection pillar={stack.pillar} />}
+
         {/* Content */}
         <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
@@ -151,6 +191,11 @@ export default async function StackPage({ params }: Props) {
             </div>
           </div>
         </section>
+
+        {/* Phase 9 (2026-05-28): pillar FAQ section. Renders below the
+            stages so users see the recommendations first, then the
+            "questions Google might ask" set. Schema lives in jsonLd above. */}
+        {stack.pillar && <StackPillarFaqs faqs={stack.pillar.faqs} />}
 
         {/* JSON-LD */}
         <script {...jsonLdScriptProps(jsonLd)} />

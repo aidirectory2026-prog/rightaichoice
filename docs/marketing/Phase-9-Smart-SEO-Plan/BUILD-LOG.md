@@ -4,6 +4,37 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — Pillar #1: AI Stack for Early-Stage SaaS (`/stacks/ai-stack-for-early-stage-saas`)
+
+**Trigger:** the first decision-engine "stack pillar" per doc 07. Distinct from `/stacks/launch-saas-mvp` (which is for no-coders building a SaaS for the first time) — this pillar targets early-stage SaaS COMPANIES choosing which AI tools to standardize on across product/eng/growth/ops. Higher commercial intent, harder query.
+
+**Approach:** extend `StackConfig` with an optional `pillar: StackPillar` field so any stack can opt into a long-form editorial layer rendered above the existing stages template. First pillar shipped at `/stacks/ai-stack-for-early-stage-saas` — 8-stage stack (engineering, foundation model, support, sales, content, analytics, design, ops) wrapped in ~1,400 words of hand-written editorial + 7-question FAQ. Existing stacks without a pillar render unchanged.
+
+### What shipped
+
+- **`lib/data/stacks.ts`** — added `StackPillar` type (metaTitle, metaDescription, publishedISO, lastReviewedISO, lastReviewed, intro: ReactNode, faqs[]) and optional `pillar` field on `StackConfig`. Type-only import of ReactNode keeps the file from needing `.tsx`.
+- **`lib/data/stack-pillars/ai-stack-for-early-stage-saas.tsx`** — the first pillar stack. Stages: Cursor (eng), Claude API (foundation model), Intercom Fin (support), Apollo (sales), Claude (content), PostHog (analytics), Canva (design), Notion AI (ops). Pillar covers: who this stack is for, how we picked (3 rules: own credit card, <$1k/mo for 4-person team, replaceable in a day), when to swap a pick out (5 scenarios), free path vs paid path math, why stages are in this order.
+- **`components/stacks/stack-pillar-section.tsx`** — `StackPillarSection` (byline + intro renderer, shown above stages) and `StackPillarFaqs` (semantic dl below stages).
+- **`app/stacks/[slug]/page.tsx`** — modified:
+  - `generateMetadata`: when `stack.pillar` exists, override title/description with `pillar.metaTitle` + `pillar.metaDescription`. Non-pillar stacks unchanged.
+  - Page body: render `<StackPillarSection>` between hero and stages when present; render `<StackPillarFaqs>` below stages; emit `articleJsonLd` + `faqPageJsonLd` alongside existing `howTo`, `toolList`, `breadcrumbs` schema.
+- All referenced tool slugs verified live in `tools` (replaced two non-existent slugs — vercel, figma — with gemini and midjourney respectively).
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | First decision-engine stack pillar — /stacks/ai-stack-for-early-stage-saas with full pillar layer + Article/FAQPage schema |
+
+### Next pillars (Day 4)
+
+Per doc 07 pillar table, next priority:
+1. `/stacks/ai-stack-for-content-creators`
+2. `/stacks/ai-stack-for-solo-developers`
+3. `/stacks/ai-stack-for-marketing-teams`
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — Cornerstone #1: AI Coding Tools (`/categories/code-development`)
 
 **Trigger:** doc 07 (internal linking) calls cornerstones the highest-leverage SEO work for a directory site. We had 30+ coding tools and 6 already-trafficked compares (cline-vs-aider-vs-continue at 778 views, openhands-vs-devin at 671) but no hub URL that concentrated authority on the broad query "best AI coding tools." `/categories/code-development` was a generic templated listing — h1 "Best Code & Development AI Tools", one sentence of intro, then a tool grid. Nothing to rank.
