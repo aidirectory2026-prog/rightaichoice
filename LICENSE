@@ -1,0 +1,36 @@
+Proprietary License
+
+Copyright (c) 2026 RightAIChoice. All Rights Reserved.
+
+This source code and all associated files (the "Software") are the
+proprietary and confidential property of RightAIChoice.
+
+The Software is published publicly for transparency and for use as a
+verifiable entity reference (schema.org sameAs) for the RightAIChoice
+brand. Public visibility does NOT grant any license to use, copy, modify,
+merge, publish, distribute, sublicense, sell, or create derivative works
+from the Software.
+
+You may:
+  - View the source code for educational or reference purposes.
+  - Submit issues or suggestions via the GitHub repository.
+
+You may NOT, without prior written permission from RightAIChoice:
+  - Copy, fork, or redistribute the Software or any substantial portion
+    of it.
+  - Use the Software, in whole or in part, to build a competing product
+    or service.
+  - Use the RightAIChoice name, logo, branding, or trade dress in any
+    derivative work.
+  - Train machine-learning models on the Software for commercial
+    purposes.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For licensing inquiries, contact: tanmayverma321@gmail.com

@@ -80,7 +80,14 @@ export function organizationJsonLd() {
       'https://x.com/rightaichoice',
       'https://twitter.com/rightaichoice',
       'https://www.linkedin.com/company/rightaichoice',
+      'https://github.com/aidirectory2026-prog/rightaichoice',
     ],
+    founder: {
+      '@type': 'Person',
+      name: 'Tanmay Verma',
+      url: 'https://www.linkedin.com/in/tanmayverma99',
+      sameAs: ['https://www.linkedin.com/in/tanmayverma99'],
+    },
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -132,6 +139,32 @@ export function decisionEngineServiceJsonLd() {
       price: '0',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
+    },
+  }
+}
+
+// ── Person: founder (root layout) ──────────────────────────────────
+//
+// Phase 9 (2026-05-27): emit a standalone Person entity for the founder,
+// linked to the Organization via `worksFor`. Two-entity binding (Org +
+// Person) gives Google a verifiable real human to anchor the brand to —
+// the single strongest entity-recognition signal for an early-stage site
+// that doesn't have a Wikipedia page yet. Both ends of the link
+// (Organization.founder + Person.worksFor) are intentional — Google reads
+// both directions when building the knowledge graph.
+
+export function founderPersonJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Tanmay Verma',
+    jobTitle: 'Founder',
+    url: 'https://www.linkedin.com/in/tanmayverma99',
+    sameAs: ['https://www.linkedin.com/in/tanmayverma99'],
+    worksFor: {
+      '@type': 'Organization',
+      name: 'RightAIChoice',
+      url: BASE_URL,
     },
   }
 }

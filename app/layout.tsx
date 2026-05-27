@@ -9,7 +9,7 @@ import { GlobalInteractionTracker } from "@/components/analytics/global-interact
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
-import { websiteJsonLd, organizationJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
+import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import "./globals.css";
 
 const inter = Inter({
@@ -96,11 +96,13 @@ export default async function RootLayout({
       className={`dark ${inter.variable} ${bricolage.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px] lg:pb-0">
-        {/* Phase 7F (2026-05-15): emit both Organization + WebSite as one
-            JSON-LD payload at the root so every page inherits the brand-
-            entity signal. Helps Google build the knowledge-panel entity
-            once authority builds. */}
-        <script {...jsonLdScriptProps([organizationJsonLd(), websiteJsonLd()])} />
+        {/* Phase 7F (2026-05-15) + Phase 9 (2026-05-27): emit Organization +
+            WebSite + founder Person as one JSON-LD payload at the root so
+            every page inherits the brand-entity signal. Two-entity binding
+            (Org + Person via worksFor / founder) is the strongest available
+            verification for an early-stage brand that doesn't yet have a
+            Wikipedia entry. */}
+        <script {...jsonLdScriptProps([organizationJsonLd(), websiteJsonLd(), founderPersonJsonLd()])} />
         <ClarityProvider />
         <MixpanelProvider>
           <GlobalInteractionTracker />
