@@ -1,6 +1,6 @@
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { ShieldCheck, Search, Filter, RefreshCw, FileText, Gift, Mail, Users } from 'lucide-react'
+import { ShieldCheck, Search, Filter, RefreshCw, FileText, Gift, Mail, Users, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { jsonLdScriptProps } from '@/lib/seo/json-ld'
 
@@ -131,6 +131,49 @@ export default function MethodologyPage() {
                 missing integration) are accepted; opinion edits are not.
               </li>
             </ul>
+          </section>
+
+          {/* (b.5) How editorial content is produced — model + human disclosure */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-emerald-400" />
+              How editorial content is produced
+            </h2>
+            <p className="text-zinc-400 leading-relaxed mb-3">
+              Editorial work on RightAIChoice is not written by a single model in one pass. Page titles, &ldquo;Our
+              Take&rdquo; verdicts, comparison framing, and the long-form Founder Review are drafted with a mixture of
+              best-in-class language models — Claude Opus 4.5, GPT Codex, and DeepSeek&apos;s strongest reasoning models
+              — and then reviewed by a human editor against an explicit quality rubric before anything ships.
+            </p>
+            <ul className="space-y-2 text-sm text-zinc-300 leading-relaxed list-disc pl-5 mb-3">
+              <li>
+                <strong className="text-white">Model mixture, not single-model output.</strong> Different models are
+                stronger at different tasks — pricing extraction, competitive positioning, voice and tone. Combining
+                them lets us cover the catalog at depth without resorting to scraped marketing copy or syndicated
+                listicles.
+              </li>
+              <li>
+                <strong className="text-white">Human review is the gate.</strong> A human editor reviews every draft
+                against an explicit rubric — factual accuracy, query-intent match, length, brand-suffix, no marketing
+                fluff — and is the layer that decides what actually publishes. Models propose; the editor disposes.
+              </li>
+              <li>
+                <strong className="text-white">Grounded in public sentiment.</strong> The same review pass incorporates
+                research and public sentiment from across the internet — Reddit threads, ProductHunt discussions, G2
+                reviews, X conversations, community forums — so the editorial position reflects what real practitioners
+                are saying, not just what vendors claim on their landing pages.
+              </li>
+              <li>
+                <strong className="text-white">One byline, full accountability.</strong> Tanmay Verma (Founder &amp;
+                Editor-in-Chief) is accountable for every published verdict regardless of which models contributed to
+                the draft. Errors flagged by readers are triaged within 72 hours.
+              </li>
+            </ul>
+            <p className="text-zinc-400 leading-relaxed">
+              This disclosure applies equally to the Founder Review feature, comparison pages, and every standalone
+              tool page. The combination is intentional: AI-assisted scale, human-owned judgment, and public-sentiment
+              grounding — each layer is doing work the other two cannot.
+            </p>
           </section>
 
           {/* (c) Affiliate disclosure */}

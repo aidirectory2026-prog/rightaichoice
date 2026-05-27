@@ -142,6 +142,18 @@ export default function AboutPage() {
               <li><strong className="text-zinc-300">AI Panel</strong> — On-demand AI analysis that synthesizes community reviews, features, and competitive positioning.</li>
               <li><strong className="text-zinc-300">FAQs</strong> — Auto-generated from real user pain points surfaced across Reddit, G2, ProductHunt, and community forums.</li>
             </ul>
+            <p className="text-zinc-400 leading-relaxed mt-4">
+              Editorial drafts — including page titles, &ldquo;Our Take&rdquo; verdicts, and the Founder Review long-form
+              — are produced with a mixture of best-in-class language models (Claude Opus 4.5, GPT Codex, and DeepSeek)
+              and then reviewed by a human editor against an explicit quality rubric before anything ships. Drafts are
+              also informed by research and public sentiment gathered from across the internet — Reddit, ProductHunt,
+              G2, and community forums. The human editor, not the models, is accountable for what publishes. For the
+              full process, see our{' '}
+              <Link href="/methodology" className="text-emerald-400 hover:text-emerald-300">
+                methodology
+              </Link>
+              .
+            </p>
           </section>
 
           {/* Community Model */}
