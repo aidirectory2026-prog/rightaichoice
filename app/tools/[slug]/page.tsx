@@ -66,6 +66,7 @@ import { ViewTracker } from '@/components/analytics/view-tracker'
 import { LatestUpdatesSection } from '@/components/tools/latest-updates-section'
 import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
 import { buildToolPageMeta } from '@/lib/seo/metadata'
+import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
 
@@ -99,8 +100,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     slug,
   )
 
+  // Phase 9 Tier-1: per-page title overrides (CTR-rewrite experiments).
+  // Override uses `title.absolute` to bypass the root layout's template
+  // suffix — the prompt already includes "| RightAIChoice" in suggestions.
+  const override = await getTitleOverride(`/tools/${slug}`)
+  const titleField = override ? { absolute: override } : base.title
+
   return {
     ...base,
+    title: titleField,
     keywords: [
       tool.name,
       `${tool.name} pricing`,

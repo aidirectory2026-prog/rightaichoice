@@ -10,6 +10,7 @@ import { mdxComponents } from '@/components/blog/mdx-components'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
+import { getTitleOverride } from '@/lib/seo/title-overrides'
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // long-form content. Falls back to publishedAt when an updated_at isn't
   // present in frontmatter.
   const modifiedTime = meta.updatedAt ?? meta.publishedAt
+  const override = await getTitleOverride(`/blog/${slug}`)
   return {
-    title: meta.title,
+    title: override ? { absolute: override } : meta.title,
     description: meta.description,
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {

@@ -16,6 +16,7 @@ import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comp
 import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 import { buildComparePageMeta } from '@/lib/seo/metadata'
+import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
 import { ViewTracker } from '@/components/analytics/view-tracker'
@@ -55,11 +56,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
   const names = tools.map((t) => (t as { name: string }).name)
-  return buildComparePageMeta(names, slug, {
+  const meta = buildComparePageMeta(names, slug, {
     publishedAt: (comparison as { published_at?: string | null }).published_at ?? null,
     lastReviewedAt:
       (comparison as { last_reviewed_at?: string | null }).last_reviewed_at ?? null,
   })
+
+  // Phase 9 Tier-1: per-page title overrides for CTR rewrites.
+  const override = await getTitleOverride(`/compare/${slug}`)
+  if (override) {
+    return { ...meta, title: { absolute: override } }
+  }
+  return meta
 }
 
 export default async function ComparisonSlugPage({ params }: Props) {

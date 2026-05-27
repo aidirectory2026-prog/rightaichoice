@@ -71,7 +71,9 @@
     "llms:full:dry": "tsx --env-file=.env.local scripts/build-llms-full.ts --dry",
     "llms:full": "tsx --env-file=.env.local scripts/build-llms-full.ts",
     "tier1:candidates:dry": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts --dry --no-titles",
-    "tier1:candidates": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts"
+    "tier1:candidates": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts",
+    "tier1:rewrite:dry": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts --dry-run",
+    "tier1:rewrite": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

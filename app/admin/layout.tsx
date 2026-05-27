@@ -47,6 +47,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Link href="/admin/authority" className="text-sm text-zinc-400 hover:text-white transition-colors">
                   Authority
                 </Link>
+                <Link href="/admin/tier1-review" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                  Tier-1
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">

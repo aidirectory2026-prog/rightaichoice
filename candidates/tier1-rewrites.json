@@ -1,0 +1,2374 @@
+{
+  "generatedAt": "2026-05-27T09:28:01.509Z",
+  "sourceFile": "candidates/tier1-candidates.json",
+  "totals": {
+    "processed": 100,
+    "newSucceeded": 98,
+    "newFailed": 2,
+    "totalInOutput": 98
+  },
+  "failures": [
+    {
+      "page": "/tools/stripe-radar",
+      "error": "DeepSeek output not valid JSON: Expected ',' or '}' after property value in JSON at position 136 (line 5 column 39)"
+    },
+    {
+      "page": "/tools/multion",
+      "error": "DeepSeek output not valid JSON: Expected ':' after property name in JSON at position 99 (line 5 column 19)"
+    }
+  ],
+  "rewrites": [
+    {
+      "page": "/compare/duolingo-vs-loora",
+      "bucket": "1A",
+      "currentTitle": "Duolingo vs Loora — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 8.05,
+      "totalImpressions": 223,
+      "totalClicks": 1,
+      "topQuery": "duolingo vs loora",
+      "suggestions": [
+        {
+          "title": "Duolingo vs Loora: Which Language App Wins? | RightAIChoice",
+          "rationale": "Front-loads query intent and promises a winner to boost CTR."
+        },
+        {
+          "title": "Duolingo vs Loora: Side-by-Side Comparison 2026 | RightAIChoice",
+          "rationale": "Adds year and retains side-by-side for comparison searchers."
+        },
+        {
+          "title": "Duolingo vs Loora: Which One Actually Works? | RightAIChoice",
+          "rationale": "Appeals to effectiveness, a key concern for language learners."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:00.881Z"
+    },
+    {
+      "page": "/compare/duolingo-vs-talkpal",
+      "bucket": "1A",
+      "currentTitle": "Duolingo vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 7.06,
+      "totalImpressions": 164,
+      "totalClicks": 0,
+      "topQuery": "duolingo vs talkpal",
+      "suggestions": [
+        {
+          "title": "Duolingo vs TalkPal (2026): Which Is Better? | RightAIChoice",
+          "rationale": "Question format directly matches query intent and signals a verdict."
+        },
+        {
+          "title": "Duolingo vs TalkPal: Side-by-Side Comparison (2026) | RightAIChoice",
+          "rationale": "Keeps familiar structure but trims length and adds year for clarity."
+        },
+        {
+          "title": "Duolingo vs TalkPal: Features, Pricing & More (2026) | RightAIChoice",
+          "rationale": "Includes specific comparison points to attract users comparing value."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:00.503Z"
+    },
+    {
+      "page": "/compare/openhands-vs-devin",
+      "bucket": "1A",
+      "currentTitle": "OpenHands vs Devin — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 7.83,
+      "totalImpressions": 156,
+      "totalClicks": 1,
+      "topQuery": "\"devin chat\" cli",
+      "suggestions": [
+        {
+          "title": "OpenHands vs Devin: CLI Chat & Features (2026) | RightAIChoice",
+          "rationale": "Front-loads top query keywords like 'CLI chat' for higher click-through."
+        },
+        {
+          "title": "Devin vs OpenHands: Which AI Agent Wins? (2026) | RightAIChoice",
+          "rationale": "Puts viral name 'Devin' first and asks a compelling comparative question."
+        },
+        {
+          "title": "OpenHands vs Devin vs Manus: AI Agent Showdown (2026) | RightAIChoice",
+          "rationale": "Expands comparison to include trending third tool 'Manus' for broader appeal."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:01.074Z"
+    },
+    {
+      "page": "/blog/ai-coding-assistant-leaderboard-swe-bench-humaneval-2026",
+      "bucket": "1A",
+      "currentTitle": "AI Coding Assistant Leaderboard 2026: SWE-bench, HumanEval, and What the Numbers Actually Mean | RightAIChoice",
+      "weightedPosition": 5.99,
+      "totalImpressions": 156,
+      "totalClicks": 0,
+      "topQuery": "aider polyglot benchmark leaderboard 2026",
+      "suggestions": [
+        {
+          "title": "SWE-bench & HumanEval 2026: Top AI Coding Assistants Ranked | RightAIChoice",
+          "rationale": "Front-loads benchmark names to match query intent for quick scanning."
+        },
+        {
+          "title": "2026 AI Coding Leaderboard: SWE-bench, HumanEval & Best Models | RightAIChoice",
+          "rationale": "Places year first and includes 'Best Models' to promise actionable comparisons."
+        },
+        {
+          "title": "AI Coding Assistant Benchmarks 2026: SWE-bench & HumanEval Compared | RightAIChoice",
+          "rationale": "Emphasizes 'benchmarks' to align with top query keywords and clarifies comparison."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:01.156Z"
+    },
+    {
+      "page": "/compare/expensify-vs-wave",
+      "bucket": "1B",
+      "currentTitle": "Expensify vs Wave — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 17.17,
+      "totalImpressions": 64,
+      "totalClicks": 0,
+      "topQuery": "expensify vs wave",
+      "suggestions": [
+        {
+          "title": "Expensify vs Wave: 2026 Pricing & Review",
+          "rationale": "Directly addresses the pricing and review intent for the exact query."
+        },
+        {
+          "title": "Expensify vs Wave: Which Is Best for You?",
+          "rationale": "Uses a choice-driven hook that increases click-through from comparison seekers."
+        },
+        {
+          "title": "Expensify vs Wave Comparison: 2026 Breakdown",
+          "rationale": "Emphasizes a detailed breakdown, appealing to users wanting comprehensive info."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:03.475Z"
+    },
+    {
+      "page": "/blog/how-much-do-ai-coding-assistants-cost-2026-real-usage-math",
+      "bucket": "1A",
+      "currentTitle": "How Much Do AI Coding Assistants Really Cost in 2026? The Real-Usage Math | RightAIChoice",
+      "weightedPosition": 7.91,
+      "totalImpressions": 56,
+      "totalClicks": 0,
+      "topQuery": "aider pricing 2026",
+      "suggestions": [
+        {
+          "title": "AI Coding Assistant Pricing 2026: Real Cost Per Dev | RightAIChoice",
+          "rationale": "Front-loads the core query phrase and adds specificity with per-dev cost."
+        },
+        {
+          "title": "Cline vs Aider Pricing 2026: Real Usage Costs Compared | RightAIChoice",
+          "rationale": "Targets top brand queries with a direct comparison angle."
+        },
+        {
+          "title": "AI Coding Assistant Cost 2026: Usage-Based Price Math | RightAIChoice",
+          "rationale": "Highlights the unique value of usage-based math to address zero-click visitors."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:03.925Z"
+    },
+    {
+      "page": "/compare/dify-vs-langflow-vs-fastgpt",
+      "bucket": "1A",
+      "currentTitle": "Dify vs Langflow vs FastGPT — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 9.22,
+      "totalImpressions": 51,
+      "totalClicks": 0,
+      "topQuery": "fastgpt vs dify",
+      "suggestions": [
+        {
+          "title": "FastGPT vs Dify vs Langflow: 2026 Comparison | RightAIChoice",
+          "rationale": "Front-loads top query 'fastgpt vs dify' for instant relevance."
+        },
+        {
+          "title": "Dify vs Langflow vs FastGPT: Which Is Best? (2026) | RightAIChoice",
+          "rationale": "Promises a definitive answer, increasing clickworthiness."
+        },
+        {
+          "title": "Compare Dify, Langflow & FastGPT for 2026 | RightAIChoice",
+          "rationale": "Uses 'compare' to match comparison intent and includes year."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:03.481Z"
+    },
+    {
+      "page": "/tools/veedio",
+      "bucket": "1C",
+      "currentTitle": "VEED.IO: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 21.29,
+      "totalImpressions": 42,
+      "totalClicks": 0,
+      "topQuery": "veedio",
+      "suggestions": [
+        {
+          "title": "VEED.IO: Pricing, Features & Alternatives | RightAIChoice",
+          "rationale": "Drops year to fit query more cleanly, improving relevance for 'veedio' searches."
+        },
+        {
+          "title": "VEED.IO Review: Pricing, Features & Alternatives in 2026",
+          "rationale": "Adds 'Review' to match user intent for tool evaluation pages."
+        },
+        {
+          "title": "VEED.IO Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Leads with pricing, a top search motivator, while staying concise."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:05.527Z"
+    },
+    {
+      "page": "/blog/open-source-ai-coding-agents-2026-self-hosting-guide",
+      "bucket": "1A",
+      "currentTitle": "Open-Source AI Coding Agents in 2026: The Self-Hosting Guide (Cline, Aider, Continue, OpenHands) | RightAIChoice",
+      "weightedPosition": 7.55,
+      "totalImpressions": 42,
+      "totalClicks": 0,
+      "topQuery": "openhands local llm coding agent documentation 2026",
+      "suggestions": [
+        {
+          "title": "Self-Host AI Coding Agents: OpenHands, Cline, Aider 2026 | RightAIChoice",
+          "rationale": "Front-loads query intent and lists tools mentioned in top queries."
+        },
+        {
+          "title": "Open-Source AI Coding Agents 2026: Self-Hosting Guide (4 Tools) | RightAIChoice",
+          "rationale": "Adds specificity with '4 Tools' to increase perceived value and click-through."
+        },
+        {
+          "title": "Run AI Coding Agents Locally: Open-Source Guide 2026 | RightAIChoice",
+          "rationale": "Targets 'local' and 'self-hosting' intent of top queries for higher relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:06.008Z"
+    },
+    {
+      "page": "/compare/cline-vs-aider-vs-continue",
+      "bucket": "1B",
+      "currentTitle": "Cline vs Aider vs Continue — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 19.08,
+      "totalImpressions": 39,
+      "totalClicks": 4,
+      "topQuery": "continue vs cline",
+      "suggestions": [
+        {
+          "title": "Cline vs Aider vs Continue: Best AI Coding Tool? | RightAIChoice",
+          "rationale": "Matches high-intent 'best' queries and fits top search phrases."
+        },
+        {
+          "title": "Continue vs Cline vs Aider: 2026 Comparison | RightAIChoice",
+          "rationale": "Leads with top query 'continue vs cline' for higher relevance."
+        },
+        {
+          "title": "Aider vs Cline vs Continue: Which AI Agent Wins? | RightAIChoice",
+          "rationale": "Targets 'vs' queries with a decisive angle to boost clicks."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:06.363Z"
+    },
+    {
+      "page": "/tools/autodesk-forma",
+      "bucket": "1B",
+      "currentTitle": "Autodesk Forma: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 12.11,
+      "totalImpressions": 28,
+      "totalClicks": 0,
+      "topQuery": "autodesk forma features pricing pros cons",
+      "suggestions": [
+        {
+          "title": "Autodesk Forma Pricing 2026: Cost, Plans & Pros/Cons | RightAIChoice",
+          "rationale": "Matches top query intent exactly and pushes pricing first."
+        },
+        {
+          "title": "Autodesk Forma: Free vs Paid Features & Pricing in 2026 | RightAIChoice",
+          "rationale": "Aligns with free vs paid query and shows feature comparison."
+        },
+        {
+          "title": "Autodesk Forma: Pros, Cons & Official Pricing 2026 | RightAIChoice",
+          "rationale": "Covers pros, cons and pricing search terms directly."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:06.056Z"
+    },
+    {
+      "page": "/tools/tavus",
+      "bucket": "1C",
+      "currentTitle": "Tavus: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 24.08,
+      "totalImpressions": 24,
+      "totalClicks": 0,
+      "topQuery": "tavus api",
+      "suggestions": [
+        {
+          "title": "Tavus API: Pricing & Integration Guide 2026 | RightAIChoice",
+          "rationale": "Targets top query 'tavus api' with clear integration focus to boost relevance."
+        },
+        {
+          "title": "Tavus Platform Integration & Features in 2026 | RightAIChoice",
+          "rationale": "Directly addresses second top query 'tavus platform integration' for higher relevance."
+        },
+        {
+          "title": "Tavus Pricing & API Integration Options 2026 | RightAIChoice",
+          "rationale": "Combines top queries into one title, covering pricing and integration needs."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:08.092Z"
+    },
+    {
+      "page": "/compare/clay-vs-phantombuster",
+      "bucket": "1A",
+      "currentTitle": "Clay vs PhantomBuster — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 6.58,
+      "totalImpressions": 24,
+      "totalClicks": 0,
+      "topQuery": "“is phantombuster safe to use on linkedin?”",
+      "suggestions": [
+        {
+          "title": "Clay vs PhantomBuster for LinkedIn: 2026 Guide | RightAIChoice",
+          "rationale": "Targets the safe-for-LinkedIn query and frames the comparison as a guide."
+        },
+        {
+          "title": "Is Clay Better Than PhantomBuster? (2026) | RightAIChoice",
+          "rationale": "Matches the exact phrase 'is clay better than phantombuster' for higher CTR."
+        },
+        {
+          "title": "Clay vs PhantomBuster: Which is Safer for LinkedIn? | RightAIChoice",
+          "rationale": "Directly answers the top query about safety on LinkedIn."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:08.788Z"
+    },
+    {
+      "page": "/tools/freshbooks",
+      "bucket": "1C",
+      "currentTitle": "FreshBooks: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 25.22,
+      "totalImpressions": 23,
+      "totalClicks": 0,
+      "topQuery": "freshbooks buy now pay later bnpl",
+      "suggestions": [
+        {
+          "title": "FreshBooks Features, Pricing & EU Alternatives | RightAIChoice",
+          "rationale": "Matches 'freshbooks europe' query by adding EU focus to standard features."
+        },
+        {
+          "title": "FreshBooks Pricing & BNPL Options in 2026 | RightAIChoice",
+          "rationale": "Directly addresses 'freshbooks buy now pay later bnpl' query with BNPL mention."
+        },
+        {
+          "title": "FreshBooks: Pricing, Features & Buy Now Pay Later | RightAIChoice",
+          "rationale": "Balances common searches and includes BNPL differentiator for click improvement."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:09.123Z"
+    },
+    {
+      "page": "/compare/moises-vs-suno",
+      "bucket": "1A",
+      "currentTitle": "Moises vs Suno — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 8.57,
+      "totalImpressions": 21,
+      "totalClicks": 0,
+      "topQuery": "moises vs suno",
+      "suggestions": [
+        {
+          "title": "Moises vs Suno: Which AI Music Tool Wins? | RightAIChoice",
+          "rationale": "Front-loads the exact query with a clear decision promise."
+        },
+        {
+          "title": "Moises AI vs Suno Studio: Side-by-Side (2026) | RightAIChoice",
+          "rationale": "Matches the specific variant queries for higher relevance."
+        },
+        {
+          "title": "Compare Moises vs Suno: Key Differences (2026) | RightAIChoice",
+          "rationale": "Emphasizes comparison and year to drive clicks from undecided users."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:08.784Z"
+    },
+    {
+      "page": "/tools/procurement-sciences-ai",
+      "bucket": "1B",
+      "currentTitle": "Procurement Sciences AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19.19,
+      "totalImpressions": 21,
+      "totalClicks": 0,
+      "topQuery": "procurementsciences rfp automation",
+      "suggestions": [
+        {
+          "title": "Procurement Sciences AI: RFP Automation & Pricing | RightAIChoice",
+          "rationale": "Targets the top query 'rfp automation' and includes pricing for relevance."
+        },
+        {
+          "title": "Procurement Sciences AI Pricing & G2 Reviews 2026 | RightAIChoice",
+          "rationale": "Combines pricing with G2 reviews to match user intent for evaluations."
+        },
+        {
+          "title": "Procurement Sciences AI: Features, Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Covers multiple intents (features, pricing, alternatives) in a tight title."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:11.542Z"
+    },
+    {
+      "page": "/tools/epidemic-sound",
+      "bucket": "1C",
+      "currentTitle": "Epidemic Sound: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 23.85,
+      "totalImpressions": 20,
+      "totalClicks": 0,
+      "topQuery": "is epidemic sound still worth it?",
+      "suggestions": [
+        {
+          "title": "Is Epidemic Sound Worth It in 2026? | RightAIChoice",
+          "rationale": "Directly matches top query 'is epidemic sound still worth it?' for relevance boost."
+        },
+        {
+          "title": "Epidemic Sound vs Pond5 for YouTube 2026 | RightAIChoice",
+          "rationale": "Targets query comparing Epidemic Sound to Pond5 for YouTube licensing."
+        },
+        {
+          "title": "Epidemic Sound Plans for YouTube Creators 2026 | RightAIChoice",
+          "rationale": "Addresses query about pricing and coverage for YouTube creators."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:10.128Z"
+    },
+    {
+      "page": "/tools/stable-audio",
+      "bucket": "1C",
+      "currentTitle": "Stable Audio: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 26.68,
+      "totalImpressions": 19,
+      "totalClicks": 0,
+      "topQuery": "stable audio",
+      "suggestions": [
+        {
+          "title": "Stable Audio Pricing 2026: Free Plan & Costs | RightAIChoice",
+          "rationale": "Leads with high-intent query phrase 'pricing' and includes 'free plan' for searchers."
+        },
+        {
+          "title": "Stable Audio vs Alternatives: Features & Pricing 2026 | RightAIChoice",
+          "rationale": "Adds comparison angle to attract users evaluating options."
+        },
+        {
+          "title": "Stable Audio 2: Features, Pricing & Official Use | RightAIChoice",
+          "rationale": "Targets 'stable audio 2' query and 'official use' commercial intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:11.150Z"
+    },
+    {
+      "page": "/tools/qoves",
+      "bucket": "1C",
+      "currentTitle": "QOVES: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20.47,
+      "totalImpressions": 19,
+      "totalClicks": 0,
+      "topQuery": "qoves price",
+      "suggestions": [
+        {
+          "title": "QOVES Price 2026: Cost & Cheaper Alternatives | RightAIChoice",
+          "rationale": "Directly targets 'qoves price' and 'cheaper alternative' queries with specific keywords."
+        },
+        {
+          "title": "QOVES Apps Like & Alternatives in 2026 | RightAIChoice",
+          "rationale": "Matches 'apps like qoves' query and signals comparison content for lower-funnel searchers."
+        },
+        {
+          "title": "Is QOVES Worth It? 2026 Pricing & Review | RightAIChoice",
+          "rationale": "Addresses 'is qoves worth it?' and 'price' queries with a value-focused angle."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:11.784Z"
+    },
+    {
+      "page": "/tools/stagehq-ai",
+      "bucket": "1C",
+      "currentTitle": "StageHQ AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 22.24,
+      "totalImpressions": 17,
+      "totalClicks": 0,
+      "topQuery": "stagehq ai",
+      "suggestions": [
+        {
+          "title": "StageHQ AI Pricing & Features in 2026 | RightAIChoice",
+          "rationale": "Drops 'Alternatives' to fit query 'StageHQ AI' and stay under 60 chars."
+        },
+        {
+          "title": "StageHQ AI Review: Pricing, Features & More | RightAIChoice",
+          "rationale": "Adds 'Review' to signal a comprehensive evaluation for undecided searchers."
+        },
+        {
+          "title": "StageHQ AI: Pricing & Key Features 2026 | RightAIChoice",
+          "rationale": "Shortens title to exactly match query with a clear year differentiator."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:12.948Z"
+    },
+    {
+      "page": "/tools/parspec",
+      "bucket": "1B",
+      "currentTitle": "Parspec: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 16.18,
+      "totalImpressions": 17,
+      "totalClicks": 0,
+      "topQuery": "parspec erp integrations eclipse prophet 21 sap",
+      "suggestions": [
+        {
+          "title": "Parspec ERP Integrations: Eclipse, Prophet 21, SAP | RightAIChoice",
+          "rationale": "Matches top queries about specific ERP integrations."
+        },
+        {
+          "title": "Parspec Pricing & Cost in 2026: Plans & Alternatives | RightAIChoice",
+          "rationale": "Catches \"parspec cost\" query with year specificity."
+        },
+        {
+          "title": "Parspec: Features, Pricing & ERP Integrations in 2026 | RightAIChoice",
+          "rationale": "Combines top intents: features, pricing, and integrations."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:14.195Z"
+    },
+    {
+      "page": "/compare/glean-vs-moveworks",
+      "bucket": "1C",
+      "currentTitle": "Glean vs Moveworks — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 26.56,
+      "totalImpressions": 16,
+      "totalClicks": 0,
+      "topQuery": "moveworks vs glean",
+      "suggestions": [
+        {
+          "title": "Moveworks vs Glean: Which AI Wins? (2026) | RightAIChoice",
+          "rationale": "Leads with top query phrasing and adds an engaging question for clicks."
+        },
+        {
+          "title": "Glean vs Moveworks: Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Specifies comparison of pricing and features to match common search intent."
+        },
+        {
+          "title": "Glean or Moveworks? Compare AI Assistants 2026 | RightAIChoice",
+          "rationale": "Uses natural language query 'Glean or Moveworks' and clarifies product type."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:14.626Z"
+    },
+    {
+      "page": "/compare/duolingo-vs-speak",
+      "bucket": "1C",
+      "currentTitle": "Duolingo vs Speak — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 23,
+      "totalImpressions": 15,
+      "totalClicks": 0,
+      "topQuery": "duolingo vs speak",
+      "suggestions": [
+        {
+          "title": "Duolingo vs Speak: Which App Wins in 2026? | RightAIChoice",
+          "rationale": "Matches exact query phrasing and introduces a direct comparison hook."
+        },
+        {
+          "title": "Is Speak Better Than Duolingo? 2026 Review | RightAIChoice",
+          "rationale": "Directly answers the high-intent query from impressions."
+        },
+        {
+          "title": "Duolingo vs Speak: Side-by-Side Comparison & Verdict | RightAIChoice",
+          "rationale": "Adds 'Verdict' to differentiate and suggest a definitive answer."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:13.760Z"
+    },
+    {
+      "page": "/tools/assemblyai",
+      "bucket": "1B",
+      "currentTitle": "AssemblyAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 10.33,
+      "totalImpressions": 15,
+      "totalClicks": 0,
+      "topQuery": "assemblyai pricing speech-to-text official",
+      "suggestions": [
+        {
+          "title": "AssemblyAI Pricing & Free Tier 2026 | RightAIChoice",
+          "rationale": "Matches top queries for pricing and free tier, tight and clickable."
+        },
+        {
+          "title": "AssemblyAI Pricing: Speech-to-Text & Diarization | RightAIChoice",
+          "rationale": "Aligns with high-intent queries including speaker diarization pricing."
+        },
+        {
+          "title": "AssemblyAI Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Broad match for pricing and feature searches, adding year for freshness."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:16.994Z"
+    },
+    {
+      "page": "/tools/cometapi",
+      "bucket": "1C",
+      "currentTitle": "CometAPI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 22,
+      "totalImpressions": 14,
+      "totalClicks": 0,
+      "topQuery": "cometapi free trial",
+      "suggestions": [
+        {
+          "title": "Is CometAPI Legit? Pricing & Safety 2026 | RightAIChoice",
+          "rationale": "Targets top query 'is cometapi legit' and safety, directly improving relevance."
+        },
+        {
+          "title": "CometAPI Pricing & Free Trial 2026 | RightAIChoice",
+          "rationale": "Combines 'cometapi free trial' and 'cometapi pricing' queries for higher relevance."
+        },
+        {
+          "title": "CometAPI Alternatives & Pricing in 2026 | RightAIChoice",
+          "rationale": "Adds 'alternatives' as a differentiator, tapping into comparison intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:15.576Z"
+    },
+    {
+      "page": "/tools/gitguardian",
+      "bucket": "1C",
+      "currentTitle": "GitGuardian: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 25.64,
+      "totalImpressions": 14,
+      "totalClicks": 0,
+      "topQuery": "gitguardian",
+      "suggestions": [
+        {
+          "title": "GitGuardian Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Trims to 42 chars, retains key info, better match for 'gitguardian pricing'."
+        },
+        {
+          "title": "GitGuardian: Secrets Detection & Governance | RightAIChoice",
+          "rationale": "Includes high-intent terms 'secrets detection' and 'governance' from query."
+        },
+        {
+          "title": "GitGuardian vs Alternatives: Pricing & Features | RightAIChoice",
+          "rationale": "Phrases as comparison page, directly answers 'alternatives' intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:17.353Z"
+    },
+    {
+      "page": "/tools/starwriter-ai",
+      "bucket": "1A",
+      "currentTitle": "StarWriter AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 8.15,
+      "totalImpressions": 13,
+      "totalClicks": 0,
+      "topQuery": "starwriter",
+      "suggestions": [
+        {
+          "title": "StarWriter AI Pricing, Features & Plans 2026",
+          "rationale": "Front-loads 'Pricing' to match searcher intent for cost info."
+        },
+        {
+          "title": "StarWriter AI Review: Features, Pricing & More",
+          "rationale": "Uses 'Review' which signals comprehensive, trustworthy evaluation."
+        },
+        {
+          "title": "StarWriter AI: 2026 Guide to Pricing & Features",
+          "rationale": "Promises a complete guide, ideal for users comparing options."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:16.495Z"
+    },
+    {
+      "page": "/tools/socket-dev",
+      "bucket": "1B",
+      "currentTitle": "Socket.dev: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 16.25,
+      "totalImpressions": 12,
+      "totalClicks": 0,
+      "topQuery": "socket.dev pricing",
+      "suggestions": [
+        {
+          "title": "Socket.dev Pricing 2026: Plans & Cost | RightAIChoice",
+          "rationale": "Leads with the top query 'socket.dev pricing' and highlights cost details."
+        },
+        {
+          "title": "Socket.dev Features & Pricing: Is It Right? | RightAIChoice",
+          "rationale": "Combines features and pricing to match searcher intent for evaluation."
+        },
+        {
+          "title": "Socket.dev Review 2026: Pricing, Features, Pros | RightAIChoice",
+          "rationale": "Adds 'review' and 'pros' to attract comparison shoppers and boost relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:18.355Z"
+    },
+    {
+      "page": "/tools/motiff",
+      "bucket": "1A",
+      "currentTitle": "Motiff: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 6.92,
+      "totalImpressions": 12,
+      "totalClicks": 0,
+      "topQuery": "motiff discontinued june 23 2026 official",
+      "suggestions": [
+        {
+          "title": "Motiff Discontinued June 2026? Official News | RightAIChoice",
+          "rationale": "Directly matches the top query about discontinuation to capture clicks."
+        },
+        {
+          "title": "Motiff Pricing, Features & Discontinued Status 2026 | RightAIChoice",
+          "rationale": "Combines info on pricing/features with the pressing discontinuation question."
+        },
+        {
+          "title": "Is Motiff Discontinued? 2026 Update & Alternatives | RightAIChoice",
+          "rationale": "Uses a question format to engage users seeking confirmation about Motiff's status."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:19.522Z"
+    },
+    {
+      "page": "/tools/tavily",
+      "bucket": "1C",
+      "currentTitle": "Tavily: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20.42,
+      "totalImpressions": 12,
+      "totalClicks": 0,
+      "topQuery": "tavily student plan",
+      "suggestions": [
+        {
+          "title": "Tavily Student Plan: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Matches the top query 'tavily student plan' exactly, boosting relevance for that search."
+        },
+        {
+          "title": "Tavily Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Directly addresses the 'tavily pricing' query while keeping alternatives as differentiator."
+        },
+        {
+          "title": "What Is Tavily? Features, Pricing & More 2026 | RightAIChoice",
+          "rationale": "Mirrors the 'what is tavily' query for informational searchers, including key differentiators."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:19.773Z"
+    },
+    {
+      "page": "/compare/alphasense-vs-claude",
+      "bucket": "1A",
+      "currentTitle": "AlphaSense vs Claude — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 3.6,
+      "totalImpressions": 10,
+      "totalClicks": 0,
+      "topQuery": "alphasense vs claude",
+      "suggestions": [
+        {
+          "title": "AlphaSense vs Claude: Which Wins? (2026) | RightAIChoice",
+          "rationale": "From 0% CTR, a direct question boost urgency and curiosity."
+        },
+        {
+          "title": "AlphaSense vs Claude: Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Front-loads specific comparison needs like pricing to attract clicks."
+        },
+        {
+          "title": "AlphaSense or Claude? Compare Tools (2026) | RightAIChoice",
+          "rationale": "Uses search query's alternative phrasing to match user intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:18.938Z"
+    },
+    {
+      "page": "/tools/gitlab-duo",
+      "bucket": "1B",
+      "currentTitle": "GitLab Duo: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19.89,
+      "totalImpressions": 9,
+      "totalClicks": 0,
+      "topQuery": "gitlab duo pro pricing",
+      "suggestions": [
+        {
+          "title": "GitLab Duo Pro & Enterprise Pricing 2026 | RightAIChoice",
+          "rationale": "Targets top pricing queries with specific plan names."
+        },
+        {
+          "title": "GitLab Duo Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Combines pricing and features for broader relevance."
+        },
+        {
+          "title": "GitLab Duo: Features, Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Includes alternatives to attract comparison searchers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:20.654Z"
+    },
+    {
+      "page": "/tools/fontjoy",
+      "bucket": "1C",
+      "currentTitle": "Fontjoy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 23.22,
+      "totalImpressions": 9,
+      "totalClicks": 0,
+      "topQuery": "\"fontjoy\" founder or co-founder",
+      "suggestions": [
+        {
+          "title": "Fontjoy: Founder & Co-Founder Explained | RightAIChoice",
+          "rationale": "Matches the top query exactly for founder info relevance."
+        },
+        {
+          "title": "Fontjoy: Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Streamlines current title with year for comparison intent."
+        },
+        {
+          "title": "Font Joy: What Is It? Features & More | RightAIChoice",
+          "rationale": "Targets the 'font joy' misspelling with a clear intro angle."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:21.862Z"
+    },
+    {
+      "page": "/compare/fathom-vs-tldv",
+      "bucket": "1C",
+      "currentTitle": "Fathom vs tl;dv — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 27.88,
+      "totalImpressions": 8,
+      "totalClicks": 0,
+      "topQuery": "fathom vs tldv",
+      "suggestions": [
+        {
+          "title": "Fathom vs tl;dv: Which is Best in 2026?",
+          "rationale": "Matches query 'Fathom vs tldv' and adds decision-focused year."
+        },
+        {
+          "title": "tl;dv vs Fathom: Compare Features & Pricing 2026",
+          "rationale": "Uses query 'tldv vs fathom' and includes key differentiators."
+        },
+        {
+          "title": "Fathom vs tl;dv: Side-by-Side Comparison for 2026",
+          "rationale": "Keeps comparison phrasing but shorter to improve relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:22.366Z"
+    },
+    {
+      "page": "/compare/kagi-vs-perplexity",
+      "bucket": "1B",
+      "currentTitle": "Kagi vs Perplexity — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 14.57,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "topQuery": "kagi assistant vs perplexity",
+      "suggestions": [
+        {
+          "title": "Kagi vs Perplexity: Which AI Assistant Wins? (2026) | RightAIChoice",
+          "rationale": "Matches the top query 'kagi assistant vs perplexity' with a decisive angle."
+        },
+        {
+          "title": "Kagi vs Perplexity: The Best AI Search Tool in 2026 | RightAIChoice",
+          "rationale": "Addresses comparison seekers by declaring a winner, boosting click intent."
+        },
+        {
+          "title": "Kagi vs Perplexity: Features, Pricing & Verdict (2026) | RightAIChoice",
+          "rationale": "Includes features and pricing, fulfilling practical search intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:21.594Z"
+    },
+    {
+      "page": "/tools/autosana",
+      "bucket": "1A",
+      "currentTitle": "Autosana: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 8.86,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "topQuery": "autosana pricing",
+      "suggestions": [
+        {
+          "title": "Autosana Pricing: Plans & Costs 2026 | RightAIChoice",
+          "rationale": "Directly matches the top query 'autosana pricing' and saves space."
+        },
+        {
+          "title": "Autosana Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Combines pricing and features to capture broader search intent."
+        },
+        {
+          "title": "Autosana: See Pricing & Top Alternatives | RightAIChoice",
+          "rationale": "Promises pricing details plus alternatives, increasing click appeal."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:23.057Z"
+    },
+    {
+      "page": "/compare/lindy-vs-superhuman",
+      "bucket": "1A",
+      "currentTitle": "Lindy vs Superhuman — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 8.71,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "topQuery": "lindy vs superhuman for email",
+      "suggestions": [
+        {
+          "title": "Lindy vs Superhuman for Email Management (2026) | RightAIChoice",
+          "rationale": "Front-loads high-intent query phrase and keeps under 60 chars."
+        },
+        {
+          "title": "Lindy vs Superhuman: Which AI Email Assistant Wins? | RightAIChoice",
+          "rationale": "Uses a question format to create curiosity and click incentive."
+        },
+        {
+          "title": "Compare Lindy vs Superhuman for Drafting Emails (2026) | RightAIChoice",
+          "rationale": "Targets specific use case from search query with year for relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:24.110Z"
+    },
+    {
+      "page": "/tools/sightsai",
+      "bucket": "1B",
+      "currentTitle": "SightsAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 14.67,
+      "totalImpressions": 6,
+      "totalClicks": 0,
+      "topQuery": "sightsai",
+      "suggestions": [
+        {
+          "title": "SightsAI Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Shortens headline to highlight core info, aligning with search intent."
+        },
+        {
+          "title": "SightsAI Review: Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Adds 'Review' to signal evaluation, matching user decision stage."
+        },
+        {
+          "title": "SightsAI Pricing, Features & More (2026) | RightAIChoice",
+          "rationale": "Uses '& More' to hint at comprehensive coverage, improving click appeal."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:24.219Z"
+    },
+    {
+      "page": "/tools/curai-health",
+      "bucket": "1C",
+      "currentTitle": "Curai Health: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 28.67,
+      "totalImpressions": 6,
+      "totalClicks": 0,
+      "topQuery": "is curai health legit",
+      "suggestions": [
+        {
+          "title": "Is Curai Health Legit? 2026 Review | RightAIChoice",
+          "rationale": "Matches exact top query 'is curai health legit' to boost relevance."
+        },
+        {
+          "title": "Curai Health Reviews, Pricing & Features | RightAIChoice",
+          "rationale": "Includes high-intent query 'curai health reviews' plus pricing."
+        },
+        {
+          "title": "Curai Health: AI Telemedicine Pricing & Alternatives 2026",
+          "rationale": "Adds 'alternatives' and year to differentiate and capture comparison searchers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:24.552Z"
+    },
+    {
+      "page": "/tools/snowseo",
+      "bucket": "1C",
+      "currentTitle": "SnowSEO: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 26,
+      "totalImpressions": 6,
+      "totalClicks": 0,
+      "topQuery": "snowseo",
+      "suggestions": [
+        {
+          "title": "SnowSEO: Features, Pricing & Alternatives | RightAIChoice",
+          "rationale": "Matches exact query language 'snowseo' and signals a complete comparison page."
+        },
+        {
+          "title": "Snow SEO Review: Pricing & Top Alternatives 2026 | RightAIChoice",
+          "rationale": "Includes 'snow seo' variation and adds 'Review' to differentiate from a generic list."
+        },
+        {
+          "title": "SnowSEO Pricing & Features: Is It Worth It? | RightAIChoice",
+          "rationale": "Directly answers a value question, adding a decision-making differentiator."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:26.811Z"
+    },
+    {
+      "page": "/compare/ivo-vs-spellbook",
+      "bucket": "1A",
+      "currentTitle": "Ivo vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 6,
+      "totalImpressions": 5,
+      "totalClicks": 0,
+      "topQuery": "spellbook vs ivo",
+      "suggestions": [
+        {
+          "title": "Spellbook vs Ivo: Which AI Drafts Better?",
+          "rationale": "Front-loads the primary query phrase and asks a specific question."
+        },
+        {
+          "title": "Ivo vs Spellbook: 2026 Contract AI Review",
+          "rationale": "Highlights the year and positions it as an expert comparison."
+        },
+        {
+          "title": "Spellbook or Ivo? Compare Features & Pricing",
+          "rationale": "Promises practical details searchers want before choosing."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:25.698Z"
+    },
+    {
+      "page": "/compare/speak-vs-talkpal",
+      "bucket": "1A",
+      "currentTitle": "Speak vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 7.8,
+      "totalImpressions": 5,
+      "totalClicks": 0,
+      "topQuery": "talkpal vs speak",
+      "suggestions": [
+        {
+          "title": "Speak vs TalkPal: Which App Wins in 2026? | RightAIChoice",
+          "rationale": "Leads with both tool names and a decisive question to boost clicks."
+        },
+        {
+          "title": "TalkPal vs Speak: Side-by-Side 2026 Comparison | RightAIChoice",
+          "rationale": "Matches exact query phrasing 'talkpal vs speak' for relevance."
+        },
+        {
+          "title": "Speak or TalkPal? 2026 Comparison Guide | RightAIChoice",
+          "rationale": "Presents a clear alternative choice to engage undecided users."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:26.664Z"
+    },
+    {
+      "page": "/tools/semrush-advertising-toolkit",
+      "bucket": "1C",
+      "currentTitle": "Semrush Advertising Toolkit: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 24.8,
+      "totalImpressions": 5,
+      "totalClicks": 0,
+      "topQuery": "semrush ads tool",
+      "suggestions": [
+        {
+          "title": "Semrush Ads Tool: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Leads with exact query 'semrush ads tool' and adds pricing/features."
+        },
+        {
+          "title": "Semrush Advertising Toolkit Review & Pricing 2026 | RightAIChoice",
+          "rationale": "Uses 'advertising toolkit' but matches review/search intent."
+        },
+        {
+          "title": "Semrush Ads Tool vs Alternatives: 2026 Guide | RightAIChoice",
+          "rationale": "Hits 'ads tool' and improves relevance by offering comparison."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:26.699Z"
+    },
+    {
+      "page": "/tools/aidelly",
+      "bucket": "1C",
+      "currentTitle": "Aidelly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 29,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "aidelly",
+      "suggestions": [
+        {
+          "title": "Aidelly Review, Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Adding 'Review' matches searcher intent and is a differentiator from current title."
+        },
+        {
+          "title": "Aidelly: Pricing, Features & Best Use Cases | RightAIChoice",
+          "rationale": "Replacing 'Alternatives' with 'Best Use Cases' adds a unique angle for relevance."
+        },
+        {
+          "title": "Aidelly Tools: Pricing, Features & Comparison 2026 | RightAIChoice",
+          "rationale": "Adding 'Comparison' signals evaluative content, which may attract clicks."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:28.238Z"
+    },
+    {
+      "page": "/tools/bible-chat",
+      "bucket": "1C",
+      "currentTitle": "Bible Chat: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 28.5,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "bible chat daily devotional cost",
+      "suggestions": [
+        {
+          "title": "Bible Chat Daily Devotional Cost & Free vs Paid | RightAIChoice",
+          "rationale": "Matches top query exactly and addresses the cost question directly."
+        },
+        {
+          "title": "Is Bible Chat Free? Pricing & Alternatives (2026) | RightAIChoice",
+          "rationale": "Leads with exact query phrase and clarifies free vs paid quickly."
+        },
+        {
+          "title": "Bible Chat Pricing: Free vs Paid Plans Compared | RightAIChoice",
+          "rationale": "Focuses on pricing comparison to attract users evaluating cost."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:28.860Z"
+    },
+    {
+      "page": "/compare/ambience-vs-ambient",
+      "bucket": "1C",
+      "currentTitle": "Ambience vs Ambient — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 28.25,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "ambience personalized search engine",
+      "suggestions": [
+        {
+          "title": "Ambience vs Ambient: AI Search Comparison 2026 | RightAIChoice",
+          "rationale": "Directly uses the query 'AI search comparison' to boost relevance."
+        },
+        {
+          "title": "Ambience vs Ambient: Which AI Search Engine? (2026) | RightAIChoice",
+          "rationale": "Matches the query 'AI search engine' and offers a clear choice."
+        },
+        {
+          "title": "Ambience vs Ambient: Personalized AI Search Comparison | RightAIChoice",
+          "rationale": "Includes 'personalized' from top query to increase relevancy."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:28.946Z"
+    },
+    {
+      "page": "/tools/heuritech",
+      "bucket": "1C",
+      "currentTitle": "Heuritech: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 29,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "heuritech",
+      "suggestions": [
+        {
+          "title": "Heuritech Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Includes exact query language 'pricing' and keeps under 60 chars."
+        },
+        {
+          "title": "Heuritech: Features, Pricing & Top Alternatives | RAC",
+          "rationale": "Adds 'Top' for differentiation and uses brand abbreviation to save space."
+        },
+        {
+          "title": "Heuritech Pricing & Features in 2026 | RightAIChoice",
+          "rationale": "Naturally integrates year and primary query terms for better relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:29.059Z"
+    },
+    {
+      "page": "/tools/spiritt",
+      "bucket": "1A",
+      "currentTitle": "Spiritt: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 6.5,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "\"spiritt\" \"founder\" or \"ceo\" or \"cto\" review",
+      "suggestions": [
+        {
+          "title": "Founder Review: Spiritt Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Front-loads the exact query 'founder review' to match searcher intent."
+        },
+        {
+          "title": "Spiritt CEO Review: Pricing, Features & Alternatives in 2026",
+          "rationale": "Targets 'CEO review' query directly while keeping core comparison promise."
+        },
+        {
+          "title": "Is Spiritt Worth It? 2026 Pricing & Features Reviewed | RightAIChoice",
+          "rationale": "Uses evaluative question to boost click-through from comparison shoppers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:31.012Z"
+    },
+    {
+      "page": "/tools/ifoto",
+      "bucket": "1C",
+      "currentTitle": "iFoto: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 28.5,
+      "totalImpressions": 4,
+      "totalClicks": 0,
+      "topQuery": "ifoto",
+      "suggestions": [
+        {
+          "title": "iFoto: Pricing, Features & Reviews | RightAIChoice",
+          "rationale": "Adds 'Reviews' to match user research intent for tool credibility."
+        },
+        {
+          "title": "iFoto Pricing & Alternatives in 2026 | RightAIChoice",
+          "rationale": "Shortens to focus on pricing and alternatives, key decision factors."
+        },
+        {
+          "title": "iFoto AI Photo Tool: Features & Pricing | RightAIChoice",
+          "rationale": "Includes 'AI Photo Tool' to clarify category and boost relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:31.269Z"
+    },
+    {
+      "page": "/blog/best-ai-coding-assistant-for-data-scientists-2026",
+      "bucket": "1B",
+      "currentTitle": "Best AI Coding Assistant for Data Scientists in 2026: Python, Jupyter, and ML Workflows | RightAIChoice",
+      "weightedPosition": 11,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "as a data scientist using pandas notebooks inside pycharm, i want a coding assistant that suggests vectorized alternatives to loops and auto-generates edge-case tests. which tools excel at this?",
+      "suggestions": [
+        {
+          "title": "Best AI Coding Assistants for Data Scientists in 2026",
+          "rationale": "Matches common query phrasing and includes year for freshness."
+        },
+        {
+          "title": "AI Code Assistants for Data Science: Python, Jupyter, ML",
+          "rationale": "Specifies key tools and workflows, improving relevance for searches."
+        },
+        {
+          "title": "Top AI Coding Tools for Data Scientists in 2026",
+          "rationale": "Short, clear, and optimized for click-through with specific year and audience."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:31.093Z"
+    },
+    {
+      "page": "/compare/loora-vs-speak",
+      "bucket": "1A",
+      "currentTitle": "Loora vs Speak — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 7.33,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "speak vs loora",
+      "suggestions": [
+        {
+          "title": "Speak vs Loora: Which App Wins in 2026? | RightAIChoice",
+          "rationale": "Matches the exact search query order for higher relevance and CTR."
+        },
+        {
+          "title": "Loora vs Speak — Top Features Compared (2026) | RightAIChoice",
+          "rationale": "Promises a feature comparison, directly addressing learners' decision needs."
+        },
+        {
+          "title": "Loora vs Speak: Pricing & Side-by-Side Test (2026) | RightAIChoice",
+          "rationale": "Specifies pricing and test results, adding concrete value for click-through."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:31.582Z"
+    },
+    {
+      "page": "/tools/creative-fast-aid",
+      "bucket": "1B",
+      "currentTitle": "Creative Fast AID: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 16,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "creative fast aid",
+      "suggestions": [
+        {
+          "title": "Creative Fast AID Review: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Leads with 'Review' to match user evaluation intent and adds keyword density."
+        },
+        {
+          "title": "Creative Fast AID Pricing & Alternatives in 2026 | RightAIChoice",
+          "rationale": "Puts 'Pricing & Alternatives' first to directly answer top comparison queries."
+        },
+        {
+          "title": "Creative Fast AID: Is It Worth It? 2026 Guide | RightAIChoice",
+          "rationale": "Uses 'Is It Worth It?' to hook undecided searchers and promises a guide."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:33.466Z"
+    },
+    {
+      "page": "/tools/letterbook",
+      "bucket": "1B",
+      "currentTitle": "Letterbook: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 12.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "letterbook",
+      "suggestions": [
+        {
+          "title": "Letterbook Review: Pricing, Features & Alternatives | RightAIChoice",
+          "rationale": "Drops the unnecessary year; uses 'Review' to match searcher intent better."
+        },
+        {
+          "title": "Letterbook Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Tighter and shorter, focusing on the core info users want from a tool page."
+        },
+        {
+          "title": "Letterbook: Is It Right for You? Pricing & More | RightAIChoice",
+          "rationale": "Adds a decision-guiding phrase to improve relevance and click-through."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:33.638Z"
+    },
+    {
+      "page": "/tools/chattts",
+      "bucket": "1C",
+      "currentTitle": "ChatTTS: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 24,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "chattts license commercial use",
+      "suggestions": [
+        {
+          "title": "ChatTTS Commercial License & Pricing 2026",
+          "rationale": "Contains exact query 'chattts license commercial use' and key details."
+        },
+        {
+          "title": "ChatTTS Pricing, Features & Alternatives 2026",
+          "rationale": "Retains current title but trims to essential, emphasizing pricing and features."
+        },
+        {
+          "title": "ChatTTS: Free vs Paid Features in 2026",
+          "rationale": "Addresses commercial license intent with free vs paid angle."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:33.835Z"
+    },
+    {
+      "page": "/tools/lumana",
+      "bucket": "1C",
+      "currentTitle": "Lumana: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 24.33,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "lumana g2 reviews",
+      "suggestions": [
+        {
+          "title": "Lumana AI Reviews & Pricing 2026 | RightAIChoice",
+          "rationale": "Matches top query 'lumana g2 reviews' and includes pricing for click relevance."
+        },
+        {
+          "title": "Lumana AI: Features, Pricing & Reviews | RightAIChoice",
+          "rationale": "Covers core searcher intents with a clean, query-aligned structure."
+        },
+        {
+          "title": "Lumana Alternatives & Pricing 2026 | RightAIChoice",
+          "rationale": "Targets comparison intent with year specificity for fresh results."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:34.254Z"
+    },
+    {
+      "page": "/tools/spacelift",
+      "bucket": "1B",
+      "currentTitle": "Spacelift: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "spacelift intelligence",
+      "suggestions": [
+        {
+          "title": "Spacelift Free Tier & Pricing 2026 | RightAIChoice",
+          "rationale": "Targets high-intent query 'spacelift free tier' with year and price focus."
+        },
+        {
+          "title": "Spacelift Intelligence Features & Pricing | RightAIChoice",
+          "rationale": "Matches 'spacelift intelligence' query and highlights key selling points."
+        },
+        {
+          "title": "Spacelift Pricing & Alternatives Guide 2026 | RightAIChoice",
+          "rationale": "Broadens appeal to users comparing costs and competitors."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:35.890Z"
+    },
+    {
+      "page": "/tools/pitch",
+      "bucket": "1C",
+      "currentTitle": "Pitch: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 27.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "custom pitch",
+      "suggestions": [
+        {
+          "title": "Pitch Pricing: Compare Plans & Alternatives | RightAIChoice",
+          "rationale": "Leads with query 'Pitch pricing' to boost relevance."
+        },
+        {
+          "title": "Custom Pitch: Pricing & Top Alternatives 2026 | RightAIChoice",
+          "rationale": "Targets 'custom pitch' query while signaling comparison scope."
+        },
+        {
+          "title": "Pitch Pricing & Alternatives: Honest 2026 Guide | RightAIChoice",
+          "rationale": "Combines two top queries with trust-building word 'Honest'."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:36.174Z"
+    },
+    {
+      "page": "/tools/thinkdiffusion",
+      "bucket": "1A",
+      "currentTitle": "Thinkdiffusion: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 7,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "topQuery": "thinkdiffusion pricing comfyui cloud 2026",
+      "suggestions": [
+        {
+          "title": "Thinkdiffusion Pro Plan: What's Included Monthly? | RightAIChoice",
+          "rationale": "Matches the query about Pro plan inclusions, promising specific details."
+        },
+        {
+          "title": "Thinkdiffusion Pricing & ComfyUI Cloud 2026 | RightAIChoice",
+          "rationale": "Front-loads the query terms 'pricing' and 'ComfyUI cloud' for relevance."
+        },
+        {
+          "title": "Thinkdiffusion Pricing: Plans, Features & Cloud 2026 | RightAIChoice",
+          "rationale": "Adds 'Cloud' and 'Plans' to match user intent for cloud comparisons."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:36.283Z"
+    },
+    {
+      "page": "/compare/docusign-vs-smallpdf",
+      "bucket": "1A",
+      "currentTitle": "DocuSign vs Smallpdf — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 9.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "smallpdf vs docusign for signing contracts",
+      "suggestions": [
+        {
+          "title": "DocuSign or Smallpdf for Contracts? (2026) | RightAIChoice",
+          "rationale": "Matches the top query verbatim to boost relevance and clicks."
+        },
+        {
+          "title": "Smallpdf vs DocuSign: Best for Contract Signing? | RightAIChoice",
+          "rationale": "Front-loads the exact user phrase with a clear question promise."
+        },
+        {
+          "title": "Compare DocuSign & Smallpdf for Contracts (2026) | RightAIChoice",
+          "rationale": "Short, direct, and includes the year for timeliness while targeting intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:36.992Z"
+    },
+    {
+      "page": "/compare/loora-vs-talkpal",
+      "bucket": "1A",
+      "currentTitle": "Loora vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 6.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "loora vs talkpal",
+      "suggestions": [
+        {
+          "title": "Loora vs TalkPal: Which Is Better? (2026) | RightAIChoice",
+          "rationale": "Directly answers the comparison query with a clear verdict angle."
+        },
+        {
+          "title": "Loora vs TalkPal: Features, Pricing & More | RightAIChoice",
+          "rationale": "Specifies practical comparison dimensions users care about."
+        },
+        {
+          "title": "Loora vs TalkPal 2026: In-Depth Comparison | RightAIChoice",
+          "rationale": "Emphasizes thoroughness and current year relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:38.023Z"
+    },
+    {
+      "page": "/compare/ivo-vs-spellbook-legal",
+      "bucket": "1A",
+      "currentTitle": "Ivo vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 9,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "spellbook vs ivo",
+      "suggestions": [
+        {
+          "title": "Spellbook vs Ivo: 2026 Legal AI Showdown | RightAIChoice",
+          "rationale": "Front-loads query 'spellbook vs ivo' and adds 'showdown' for urgency."
+        },
+        {
+          "title": "Ivo vs Spellbook for Legal AI – 2026 Compared | RightAIChoice",
+          "rationale": "Specifies use case 'legal AI' to attract intent-driven clicks."
+        },
+        {
+          "title": "Spellbook or Ivo? 2026 Side-by-Side | RightAIChoice",
+          "rationale": "Uses decision-oriented phrasing 'or' to engage comparison seekers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:38.491Z"
+    },
+    {
+      "page": "/compare/meshy-vs-rodin",
+      "bucket": "1A",
+      "currentTitle": "Meshy vs Rodin — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 6.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "meshy ai vs rodin",
+      "suggestions": [
+        {
+          "title": "Meshy vs Rodin: The 2026 Showdown | RightAIChoice",
+          "rationale": "Adds a competitive edge with 'showdown' to boost click urgency."
+        },
+        {
+          "title": "Meshy vs Rodin: Which 3D AI Wins in 2026? | RightAIChoice",
+          "rationale": "Front-loads query and poses a direct question to drive clicks."
+        },
+        {
+          "title": "Meshy AI vs Rodin: Best 3D Generator in 2026 | RightAIChoice",
+          "rationale": "Mirrors 'meshy ai vs rodin' query and promises a clear winner."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:38.572Z"
+    },
+    {
+      "page": "/compare/opus-clip-vs-riverside-fm",
+      "bucket": "1C",
+      "currentTitle": "Opus Clip vs Riverside — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 27.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "opus clip vs riverside",
+      "suggestions": [
+        {
+          "title": "Opus Clip vs Riverside: Which Is Better? (2026) | RightAIChoice",
+          "rationale": "Mirrors the top query exactly and adds a common decision-making phrase."
+        },
+        {
+          "title": "Opus Clip vs Riverside: Side-by-Side Comparison (2026) | RightAIChoice",
+          "rationale": "Clarifies that this is a direct side-by-side comparison, matching the current title's strength."
+        },
+        {
+          "title": "Compare Opus Clip vs Riverside (2026): Key Differences | RightAIChoice",
+          "rationale": "Starts with an action verb and highlights the differentiator of key differences."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:39.801Z"
+    },
+    {
+      "page": "/tools/context7",
+      "bucket": "1A",
+      "currentTitle": "Context7: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 10,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "context7 pricing free tier",
+      "suggestions": [
+        {
+          "title": "Context7 Pricing & Free Tier 2026 | RightAIChoice",
+          "rationale": "Front-loads exact query intent: pricing and free tier."
+        },
+        {
+          "title": "Context7 Pricing Plans in 2026 | RightAIChoice",
+          "rationale": "Matches top query 'pricing plans' directly for higher CTR."
+        },
+        {
+          "title": "Context7: Pricing, Plans & Free Tier 2026 | RightAIChoice",
+          "rationale": "Combines all high-intent keywords: pricing, plans, free tier."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:40.423Z"
+    },
+    {
+      "page": "/tools/ceartas-dmca",
+      "bucket": "1C",
+      "currentTitle": "Ceartas DMCA: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 22,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "ceartas alternative",
+      "suggestions": [
+        {
+          "title": "Ceartas DMCA Alternatives in 2026 | RightAIChoice",
+          "rationale": "Directly matches the top query \"ceartas alternative\" and adds year for freshness."
+        },
+        {
+          "title": "Ceartas DMCA Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Targets users comparing costs and features with a clear, scannable format."
+        },
+        {
+          "title": "Best Ceartas DMCA Alternatives Compared | RightAIChoice",
+          "rationale": "Includes \"best\" and \"alternatives\" to capture high-intent comparison searches."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:40.996Z"
+    },
+    {
+      "page": "/tools/customerly",
+      "bucket": "1C",
+      "currentTitle": "Customerly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 28.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "customerly",
+      "suggestions": [
+        {
+          "title": "Customerly Review: Pricing, Features & More | RightAIChoice",
+          "rationale": "Leads with 'Customerly Review' to directly match searcher intent for information."
+        },
+        {
+          "title": "Customerly Pricing & Features 2026: Full Guide | RightAIChoice",
+          "rationale": "Highlights year and comprehensive guide to signal fresh, detailed content."
+        },
+        {
+          "title": "Customerly: Is It Right for You? Pricing & Features | RightAIChoice",
+          "rationale": "Asks a question to engage users considering the tool for their needs."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:41.080Z"
+    },
+    {
+      "page": "/tools/intrascope",
+      "bucket": "1C",
+      "currentTitle": "Intrascope: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "intrascope",
+      "suggestions": [
+        {
+          "title": "Intrascope Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Trims extra words to fit tightly; matches top query exactly."
+        },
+        {
+          "title": "Intrascope: AI Tool Pricing & Alternatives | RightAIChoice",
+          "rationale": "Adds 'AI tool' to clarify category for new search contexts."
+        },
+        {
+          "title": "Intrascope Features & Pricing in 2026 | RightAIChoice",
+          "rationale": "Places features first, still covers the searcher's core intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:42.247Z"
+    },
+    {
+      "page": "/tools/molypix-ai",
+      "bucket": "1C",
+      "currentTitle": "MolyPix.AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 28.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "molypix",
+      "suggestions": [
+        {
+          "title": "MolyPix AI: Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Directly matches the top query 'molypix ai' and includes pricing and alternatives."
+        },
+        {
+          "title": "MolyPix.AI Pricing & Features in 2026 | RightAIChoice",
+          "rationale": "Simplifies title to focus on core search intent, reducing length for better relevance."
+        },
+        {
+          "title": "MolyPix.AI Review: Pricing, Pros & Cons 2026 | RightAIChoice",
+          "rationale": "Introduces 'review' and 'pros & cons' to differentiate and attract comparison seekers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:43.106Z"
+    },
+    {
+      "page": "/tools/lex-markets",
+      "bucket": "1C",
+      "currentTitle": "Lex: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 26,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "lex markets",
+      "suggestions": [
+        {
+          "title": "Lex Markets Review: Pricing & Features | RightAIChoice",
+          "rationale": "Targets exact query 'lex markets review' with high-relevance terms."
+        },
+        {
+          "title": "Lex Markets 2026: Pricing, Features & Alternatives | RightAIChoice",
+          "rationale": "Leads with brand name and year to boost relevance for broad query."
+        },
+        {
+          "title": "Lex Markets Pricing & Alternatives [2026] | RightAIChoice",
+          "rationale": "Emphasizes pricing and alternatives, aligning with common search intents."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:43.424Z"
+    },
+    {
+      "page": "/tools/post-boost",
+      "bucket": "1B",
+      "currentTitle": "Post-Boost: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 18,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "postboost product info and reviews",
+      "suggestions": [
+        {
+          "title": "Post-Boost Review: Pricing, Features & More in 2026 | RightAIChoice",
+          "rationale": "Leads with 'review' to match high-intent query 'postboost reviews'."
+        },
+        {
+          "title": "Post-Boost Pricing & Features (2026) – Full Info | RightAIChoice",
+          "rationale": "Targets 'product info and reviews' query by emphasizing pricing and features."
+        },
+        {
+          "title": "Post-Boost: Is It Right For You? Pricing & Alternatives | RightAIChoice",
+          "rationale": "Adds decision-making angle to attract comparison shoppers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:43.767Z"
+    },
+    {
+      "page": "/tools/promptdrive-ai",
+      "bucket": "1C",
+      "currentTitle": "PromptDrive.ai: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 29,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "promptdrive",
+      "suggestions": [
+        {
+          "title": "PromptDrive.ai Review: Features & Pricing 2026 | RightAIChoice",
+          "rationale": "Includes 'Review' to match search intent and validate tool reliability."
+        },
+        {
+          "title": "PromptDrive.ai Pricing, Features & More in 2026 | RightAIChoice",
+          "rationale": "Adds 'More' to suggest comprehensive coverage beyond basics."
+        },
+        {
+          "title": "PromptDrive.ai Pricing & Features Guide 2026 | RightAIChoice",
+          "rationale": "Uses 'Guide' to imply detailed, helpful content for comparison."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:44.467Z"
+    },
+    {
+      "page": "/tools/superhuman",
+      "bucket": "1B",
+      "currentTitle": "Superhuman: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "superhuman api",
+      "suggestions": [
+        {
+          "title": "Superhuman Pricing 2026: Plans & Costs | RightAIChoice",
+          "rationale": "Directly targets top query 'superhuman pricing' with year and cost focus."
+        },
+        {
+          "title": "Superhuman Features & Pricing in 2026 | RightAIChoice",
+          "rationale": "Combines two top intents – features and pricing – for broader appeal."
+        },
+        {
+          "title": "Superhuman Email Review: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Adds 'review' to imply evaluation, increasing click appeal for comparison seekers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:45.484Z"
+    },
+    {
+      "page": "/tools/rightjoin",
+      "bucket": "1B",
+      "currentTitle": "RightJoin: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "rightjoin",
+      "suggestions": [
+        {
+          "title": "RightJoin Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Cleaner, keyword-dense title that matches the exact query intent."
+        },
+        {
+          "title": "RightJoin: Pricing, Features & Alternatives (2026)",
+          "rationale": "Minor tweak adds parentheses for better readability and click appeal."
+        },
+        {
+          "title": "RightJoin Review: Pricing & Features in 2026",
+          "rationale": "Leads with 'Review' to signal evaluation content, increasing relevance."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:46.024Z"
+    },
+    {
+      "page": "/tools/tango-us",
+      "bucket": "1C",
+      "currentTitle": "Tango: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 23.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "get tango pricing",
+      "suggestions": [
+        {
+          "title": "Get Tango Pricing & Enterprise Costs | RightAIChoice",
+          "rationale": "Matches the searcher's exact phrase 'get tango pricing' for higher relevance."
+        },
+        {
+          "title": "Tango Enterprise Platform Costs & Pricing | RightAIChoice",
+          "rationale": "Targets 'enterprise platform costs' query with specific cost language."
+        },
+        {
+          "title": "Tango Pricing: Features & Plans for 2026 | RightAIChoice",
+          "rationale": "Retains features and adds 'plans' to align with pricing intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:46.168Z"
+    },
+    {
+      "page": "/tools/vectorize",
+      "bucket": "1A",
+      "currentTitle": "Vectorize: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 2.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "hindsight vectorize pricing",
+      "suggestions": [
+        {
+          "title": "Vectorize Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Front-loads pricing, the top query intent, and drops less clicked 'Features'."
+        },
+        {
+          "title": "Hindsight Vectorize Pricing 2026 | RightAIChoice",
+          "rationale": "Matches exact query phrasing 'hindsight vectorize pricing' from top search."
+        },
+        {
+          "title": "Vectorize Cost & Plans 2026 | RightAIChoice",
+          "rationale": "Uses 'cost' and 'plans' to signal price transparency and alternatives."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:46.947Z"
+    },
+    {
+      "page": "/tools/velona",
+      "bucket": "1B",
+      "currentTitle": "Velona: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "topQuery": "velona ai",
+      "suggestions": [
+        {
+          "title": "Velona AI: Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Matches exact 'velona ai' query and includes year for freshness."
+        },
+        {
+          "title": "Velona AI Review 2026: Pricing, Features & Top Alternatives | RightAIChoice",
+          "rationale": "Adds 'review' to signal evaluation content, boosting click appeal."
+        },
+        {
+          "title": "Velona AI Pricing & Features 2026 - Best Alternatives Compared | RightAIChoice",
+          "rationale": "Leads with pricing intent and promises comparison, addressing user needs."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:48.588Z"
+    },
+    {
+      "page": "/compare/capcut-vs-captions",
+      "bucket": "1B",
+      "currentTitle": "CapCut vs Captions — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 16,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "capcut vs captions app for instagram reels",
+      "suggestions": [
+        {
+          "title": "CapCut vs Captions for Reels (2026) | RightAIChoice",
+          "rationale": "Matches user query exactly and promises a direct comparison for Instagram Reels."
+        },
+        {
+          "title": "CapCut vs Captions: Best for Instagram Reels? | RightAIChoice",
+          "rationale": "Poses a question that hooks users seeking the best app for Reels."
+        },
+        {
+          "title": "CapCut vs Captions App – Which Wins for Reels? | RightAIChoice",
+          "rationale": "Uses action-oriented language to target the specific Reels use case."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:48.214Z"
+    },
+    {
+      "page": "/compare/claude-vs-spellbook-legal",
+      "bucket": "1B",
+      "currentTitle": "Claude vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
+      "weightedPosition": 19,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "spellbook vs claude",
+      "suggestions": [
+        {
+          "title": "Spellbook vs Claude: Legal AI Showdown (2026) | RightAIChoice",
+          "rationale": "Leads with the higher-volume query phrase for tighter query match."
+        },
+        {
+          "title": "Claude vs Spellbook for Legal Work (2026) | RightAIChoice",
+          "rationale": "Adds use-case specificity to attract legal professionals."
+        },
+        {
+          "title": "Spellbook vs Claude Legal AI: Which Wins? | RightAIChoice",
+          "rationale": "Shortens title to fit search snippet while maintaining keyword density."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:48.553Z"
+    },
+    {
+      "page": "/tools/andi",
+      "bucket": "1B",
+      "currentTitle": "Andi: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 16,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "ad and i",
+      "suggestions": [
+        {
+          "title": "Andi AI: Pricing, Features & Alternatives | RightAIChoice",
+          "rationale": "Shortens title to match branded search 'Andi AI' and fit 60 chars."
+        },
+        {
+          "title": "Andi Search: Pricing, Features & Alternatives in 2026",
+          "rationale": "Aligns with query 'ad and i' by using product name 'Andi Search'."
+        },
+        {
+          "title": "Andi Pricing & Alternatives: Compare AI Search in 2026",
+          "rationale": "Leads with searcher intent for pricing and comparisons."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:49.368Z"
+    },
+    {
+      "page": "/tools/chromox",
+      "bucket": "1B",
+      "currentTitle": "Chromox: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 18,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "chromox",
+      "suggestions": [
+        {
+          "title": "Chromox: Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Shortens title by removing ampersand for tighter fit."
+        },
+        {
+          "title": "Chromox Pricing & Reviews 2026 | Alternatives Included | RightAIChoice",
+          "rationale": "Leads with pricing and reviews to match searcher intent."
+        },
+        {
+          "title": "Chromox: Key Features & Pricing (2026) | RightAIChoice",
+          "rationale": "Focuses on core features and pricing for relevant clicks."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:50.673Z"
+    },
+    {
+      "page": "/tools/boost-space",
+      "bucket": "1B",
+      "currentTitle": "boost.space: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "boost.space product data hub review pricing features",
+      "suggestions": [
+        {
+          "title": "Boost.space Review: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Leads with 'Review' to match review intent exactly."
+        },
+        {
+          "title": "Boost.space Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Directly includes core query terms for high relevance."
+        },
+        {
+          "title": "Boost.space Product Data Hub: Price & Review | RightAIChoice",
+          "rationale": "Incorporates the category 'Product Data Hub' from search query."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:50.965Z"
+    },
+    {
+      "page": "/tools/civitai",
+      "bucket": "1A",
+      "currentTitle": "CivitAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 7,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "civitai vs civitai red",
+      "suggestions": [
+        {
+          "title": "CivitAI AI Models: Price & Free vs Paid | RightAIChoice",
+          "rationale": "Front-loads 'AI Models' and highlights free vs paid pricing."
+        },
+        {
+          "title": "CivitAI vs Other AI Art Platforms: 2026 Guide | RightAIChoice",
+          "rationale": "Addresses comparison intent directly from top query."
+        },
+        {
+          "title": "CivitAI 2026: Features, Pricing & Top Alternatives | RightAIChoice",
+          "rationale": "Simplifies current title and adds '2026' for recency."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:51.198Z"
+    },
+    {
+      "page": "/tools/coinfeeds",
+      "bucket": "1B",
+      "currentTitle": "Coinfeeds: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 18,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "coinfeeds",
+      "suggestions": [
+        {
+          "title": "Coinfeeds Pricing & Alternatives 2026 | RightAIChoice",
+          "rationale": "Shorter and tighter, directly matching the query 'coinfeeds' for higher relevance."
+        },
+        {
+          "title": "Coinfeeds: Features, Pricing & 2026 Alternatives | RightAIChoice",
+          "rationale": "Leads with tool name and intent, emphasizing features and alternatives for searchers."
+        },
+        {
+          "title": "Coinfeeds Review: Pricing, Features & Top Alternatives",
+          "rationale": "Uses 'Review' to imply depth and authority, boosting click appeal on page 2."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:51.964Z"
+    },
+    {
+      "page": "/tools/coze-studio",
+      "bucket": "1B",
+      "currentTitle": "Coze Studio: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 12,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "coze pricing official 2026",
+      "suggestions": [
+        {
+          "title": "Coze Studio: Official Pricing 2026 & Features | RightAIChoice",
+          "rationale": "Matches the exact top query 'coze pricing official 2026' for relevance."
+        },
+        {
+          "title": "Coze Studio Pricing 2026: Plans, Features & Alternatives | RightAIChoice",
+          "rationale": "Leads with pricing and includes alternatives to capture broader search intent."
+        },
+        {
+          "title": "Coze Studio Review 2026: Pricing & Features Compared | RightAIChoice",
+          "rationale": "Positions as a review to attract comparison and evaluation searchers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:52.925Z"
+    },
+    {
+      "page": "/tools/crush",
+      "bucket": "1C",
+      "currentTitle": "Crush: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 21,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "crush ide",
+      "suggestions": [
+        {
+          "title": "Crush IDE: Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Includes exact query 'Crush IDE' to boost relevance for searchers."
+        },
+        {
+          "title": "Crush IDE: Pricing, Features & Top Alternatives | RightAIChoice",
+          "rationale": "Uses 'pricing, features, alternatives' directly and stays within character limit."
+        },
+        {
+          "title": "Crush IDE Review: Pricing & Best Alternatives in 2026 | RightAIChoice",
+          "rationale": "Leads with 'review' for informational intent and includes year for freshness."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:53.420Z"
+    },
+    {
+      "page": "/tools/corti",
+      "bucket": "1A",
+      "currentTitle": "Corti: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "corti.ai pricing",
+      "suggestions": [
+        {
+          "title": "Corti.ai Pricing 2026: Plans & Cost | RightAIChoice",
+          "rationale": "Front-loads the top query intent and makes the value clear in under 60 chars."
+        },
+        {
+          "title": "Corti AI Pricing & Alternatives (2026) | RightAIChoice",
+          "rationale": "Adds alternatives to match broader search intent and improve relevance."
+        },
+        {
+          "title": "Corti AI 2026: Pricing, Features & Free Trial | RightAIChoice",
+          "rationale": "Includes 'Free Trial' to increase click appeal for comparison shoppers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:53.775Z"
+    },
+    {
+      "page": "/tools/happycapy",
+      "bucket": "1C",
+      "currentTitle": "happycapy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 27,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "happycapy",
+      "suggestions": [
+        {
+          "title": "HappyCapy AI Tool: Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Leads with tool name and clarifies it's an AI tool for direct match."
+        },
+        {
+          "title": "HappyCapy Review: Pricing, Features & Alternatives | RightAIChoice",
+          "rationale": "Adds 'review' to match searcher's evaluation intent."
+        },
+        {
+          "title": "HappyCapy Pricing & Features 2026 – See Alternatives | RightAIChoice",
+          "rationale": "Front-loads pricing and features, then hints at alternatives for comparison."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:54.530Z"
+    },
+    {
+      "page": "/tools/magicphotos",
+      "bucket": "1C",
+      "currentTitle": "MagicPhotos: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 24,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "magicphotos",
+      "suggestions": [
+        {
+          "title": "MagicPhotos Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Adds 'Pricing & Features' for clarity while staying under 60 chars."
+        },
+        {
+          "title": "MagicPhotos: Pricing, Features & Reviews | RightAIChoice",
+          "rationale": "Includes 'Reviews' as a differentiator to match user intent for credibility."
+        },
+        {
+          "title": "MagicPhotos Pricing & Alternatives (2026) | RightAIChoice",
+          "rationale": "Uses 'Alternatives' to catch broader searches and stays concise."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:55.554Z"
+    },
+    {
+      "page": "/tools/mem0",
+      "bucket": "1B",
+      "currentTitle": "Mem0: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "mem0 pricing",
+      "suggestions": [
+        {
+          "title": "Mem0 Pricing & Plans 2026 | RightAIChoice",
+          "rationale": "Matches the top query 'mem0 pricing' directly, actionable."
+        },
+        {
+          "title": "Mem0: Pricing & Top Alternatives 2026 | RightAIChoice",
+          "rationale": "Covers pricing and alternatives in one title, boosting relevance."
+        },
+        {
+          "title": "Mem0 Pricing 2026: Features & Costs | RightAIChoice",
+          "rationale": "Leads with pricing, adds features and cost transparency."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:55.655Z"
+    },
+    {
+      "page": "/tools/locofy",
+      "bucket": "1A",
+      "currentTitle": "Locofy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 9,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "locofy pricing figma to code",
+      "suggestions": [
+        {
+          "title": "Locofy Pricing: Figma to Code Cost 2026 | RightAIChoice",
+          "rationale": "Front-loads the high-intent query 'pricing' and specifies the use case."
+        },
+        {
+          "title": "Locofy Review: Features, Pricing & Alternatives | RightAIChoice",
+          "rationale": "Uses 'Review' to signal comprehensive evaluation, boosting CTR."
+        },
+        {
+          "title": "Locofy Alternatives & Pricing: Figma to Code 2026 | RightAIChoice",
+          "rationale": "Leads with 'Alternatives' to capture comparison shoppers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:56.516Z"
+    },
+    {
+      "page": "/tools/pdf-ai",
+      "bucket": "1A",
+      "currentTitle": "PDF.ai: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "pdf.ai pricing official",
+      "suggestions": [
+        {
+          "title": "PDF.ai Pricing 2026: Plans & Cost | RightAIChoice",
+          "rationale": "Front-loads 'pricing', matches searcher intent exactly."
+        },
+        {
+          "title": "PDF.ai Reviews & Pricing (2026) | RightAIChoice",
+          "rationale": "Adds 'reviews' for trust; stays concise under 55 chars."
+        },
+        {
+          "title": "PDF.ai Pricing & Features (2026) | RightAIChoice",
+          "rationale": "Drops 'alternatives' to sharpen on official pricing intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:57.840Z"
+    },
+    {
+      "page": "/tools/postly",
+      "bucket": "1B",
+      "currentTitle": "Postly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 18,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "postly pricing",
+      "suggestions": [
+        {
+          "title": "Postly Pricing 2026: Plans, Features & Alternatives | RightAIChoice",
+          "rationale": "Leads with the top query 'postly pricing' and adds year and alternatives."
+        },
+        {
+          "title": "Postly Pricing & Plans 2026: Compare Features & Cost | RightAIChoice",
+          "rationale": "Matches 'postly pricing' intent and highlights plan comparison for click-through."
+        },
+        {
+          "title": "Postly Pricing 2026: How Much Does Postly Cost? | RightAIChoice",
+          "rationale": "Uses a direct cost question to attract users seeking pricing clarity."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:58.259Z"
+    },
+    {
+      "page": "/tools/option-alpha",
+      "bucket": "1A",
+      "currentTitle": "Option Alpha: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 9,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "option alpha pricing plans 2026",
+      "suggestions": [
+        {
+          "title": "Option Alpha Pricing Plans 2026 | RightAIChoice",
+          "rationale": "Front-loads the exact query 'pricing plans' to match searcher intent."
+        },
+        {
+          "title": "Option Alpha 2026: Pricing & Features | RightAIChoice",
+          "rationale": "Combines pricing and features, keeping it concise and year-specific."
+        },
+        {
+          "title": "Option Alpha Pricing 2026: Plans & Cost | RightAIChoice",
+          "rationale": "Focuses on cost transparency with 'Plans & Cost' to drive clicks."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:58.760Z"
+    },
+    {
+      "page": "/tools/recursion-pharma",
+      "bucket": "1B",
+      "currentTitle": "Recursion Pharmaceuticals: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 19,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "recursion pharmaceuticals dataset size petabytes",
+      "suggestions": [
+        {
+          "title": "Recursion Pharma Dataset Size: 10+ PB in 2026 | RightAIChoice",
+          "rationale": "Matches exact query 'dataset size petabytes' to boost relevance."
+        },
+        {
+          "title": "Recursion Pharma Pricing, Features & 10PB Dataset | RightAIChoice",
+          "rationale": "Combines popular terms with key dataset size for broader appeal."
+        },
+        {
+          "title": "Recursion Pharma: Pricing & 10PB Dataset Info 2026 | RightAIChoice",
+          "rationale": "Concise, includes year and dataset size to attract informed clicks."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:27:59.334Z"
+    },
+    {
+      "page": "/tools/shipixen",
+      "bucket": "1B",
+      "currentTitle": "Shipixen: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "shipixen",
+      "suggestions": [
+        {
+          "title": "Shipixen Pricing, Features & Alternatives 2026 | RightAIChoice",
+          "rationale": "Drops colon for cleaner scan and matches exact query phrasing."
+        },
+        {
+          "title": "Shipixen Alternatives & Pricing 2026 | RightAIChoice",
+          "rationale": "Leads with alternatives, a high-intent query for page-2 searchers."
+        },
+        {
+          "title": "Shipixen Review: Pricing, Features & More | RightAIChoice",
+          "rationale": "Adds 'Review' to signal fresh content and attract comparison seekers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:28:00.089Z"
+    },
+    {
+      "page": "/tools/talkpal",
+      "bucket": "1C",
+      "currentTitle": "TalkPal: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 25,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "talkpal kosten",
+      "suggestions": [
+        {
+          "title": "TalkPal Kosten: Pricing & Features 2026 | RightAIChoice",
+          "rationale": "Directly matches German 'kosten' query for relevance."
+        },
+        {
+          "title": "TalkPal Preis 2026: Kosten, Features & Alternativen | RightAIChoice",
+          "rationale": "Uses 'Preis' and 'Alternativen' to cover pricing and comparison intents."
+        },
+        {
+          "title": "TalkPal Abo Preise: Kosten & Vergleich 2026 | RightAIChoice",
+          "rationale": "Highlights subscription pricing and comparison for German searchers."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:28:00.526Z"
+    },
+    {
+      "page": "/tools/seowritex",
+      "bucket": "1B",
+      "currentTitle": "SEOWriteX: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "seowritex",
+      "suggestions": [
+        {
+          "title": "SEOWriteX Review 2026: Pricing, Features & More | RightAIChoice",
+          "rationale": "Leads with 'Review' to match review-intent queries and adds the year."
+        },
+        {
+          "title": "SEOWriteX Pricing & Features 2026: Is It Worth It? | RightAIChoice",
+          "rationale": "Directly addresses value question with 'Is It Worth It?' for click appeal."
+        },
+        {
+          "title": "SEOWriteX Alternatives & Pricing 2026 | RightAIChoice",
+          "rationale": "Targets users searching for alternatives, expanding relevance beyond brand queries."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:28:01.248Z"
+    },
+    {
+      "page": "/tools/tensor-art",
+      "bucket": "1A",
+      "currentTitle": "Tensor.art: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "tensor.art daily credits free plan 2026",
+      "suggestions": [
+        {
+          "title": "Tensor.art Free Plan: Daily Credits 2026 | RightAIChoice",
+          "rationale": "Front-loads the top query 'daily credits free plan' with year."
+        },
+        {
+          "title": "Tensor.art Pricing: Free Daily Credits in 2026 | RightAIChoice",
+          "rationale": "Targets pricing intent while promising free credits specifics."
+        },
+        {
+          "title": "Tensor.art Credits & Free Plan 2026 | RightAIChoice",
+          "rationale": "Directly answers searcher's need for credits and free plan."
+        }
+      ],
+      "generatedAt": "2026-05-27T09:28:01.509Z"
+    }
+  ]
+}
