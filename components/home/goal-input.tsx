@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 import { useDebouncedTextTracking } from '@/lib/hooks/use-debounced-text-tracking'
+import { useAuth } from '@/components/providers/auth-provider'
+import { PlanSignupModal } from '@/components/cta/plan-signup-modal'
 
 const MIN_CHARS = 10
 
@@ -42,10 +44,12 @@ const CHIPS: Array<{ label: string; intent: string }> = [
 
 export function GoalInput() {
   const router = useRouter()
+  const { user } = useAuth()
   const [goal, setGoal] = useState('')
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [usedChip, setUsedChip] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [signupOpen, setSignupOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const trimmed = goal.trim()
@@ -79,13 +83,21 @@ export function GoalInput() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
-    setSubmitting(true)
     analytics.heroCtaClicked('plan_my_stack', 'homepage_goal_input')
     analytics.searchQuerySubmitted(trimmed, 0, 'homepage_goal_input')
+    analytics.planCtaClicked({ surface: 'homepage', page_path: '/' })
     // Note: usedChip flag is captured for future tracking once analytics
     // exposes a generic track() — see Phase 5 follow-ups in plan.md.
     void usedChip
-    router.push(`/plan?q=${encodeURIComponent(trimmed)}`)
+
+    // Phase 9 — Anonymous users see the signup modal first (skippable);
+    // known users navigate straight through.
+    if (!user?.id) {
+      setSignupOpen(true)
+      return
+    }
+    setSubmitting(true)
+    router.push(`/plan?q=${encodeURIComponent(trimmed)}&source=homepage`)
   }
 
   return (
@@ -144,6 +156,15 @@ export function GoalInput() {
           </button>
         ))}
       </div>
+
+      {/* Phase 9 — Anonymous-user signup gate before /plan navigation.
+          Skippable; typed goal is persisted to plan_intents either way. */}
+      <PlanSignupModal
+        open={signupOpen}
+        onClose={() => setSignupOpen(false)}
+        typedGoal={trimmed}
+        sourceSurface="homepage"
+      />
     </div>
   )
 }

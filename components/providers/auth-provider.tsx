@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef } from 'react'
 import { analytics } from '@/lib/analytics'
 import { registerAnonSuperProps } from './mixpanel-provider'
+import { linkPlanIntentsToUser, readPendingIntent, clearPendingIntent, persistPlanIntent } from '@/lib/cta/persist-intent'
 
 type User = {
   id: string
@@ -60,6 +61,33 @@ export function AuthProvider({
         auth_state: 'known',
       })
       analytics.setPlanGroup('free')
+
+      // Phase 9 — anon→known transition. Run once per session per user:
+      //   1. Restore any "pending intent" stashed before OAuth round-trip
+      //      (modal Skip vs OAuth click stashes typed_goal in sessionStorage),
+      //      POST it to /api/plan/intent so the row carries the new user_id.
+      //   2. Reconcile every other anon plan_intents row for this distinct_id
+      //      to the now-known user_id via /api/plan/intent/link.
+      // Both are fire-and-forget. Only run on the transition itself (not on
+      // every render where user.id is still set), guarded by prevUserId check.
+      const wasAnonToKnown = !prevUserId
+      if (wasAnonToKnown) {
+        const pending = readPendingIntent()
+        if (pending) {
+          const provider = (sessionStorage.getItem('plan_signup_provider') as 'google' | 'linkedin' | null) ?? 'google'
+          analytics.planSignupModalCompleted({ provider, was_anon_to_known: true })
+          void persistPlanIntent({
+            typed_goal: pending.typed_goal,
+            source_surface: pending.source_surface,
+            signup_outcome: provider === 'linkedin' ? 'completed_linkedin' : 'completed_google',
+          }).finally(() => {
+            clearPendingIntent()
+            sessionStorage.removeItem('plan_signup_provider')
+          })
+        }
+        void linkPlanIntentsToUser()
+      }
+
       prevUserIdRef.current = user.id
     } else if (prevUserId) {
       // Real logout: was known, now anon. Reset clears the identity AND

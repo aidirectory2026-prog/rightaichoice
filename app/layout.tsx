@@ -9,6 +9,7 @@ import { GlobalInteractionTracker } from "@/components/analytics/global-interact
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
+import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import "./globals.css";
 
@@ -118,6 +119,9 @@ export default async function RootLayout({
         </MixpanelProvider>
         <MobileNav />
         <MobileNewsletterSticky />
+        {/* Phase 9 — global Plan Your Stack CTA. Hidden on excluded paths
+            (footer URLs, auth, admin, planner itself) via isEligibleForCTA. */}
+        <PlanCTASticky />
       </body>
     </html>
   );

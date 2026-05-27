@@ -11,6 +11,7 @@ import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
 import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
+import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
@@ -166,6 +167,11 @@ export default async function BlogPostPage({ params }: PageProps) {
               </div>
             )}
           </header>
+
+          {/* Phase 9 — inline Plan-Your-Stack CTA placed between blog
+              header and article body. High-intent placement for readers
+              who landed via long-tail Google queries. */}
+          <PlanCTAInline context={meta.title} />
 
           {/* MDX content */}
           <div className="prose-custom">

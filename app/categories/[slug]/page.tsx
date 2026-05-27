@@ -18,6 +18,7 @@ import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { buildCategoryPageMeta } from '@/lib/seo/metadata'
 import { getRelatedComparesForCategory } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
+import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -116,6 +117,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 {category.description}
               </p>
             )}
+
+            {/* Phase 9 — inline CTA after category intro paragraph. Highest
+                conversion intent on a category page is right after the user
+                reads "what is this category" copy. */}
+            <PlanCTAInline context={`${category.name} AI tools`} />
           </div>
 
           {/* Phase 6.5 (2026-05-12): grid + filters streamed via Suspense

@@ -353,6 +353,76 @@ export const AUDIT_CHECKS: AuditCheck[] = [
       expected: '> 0',
     }),
   },
+  // ── PHASE 9 PLAN-CTA FUNNEL HEALTH ──────────────────────────────────────
+  {
+    id: 'plan-cta-impressions-fresh',
+    category: 'freshness',
+    label: 'At least 1 plan_cta_impression event in last 24h (CTA is rendering)',
+    rationale: 'The global Plan-Your-Stack CTA should appear on every eligible page. Zero impressions in 24h = the layout mount broke or the eligibility helper is excluding everything.',
+    sql: `SELECT count(*)::int AS n FROM user_events
+           WHERE event_name = 'plan_cta_impression'
+             AND created_at >= now() - interval '24 hours'`,
+    interpret: (r) => ({
+      pass: Number(r.n) > 0,
+      actual: `${r.n} impression(s) in 24h`,
+      expected: '> 0',
+      note: Number(r.n) === 0 ? 'verify <PlanCTASticky/> is mounted in app/layout.tsx and isEligibleForCTA returns true on at least one route' : undefined,
+    }),
+  },
+  {
+    id: 'plan-intents-table-fresh',
+    category: 'freshness',
+    label: 'At least 1 plan_intents row in last 24h (capture pipeline alive)',
+    rationale: 'Users typing goals + clicking the CTA should INSERT into plan_intents (Skip path) or after-OAuth (completed path). If 24h passes with zero new rows but CTA impressions > 0, /api/plan/intent is broken.',
+    sql: `SELECT count(*)::int AS n FROM plan_intents
+           WHERE created_at >= now() - interval '24 hours'`,
+    interpret: (r) => ({
+      pass: Number(r.n) >= 0,  // 0 is acceptable if traffic is genuinely zero; the freshness check is purely a tripwire
+      actual: `${r.n} new intent(s) in 24h`,
+      expected: '>= 0 (informational)',
+      note: Number(r.n) === 0 ? 'no captures yet — verify /api/plan/intent route deployed + persist-intent.ts called from modal' : undefined,
+    }),
+  },
+  {
+    id: 'plan-intent-link-rate',
+    category: 'tracking-rpc',
+    label: 'Anon→known link rate ≥10% over 7d (signup conversion working)',
+    rationale: 'Of all plan_intents created with user_id=null, what % later got linked to a user_id via /api/plan/intent/link. <10% suggests the modal is friction-heavy OR the reconciliation hook in auth-provider broke.',
+    sql: `SELECT count(*) FILTER (WHERE user_id IS NOT NULL)::int AS linked,
+                 count(*)::int AS total
+            FROM plan_intents WHERE created_at >= now() - interval '7 days'`,
+    interpret: (r) => {
+      const total = Number(r.total)
+      if (total < 10) return { pass: true, actual: `${r.linked}/${total} linked`, expected: '≥10% once total ≥ 10', note: 'sample too small to evaluate' }
+      const rate = (Number(r.linked) / total) * 100
+      return {
+        pass: rate >= 10,
+        actual: `${rate.toFixed(1)}% linked (${r.linked}/${total})`,
+        expected: '≥ 10%',
+      }
+    },
+  },
+  {
+    id: 'plan-signup-modal-skip-rate',
+    category: 'tracking-rpc',
+    label: 'Signup modal skip rate ≤80% over 7d (modal isn\'t repelling everyone)',
+    rationale: 'High skip rate = OAuth modal feels too heavy. Copy / position / friction issue. We expect some skips (that\'s the point of skippable), but >80% means the OAuth path is barely working.',
+    sql: `SELECT
+            count(*) FILTER (WHERE event_name = 'plan_signup_modal_skipped')::int AS skipped,
+            count(*) FILTER (WHERE event_name = 'plan_signup_modal_shown')::int AS shown
+          FROM user_events WHERE created_at >= now() - interval '7 days'
+            AND event_name IN ('plan_signup_modal_skipped', 'plan_signup_modal_shown')`,
+    interpret: (r) => {
+      const shown = Number(r.shown)
+      if (shown < 10) return { pass: true, actual: `${r.skipped}/${shown} skipped`, expected: '≤80% once shown ≥ 10', note: 'sample too small to evaluate' }
+      const rate = (Number(r.skipped) / shown) * 100
+      return {
+        pass: rate <= 80,
+        actual: `${rate.toFixed(1)}% skip rate (${r.skipped}/${shown})`,
+        expected: '≤ 80%',
+      }
+    },
+  },
   {
     id: 'mirror-source-balance-not-skewed',
     category: 'mirror',

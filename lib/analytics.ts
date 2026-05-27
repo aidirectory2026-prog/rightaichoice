@@ -408,6 +408,58 @@ export const analytics = {
   },
 
   // ──────────────────────────────────────────────────────────────
+  // Phase 9 — Global Plan CTA + signup-gate funnel
+  // ──────────────────────────────────────────────────────────────
+  /** Fires when the global sticky/inline CTA scrolls into view. */
+  planCtaImpression(props: { surface: 'sticky_bar' | 'inline_card'; page_path: string }) {
+    capture('plan_cta_impression', { surface: props.surface, page_path: props.page_path })
+  },
+  /** Fires when the user clicks the CTA button (before any signup gate). */
+  planCtaClicked(props: { surface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage'; page_path: string }) {
+    capture('plan_cta_clicked', { surface: props.surface, page_path: props.page_path })
+  },
+  /** Fires when the user dismisses (×) the sticky bar. */
+  planCtaDismissed(props: { surface: 'sticky_bar' | 'inline_card'; page_path: string }) {
+    capture('plan_cta_dismissed', { surface: props.surface, page_path: props.page_path })
+  },
+  /** Fires when the OAuth signup modal opens. */
+  planSignupModalShown(props: { source_surface: string; typed_goal_char_count: number }) {
+    capture('plan_signup_modal_shown', {
+      source_surface: props.source_surface,
+      typed_goal_char_count: props.typed_goal_char_count,
+    })
+  },
+  /** Fires when the user clicks a provider button in the modal. */
+  planSignupModalOAuthClicked(props: { provider: 'google' | 'linkedin' }) {
+    capture('plan_signup_modal_oauth_clicked', { provider: props.provider })
+  },
+  /** Fires when the user clicks "Skip & continue" in the modal. */
+  planSignupModalSkipped(props: { typed_goal_char_count: number }) {
+    capture('plan_signup_modal_skipped', { typed_goal_char_count: props.typed_goal_char_count })
+  },
+  /** Fires when the post-OAuth identify call completes (was_anon_to_known). */
+  planSignupModalCompleted(props: { provider: 'google' | 'linkedin'; was_anon_to_known: boolean }) {
+    capture('plan_signup_modal_completed', {
+      provider: props.provider,
+      was_anon_to_known: props.was_anon_to_known,
+    })
+  },
+  /** Server-side mirror — fires after a POST /api/plan/intent insert succeeds. */
+  planIntentPersisted(props: { source_surface: string; char_count: number }) {
+    capture('plan_intent_persisted', {
+      source_surface: props.source_surface,
+      char_count: props.char_count,
+    })
+  },
+  /** Fires after the anon→user_id stitch UPDATE on plan_intents completes. */
+  planIntentLinkedToUser(props: { user_id: string; count_linked: number }) {
+    capture('plan_intent_linked_to_user', {
+      user_id: props.user_id,
+      count_linked: props.count_linked,
+    })
+  },
+
+  // ──────────────────────────────────────────────────────────────
   // Content / Blog / SEO pages
   // ──────────────────────────────────────────────────────────────
   blogPostViewed(slug: string) {

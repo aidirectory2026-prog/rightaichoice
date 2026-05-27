@@ -41,6 +41,7 @@ import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
 import { MobileActionBar } from '@/components/tools/mobile-action-bar'
 import { TutorialLink } from '@/components/tools/tutorial-link'
+import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 // Phase 3 density-replacement sections
 import { SkipIfLine } from '@/components/tools/skip-if-line'
 import { CostCalculator } from '@/components/tools/cost-calculator'
@@ -623,6 +624,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </p>
                 </div>
               </section>
+
+              {/* Phase 9 — inline Plan-Your-Stack CTA, after the About block.
+                  Places the strongest conversion ask above-the-fold for users
+                  who scrolled past the description. Context-aware copy. */}
+              <PlanCTAInline context={tool.name} />
 
               {/* Features */}
               {tool.features && tool.features.length > 0 && (

@@ -471,6 +471,116 @@ export const EVENTS: EventDef[] = [
   },
 
   // ──────────────────────────────────────────────────────────────
+  // Phase 9 — Global Plan CTA + signup-gate funnel
+  // ──────────────────────────────────────────────────────────────
+  {
+    name: 'plan_cta_impression',
+    category: 'nav',
+    source: 'client',
+    description: 'Global Plan-Your-Stack CTA scrolls into view.',
+    firesOn: 'IntersectionObserver visible on sticky bar or inline card.',
+    whyItMatters: 'Denominator for CTA CTR by surface.',
+    properties: [
+      { name: 'surface', type: 'string', description: 'sticky_bar | inline_card.' },
+      { name: 'page_path', type: 'string', description: 'Page where the CTA rendered.' },
+    ],
+  },
+  {
+    name: 'plan_cta_clicked',
+    category: 'nav',
+    source: 'client',
+    description: 'Click on any Plan-Your-Stack CTA across the site.',
+    firesOn: 'Sticky bar, inline card, homepage hero, navbar.',
+    whyItMatters: 'Numerator for funnel; per-surface attribution for the planner.',
+    properties: [
+      { name: 'surface', type: 'string', description: 'sticky_bar | inline_card | navbar | homepage.' },
+      { name: 'page_path', type: 'string', description: 'Page the click originated on.' },
+    ],
+  },
+  {
+    name: 'plan_cta_dismissed',
+    category: 'nav',
+    source: 'client',
+    description: 'User × dismisses the sticky CTA.',
+    firesOn: 'Sticky-bar × button.',
+    whyItMatters: 'Friction signal — high dismiss rate = copy/timing/placement issue.',
+    properties: [
+      { name: 'surface', type: 'string', description: 'sticky_bar | inline_card.' },
+      { name: 'page_path', type: 'string', description: 'Page where dismissed.' },
+    ],
+  },
+  {
+    name: 'plan_signup_modal_shown',
+    category: 'nav',
+    source: 'client',
+    description: 'OAuth signup modal opens after anonymous user clicks Plan-My-Stack CTA.',
+    firesOn: 'Modal mount.',
+    whyItMatters: 'Top of signup funnel — denominator for signup_rate.',
+    properties: [
+      { name: 'source_surface', type: 'string', description: 'Which CTA surface triggered the modal.' },
+      { name: 'typed_goal_char_count', type: 'number', description: 'Length of the typed goal at the moment of click.' },
+    ],
+  },
+  {
+    name: 'plan_signup_modal_oauth_clicked',
+    category: 'nav',
+    source: 'client',
+    description: 'User clicked a provider button (Google / LinkedIn) in the signup modal.',
+    firesOn: 'OAuth button click.',
+    whyItMatters: 'Per-provider conversion split.',
+    properties: [
+      { name: 'provider', type: 'string', description: 'google | linkedin.' },
+    ],
+  },
+  {
+    name: 'plan_signup_modal_skipped',
+    category: 'nav',
+    source: 'client',
+    description: 'User clicked "Skip & continue" in the signup modal.',
+    firesOn: 'Skip link click.',
+    whyItMatters: 'Drop-off measure; the typed goal is still persisted server-side.',
+    properties: [
+      { name: 'typed_goal_char_count', type: 'number', description: 'Length of the typed goal at skip time.' },
+    ],
+  },
+  {
+    name: 'plan_signup_modal_completed',
+    category: 'nav',
+    source: 'client',
+    description: 'OAuth round-trip completed — user is now identified.',
+    firesOn: 'auth-provider identify() success after modal-initiated OAuth.',
+    whyItMatters: 'Bottom of signup funnel; closes the loop.',
+    properties: [
+      { name: 'provider', type: 'string', description: 'google | linkedin.' },
+      { name: 'was_anon_to_known', type: 'boolean', description: 'True if anon distinct_id existed before OAuth.' },
+    ],
+  },
+  {
+    name: 'plan_intent_persisted',
+    category: 'nav',
+    source: 'server',
+    description: 'POST /api/plan/intent succeeded — typed goal saved to plan_intents.',
+    firesOn: 'After INSERT into plan_intents row.',
+    whyItMatters: 'Verifies the durable-capture pipeline (not just the Mixpanel event).',
+    properties: [
+      { name: 'source_surface', type: 'string', description: 'Surface that originated the goal.' },
+      { name: 'char_count', type: 'number', description: 'Sanitized goal length.' },
+    ],
+  },
+  {
+    name: 'plan_intent_linked_to_user',
+    category: 'nav',
+    source: 'server',
+    description: 'Anon plan_intents rows linked to authenticated user_id after signup.',
+    firesOn: 'POST /api/plan/intent/link after UPDATE plan_intents SET user_id.',
+    whyItMatters: 'Confirms anon→known stitching is reconciling goal history.',
+    properties: [
+      { name: 'user_id', type: 'string', description: 'auth.users id.' },
+      { name: 'count_linked', type: 'number', description: 'Number of plan_intents rows linked.' },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────────────
   // Content / Blog / SEO
   // ──────────────────────────────────────────────────────────────
   {

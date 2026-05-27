@@ -181,3 +181,29 @@ export async function signInWithGoogle(formData?: FormData): Promise<void> {
 
   redirect(data.url)
 }
+
+// ─── LinkedIn OAuth (Phase 9 — Plan-Your-Stack signup modal) ────────────────
+
+export async function signInWithLinkedIn(formData?: FormData): Promise<void> {
+  const supabase = await createClient()
+  const next = safeNext(formData?.get('next') ?? null)
+
+  const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL)
+  callbackUrl.searchParams.set('next', next)
+
+  // Supabase Auth uses 'linkedin_oidc' for the OpenID Connect LinkedIn flow
+  // (the legacy 'linkedin' provider was deprecated by LinkedIn in 2023).
+  // The provider must be enabled + credentials added in Supabase dashboard
+  // → Authentication → Providers → LinkedIn (OIDC) before this works.
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'linkedin_oidc',
+    options: { redirectTo: callbackUrl.toString() },
+  })
+
+  if (error || !data.url) {
+    console.error('LinkedIn OAuth error:', error?.message ?? 'No redirect URL returned')
+    redirect('/login?error=oauth_failed')
+  }
+
+  redirect(data.url)
+}
