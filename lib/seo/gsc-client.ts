@@ -22,6 +22,7 @@ import { OAuth2Client } from 'google-auth-library'
 import { readFileSync } from 'fs'
 
 const GSC_BASE = 'https://searchconsole.googleapis.com/webmasters/v3'
+const GSC_INSPECT_BASE = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect'
 
 let oauthClient: OAuth2Client | null = null
 
@@ -113,6 +114,78 @@ export async function querySearchAnalytics(
 
   const data = (await res.json()) as { rows?: GscRow[] }
   return data.rows ?? []
+}
+
+/**
+ * URL Inspection API — returns Google's current view of a single URL.
+ *
+ * Critical field is `indexStatusResult.coverageState`, which categorizes
+ * the URL's indexation state. Common values:
+ *   "Submitted and indexed"
+ *   "Crawled - currently not indexed"
+ *   "Discovered - currently not indexed"      ← the authority/crawl-budget bucket
+ *   "Page with redirect"
+ *   "Duplicate without user-selected canonical"
+ *   "Duplicate, Google chose different canonical than user"
+ *   "Excluded by 'noindex' tag"
+ *   "Soft 404"
+ *   "Not found (404)"
+ *   "URL is unknown to Google"
+ *
+ * Quota: 2,000 inspections/day per Search Console property + 600/min/project.
+ * The /v1/ endpoint requires the same `webmasters.readonly` scope already
+ * authorized in the OAuth bootstrap flow.
+ */
+export type CoverageState = string // Google may add new categories; keep open
+
+export type IndexStatusResult = {
+  verdict?: 'PASS' | 'PARTIAL' | 'FAIL' | 'NEUTRAL' | string
+  coverageState?: CoverageState
+  robotsTxtState?: string
+  indexingState?: string
+  lastCrawlTime?: string
+  pageFetchState?: string
+  googleCanonical?: string
+  userCanonical?: string
+  sitemap?: string[]
+  referringUrls?: string[]
+  crawledAs?: 'DESKTOP' | 'MOBILE' | string
+}
+
+export type InspectionResult = {
+  inspectionResult: {
+    inspectionResultLink?: string
+    indexStatusResult?: IndexStatusResult
+    ampResult?: unknown
+    mobileUsabilityResult?: unknown
+    richResultsResult?: unknown
+  }
+}
+
+export async function inspectUrl(
+  siteUrl: string,
+  inspectionUrl: string,
+  languageCode = 'en-US'
+): Promise<InspectionResult> {
+  const client = getOAuthClient()
+  const { token } = await client.getAccessToken()
+  if (!token) throw new Error('Failed to refresh OAuth access token — try re-running bootstrap.')
+
+  const res = await fetch(GSC_INSPECT_BASE, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ inspectionUrl, siteUrl, languageCode }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`GSC URL Inspection ${res.status}: ${text.slice(0, 500)}`)
+  }
+
+  return (await res.json()) as InspectionResult
 }
 
 /**
