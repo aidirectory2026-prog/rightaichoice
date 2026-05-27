@@ -1,9 +1,49 @@
-# 05 — Tier 3: Indexation Rescue (~1,330 zero-impression pages)
+# 05 — Tier 3: Indexation Rescue
 
 > **Goal:** Get the silent half of the site indexed and ranked. Today
-> ~1,330 published pages have zero impressions in 28 days, meaning
-> Google either never crawled them or crawled and refused to index.
-> This is the biggest long-term unlock.
+> a large slice of published pages produce zero impressions in 28 days,
+> meaning Google either never crawled them or crawled and refused to
+> index. This is the biggest long-term unlock.
+
+## 2026-05-28 reframe — read this first
+
+The original framing of this doc was: "~1,330 zero-impression *tool*
+pages are the bottleneck." The first GSC URL-Inspection audit (see
+[14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md))
+disproved that assumption. The actual indexation gap looks like this:
+
+| Page type | Sample | Indexed | Rate |
+| --- | --: | --: | --: |
+| tool | 100 | 93 | **93%** |
+| best | 51 | 50 | 98% |
+| stack | 40 | 35 | 88% |
+| role | 20 | 20 | 100% |
+| blog | 16 | 16 | 100% |
+| category | 15 | 13 | 87% |
+| static | 14 | 8 | 57% |
+| **compare** | **100** | **34** | **34%** |
+
+**Top-100 tools are 93% indexed. Top-100 compares (by recency) are 34%
+indexed.** ~1,000 editorial compares published, ~660 invisible to Google.
+
+That reframes everything in this doc. New priority order:
+
+1. **B1 — Fix compare-as-orphans** (compare-link elevation on tool
+   pages). See doc [07](./07-internal-linking-topical-authority.md)
+   "Compare-link elevation" section. **Highest-leverage move in Tier 3.**
+2. **B2 — Compare sitemap priority bump** (0.8 → 0.95).
+3. **B3 — Re-run audit with `--all`** to get full coverage (2 days at
+   2k/day quota); produces the actual bucket distribution for
+   ~2,781 URLs instead of the 356-URL sample.
+4. **B4 — Long-tail tool internal linking** (the original Tier-3 focus)
+   is now secondary. Tools at the bottom of view_count likely *are* in
+   the "URL is unknown to Google" bucket, but they represent a smaller
+   slice than the compare problem and have less commercial intent.
+
+The rest of this doc (root causes, diagnostic pipeline, fix playbook)
+remains correct as a *general framework*. Treat the volumes and
+bucket targets below as a baseline to be replaced once the `--all`
+audit completes.
 
 ## Why this matters
 

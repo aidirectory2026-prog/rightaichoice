@@ -4,6 +4,230 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 — 2026-05-28 — Noindex sweep (22 pages) + first GSC URL-Inspection audit (356 URLs)
+
+**Trigger:** Phase 9 plan called for Tier-3 indexation rescue (the ~1,330 zero-impression pages) and Tier-4 prune-or-merge (the 529 pos-51+ pages) to run in parallel. Before doing the heavy work, we needed to know: which pages are actually missing from Google's index, and which are indexed-but-buried? Phase A = ship the most obvious noindex candidates (Tier-4 first wave). Phase B = run the first real audit using the GSC URL Inspection API to ground the rest of the plan in data, not assumptions.
+
+**Approach:** Two parallel tracks ran on the same day:
+- **Phase A — Targeted noindex sweep.** Pull the 10 worst-performing hub/best/stacks/for pages (avg pos 58–90, single-digit impressions, off-domain or zero commercial intent) + 12 worst-performing comparison pages (mostly non-AI residue from the early bulk seed). Mark them `noindex, follow` so URLs still resolve but Google drops them from the index and crawl budget reallocates to pages we want indexed.
+- **Phase B — First indexation audit.** Sample top-100-by-view_count per page type (~356 URLs total across tool / best / stack / role / blog / category / static / compare). Call GSC URL Inspection API for each. Bucket the responses by `coverageState`. The "what's actually broken" picture this paints is what the rest of Phase 9 should optimize for.
+
+### What shipped — in plain English
+
+**1. Targeted noindex sweep — 22 pages dropped from the index.**
+
+Two mechanisms, depending on whether the page is config-driven or DB-driven:
+
+- **Static config pages** (best / stacks / for) — added an optional `noindex?: boolean` field to the TypeScript config in `lib/data/{best-pages,stacks,role-pages}.ts`. The flag is read by both the per-section sitemap and the per-page `generateMetadata` (which emits `robots: { index: false, follow: true }`). Flagged 10 pages: `/best/agencies`, `/best/design`, `/best/writing`, `/best/spreadsheets`, `/best/cybersecurity`, `/best/cold-outreach`, `/best/presentations`, `/best/healthcare-ai`, `/stacks/real-estate-agent`, `/for/real-estate-agents`. All were pos 58+ with single-digit impressions; several are off-domain for an AI directory (cybersecurity, healthcare, real-estate).
+- **DB-driven compare pages** — migration `113_noindex_tool_comparisons.sql` adds a `noindex` boolean column to `tool_comparisons` (default false, partial index on `WHERE noindex = false` for query performance). Flag is read by the compare page's `generateMetadata` and filters through 7 downstream surfaces: sitemap, RSS feed, related-compares rail, hub listings, llms-full.txt, IndexNow recent-pings cron, Bing URL-submission cron. Flagged 12 compares: 8 non-AI (Expensify×2, Aweber/Klaviyo, Shopify/Webflow, Skool×2, Carrd, Leadpages, Rewardful) + 3 AI-adjacent low-quality (Canva×2, Heygen).
+- **Deliberately skipped:** `/categories/business-finance`, `/categories/healthcare` — these are core taxonomy nodes. The right fix is better content, not noindex.
+
+Full doc: [14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md).
+
+**2. First indexation audit — 356 URLs inspected.**
+
+Ran `scripts/audit-gsc-indexation.ts` against a top-N-by-view_count sample per page type. The top-line indexation rates:
+
+| Page type   | Inspected | Indexed | Rate  |
+| ----------- | --------: | ------: | ----- |
+| tool        | 100       | 93      | 93%   |
+| best        | 51        | 50      | 98%   |
+| stack       | 40        | 35      | 88%   |
+| role        | 20        | 20      | 100%  |
+| blog        | 16        | 16      | 100%  |
+| category    | 15        | 13      | 87%   |
+| static      | 14        | 8       | 57%   |
+| **compare** | **100**   | **34**  | **34%** |
+
+**3. The audit finding that reframes Tier 3.**
+
+We assumed the 1,400 zero-impression tools were the indexation problem. The audit says otherwise. Top-100 tools are **93% indexed**. Top-100 *compares* are only **34% indexed**. ~1,000 editorial compares published, ~660 of them invisible to Google.
+
+That's a 3× larger problem hiding inside a smaller surface. The crawl-budget bottleneck isn't long-tail tools — it's editorial compares being orphans (linked only from a "related compares" rail at the bottom of *other* compare pages = circular, low priority).
+
+### What this changes for the rest of Phase 9
+
+Tier 3 priority order has flipped. New B1–B4 sequence (full detail in [14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md)):
+
+| Priority | Action | Doc impact |
+| :-- | :-- | :-- |
+| **B1** | Elevate compare links on tool pages — above-the-fold "Compared with: …" pill instead of buried rail | doc 07 updated (compare-elevation section added) |
+| **B2** | Bump compare sitemap priority `0.8 → 0.95` | one-line change, follow-up PR |
+| **B3** | Re-run audit with `--all` to cover all 2,781 URLs (2 days at 2k/day quota) | runs as background pipeline |
+| **B4** | Long-tail tool internal linking — weight UN-indexed tools higher in "Similar tools" rail | doc 05 updated to flag this as secondary, not primary |
+
+### Commits shipped today
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `de770ff` | Phase A noindex sweep — 22 pages (10 hub + 12 compare) emit `robots: noindex,follow` and are excluded from sitemap, RSS, IndexNow, Bing pings, llms-full.txt, related-compares rail, hub listings. Migration 113 ships the `tool_comparisons.noindex` column. |
+| `935d09e` | Phase 9 CTA & conversion: global Plan-Your-Stack CTA + signup gate (separate workstream landing the same day; not part of the noindex sweep). |
+| _follow-up commit_ | New `14-noindex-sweep-and-audit-findings.md` plan doc + this BUILD-LOG entry + reframes of docs 05/06/07/README. |
+
+### Files changed (Phase A)
+
+```
+lib/data/best-pages.ts                + noindex?: boolean + 8 flags
+lib/data/stacks.ts                    + noindex?: boolean + 1 flag
+lib/data/role-pages.ts                + noindex?: boolean + 1 flag
+lib/data/comparisons.ts               + .eq('noindex', false) on 4 query helpers
+lib/seo/internal-links.ts             + .eq('noindex', false) on related-compares query
+app/best/[slug]/page.tsx              + robots: { index: false } from config
+app/best/sitemap.ts                   + .filter((p) => !p.noindex)
+app/stacks/[slug]/page.tsx            + same
+app/stacks/sitemap.ts                 + same
+app/for/[slug]/page.tsx               + same
+app/for/sitemap.ts                    + same
+app/compare/[slug]/page.tsx           + robots: { index: false } from DB row
+app/feed.xml/route.ts                 + .eq('noindex', false) on compare RSS
+app/api/cron/indexnow-recent/route.ts + .eq('noindex', false) before pinging IndexNow
+app/api/cron/submit-urls-bing/route.ts + .eq('noindex', false) before pinging Bing
+scripts/build-llms-full.ts            + .eq('noindex', false) before writing llms.txt
+supabase/migrations/113_noindex_tool_comparisons.sql  (new)
+```
+
+### What's measurable from this ship
+
+| When | Check |
+| :--- | :--- |
+| Today +1hr | View-source on `/best/agencies` shows `<meta name="robots" content="noindex,follow">` |
+| Today +1hr | View-source on `/compare/expensify-vs-quickbooks` shows same |
+| Today +1hr | `/sitemap.xml` no longer contains the 22 flagged URLs |
+| Day +3 | GSC re-crawl confirms; URL Inspection on a noindex'd page reports "Excluded by 'noindex' tag" |
+| Day +14 | Indexed-page count for the 22 noindex'd pages drops to 0 |
+| Day +14 | Total impressions should NOT drop (these pages weren't contributing) |
+| Day +14 | Compare-section impressions should rise (crawl budget reallocates) |
+| Day +30 | After B1 ships (compare-link elevation), compare-indexation rate measured: target ≥ 70% (vs 34% baseline) |
+
+### What did NOT ship today (and why)
+
+- **B1 (elevate compare links on tool pages)** — needs UX design pass first. The `getEditorialComparisonsForTool` data layer exists (`lib/data/comparisons.ts`), but where the rail sits on the tool page and what it looks like is a design choice. Held to Day 4 deliberately.
+- **B2 (bump compare sitemap priority to 0.95)** — held out of this PR for review focus. Trivial one-line change, will ship in a follow-up commit.
+- **B3 (full `--all` audit run)** — kicks off as a background process; takes ~2 days at 2k/day quota. Results will inform Day-5 decisions.
+- **B4 (long-tail tool similar-tools rail re-weighting)** — secondary priority now that audit shows tools are 93% indexed at the top end. Held until B1 and B3 land.
+
+### Lesson logged
+
+The Phase 9 plan's "1,330 zero-impression tools = bottleneck" framing was an *assumption* we never tested. The first thing to do in any rescue effort is to call URL Inspection on a representative sample — 4 hours of API quota would have saved 4 weeks of misaimed work. Bake this into future plans: before any rescue tier, run an audit-first checkpoint.
+
+---
+
+## Day 2 — 2026-05-26 → 27 — Full catalog data-completeness pass (2,038 tools refreshed)
+
+**Trigger:** every tool page needs every section populated with current data; user audit found ~56% of tools had empty `latest_updates`, 71% had hidden Tutorials section, and tutorial links rendered as bare hostnames ("dbos.dev" × 4) instead of real page titles.
+
+**Approach:** extend the Phase 4 SOP (`scripts/backfill-tool-data.ts`) to capture every depth field in one DeepSeek call, then run it across the entire catalog in 4 parallel shards, then HTTP-fetch real `<title>` tags for every tutorial URL.
+
+### What shipped — in plain English
+
+**1. Phase 4 SOP now captures depth fields in one pass.**
+
+Before, the SOP only refreshed structured fields (features, FAQs, pricing_plan_guides, workflow_scenarios, etc.). Depth fields (`tutorial_urls`, `latest_updates`, `models`, `community_links`, `pricing_details`) were handled by a separate Anthropic-based script (`enrich-tools.ts`), and `latest_updates` had a broken schema that produced empty cards on the page.
+
+Now the SOP:
+- Extracts `tutorial_urls` (10 absolute URLs to docs/guides/tutorials/help/academy/learn/getting-started)
+- Extracts `latest_updates` in the correct `{date, source, type, title, url, summary}` shape that matches `LatestUpdatesSection`
+- Extracts `models` (named LLMs the tool uses)
+- Extracts `community_links` (G2/ProductHunt/Reddit)
+- Extracts `pricing_details` (tier list with plan/price/features)
+- Scrapes 4 more page paths (`/help`, `/support`, `/academy`, `/resources`, `/learn`, `/getting-started`) so enterprise tools that hide docs behind login still surface the help center
+- All these new fields only OVERWRITE existing data if DeepSeek returned non-empty values (safety)
+
+**2. 4-shard parallel architecture.**
+
+The SOP used to run sequentially (~80 sec per tool × 2,038 = 49 hours). Added `--shard=N --shards=M` flags so the catalog gets deterministically partitioned by `hash(slug) % M`. Each shard processes its own ~500 tools, writes to its own checkpoint file (`scripts/.refresh-progress.shard0of4.json`), and runs as a separate `nohup` background process. Wall-clock dropped from 49h → ~7h.
+
+**3. UI fallback: "Resources & Guides" section now always renders.**
+
+Previously the section was hidden when `tutorial_urls` was empty. Now (`components/tools/tutorial-link.tsx` + `app/tools/[slug]/page.tsx`):
+- Prefers enriched `tutorial_links` with real `<title>` + meta-description
+- Falls back to bare `tutorial_urls` with URL-path-derived titles ("Quickstart", "Documentation", "API Reference") + colored badges
+- Final fallback: synthesizes from `docs_url` / `changelog_url` / `github_url` / community URLs / website URL — so EVERY tool has at least one actionable resource card
+
+**4. `tutorial_links` jsonb column + HTTP backfill script.**
+
+Migration 106 added the column. `scripts/backfill-tutorial-titles.mjs` HTTP-fetches every tutorial URL, parses `<title>` and `<meta property="og:title">` / `<meta name="description">`, strips the tool brand suffix ("Quickstart - DBOS" → "Quickstart"), and writes `{url, title, description}` triples. Concurrency 6, 7s per-fetch timeout.
+
+**5. SOP synthesis improvements (mid-flight fixes).**
+
+| Bug | Fix |
+|---|---|
+| 23% failure rate from JSON truncation | `max_tokens: 4096 → 8192` |
+| Postgres statement timeout from 4 parallel jsonb fetches at startup | Split to lightweight `id+slug` scan + lazy per-tool hydration |
+| Network blips killed every remaining tool in the run | Added 5× exponential-backoff retry on hydrate |
+| Malformed DeepSeek JSON (control chars, trailing commas, truncation) | Added in-place JSON repair sanitizer with brace-balancing |
+| `pgArray()` apostrophe-in-array-literal bug failed ~10% of chunks | Escape `'` → `''` inside `{"..."}` literals before SQL-string-wrapping |
+| `has_api: null`, `pricing_type` enum mismatch, `skill_level` enum mismatch | Defensive normalization before Zod parse |
+
+**6. Tutorial-titles backfill: 1,768 / 1,768 tools (100% of those with URLs).**
+
+Ran across the full catalog in two passes (DNS blip killed the first at scanned=1,050 → restarted, picked up from checkpoint via `tutorial_links` skip logic). Every tool that has any tutorial URL now shows the real page `<title>` instead of a hostname.
+
+**7. Viability backfill (deterministic, no LLM): 100% coverage.**
+
+`scripts/backfill-viability.mjs` re-runs the 6-signal score model for any null entries. Result: 2,038 / 2,038 tools have a 0-100 viability_score.
+
+**8. Two follow-up retries to close gaps.**
+
+- **Retry-1** — 56 tools missed the initial SOP refresh (DeepSeek validation failures, network stragglers). Single-slug SOP loop recovered 37 of them (~66%); the remaining 19 consistently fail scrape or hit Zod validation rejects.
+- **Retry-2** — 639 tools had empty `latest_updates`. New focused script `scripts/retry-latest-updates.mjs` scrapes a wider net (`/news`, `/press`, `/research`, `/announcements`, GitHub releases via API for tools with `github_url`) and asks DeepSeek for ONLY `latest_updates` with a tight prompt. Filled 166 (26% fill rate). The remaining ~470 genuinely have no public dated content (early-stage products, enterprise tools with no public blog).
+
+### Final coverage (compared against the audit baseline)
+
+| Section | Audit baseline | After this pass | Delta |
+| :--- | ---: | ---: | ---: |
+| SOP refreshed in last 24h | ~0 | **2,019 / 2,038 (99.1%)** | +2,019 |
+| Viability score populated | ~1,178 | **2,038 (100%)** | +860 |
+| Features | varied | **2,038 (100%)** | — |
+| FAQs (long-tail) | varied | **2,035 (99.9%)** | +14 |
+| Skip-if line | varied | **2,035 (99.9%)** | +14 |
+| Workflow scenarios | varied | **2,035 (99.9%)** | +14 |
+| Tutorial URLs | 1,698 | **1,768 (87%)** | +70 |
+| **Tutorial REAL TITLES** | 232 | **1,768 (100% of those with URLs)** | **+1,536** |
+| Latest updates (news) | 1,334 | **1,568 (77%)** | +234 |
+| Pricing tiers | 1,608 | 1,692 (83%) | +84 |
+
+**The 19 SOP holdouts** are tools whose websites consistently 4xx/timeout scrape — would need manual review or a different ingestion path.
+**The 470 latest_updates holdouts** are tools with no public dated changelog/blog/news content — genuine, not a bug.
+
+### Commits shipped today
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `4822f15` | Resources & Guides section always renders + SOP scrape extracts wider URL set |
+| `a6afc31` | Hotfix: commit `lib/cron/scrape.ts` so `fetchToolPagesBundle` export is present (deploy was failing because `enrich.ts` was committed without the function it imports) |
+| `55dead6` | Tutorial + news rendering: real page titles instead of bare hostnames; migration 106 (`tutorial_links` jsonb); enrich.ts `latest_updates` schema fix |
+
+### Cost + time
+
+- DeepSeek API: ~$20-25 for the full catalog re-synthesis (4 SOP runs × ~2,000 tools × ~$0.01 each + retries + focused latest_updates)
+- Wall-clock: ~10 hours over 2026-05-26 evening → 2026-05-27 afternoon
+- Mac kept alive via `caffeinate -dims &` for the full duration
+
+### Incident notes — what went wrong
+
+1. **JSON truncation cascade (~23% of tools)** — DeepSeek hit the 4096-token output limit on the now-richer SOP output. Bumped to 8192. Resolved.
+2. **Postgres statement timeout on parallel startup** — 4 shards × full jsonb fetch at boot exceeded the 8s statement timeout on Free tier. Resolved by lightweight initial scan + lazy hydration.
+3. **Network blip → 1,625 cascading "hydrate failed"** — when network blipped during a shard run, the next ~1,500 hydrate calls all failed (no retry). Added 5× exponential backoff retry. The shards that finished with these failures left ~150 tools unchecked → recovered via Retry-1.
+4. **Supabase Free-tier pool exhaustion** — after 6+ hours of 4-shard parallel processing, Postgres connection pool stayed jammed even after shards died. `SELECT 1` timed out for ~10 hours. Resolved by: user upgraded to Pro plan, then triggered project restart from dashboard. Cleared instantly.
+5. **Shard 3 launch dropped twice from the bash for-loop** — the `for i in 0 1 2 3; do nohup ... & done` would silently end before launching shard 3 in both attempts. Manually launched it both times. Root cause unclear (shell quoting + heredoc nesting?), worked around.
+6. **Duplicate shard 3 instances** — manual launch + leftover from earlier run created two shard 3 processes that interleaved writes into the same log file (corrupted log readability, but DB writes were still atomic). Killed the older instance, single instance continued.
+
+### What's measurable from this ship
+
+- Every tool page should now show: Editorial Verdict, Behind the Verdict, Latest from {Tool}, Viability Score, About, Key Features, Use Cases, Limitations, Pricing, Integrations, Resources & Guides, FAQ — all populated.
+- Spot-check on production (Vercel auto-deployed `4822f15`): `/tools/inngest` should show "How Durable Execution Works", "Next Js Quickstart" etc. instead of "inngest.com" × 10.
+
+### Lesson logged for next time
+
+When running long-tail concurrent jobs against a managed Postgres:
+- Pre-warm the connection pool with one sequential query before fanning out (so pool size is established before peak load).
+- Stagger shard launches by at least 15s so the first jsonb fetches don't all hit at once.
+- Use per-shard checkpoint files, not a shared file (parallel JSON writes corrupt).
+- Always wrap hydrate in retry — Supabase-side network blips happen and a single un-retried fetch failure shouldn't cascade.
+
+---
+
 ## Day 1 — 2026-05-27
 
 **Commit:** `24e41b9` — Phase 9 Day-1 — decision-engine positioning + AI crawler manifest + E-E-A-T wiring

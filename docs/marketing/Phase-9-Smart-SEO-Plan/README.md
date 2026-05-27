@@ -49,10 +49,13 @@ achievable. See [`01-diagnosis-and-baseline.md`](./01-diagnosis-and-baseline.md)
    where title/meta changes alone meaningfully move clicks.
 4. **Tier 2 (143 pages): content depth + backlinks for pos 31–50** —
    these need *substance*, not titles.
-5. **Tier 3 (~1,330 pages): indexation rescue** — most of the site is
-   invisible because of poor internal linking + thin pages.
+5. **Tier 3: indexation rescue** — originally framed as ~1,330 zero-impression
+   tool pages. The 2026-05-28 GSC audit (see [14](./14-noindex-sweep-and-audit-findings.md))
+   reframed this: **top-100 tools are 93% indexed; top-100 compares are only 34%.**
+   The bottleneck is editorial *compares* being orphans, not tools.
 6. **Tier 4 (529 pages): prune or merge** — pos-51+ with no quality
-   signals is a sitewide quality drag; aggressive cleanup.
+   signals is a sitewide quality drag; aggressive cleanup. First wave
+   (22 pages noindex'd) shipped 2026-05-28.
 
 In parallel: stack pillar pages (`/stacks/[slug]`), link magnets, AI
 search citations, internal cornerstones, Reddit/YouTube distribution.
@@ -129,6 +132,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | [`11-kpis-and-feedback-loops.md`](./11-kpis-and-feedback-loops.md) | Weekly review ritual + dashboards                       |
 | [`12-execution-timeline.md`](./12-execution-timeline.md)      | Today / week / month / 90-day Gantt                         |
 | [`13-homepage-positioning-and-brand-defense.md`](./13-homepage-positioning-and-brand-defense.md) | Positioning shift, homepage rewrite, brand SERP defense, CTA fix, stack pillar pages |
+| [`14-noindex-sweep-and-audit-findings.md`](./14-noindex-sweep-and-audit-findings.md) | Day-3 noindex sweep (22 pages) + first GSC URL-Inspection audit (356 URLs); reframes Tier 3 around compare-indexation gap |
 
 ## How to read this folder
 

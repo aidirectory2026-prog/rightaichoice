@@ -19,6 +19,37 @@ Internal links do three things at once:
 A directory site without strong internal linking is a graveyard of
 orphan pages. Today, RAC is mostly graveyard.
 
+## 2026-05-28 priority injection — compare-link elevation
+
+The 2026-05-28 GSC audit (see
+[14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md))
+found that editorial *compare* pages are only **34% indexed** — vs 93%
+for tool pages. The cause maps directly onto this doc's premise:
+compares are orphans. They're linked from a "related compares" rail at
+the bottom of *other* compare pages = circular, low-priority for crawl.
+
+**B1 — Elevate compare links on tool pages.** Every editorial compare
+should be linked from the two tool pages it compares — front and
+center, not buried.
+
+- Data layer already exists: `getEditorialComparisonsForTool` in
+  `lib/data/comparisons.ts:133`.
+- Current placement: a "Compared with" rail somewhere mid- or
+  below-the-fold on the tool page.
+- New placement: **above-the-fold pill or strip**, e.g.:
+  - `Compared with: Cursor → · GitHub Copilot → · Cline →`
+  - Or a dedicated "Head-to-head" block right under the editorial
+    verdict, before the feature table.
+- Treat compares as first-class navigation, not "related content".
+
+Why this works: tool pages already enjoy 93% crawl coverage. Moving
+compare links into above-the-fold position transfers crawl-priority
+authority from already-indexed pages to under-indexed ones. This is
+the single highest-leverage internal-link change in Phase 9.
+
+Note: the linking query already filters `.eq('noindex', false)` so the
+22 noindex'd compares won't get authority injected into them.
+
 ## The hub-and-spoke model
 
 Pick a small set of **cornerstone pages** (5–7). Every related

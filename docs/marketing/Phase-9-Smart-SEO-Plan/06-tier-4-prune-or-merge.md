@@ -4,6 +4,24 @@
 > impressions. Aggressive triage — improve, merge, or noindex. Doing
 > nothing is the wrong answer: each weak page drags sitewide quality.
 
+## 2026-05-28 status — first wave shipped (22 pages noindex'd)
+
+The most obvious noindex candidates were shipped on 2026-05-28 as the
+**first wave** of Tier 4 (commit `de770ff`, doc
+[14](./14-noindex-sweep-and-audit-findings.md)). 22 pages with avg pos
+58–90 and single-digit impressions are now `noindex, follow`:
+
+- 10 hub pages (best/stacks/for) — agencies, design, writing,
+  spreadsheets, cybersecurity, cold-outreach, presentations,
+  healthcare-ai, real-estate-agent (stack), real-estate-agents (role)
+- 12 comparison pages — 8 non-AI (Expensify×2, Aweber/Klaviyo,
+  Shopify/Webflow, Skool×2, Carrd, Leadpages, Rewardful) + 3
+  AI-adjacent low-quality (Canva×2, Heygen)
+
+This is **22 of the 529** flagged for Tier 4 — the no-judgment-call
+slice (off-domain, non-AI, niche). The remaining ~500 require the
+decision-matrix triage below.
+
 ## Why prune at all?
 
 Google's site-wide quality assessment penalizes sites with a high ratio
