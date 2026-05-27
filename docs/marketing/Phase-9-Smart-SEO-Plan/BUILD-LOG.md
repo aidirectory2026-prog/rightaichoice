@@ -135,6 +135,58 @@ MODIFIED
 
 ---
 
+## Day 3 (cont.) — 2026-05-28 — B1 + B2: compare-link elevation + sitemap priority bump
+
+**Trigger:** the same-day GSC audit (see entry below) found editorial compares only 34% indexed vs tools at 93%. The plan's B1 (elevate compare links above the fold on tool pages) and B2 (bump compare sitemap priority) are the two fastest moves to start closing that gap. Both shipped immediately.
+
+### What shipped — in plain English
+
+**1. "Compared with" pill strip — above the fold on every tool page.**
+
+Until today, the only place a tool page surfaced its editorial comparisons was a "Featured Head-to-Head Comparisons" rail at the bottom of the right sidebar — well below the fold, easily missed by both users and Googlebot. The new strip sits directly under the hero (between the action buttons and the FTC disclosure) and renders as a horizontal row of pill links:
+
+> **Compared with**  · vs Cursor → · vs GitHub Copilot → · vs Cline →
+
+- Caps at 6 visible compares per tool (room for more if needed; long-tail compares stay accessible via the sidebar rail which we kept as long-form context with verdict snippets).
+- Anchor text uses "vs {OtherTool}" — descriptive without redundant repetition of the current tool name, per doc 07 anchor-text strategy.
+- Emerald-tinted pill styling matches the existing editorial-verdict theme so the strip reads as authoritative editorial nav, not generic "related content".
+
+Why this works (mechanism): tool pages already enjoy 93% crawl coverage. Hoisting compare links into above-the-fold position transfers crawl-priority authority from already-indexed pages directly into compares. Pages linked from above-the-fold positions on indexed pages get crawled significantly more frequently than pages linked from buried widgets — this is the single highest-leverage internal-link move in Phase 9.
+
+**2. Compare sitemap priority bumped 0.8 → 0.95.**
+
+One-line change in `app/compare/sitemap.ts`. Sitemap priority is a relative signal — bumping compares above the 0.8 default tells Google to prefer crawling them when budget is constrained. Tools stay at their default. The bump is incremental but free.
+
+### Commits shipped (cont.)
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `1c410da` | B1 (elevated "Compared with" strip on tool pages) + B2 (compare sitemap priority 0.8 → 0.95) |
+
+### Files changed
+
+```
+app/tools/[slug]/page.tsx     + 30 lines: above-the-fold "Compared with" pill strip
+app/compare/sitemap.ts        + 5 lines:  priority 0.8 → 0.95 with rationale comment
+```
+
+### What's measurable from this ship
+
+| When | Check |
+| :--- | :--- |
+| Today +5min | View-source on `/tools/cursor` shows new `<div>` with `vs GitHub Copilot →` links above the FTC disclosure |
+| Today +5min | `/compare/sitemap.xml` shows `<priority>0.95</priority>` on every compare URL |
+| Day +14 | GSC Crawl Stats — compare-section requests/day should rise vs prior 7-day baseline |
+| Day +21 | Sample re-inspection of 20 previously-unindexed compares: target ≥ 50% flipped to indexed |
+| Day +30 | Full audit re-run (after B3 completes); compare-indexation rate target ≥ 70% (vs 34% baseline) |
+
+### What's NOT yet shipped from the B-series
+
+- **B3 — full `--all` GSC URL Inspection audit.** Requires 2 days at the 2k/day quota and consumes the entire daily inspection budget. Held for explicit go-ahead. Command: `npm run audit:indexation -- --all`. Checkpoints to `scripts/.gsc-indexation-progress.json`, so it survives session breaks and a single-day quota hit.
+- **B4 — long-tail tool internal linking** (re-weight "Similar tools" rail to favor un-indexed tools). Secondary priority now that audit shows tools are 93% indexed at the top end. Held until B1/B3 results are in — sequencing matters because B1's effect will likely change the shape of B4's target list.
+
+---
+
 ## Day 3 — 2026-05-28 — Noindex sweep (22 pages) + first GSC URL-Inspection audit (356 URLs)
 
 **Trigger:** Phase 9 plan called for Tier-3 indexation rescue (the ~1,330 zero-impression pages) and Tier-4 prune-or-merge (the 529 pos-51+ pages) to run in parallel. Before doing the heavy work, we needed to know: which pages are actually missing from Google's index, and which are indexed-but-buried? Phase A = ship the most obvious noindex candidates (Tier-4 first wave). Phase B = run the first real audit using the GSC URL Inspection API to ground the rest of the plan in data, not assumptions.
