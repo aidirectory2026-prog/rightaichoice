@@ -64,10 +64,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Phase 9 Tier-1: per-page title overrides for CTR rewrites.
   const override = await getTitleOverride(`/compare/${slug}`)
-  if (override) {
-    return { ...meta, title: { absolute: override } }
-  }
-  return meta
+  const titled = override ? { ...meta, title: { absolute: override } } : meta
+
+  // Phase 9 noindex sweep — emit robots: noindex,follow for flagged compares.
+  const noindex = (comparison as { noindex?: boolean | null }).noindex === true
+  return noindex
+    ? { ...titled, robots: { index: false, follow: true } }
+    : titled
 }
 
 export default async function ComparisonSlugPage({ params }: Props) {

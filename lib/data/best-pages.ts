@@ -15,6 +15,12 @@ export type BestPageConfig = {
   featureKeywords?: string[]
   /** Skill level filter */
   skillLevel?: 'beginner' | 'intermediate' | 'advanced'
+  /**
+   * Phase 9 noindex sweep — keep URL live but exclude from sitemap
+   * and emit <meta name="robots" content="noindex,follow">. Used to
+   * reclaim crawl budget from pages stuck at pos 51+.
+   */
+  noindex?: boolean
 }
 
 export const BEST_PAGES: BestPageConfig[] = [
@@ -25,6 +31,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     description:
       'Discover the top AI writing assistants for content creation, copywriting, long-form articles, and more. Compare features, pricing, and real user reviews.',
     categories: ['writing-content'],
+    noindex: true,
   },
   {
     slug: 'coding',
@@ -103,6 +110,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI design tools for every creator — from logo generators and UI builders to AI photo editors, 3D tools, and brand identity platforms.',
     // Phase 7 Step 52 (BUG-016): was `design-creative` (phantom). Canonical is `design-ui`.
     categories: ['design-ui'],
+    noindex: true,
   },
   {
     slug: 'research',
@@ -218,6 +226,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     description:
       'Create stunning presentations in minutes with AI. Compare Gamma, Beautiful.ai, Tome, and other tools that generate professional slides from text.',
     featureKeywords: ['presentation', 'slides', 'pitch deck', 'slideshow'],
+    noindex: true,
   },
   {
     slug: 'translation',
@@ -313,6 +322,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     description:
       'AI tools for medical professionals — clinical note generation, diagnostic assistance, patient communication, medical imaging analysis, and research.',
     categories: ['healthcare'],
+    noindex: true,
   },
   {
     slug: 'education',
@@ -330,6 +340,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     description:
       'AI-powered cybersecurity tools for threat detection, vulnerability scanning, incident response, and security operations. Compare top solutions.',
     categories: ['security-privacy'],
+    noindex: true,
   },
   {
     slug: 'game-dev',
@@ -374,6 +385,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI tools that help agencies scale — from client reporting and content generation to campaign optimization and white-label solutions.',
     categories: ['marketing-seo'],
     featureKeywords: ['agency', 'white-label', 'client reporting'],
+    noindex: true,
   },
   {
     slug: 'content-repurposing',
@@ -391,6 +403,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI-powered cold outreach tools for personalized emails at scale — find leads, write copy, automate sequences, and track responses.',
     categories: ['marketing-seo'],
     featureKeywords: ['cold email', 'outreach', 'lead generation', 'personalization'],
+    noindex: true,
   },
   {
     slug: 'data-analysis',
@@ -460,6 +473,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI-powered spreadsheet tools that write formulas, clean data, generate charts, and automate analysis. Stop staring at cells — let AI handle it.',
     categories: ['data-analytics'],
     featureKeywords: ['spreadsheet', 'Excel', 'Google Sheets', 'formula'],
+    noindex: true,
   },
   {
     slug: 'logo-design',

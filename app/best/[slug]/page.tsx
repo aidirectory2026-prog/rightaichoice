@@ -11,6 +11,7 @@ import { getBestPageBySlug, BEST_PAGES } from '@/lib/data/best-pages'
 import { getTools } from '@/lib/data/tools'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { itemListJsonLd, faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 
 export const revalidate = 3600 // 1 hour
 
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `https://rightaichoice.com/best/${slug}`,
     },
+    ...(page.noindex && { robots: { index: false, follow: true } }),
   }
 }
 
@@ -128,6 +130,11 @@ export default async function BestPage({ params }: PageProps) {
                 size="sm"
               />
             </div>
+
+            {/* Phase 9 — inline Plan-Your-Stack CTA right after the
+                page-hero copy. "Best-of" readers are mid-research; this
+                offers them the shortcut: describe the goal, get the match. */}
+            <PlanCTAInline context={config.title} />
           </div>
         </div>
 

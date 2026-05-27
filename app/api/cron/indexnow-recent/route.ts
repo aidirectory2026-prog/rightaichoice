@@ -38,10 +38,13 @@ export const POST = cronRoute({ pipelineKey: 'indexnow-recent' }, async (ctx) =>
     urls.push(...(tools as { slug: string }[]).map((t) => `${BASE}/tools/${t.slug}`))
   }
 
+  // Phase 9 noindex sweep: skip noindex compares — don't ask IndexNow to crawl
+  // pages we've just told Google not to index.
   const { data: comparisons } = await db
     .from('tool_comparisons')
     .select('slug')
     .eq('is_editorial', true)
+    .eq('noindex', false)
     .gte('published_at', cutoff)
   if (comparisons) {
     urls.push(

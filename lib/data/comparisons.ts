@@ -112,6 +112,8 @@ export async function getAllComparisonSlugs() {
   // Use admin client (no cookies) — called from generateStaticParams and sitemap at build time
   const db = getAdminClient()
 
+  // Phase 9 noindex sweep: exclude noindex=true rows so off-domain / low-quality
+  // compares stay out of the sitemap. The page still resolves at the URL.
   return fetchAllPages<{
     slug: string
     last_reviewed_at: string | null
@@ -121,6 +123,7 @@ export async function getAllComparisonSlugs() {
       .from('tool_comparisons')
       .select('slug, last_reviewed_at, published_at')
       .eq('is_editorial', true)
+      .eq('noindex', false)
       .order('published_at', { ascending: false })
       .range(from, to)
   )
@@ -137,6 +140,7 @@ export async function getEditorialComparisonsForTool(toolId: string) {
     .from('tool_comparisons')
     .select('slug, tool_ids, verdict, view_count')
     .eq('is_editorial', true)
+    .eq('noindex', false)
     .contains('tool_ids', [toolId])
     .order('published_at', { ascending: false })
 
@@ -154,6 +158,7 @@ export async function getFeaturedEditorialComparisons(limit = 6) {
     .from('tool_comparisons')
     .select('slug, tool_ids, verdict, view_count, published_at')
     .eq('is_editorial', true)
+    .eq('noindex', false)
     .order('published_at', { ascending: false })
     .limit(limit)
 
@@ -197,12 +202,14 @@ export async function getEditorialComparisonsPaginated(page = 1, perPage = 24) {
     .from('tool_comparisons')
     .select('slug', { count: 'exact', head: true })
     .eq('is_editorial', true)
+    .eq('noindex', false)
 
   // Page rows
   const { data, error } = await supabase
     .from('tool_comparisons')
     .select('slug, tool_ids, verdict, published_at, view_count')
     .eq('is_editorial', true)
+    .eq('noindex', false)
     .order('published_at', { ascending: false })
     .range(offset, offset + perPage - 1)
   if (error || !data) {

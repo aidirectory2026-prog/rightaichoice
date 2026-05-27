@@ -57,6 +57,7 @@ export async function GET() {
       .from('tool_comparisons')
       .select('slug, verdict, published_at, last_reviewed_at, tool_ids')
       .eq('is_editorial', true)
+      .eq('noindex', false)
       .order('published_at', { ascending: false })
       .range(0, 49),
     supa

@@ -19,6 +19,11 @@ export type RolePageConfig = {
   featureKeywords?: string[]
   /** Recommended stack page slug if one exists */
   stackSlug?: string
+  /**
+   * Phase 9 noindex sweep — keep URL live but exclude from sitemap
+   * and emit <meta name="robots" content="noindex,follow">.
+   */
+  noindex?: boolean
 }
 
 // Phase 7 Step 52 (BUG-017) — Phantom-slug fix sweep applied to every entry.
@@ -223,6 +228,7 @@ export const ROLE_PAGES: RolePageConfig[] = [
       'Real estate professionals need to move fast — from creating compelling listings and staging photos virtually to qualifying leads and analyzing market trends. These AI tools help agents close more deals with less manual work.',
     categories: ['writing-content', 'marketing-seo'],
     featureKeywords: ['real estate', 'property', 'listing', 'staging', 'lead generation'],
+    noindex: true,
   },
   {
     slug: 'podcasters',

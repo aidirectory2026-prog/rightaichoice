@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `https://rightaichoice.com/for/${slug}`,
     },
+    ...(page.noindex && { robots: { index: false, follow: true } }),
   }
 }
 

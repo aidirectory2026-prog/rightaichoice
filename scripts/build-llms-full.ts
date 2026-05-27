@@ -103,10 +103,12 @@ async function fetchTools(supabase: any): Promise<ToolRow[]> {
 }
 
 async function fetchCompares(supabase: any): Promise<CompareRow[]> {
+  // Phase 9 noindex sweep: exclude noindex compares from llms-full.txt too.
   const { data, error } = await supabase
     .from('tool_comparisons')
     .select('slug, verdict')
     .eq('is_editorial', true)
+    .eq('noindex', false)
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
     .limit(500)

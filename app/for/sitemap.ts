@@ -6,7 +6,7 @@ const BASE_URL = 'https://rightaichoice.com'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  return ROLE_PAGES.map((r) => ({
+  return ROLE_PAGES.filter((r) => !r.noindex).map((r) => ({
     url: `${BASE_URL}/for/${r.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

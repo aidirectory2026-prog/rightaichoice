@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: stack.description,
       images: [ogImage],
     },
+    ...(stack.noindex && { robots: { index: false, follow: true } }),
   }
 }
 

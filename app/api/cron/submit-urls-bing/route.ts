@@ -43,10 +43,12 @@ async function fetchPool(type: ContentType): Promise<string[]> {
   const supabase = getAdminClient()
   switch (type) {
     case 'compare': {
+      // Phase 9 noindex sweep: don't push noindex compares to Bing.
       const { data } = await supabase
         .from('tool_comparisons')
         .select('slug')
         .eq('is_editorial', true)
+        .eq('noindex', false)
       return ((data as { slug: string }[]) ?? []).map(
         (c) => `${SITE_URL}/compare/${c.slug}`,
       )

@@ -32,6 +32,11 @@ export type StackConfig = {
     skillLevel: 'Beginner' | 'Intermediate' | 'Advanced'
     setupTime: string
   }
+  /**
+   * Phase 9 noindex sweep — keep URL live but exclude from sitemap
+   * and emit <meta name="robots" content="noindex,follow">.
+   */
+  noindex?: boolean
 }
 
 export const STACKS: StackConfig[] = [
@@ -1030,6 +1035,7 @@ export const STACKS: StackConfig[] = [
       },
     ],
     summary: { freePath: '$0/mo (free tiers)', paidPath: '$80–150/mo', skillLevel: 'Beginner', setupTime: '3–5 days' },
+    noindex: true,
   },
   {
     slug: 'e-learning-creator',
