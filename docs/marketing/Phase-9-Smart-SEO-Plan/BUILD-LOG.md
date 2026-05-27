@@ -4,6 +4,137 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — CTA + Conversion: global Plan-Your-Stack CTA, signup gate, durable intent capture, admin funnel
+
+**Trigger:** every page except the homepage was a conversion dead-end. Visitors landing on `/tools/[slug]`, `/categories/[slug]`, `/blog/[slug]`, `/best/[slug]` etc. from Google had no direct prompt to use the actual product (the stack planner). Conversion from long-tail traffic was incidental at best. We also had zero durable record of what users typed into the goal box — anything that lived only in `?q=` URL params or `plan_goal_typed` keystroke events evaporated when users bounced.
+
+**Approach:** ship a global "Plan Your Stack" CTA in two complementary forms (sticky bar + inline content card) on every eligible page; intercept the click with a lightweight Google/LinkedIn OAuth signup modal that's skippable but always captures the typed goal server-side; surface a new `/admin/plan-conversion` dashboard so every CTA impression, click, signup outcome, and typed goal is visible with full surface attribution and originating-page provenance.
+
+### What shipped — in plain English
+
+**1. Global Plan-Your-Stack CTA, mounted on every page that isn't in the footer.**
+
+- **Sticky bar** at the bottom (above the mobile nav, dismissible per session). Copy: "Pick the right AI stack in 60s — Skip the research, describe your goal, we'll match the tools." Single emerald primary CTA button. Lives at z-40 so it stacks under modals but over the rest of the page.
+- **Inline card** dropped into the four highest-traffic detail-page templates: `/tools/[slug]` (after the About section), `/categories/[slug]` (after the intro paragraph), `/best/[slug]` (after the page header), `/blog/[slug]` (between header and article body). Each card gets a context-aware headline: "Researching Leena AI?", "Researching AI writing tools?", "Researching best AI for coding?", etc.
+- **Eligibility helper** (`lib/cta/eligible-path.ts`) is the single source of truth for which paths render the CTA. Excludes the 15 footer URLs + the homepage (which already has its own hero input) + auth/admin/embed/dashboard/planner sub-routes. Every other page gets it.
+
+**2. Skippable Google + LinkedIn OAuth signup modal.**
+
+Clicking any CTA opens a modal that says:
+
+> Save your custom AI stack
+> It's **free** and takes 5 seconds. We'll save your stack to your dashboard so you can revisit, compare, and share it anytime.
+> — Continue with Google —
+> — Continue with LinkedIn —
+> Skip & continue as guest →
+
+- Anonymous users see this modal before reaching `/plan`. Authenticated users go straight through (no modal).
+- LinkedIn OAuth uses Supabase's `linkedin_oidc` provider (the LinkedIn-deprecated `linkedin` provider was replaced in 2023). Provider must be enabled in the Supabase dashboard before the LinkedIn button works on prod; Google works immediately.
+- Skip is a real first-class path — typed goal is still captured server-side, the user lands on `/plan?q=…` with the planner pre-filled. We never block.
+
+**3. Durable typed-goal capture in a new `plan_intents` table.**
+
+Migration `112_plan_intents` adds:
+
+```
+plan_intents (
+  id, distinct_id, user_id (nullable),
+  typed_goal, char_count,
+  source_surface, source_path,
+  signup_outcome, referrer, user_agent, country, created_at
+)
+```
+
+Two new server routes write into it:
+
+- `POST /api/plan/intent` — inserts a row from either the modal Skip path (anon, `signup_outcome='skipped'`, `user_id=null`) or the post-OAuth flow (`signup_outcome='completed_google'|'completed_linkedin'`, `user_id` populated). Server applies the same PII scrubber as the keystroke tracker (strips emails → `[email]`, long numbers → `[number]`).
+- `POST /api/plan/intent/link` — called once after the auth-provider identifies a known user post-OAuth; UPDATEs every `plan_intents` row matching `distinct_id = ? AND user_id IS NULL` to set the new `user_id`. One human, one continuous goal history.
+
+**4. CRITICAL fix shipped same-day: source-page tracking is now end-to-end correct.**
+
+A self-audit caught a real bug: `plan_intents.source_path` was being filled from the HTTP Referer header. That works for the Skip path (Referer still reflects the original CTA-click page), but **breaks for the OAuth path** — after the round-trip, Referer becomes `/auth/callback` or `/plan`, not the original `/tools/[slug]` where the user clicked.
+
+Fix: pass `page_path` explicitly through the entire pipeline.
+
+- `stashPendingIntent(typed_goal, source_surface, page_path)` now requires page_path; stashes it in sessionStorage so it survives the OAuth round-trip.
+- `persistPlanIntent({ ..., page_path })` accepts an optional explicit page_path and posts it as `body.source_path`.
+- `/api/plan/intent` route prioritizes `body.source_path` over the Referer header (Referer is now only a fallback for direct curl / older clients).
+- Both modal handlers (Skip and OAuth) read `window.location.pathname` at click time and feed it through.
+- `auth-provider.tsx` reads the stashed page_path post-OAuth and passes it on.
+
+**Verified twice** before shipping:
+- *Test 1 — code trace.* Walked the API route's source_path-selection logic for both paths.
+- *Test 2 — synthetic DB inserts.* Inserted a Skip-style row with `source_path=/tools/leena-ai` (Referer matched) and an OAuth-style row with `source_path=/best/coding-tools` even though Referer was `/auth/callback?next=/plan`. Both rows stored the ORIGINAL page. Test rows cleaned up.
+
+**5. `/admin/plan-conversion` dashboard.**
+
+New admin page with five sections:
+
+- **KPI strip** — CTAs shown / CTA clicks / signups completed / goals captured (with anon→user link rate).
+- **8-step funnel** — CTA Impression → CTA Click → Signup Modal Shown → OAuth Clicked / Skipped → Signup Completed → /plan loaded → plan finalized. Each step shows count, bar, and drop-off % from the previous step.
+- **Per-surface conversion table** — sticky_bar / inline_card / navbar / homepage with impressions, clicks, CTR, signups, signup-rate. Tells you which surface actually converts.
+- **Live intent stream** — last 50 typed goals in the window. Each row shows the goal text (linked to the user's full journey timeline), the originating page path (the fix from item 4 above), surface, outcome chip (color-coded), and time-ago. Drill into any row by distinct_id.
+- **Anon → known link-rate gauge** — what % of typed goals eventually got linked to an authenticated user (in-session OAuth or later reconciliation).
+
+Uses the unified `<RangePicker>` so Today / Yesterday / 7d / 30d / Custom all work consistently with the rest of the admin.
+
+**6. Analytics: 9 new event methods + 4 new audit invariants.**
+
+In `lib/analytics.ts`: `planCtaImpression`, `planCtaClicked`, `planCtaDismissed`, `planSignupModalShown`, `planSignupModalOAuthClicked`, `planSignupModalSkipped`, `planSignupModalCompleted`, `planIntentPersisted`, `planIntentLinkedToUser`. Every event includes `source_surface` and (for the click events) `page_path` so you can attribute conversions back to the originating page in Mixpanel + the Supabase mirror.
+
+In `lib/admin/data-audit.ts`: 4 new invariants validate the funnel is healthy:
+- `plan-cta-impressions-fresh` — at least 1 impression in last 24h (CTA is rendering somewhere)
+- `plan-intents-table-fresh` — informational counter, surfaces capture-pipeline activity
+- `plan-intent-link-rate` — anon→known link rate ≥ 10% over 7d once sample is meaningful
+- `plan-signup-modal-skip-rate` — skip rate ≤ 80% over 7d (catches a modal that's repelling everyone)
+
+### Commits shipped today
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `935d09e` | Phase 9 CTA & conversion — global Plan-Your-Stack CTA + signup gate + plan_intents + admin/plan-conversion |
+| `0c2f710` | Hotfix: `lib/admin/plan-conversion.ts` (missed in 935d09e — would have broken the new admin page build) |
+| `27da297` | Source-path pipeline fix — `body.source_path` now takes priority over Referer; stash/restore preserves the original CTA-click page across the OAuth round-trip |
+
+### Files changed
+
+```
+NEW
+  components/cta/plan-cta-sticky.tsx          (sticky bar, dismissible, IntersectionObserver impression)
+  components/cta/plan-cta-inline.tsx          (in-content card, context-aware headline)
+  components/cta/plan-cta-button.tsx          (shared anon→modal / known→/plan branching wrapper)
+  components/cta/plan-signup-modal.tsx        (Google + LinkedIn + Skip, full keyboard/backdrop a11y)
+  lib/cta/eligible-path.ts                    (path-eligibility helper)
+  lib/cta/persist-intent.ts                   (stash/read/clear + persist + link helpers)
+  lib/admin/plan-conversion.ts                (query helpers for /admin/plan-conversion)
+  app/admin/plan-conversion/page.tsx          (KPI strip + funnel + surface table + intent stream + link-rate gauge)
+  app/api/plan/intent/route.ts                (POST capture endpoint, PII-scrubbed)
+  app/api/plan/intent/link/route.ts           (POST anon→known reconciliation)
+  supabase/migrations/112_plan_intents.sql    (table + indexes + RLS)
+
+MODIFIED
+  app/layout.tsx                              (+ <PlanCTASticky />)
+  app/tools/[slug]/page.tsx                   (+ <PlanCTAInline /> after About)
+  app/categories/[slug]/page.tsx              (+ <PlanCTAInline /> after intro)
+  app/best/[slug]/page.tsx                    (+ <PlanCTAInline /> after page header)
+  app/blog/[slug]/page.tsx                    (+ <PlanCTAInline /> after blog header)
+  app/admin/layout.tsx                        (+ "Plan funnel" nav link)
+  components/home/goal-input.tsx              (anon users see modal before /plan)
+  components/providers/auth-provider.tsx      (on anon→known, restore stashed intent + link)
+  actions/auth.ts                             (+ signInWithLinkedIn() for linkedin_oidc)
+  lib/analytics.ts                            (+ 9 new event methods)
+  scripts/mixpanel/config/events.ts           (+ 9 lexicon definitions)
+  lib/admin/data-audit.ts                     (+ 4 invariants for funnel health)
+```
+
+### Open follow-ups (deferred, not blocking)
+
+- **Manual step:** enable LinkedIn OIDC provider in the Supabase dashboard (Authentication → Providers → LinkedIn (OIDC) → enable + paste LinkedIn app credentials). Google button works without this; LinkedIn button errors to `/login?error=oauth_failed` until done.
+- **Stage 5 section 5 (deferred):** DeepSeek-powered nightly topic-clustering of typed goals so the admin shows "what users most want this week" themes. Skip on v1; add in a follow-up if intent volume justifies it.
+- **Newsletter sticky vs Plan CTA sticky stacking:** both live in `app/layout.tsx`. On the same page they sit at z-40 and z-30 respectively. If the visual feels crowded post-deploy, hide newsletter-sticky on pages where plan-CTA-sticky is visible.
+
+---
+
 ## Day 3 — 2026-05-28 — Noindex sweep (22 pages) + first GSC URL-Inspection audit (356 URLs)
 
 **Trigger:** Phase 9 plan called for Tier-3 indexation rescue (the ~1,330 zero-impression pages) and Tier-4 prune-or-merge (the 529 pos-51+ pages) to run in parallel. Before doing the heavy work, we needed to know: which pages are actually missing from Google's index, and which are indexed-but-buried? Phase A = ship the most obvious noindex candidates (Tier-4 first wave). Phase B = run the first real audit using the GSC URL Inspection API to ground the rest of the plan in data, not assumptions.
