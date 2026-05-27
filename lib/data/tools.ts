@@ -519,9 +519,20 @@ export async function getAlternativeTools(
       }
       score += wordOverlap
 
-      // Small popularity tiebreaker — never enough to overpower a real signal,
-      // but breaks ties between equally-related candidates.
-      score += Math.log10((row.view_count ?? 0) + 1) * 0.5
+      // Phase 9 B4 (2026-05-28): inverted the popularity tiebreaker.
+      // OLD: `+Math.log10((view_count ?? 0) + 1) * 0.5` — high-view tools always
+      // won ties (rich-get-richer; long-tail likely-un-indexed tools never
+      // surfaced as alternatives). The 2026-05-28 GSC audit identified
+      // long-tail tool indexation as a secondary bottleneck.
+      // NEW: small INVERTED boost. Un-indexed (view_count=0) tools get +1;
+      // high-view tools get a small penalty (down to -1). Capped at ±1 so
+      // it remains strictly a tiebreaker — a single shared identity tag
+      // scores 10pts and a shared non-identity tag scores 3pts, so this
+      // never overpowers a real relevance signal. Internal-link authority
+      // now flows from indexed siblings into the long tail when relevance
+      // is equal.
+      const viewCount = row.view_count ?? 0
+      score += viewCount === 0 ? 1 : Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
 
       return { row, score, sharedIdentity, sharedAnyTag, candTagSetRaw }
     })
