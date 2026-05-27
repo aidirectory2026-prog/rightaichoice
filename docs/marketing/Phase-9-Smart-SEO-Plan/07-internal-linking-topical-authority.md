@@ -19,18 +19,29 @@ Internal links do three things at once:
 A directory site without strong internal linking is a graveyard of
 orphan pages. Today, RAC is mostly graveyard.
 
-## 2026-05-28 priority injection — compare-link elevation
+## 2026-05-28 priority injection — compare-link elevation + tool long-tail
 
-The 2026-05-28 GSC audit (see
-[14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md))
-found that editorial *compare* pages are only **34% indexed** — vs 93%
-for tool pages. The cause maps directly onto this doc's premise:
-compares are orphans. They're linked from a "related compares" rail at
-the bottom of *other* compare pages = circular, low-priority for crawl.
+The first 2026-05-28 GSC audit (356-URL sample) said compares were the
+only indexation problem. The follow-up `--all` audit (1996 URLs, same
+day) revealed **tools are also a major crawl-budget problem**:
 
-**B1 — Elevate compare links on tool pages.** Every editorial compare
-should be linked from the two tool pages it compares — front and
-center, not buried.
+| Page type | Inspected | Indexed | Rate |
+| --- | --: | --: | --: |
+| **tool** | **1740** | **1082** | **62%** |
+| **compare** | 100 | 34 | **34%** |
+
+That's **658 tool pages discovered-not-indexed vs ~66 compares**. The
+"tools at 93%" line from the small sample reflected the top-100 by
+view_count — the long tail is far worse. Full breakdown in
+[14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md).
+
+Both problems map directly onto this doc's premise: the underexposed
+pages are orphans inside their own clusters. Two parallel workstreams
+flow from this audit:
+
+**B1 — Elevate compare links on tool pages** (highest per-URL leverage).
+Every editorial compare should be linked from the two tool pages it
+compares — front and center, not buried.
 
 - Data layer already exists: `getEditorialComparisonsForTool` in
   `lib/data/comparisons.ts:133`.
@@ -42,13 +53,26 @@ center, not buried.
     verdict, before the feature table.
 - Treat compares as first-class navigation, not "related content".
 
-Why this works: tool pages already enjoy 93% crawl coverage. Moving
-compare links into above-the-fold position transfers crawl-priority
-authority from already-indexed pages to under-indexed ones. This is
-the single highest-leverage internal-link change in Phase 9.
+Why this works: tool pages enjoy higher crawl priority than compares.
+Moving compare links into above-the-fold position transfers
+crawl-priority authority from indexed pages to under-indexed ones.
 
 Note: the linking query already filters `.eq('noindex', false)` so the
 22 noindex'd compares won't get authority injected into them.
+
+**B4 — Tool-page internal linking sweep** (highest absolute volume).
+The orphan-detection workstream below (Step 1–4) was originally framed
+as "next week" work — the `--all` audit promotes it to **immediately
+after cornerstones**. 540 discovered-not-indexed URLs vs 9
+crawled-not-indexed confirms the bottleneck is crawl-budget (which
+internal linking fixes), not content quality (which would need editorial
+rewrites).
+
+The sibling-tools rail (`components/tools/related-tools.tsx` /
+equivalent) should weight UN-indexed tools higher so crawl flows down
+into the long tail. Today it pulls from `tool_categories` overlap with
+no weighting — a tool that's already indexed and a tool that's never
+been crawled get equal probability of surfacing. That has to flip.
 
 ## 2026-05-28 status — first cornerstone shipped
 

@@ -50,7 +50,53 @@ listings):
 - `/categories/business-finance`, `/categories/healthcare` — these are
   core taxonomy nodes. The right fix is better content, not noindex.
 
-## Audit results — first 356 URLs inspected
+## 2026-05-28 update — full --all audit complete (1996 URLs)
+
+The B3 follow-up audit ran to the 2,000/day quota cap. **The reframe
+in this doc is now partially wrong**: the small-sample audit below
+overstated tool-indexation health.
+
+| Page type   | Inspected | Indexed | Rate  |
+| ----------- | --------: | ------: | ----- |
+| tool        | **1740**  | **1082**| **62%** |
+| compare     | 100       | 34      | 34%   |
+| category    | 15        | 13      | 87%   |
+| best        | 51        | 50      | 98%   |
+| stack       | 40        | 35      | 88%   |
+| role        | 20        | 20      | 100%  |
+| blog        | 16        | 16      | 100%  |
+| static      | 14        | 8       | 57%   |
+
+Bucket totals across the 1996-URL run:
+
+- `Submitted and indexed` — 1258 (63%)
+- `Discovered - currently not indexed` — **540 (27%)** ← crawl-budget bottleneck
+- `URL is unknown to Google` — 171 (8.6%)
+- `Duplicate without user-selected canonical` — 16 (0.8%)
+- `Crawled - currently not indexed` — 9 (0.5%) ← content-quality bottleneck
+- `Server error (5xx)` — 2
+
+**Revised takeaway:**
+1. Compares are still the worst rate (34%) — the B1 above-the-fold
+   compare-link elevation (shipped 2026-05-28) remains the right move.
+2. **Tools are the bigger absolute-volume problem**: 658 tool pages
+   discovered-not-indexed vs ~66 compares. The earlier "tools are at
+   93%" line was a top-100-by-view_count sample, not the full catalog.
+3. The diagnostic split is **540 discovered-not-indexed** (crawl budget)
+   vs **9 crawled-not-indexed** (content quality) — confirms the
+   primary lever is internal linking, not editorial rewrites.
+
+This redirects Phase 9 priority order for the rest of the week to:
+1. Cornerstones + stack pillars (concentrate authority on hubs)
+2. **Tool-page internal linking sweep** (B4 — was "next week", now
+   moved up because the long tail is bigger than thought)
+3. Continue compare-link elevation (B1)
+
+4 tool URLs returned fetch failures during the audit and need
+investigation: `coreweave`, `flatiron-health`, `resistant-ai`,
+`gloat`.
+
+## Original audit results — first 356 URLs inspected (small-sample)
 
 Sampled top-100-by-view_count per page type (compares ordered by
 `published_at desc`). Top-line numbers:

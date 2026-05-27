@@ -5,45 +5,51 @@
 > meaning Google either never crawled them or crawled and refused to
 > index. This is the biggest long-term unlock.
 
-## 2026-05-28 reframe — read this first
+## 2026-05-28 reframe — read this first (revised after full audit)
 
-The original framing of this doc was: "~1,330 zero-impression *tool*
-pages are the bottleneck." The first GSC URL-Inspection audit (see
-[14-noindex-sweep-and-audit-findings.md](./14-noindex-sweep-and-audit-findings.md))
-disproved that assumption. The actual indexation gap looks like this:
+This section was first written off a 356-URL sample. The B3 `--all`
+audit (1996 URLs, 2026-05-28) revealed the small sample
+significantly overstated tool-indexation health. Updated numbers:
 
-| Page type | Sample | Indexed | Rate |
+| Page type | Inspected | Indexed | Rate |
 | --- | --: | --: | --: |
-| tool | 100 | 93 | **93%** |
+| **tool** | **1740** | **1082** | **62%** |
+| **compare** | 100 | 34 | **34%** |
+| category | 15 | 13 | 87% |
 | best | 51 | 50 | 98% |
 | stack | 40 | 35 | 88% |
 | role | 20 | 20 | 100% |
 | blog | 16 | 16 | 100% |
-| category | 15 | 13 | 87% |
 | static | 14 | 8 | 57% |
-| **compare** | **100** | **34** | **34%** |
 
-**Top-100 tools are 93% indexed. Top-100 compares (by recency) are 34%
-indexed.** ~1,000 editorial compares published, ~660 invisible to Google.
+**Both buckets need work. Volume-wise, tools is now the bigger lift:**
+658 tool pages discovered-not-indexed vs ~66 compares. The earlier
+"tools are 93% indexed" line was a top-100-by-view_count slice — the
+long tail is far worse.
 
-That reframes everything in this doc. New priority order:
+Bucket diagnostic (1996 URLs):
+- `Submitted and indexed` — 1258 (63%)
+- `Discovered - currently not indexed` — **540 (27%)** ← crawl-budget
+  bottleneck (fix via internal linking, not editorial rewrites)
+- `URL is unknown to Google` — 171 (8.6%)
+- `Crawled - currently not indexed` — 9 (0.5%) ← content-quality bottleneck
 
-1. **B1 — Fix compare-as-orphans** (compare-link elevation on tool
-   pages). See doc [07](./07-internal-linking-topical-authority.md)
-   "Compare-link elevation" section. **Highest-leverage move in Tier 3.**
-2. **B2 — Compare sitemap priority bump** (0.8 → 0.95).
-3. **B3 — Re-run audit with `--all`** to get full coverage (2 days at
-   2k/day quota); produces the actual bucket distribution for
-   ~2,781 URLs instead of the 356-URL sample.
-4. **B4 — Long-tail tool internal linking** (the original Tier-3 focus)
-   is now secondary. Tools at the bottom of view_count likely *are* in
-   the "URL is unknown to Google" bucket, but they represent a smaller
-   slice than the compare problem and have less commercial intent.
+Revised priority order:
 
-The rest of this doc (root causes, diagnostic pipeline, fix playbook)
-remains correct as a *general framework*. Treat the volumes and
-bucket targets below as a baseline to be replaced once the `--all`
-audit completes.
+1. **B1 — Compare-link elevation on tool pages** (shipped 2026-05-28).
+   See doc [07](./07-internal-linking-topical-authority.md)
+   "Compare-link elevation" section. Still the highest per-URL leverage.
+2. **B2 — Compare sitemap priority bump** (shipped 2026-05-28, 0.8 → 0.95).
+3. **B3 — `--all` audit run** (completed 2026-05-28, see above).
+4. **B4 — Long-tail tool internal linking** — promoted from "next week"
+   to the next workstream after cornerstones. The 540 discovered-not-
+   indexed URLs are almost entirely tool pages, and the diagnostic
+   confirms it's crawl-budget (not quality). Fix: sibling-tool rail
+   weights up under-indexed tools so crawl flows down into the tail.
+
+Cornerstones + stack pillars (shipped 2026-05-28) feed both lifts —
+they're the new authority hubs that link out to underexposed tools
+and compares.
 
 ## Why this matters
 

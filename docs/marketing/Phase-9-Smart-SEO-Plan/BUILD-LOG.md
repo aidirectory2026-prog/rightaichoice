@@ -4,6 +4,38 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont.) — 2026-05-28 — Plan-doc refresh from B3 `--all` audit (1996 URLs)
+
+**Trigger:** the `--all` re-run of `audit-gsc-indexation.ts` completed (hit the 2000/day quota at 1996 URLs). The numbers materially changed the indexation picture vs the first 356-URL sample. Plan docs needed to reflect reality before we picked the next workstream.
+
+### Audit numbers that changed the plan
+
+- **Tools: 62% indexed (1082/1740)** — the small sample said 93%. The small sample was top-100-by-view-count; the long tail is far worse.
+- Compares: 34% indexed (34/100) — unchanged from sample, B1 elevation still the right move.
+- 540 URLs in `Discovered - currently not indexed` (crawl budget) vs 9 in `Crawled - currently not indexed` (quality). The bottleneck is overwhelmingly internal linking, not editorial rewrites.
+- **658 tool pages discovered-not-indexed vs ~66 compares** — tools are now the bigger absolute-volume problem despite the better rate.
+- 4 tool URLs returned fetch failures: `coreweave`, `flatiron-health`, `resistant-ai`, `gloat`. Need investigation (likely 5xx or build-time issues — check Vercel logs).
+
+### Doc updates
+
+- **`14-noindex-sweep-and-audit-findings.md`** — added "2026-05-28 update — full --all audit complete (1996 URLs)" section showing revised breakdown by page type + bucket distribution. Renamed the original sample-based section to "Original audit results — first 356 URLs inspected (small-sample)" so the reframe stays correctable.
+- **`05-tier-3-indexation-rescue.md`** — rewrote the "2026-05-28 reframe — read this first" block at the top. Both buckets (tools + compares) need work; tool long-tail promoted from "next week" (B4) to the immediate-next workstream after cornerstones because the volume is bigger than thought.
+- **`07-internal-linking-topical-authority.md`** — replaced the "compare-link elevation" section with a two-workstream version (B1 compare-elevation + B4 tool-long-tail). The orphan-detection sweep (Step 1–4 of that doc) gets promoted to immediate-next and should weight UN-indexed tools higher in the sibling-tools rail so crawl flows down into the long tail.
+
+### Revised priority order coming out of this
+
+1. **Cornerstones + stack pillars** — concentrate authority on hubs (Day-3 work already shipped: `/categories/code-development` + `/stacks/ai-stack-for-early-stage-saas`)
+2. **Tool-page internal linking sweep (B4)** — promoted from "next week" to the next workstream after cornerstones. Fixes the 540 discovered-not-indexed URLs (almost entirely tool pages, almost entirely crawl-budget bottleneck).
+3. **Compare-link elevation (B1)** — already shipped 2026-05-28, continue monitoring.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Plan docs corrected to reflect full-audit indexation reality; tool long-tail promoted in priority order |
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — Pillar #1: AI Stack for Early-Stage SaaS (`/stacks/ai-stack-for-early-stage-saas`)
 
 **Trigger:** the first decision-engine "stack pillar" per doc 07. Distinct from `/stacks/launch-saas-mvp` (which is for no-coders building a SaaS for the first time) — this pillar targets early-stage SaaS COMPANIES choosing which AI tools to standardize on across product/eng/growth/ops. Higher commercial intent, harder query.
