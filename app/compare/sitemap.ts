@@ -21,6 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   }
 
+  // Phase 9 B2 (2026-05-28): bump compare priority 0.8 → 0.95. The 2026-05-28
+  // GSC audit found compares only 34% indexed (vs tools at 93%). Sitemap
+  // priority is a relative signal — bumping compares above the 0.8 default
+  // tells Google to prefer crawling compares when budget is constrained.
   const comparisonRoutes: MetadataRoute.Sitemap = comparisons.map((c) => ({
     url: `${BASE_URL}/compare/${c.slug}`,
     lastModified: c.last_reviewed_at
@@ -29,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? new Date(c.published_at)
       : new Date(),
     changeFrequency: 'monthly',
-    priority: 0.8,
+    priority: 0.95,
   }))
 
   return [...compareHubPagedRoutes, ...comparisonRoutes]

@@ -376,6 +376,39 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Phase 9 B1 (2026-05-28): elevated "Compared with" strip.
+              Editorial compares are only 34% indexed (vs tools at 93%) because
+              they're orphans linked only from a sidebar rail. Hoisting them to
+              an above-the-fold strip transfers crawl-priority authority from
+              this already-indexed tool page. The buried sidebar block at
+              line ~895 stays as long-form context with verdict snippets.
+              Anchor text uses "vs {OtherTool}" per doc 07 strategy. */}
+          {editorialCompares.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 shrink-0">
+                Compared with
+              </span>
+              {editorialCompares.slice(0, 6).map((c) => {
+                const parts = c.slug.split('-vs-')
+                const otherSlug = parts.find((p) => p !== tool.slug) ?? parts[parts.length - 1]
+                const otherName = otherSlug
+                  .split('-')
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(' ')
+                return (
+                  <Link
+                    key={c.slug}
+                    href={`/compare/${c.slug}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-900/40 bg-emerald-950/20 px-3 py-1 text-xs font-medium text-emerald-300 hover:border-emerald-700 hover:bg-emerald-950/40 hover:text-emerald-200 transition-colors"
+                  >
+                    vs {otherName}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+
           {/* FTC affiliate disclosure — inline above the fold, near primary CTA */}
           <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3.5 py-2.5 text-xs text-zinc-400 flex items-start gap-2">
             <ShieldCheck className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
