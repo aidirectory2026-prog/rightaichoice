@@ -34,6 +34,8 @@
     "compare:deep:apply": "tsx --env-file=.env.local scripts/generate-comparisons.ts --apply --deep",
     "indexnow:dry": "tsx --env-file=.env.local scripts/submit-indexnow.ts --dry-run",
     "indexnow:submit": "tsx --env-file=.env.local scripts/submit-indexnow.ts --submit",
+    "indexnow:deleted:dry": "tsx --env-file=.env.local scripts/blast-deleted-urls-indexnow.ts --dry",
+    "indexnow:deleted": "tsx --env-file=.env.local scripts/blast-deleted-urls-indexnow.ts",
     "gsc:sitemap:submit": "tsx --env-file=.env.local scripts/submit-sitemap-gsc.ts",
     "gsc:build-list": "tsx --env-file=.env.local scripts/build-gsc-indexing-list.ts",
     "latest:dry": "tsx --env-file=.env.local scripts/refresh-latest-updates.ts --dry-run",
