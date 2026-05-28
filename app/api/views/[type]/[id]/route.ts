@@ -65,26 +65,15 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return new NextResponse(null, { status: 204 })
   }
 
-  // Increment in DB. Use a Postgres function call would be cleaner
-  // (atomic +1) but we don't have one — fall back to read-modify-write
-  // which is acceptable for a single-row counter without contention.
+  // 9.A.1 #13 — atomic increment via Postgres RPC. Was read-modify-write,
+  // which silently loses concurrent increments on hot rows (the inline claim
+  // of "no contention" doesn't hold for popular tools). The RPC does
+  // `update ... set view_count = view_count + 1` in one statement.
   const supa = getAdminClient()
-  const table = type === 'tool' ? 'tools' : 'tool_comparisons'
-  const { data: row, error: readErr } = await supa
-    .from(table)
-    .select('view_count')
-    .eq('id', id)
-    .single()
-  if (readErr || !row) {
-    return new NextResponse(null, { status: 204 })
-  }
-  const currentCount = ((row as { view_count: number | null }).view_count ?? 0) | 0
-  const { error: updateErr } = await supa
-    .from(table)
-    .update({ view_count: currentCount + 1 } as never)
-    .eq('id', id)
-  if (updateErr) {
-    console.error(`[/api/views] increment failed for ${type}:${id}`, updateErr.message)
+  const fn = type === 'tool' ? 'increment_tool_view_count' : 'increment_comparison_view_count'
+  const { error: incErr } = await supa.rpc(fn, { p_id: id } as never)
+  if (incErr) {
+    console.error(`[/api/views] increment failed for ${type}:${id}`, incErr.message)
     return new NextResponse(null, { status: 204 })
   }
 

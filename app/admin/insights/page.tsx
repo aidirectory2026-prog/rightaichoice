@@ -7,7 +7,6 @@ import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target
 import { RangePicker as UnifiedRangePicker } from '@/components/admin/range-picker'
 import { parseRange } from '@/lib/admin/range'
 import {
-  type DayWindow,
   getBotShare,
   getChatMetrics,
   getDailyActiveUsers,
@@ -202,10 +201,7 @@ export default async function InsightsPage({
 }) {
   const sp = await searchParams
   const sel = parseRange(sp)
-  // RPCs take a literal day count; map sel.days (1/7/14/30/90/etc) to the
-  // nearest legacy window so existing RPC contracts hold.
-  const candidate = [1, 7, 30, 90].includes(sel.days) ? sel.days : (sel.days <= 7 ? 7 : sel.days <= 30 ? 30 : 90)
-  const days: DayWindow = candidate as DayWindow
+  const days = sel.days
   const includeBots = sp.include_bots === '1'
 
   const [
@@ -215,29 +211,29 @@ export default async function InsightsPage({
     topViewedTools, topClickedTools, topSavedTools, topComparedTools,
     returningSummary, recentVisitors,
   ] = await Promise.all([
-    getBotShare(days),
-    getOverviewMetrics(days, includeBots),
-    getDailyActiveUsers(days, includeBots),
-    getPageViewsByDevice(days, includeBots),
-    getTopReferrers(days, includeBots),
-    getPlanFunnel(days, includeBots),
-    getTopExistingTools(days, includeBots),
-    getTopUseCases(days, includeBots),
-    getEngagementMetrics(days, includeBots),
-    getTopEvents(days, includeBots),
-    getSearchMetrics(days, includeBots),
-    getTopSearches(days, includeBots),
-    getChatMetrics(days, includeBots),
-    getTopChatTools(days, includeBots),
-    getTopViewedTools(days, includeBots),
-    getTopClickedTools(days, includeBots),
-    getTopSavedTools(days, includeBots),
-    getTopComparedTools(days, includeBots),
-    getReturningSummary(days, includeBots),
-    getRecentVisitors(50, includeBots),
+    getBotShare(sel),
+    getOverviewMetrics(sel, includeBots),
+    getDailyActiveUsers(sel, includeBots),
+    getPageViewsByDevice(sel, includeBots),
+    getTopReferrers(sel, includeBots),
+    getPlanFunnel(sel, includeBots),
+    getTopExistingTools(sel, includeBots),
+    getTopUseCases(sel, includeBots),
+    getEngagementMetrics(sel, includeBots),
+    getTopEvents(sel, includeBots),
+    getSearchMetrics(sel, includeBots),
+    getTopSearches(sel, includeBots),
+    getChatMetrics(sel, includeBots),
+    getTopChatTools(sel, includeBots),
+    getTopViewedTools(sel, includeBots),
+    getTopClickedTools(sel, includeBots),
+    getTopSavedTools(sel, includeBots),
+    getTopComparedTools(sel, includeBots),
+    getReturningSummary(sel, includeBots),
+    getRecentVisitors(50, includeBots, sel),
   ])
 
-  const qs = (opts: { days?: DayWindow; include_bots?: boolean }) => {
+  const qs = (opts: { days?: number; include_bots?: boolean }) => {
     const parts: string[] = []
     if (opts.days) parts.push(`days=${opts.days}`)
     if (opts.include_bots) parts.push('include_bots=1')

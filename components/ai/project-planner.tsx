@@ -1002,6 +1002,18 @@ export function ProjectPlanner({
                           <Link
                             key={tool.slug}
                             href={`/tools/${tool.slug}`}
+                            onClick={() =>
+                              // 9.A.1 #3 — final plan-funnel step. Previously
+                              // never fired, so the funnel's last bar was always 0.
+                              analytics.planResultsToolClicked({
+                                tool_slug: tool.slug,
+                                position: ti,
+                                recommendation_tier: ti === 0 ? 'top' : 'alt',
+                                stage_id: currentStage.id,
+                                user_intake_use_case: query.slice(0, 100),
+                                total_recommended_count: currentStage.tools.length,
+                              })
+                            }
                             style={{ ['--rac-idx' as string]: ti }}
                             className={`rac-card-reveal group/card relative flex items-start gap-4 rounded-xl border p-5 transition-all hover:shadow-lg min-w-0 ${
                               ti === 0

@@ -2,8 +2,8 @@
 // <pre>JSON</pre> — no chart components, no client components.
 // Used to isolate whether the crash lives in the render pipeline.
 
+import { parseRange } from '@/lib/admin/range'
 import {
-  type DayWindow,
   getBotShare,
   getChatMetrics,
   getDailyActiveUsers,
@@ -29,28 +29,28 @@ export const revalidate = 0
 export const metadata = { title: 'Insights raw — Admin' }
 
 export default async function InsightsRawPage() {
-  const days: DayWindow = 7
+  const sel = parseRange({ days: '7' })
   const includeBots = false
 
   const sections: Array<[string, () => Promise<unknown>]> = [
-    ['botShare', () => getBotShare(days)],
-    ['overview', () => getOverviewMetrics(days, includeBots)],
-    ['dailyActive', () => getDailyActiveUsers(days, includeBots)],
-    ['deviceBreakdown', () => getPageViewsByDevice(days, includeBots)],
-    ['referrers', () => getTopReferrers(days, includeBots)],
-    ['planFunnel', () => getPlanFunnel(days, includeBots)],
-    ['topExistingTools', () => getTopExistingTools(days, includeBots)],
-    ['topUseCases', () => getTopUseCases(days, includeBots)],
-    ['engagement', () => getEngagementMetrics(days, includeBots)],
-    ['topEvents', () => getTopEvents(days, includeBots)],
-    ['searchMetrics', () => getSearchMetrics(days, includeBots)],
-    ['topSearches', () => getTopSearches(days, includeBots)],
-    ['chatMetrics', () => getChatMetrics(days, includeBots)],
-    ['topChatTools', () => getTopChatTools(days, includeBots)],
-    ['topViewedTools', () => getTopViewedTools(days, includeBots)],
-    ['topClickedTools', () => getTopClickedTools(days, includeBots)],
-    ['topSavedTools', () => getTopSavedTools(days, includeBots)],
-    ['topComparedTools', () => getTopComparedTools(days, includeBots)],
+    ['botShare', () => getBotShare(sel)],
+    ['overview', () => getOverviewMetrics(sel, includeBots)],
+    ['dailyActive', () => getDailyActiveUsers(sel, includeBots)],
+    ['deviceBreakdown', () => getPageViewsByDevice(sel, includeBots)],
+    ['referrers', () => getTopReferrers(sel, includeBots)],
+    ['planFunnel', () => getPlanFunnel(sel, includeBots)],
+    ['topExistingTools', () => getTopExistingTools(sel, includeBots)],
+    ['topUseCases', () => getTopUseCases(sel, includeBots)],
+    ['engagement', () => getEngagementMetrics(sel, includeBots)],
+    ['topEvents', () => getTopEvents(sel, includeBots)],
+    ['searchMetrics', () => getSearchMetrics(sel, includeBots)],
+    ['topSearches', () => getTopSearches(sel, includeBots)],
+    ['chatMetrics', () => getChatMetrics(sel, includeBots)],
+    ['topChatTools', () => getTopChatTools(sel, includeBots)],
+    ['topViewedTools', () => getTopViewedTools(sel, includeBots)],
+    ['topClickedTools', () => getTopClickedTools(sel, includeBots)],
+    ['topSavedTools', () => getTopSavedTools(sel, includeBots)],
+    ['topComparedTools', () => getTopComparedTools(sel, includeBots)],
   ]
 
   const results = await Promise.all(

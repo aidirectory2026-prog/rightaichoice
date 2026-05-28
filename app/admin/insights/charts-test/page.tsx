@@ -1,8 +1,8 @@
 // Diagnostic: render each /admin/insights chart in isolation with live
 // data. Whichever section is missing / shows an error is the culprit.
 
+import { parseRange } from '@/lib/admin/range'
 import {
-  type DayWindow,
   getBotShare,
   getChatMetrics,
   getDailyActiveUsers,
@@ -39,7 +39,7 @@ function Section({ name, children }: { name: string; children: React.ReactNode }
 }
 
 export default async function ChartsTest() {
-  const days: DayWindow = 7
+  const sel = parseRange({ days: '7' })
   const includeBots = false
 
   const [
@@ -48,24 +48,24 @@ export default async function ChartsTest() {
     searchMetrics, topSearches, chatMetrics, topChatTools,
     topViewedTools, topClickedTools, topSavedTools, topComparedTools,
   ] = await Promise.all([
-    getBotShare(days),
-    getOverviewMetrics(days, includeBots),
-    getDailyActiveUsers(days, includeBots),
-    getPageViewsByDevice(days, includeBots),
-    getTopReferrers(days, includeBots),
-    getPlanFunnel(days, includeBots),
-    getTopExistingTools(days, includeBots),
-    getTopUseCases(days, includeBots),
-    getEngagementMetrics(days, includeBots),
-    getTopEvents(days, includeBots),
-    getSearchMetrics(days, includeBots),
-    getTopSearches(days, includeBots),
-    getChatMetrics(days, includeBots),
-    getTopChatTools(days, includeBots),
-    getTopViewedTools(days, includeBots),
-    getTopClickedTools(days, includeBots),
-    getTopSavedTools(days, includeBots),
-    getTopComparedTools(days, includeBots),
+    getBotShare(sel),
+    getOverviewMetrics(sel, includeBots),
+    getDailyActiveUsers(sel, includeBots),
+    getPageViewsByDevice(sel, includeBots),
+    getTopReferrers(sel, includeBots),
+    getPlanFunnel(sel, includeBots),
+    getTopExistingTools(sel, includeBots),
+    getTopUseCases(sel, includeBots),
+    getEngagementMetrics(sel, includeBots),
+    getTopEvents(sel, includeBots),
+    getSearchMetrics(sel, includeBots),
+    getTopSearches(sel, includeBots),
+    getChatMetrics(sel, includeBots),
+    getTopChatTools(sel, includeBots),
+    getTopViewedTools(sel, includeBots),
+    getTopClickedTools(sel, includeBots),
+    getTopSavedTools(sel, includeBots),
+    getTopComparedTools(sel, includeBots),
   ])
 
   return (

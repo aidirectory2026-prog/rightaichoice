@@ -8,6 +8,7 @@
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { type DayWindow, getReconciliationStats } from '../queries'
+import { parseRange } from '@/lib/admin/range'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -28,7 +29,7 @@ export default async function ReconciliationPage({
   const requested = Number(sp.days ?? '7') as DayWindow
   const days: DayWindow = ([1, 7, 30] as DayWindow[]).includes(requested) ? requested : 7
 
-  const stats = await getReconciliationStats(days)
+  const stats = await getReconciliationStats(parseRange({ days: String(days) }))
 
   const humanEvents = stats.client_events - stats.bot_events
   const humanVisitors = stats.unique_distinct_ids_no_bots

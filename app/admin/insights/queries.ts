@@ -11,6 +11,7 @@
 // runs ONE SQL query, returns typed rows. Page calls them in Promise.all.
 
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import type { RangeSelection } from '@/lib/admin/range'
 
 // The 12 RPCs in migrations 096+098 aren't in the generated Supabase
 // types yet, so wrap rpc() in a loosely-typed helper.
@@ -82,9 +83,10 @@ export interface BotShare {
 
 // ── Bot share (powers the "% bot traffic" metric tile) ─────────────
 
-export async function getBotShare(days: DayWindow): Promise<BotShare> {
+export async function getBotShare(sel: RangeSelection): Promise<BotShare> {
   const db = getAdminClient()
-  const { data } = await rpc(db, 'insights_bot_share', { p_days: days }).maybeSingle()
+  const { data } = await rpc(db, 'insights_bot_share',
+    { p_days: sel.days, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO }).maybeSingle()
   const d = (data ?? {}) as Partial<BotShare>
   return {
     total_events: Number(d.total_events ?? 0),
@@ -98,29 +100,29 @@ export async function getBotShare(days: DayWindow): Promise<BotShare> {
 
 // ── Acquisition ─────────────────────────────────────────────────────
 
-export async function getOverviewMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
+export async function getOverviewMetrics(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
+  const cutoff = sel.cutoffISO
 
   const [pageViews, uniqueVisitors, uniqueUsers, signups, newsletter] = await Promise.all([
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'page_viewed').gte('created_at', cutoff),
+        .eq('event_name', 'page_viewed').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots }).maybeSingle(),
     // Phase 9 (2026-05-28) — true distinct-human count (auth user_id).
     // Differs from "Unique visitors" (distinct_id), which counts each
     // browser / cookie-cleared session as a separate visitor.
-    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots }).maybeSingle(),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'signup_completed').gte('created_at', cutoff),
+        .eq('event_name', 'signup_completed').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'newsletter_subscribed').gte('created_at', cutoff),
+        .eq('event_name', 'newsletter_subscribed').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
   ])
@@ -134,21 +136,24 @@ export async function getOverviewMetrics(days: DayWindow, includeBots: boolean):
   ]
 }
 
-export async function getDailyActiveUsers(days: DayWindow, includeBots: boolean): Promise<LinePoint[]> {
+export async function getDailyActiveUsers(sel: RangeSelection, includeBots: boolean): Promise<LinePoint[]> {
   const db = getAdminClient()
-  const { data } = await rpc(db, 'insights_daily_active_users', { p_days: days, p_include_bots: includeBots })
+  const { data } = await rpc(db, 'insights_daily_active_users',
+    { p_days: sel.days, p_include_bots: includeBots, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO })
   return ((data as Array<{ day: string; users: number }>) ?? []).map((r) => ({
     date: r.day,
     value: Number(r.users),
   }))
 }
 
-export async function getPageViewsByDevice(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getPageViewsByDevice(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_events_by_device', {
     p_event_name: 'page_viewed',
-    p_days: days,
+    p_days: sel.days,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ device_type: string; events: number }>) ?? []).map((r) => ({
     label: r.device_type ?? 'unknown',
@@ -156,13 +161,15 @@ export async function getPageViewsByDevice(days: DayWindow, includeBots: boolean
   }))
 }
 
-export async function getTopReferrers(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopReferrers(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_property', {
     p_property: 'first_touch_referrer',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 10,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value ?? '(direct)',
@@ -172,15 +179,15 @@ export async function getTopReferrers(days: DayWindow, includeBots: boolean): Pr
 
 // ── Plan Funnel ─────────────────────────────────────────────────────
 
-export async function getPlanFunnel(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
+export async function getPlanFunnel(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
+  const cutoff = sel.cutoffISO
   const steps = ['plan_started', 'plan_intake_submitted', 'plan_completed', 'plan_results_tool_clicked']
   const results = await Promise.all(
     steps.map((step) =>
       maybeFilterBots(
         db.from('user_events').select('*', { count: 'exact', head: true })
-          .eq('event_name', step).gte('created_at', cutoff),
+          .eq('event_name', step).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
         includeBots,
       ),
     ),
@@ -191,14 +198,16 @@ export async function getPlanFunnel(days: DayWindow, includeBots: boolean): Prom
   }))
 }
 
-export async function getTopExistingTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopExistingTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'plan_existing_tool_added',
     p_property: 'tool_name',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 15,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -206,13 +215,15 @@ export async function getTopExistingTools(days: DayWindow, includeBots: boolean)
   }))
 }
 
-export async function getTopUseCases(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopUseCases(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_unnest_intent_array', {
     p_column: 'plan_use_cases_submitted',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 10,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; users: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -222,7 +233,7 @@ export async function getTopUseCases(days: DayWindow, includeBots: boolean): Pro
 
 // ── Engagement ──────────────────────────────────────────────────────
 
-export async function getEngagementMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
+export async function getEngagementMetrics(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
   const todayIso = midnightIstIso()
   const [today, week, month, todayKnown, weekKnown, monthKnown] = await Promise.all([
@@ -234,7 +245,7 @@ export async function getEngagementMetrics(days: DayWindow, includeBots: boolean
     rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
     rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(30), p_include_bots: includeBots }).maybeSingle(),
   ])
-  void days
+  void sel
   const num = (r: { data: unknown }) => Number((r.data as { count?: number } | null)?.count ?? 0)
   return [
     { label: 'DAU (today)', value: num(today) },
@@ -246,9 +257,10 @@ export async function getEngagementMetrics(days: DayWindow, includeBots: boolean
   ]
 }
 
-export async function getTopEvents(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopEvents(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
-  const { data } = await rpc(db, 'insights_top_events', { p_days: days, p_limit: 20, p_include_bots: includeBots })
+  const { data } = await rpc(db, 'insights_top_events', { p_days: sel.days, p_limit: 20,
+    p_include_bots: includeBots, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO })
   return ((data as Array<{ event_name: string; events: number }>) ?? []).map((r) => ({
     label: r.event_name,
     value: Number(r.events),
@@ -257,46 +269,45 @@ export async function getTopEvents(days: DayWindow, includeBots: boolean): Promi
 
 // ── Search ──────────────────────────────────────────────────────────
 
-export async function getSearchMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
+export async function getSearchMetrics(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
-  const [submitted, zeroResults, clicked] = await Promise.all([
+  const cutoff = sel.cutoffISO
+  const [submitted, zero, clicked] = await Promise.all([
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'search_query_submitted').gte('created_at', cutoff),
+        .eq('event_name', 'search_query_submitted').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
+    rpc(db, 'insights_zero_result_rate', {
+      p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots, p_days: sel.days,
+    }).maybeSingle(),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'search_query_submitted').gte('created_at', cutoff)
-        .filter('properties->>zero_results', 'eq', 'true'),
-      includeBots,
-    ),
-    maybeFilterBots(
-      db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'search_result_clicked').gte('created_at', cutoff),
+        .eq('event_name', 'search_result_clicked').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
   ])
   const total = submitted.count ?? 0
-  const zero = zeroResults.count ?? 0
   const clicks = clicked.count ?? 0
+  const zeroPct = Number((zero.data as { zero_result_pct?: number } | null)?.zero_result_pct ?? 0)
   return [
     { label: 'Searches', value: total },
-    { label: 'Zero-result rate', value: total > 0 ? Math.round((zero / total) * 100) : 0 },
+    { label: 'Zero-result rate', value: zeroPct },
     { label: 'Clicks on results', value: clicks },
     { label: 'CTR %', value: total > 0 ? Math.round((clicks / total) * 100) : 0 },
   ]
 }
 
-export async function getTopSearches(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopSearches(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'search_query_submitted',
     p_property: 'query',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 15,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -306,19 +317,19 @@ export async function getTopSearches(days: DayWindow, includeBots: boolean): Pro
 
 // ── AI Chat ─────────────────────────────────────────────────────────
 
-export async function getChatMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
+export async function getChatMetrics(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
+  const cutoff = sel.cutoffISO
   const [messages, uniqueUsers, toolClicks] = await Promise.all([
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'ai_chat_message').gte('created_at', cutoff),
+        .eq('event_name', 'ai_chat_message').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
-    rpc(db, 'distinct_visitors_for_event', { p_event_name: 'ai_chat_message', p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_visitors_for_event', { p_event_name: 'ai_chat_message', p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots }).maybeSingle(),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'ai_chat_tool_clicked').gte('created_at', cutoff),
+        .eq('event_name', 'ai_chat_tool_clicked').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
       includeBots,
     ),
   ])
@@ -329,13 +340,15 @@ export async function getChatMetrics(days: DayWindow, includeBots: boolean): Pro
   ]
 }
 
-export async function getTopChatTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopChatTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_unnest_intent_array', {
     p_column: 'ai_chat_tools_mentioned',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 15,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; users: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -345,14 +358,16 @@ export async function getTopChatTools(days: DayWindow, includeBots: boolean): Pr
 
 // ── Vendor Audience Snapshot ────────────────────────────────────────
 
-export async function getTopViewedTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopViewedTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'tool_page_viewed',
     p_property: 'tool_slug',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 20,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -360,14 +375,16 @@ export async function getTopViewedTools(days: DayWindow, includeBots: boolean): 
   }))
 }
 
-export async function getTopClickedTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopClickedTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'tool_visit_redirected',
     p_property: 'tool_slug',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 20,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -375,14 +392,16 @@ export async function getTopClickedTools(days: DayWindow, includeBots: boolean):
   }))
 }
 
-export async function getTopSavedTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopSavedTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'tool_saved',
     p_property: 'tool_slug',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 20,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -390,13 +409,15 @@ export async function getTopSavedTools(days: DayWindow, includeBots: boolean): P
   }))
 }
 
-export async function getTopComparedTools(days: DayWindow, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopComparedTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_unnest_intent_array', {
     p_column: 'tools_compared_with',
-    p_days: days,
+    p_days: sel.days,
     p_limit: 15,
     p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{ value: string; users: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -415,30 +436,31 @@ export interface ToolAudienceDetail {
   unique_users: number
 }
 
-export async function getToolAudienceDetail(slug: string, days: DayWindow, includeBots: boolean): Promise<ToolAudienceDetail> {
+export async function getToolAudienceDetail(slug: string, sel: RangeSelection, includeBots: boolean): Promise<ToolAudienceDetail> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
+  const cutoff = sel.cutoffISO
   const [views, clicks, saves, comparedWith, uniqUsers] = await Promise.all([
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'tool_page_viewed').gte('created_at', cutoff)
+        .eq('event_name', 'tool_page_viewed').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
     ),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'tool_visit_redirected').gte('created_at', cutoff)
+        .eq('event_name', 'tool_visit_redirected').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
     ),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
-        .eq('event_name', 'tool_saved').gte('created_at', cutoff)
+        .eq('event_name', 'tool_saved').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
     ),
-    rpc(db, 'insights_tool_compared_with', { p_slug: slug, p_days: days, p_limit: 10, p_include_bots: includeBots }),
-    rpc(db, 'distinct_visitors_for_tool', { p_slug: slug, p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'insights_tool_compared_with', { p_slug: slug, p_days: sel.days, p_limit: 10,
+      p_include_bots: includeBots, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO }),
+    rpc(db, 'distinct_visitors_for_tool', { p_slug: slug, p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots }).maybeSingle(),
   ])
   return {
     slug,
@@ -739,11 +761,10 @@ export type RecentVisitor = {
   is_returning: boolean
 }
 
-export async function getReturningSummary(days: DayWindow, includeBots: boolean): Promise<ReturningSummary> {
+export async function getReturningSummary(sel: RangeSelection, includeBots: boolean): Promise<ReturningSummary> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_returning_visitors', {
-    p_cutoff: cutoffIso(days),
-    p_include_bots: includeBots,
+    p_cutoff: sel.cutoffISO, p_include_bots: includeBots, p_end: sel.endCutoffISO, p_days: sel.days,
   }).maybeSingle()
   const d = (data ?? {}) as Partial<{
     total_visitors: number
@@ -761,11 +782,13 @@ export async function getReturningSummary(days: DayWindow, includeBots: boolean)
   }
 }
 
-export async function getRecentVisitors(limit: number, includeBots: boolean): Promise<RecentVisitor[]> {
+export async function getRecentVisitors(limit: number, includeBots: boolean, sel: RangeSelection): Promise<RecentVisitor[]> {
   const db = getAdminClient()
   const { data } = await rpc(db, 'insights_recent_visitors', {
     p_limit: limit,
     p_include_bots: includeBots,
+    p_window_start: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
   })
   return ((data as Array<{
     distinct_id: string
@@ -786,21 +809,21 @@ export async function getRecentVisitors(limit: number, includeBots: boolean): Pr
   }))
 }
 
-export async function getReconciliationStats(days: DayWindow): Promise<ReconciliationStats> {
+export async function getReconciliationStats(sel: RangeSelection): Promise<ReconciliationStats> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(days)
+  const cutoff = sel.cutoffISO
   const [client, server, bots, allUniq, humanUniq] = await Promise.all([
     db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('source_kind', 'client').gte('created_at', cutoff),
+      .eq('source_kind', 'client').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
     db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('source_kind', 'server').gte('created_at', cutoff),
+      .eq('source_kind', 'server').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
     db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('bot_likely', true).gte('created_at', cutoff),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_include_bots: true }).maybeSingle(),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_include_bots: false }).maybeSingle(),
+      .eq('bot_likely', true).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: true }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: false }).maybeSingle(),
   ])
   return {
-    days,
+    days: sel.days,
     client_events: client.count ?? 0,
     server_events: server.count ?? 0,
     bot_events: bots.count ?? 0,

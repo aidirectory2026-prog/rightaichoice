@@ -1,15 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { Eye, MousePointerClick, Search, Star, MessageSquare, GitBranch, TrendingUp, Users } from 'lucide-react'
 import { RangePicker } from '@/components/admin/range-picker'
-import { parseRange } from '@/lib/admin/range'
+import { parseRange, type RangeSelection } from '@/lib/admin/range'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 // Phase 8.d.6 — force-dynamic + shared range picker. No more 30-day cache.
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Analytics' }
 
-async function getAnalyticsData(cutoff: string) {
+async function getAnalyticsData(sel: RangeSelection) {
   const supabase = await createClient()
+  const cutoff = sel.cutoffISO
+  const end = sel.endCutoffISO
 
   const [
     totalViewsRes,
@@ -21,20 +24,22 @@ async function getAnalyticsData(cutoff: string) {
     totalsRes,
   ] = await Promise.all([
     supabase.from('page_views').select('id', { count: 'exact', head: true }),
-    supabase.from('page_views').select('id', { count: 'exact', head: true }).gte('created_at', cutoff),
+    supabase.from('page_views').select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff).lt('created_at', end),
     supabase.from('click_logs').select('id', { count: 'exact', head: true }),
-    supabase.from('click_logs').select('id', { count: 'exact', head: true }).gte('created_at', cutoff),
+    supabase.from('click_logs').select('id', { count: 'exact', head: true })
+      .gte('created_at', cutoff).lt('created_at', end),
     supabase
       .from('tools')
       .select('id, name, slug, view_count, review_count, avg_rating')
       .eq('is_published', true)
       .order('view_count', { ascending: false })
       .limit(10),
-    supabase
-      .from('search_logs')
-      .select('query')
-      .gte('created_at', cutoff)
-      .limit(500),
+    // Aggregated in-DB via service-role RPC (search_top_queries is locked to
+    // service_role), replacing the prior 500-row fetch + JS tally.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (getAdminClient() as any).rpc('search_top_queries',
+      { p_cutoff: cutoff, p_end: end, p_limit: 10, p_days: sel.days }),
     Promise.all([
       supabase.from('tools').select('id', { count: 'exact', head: true }).eq('is_published', true),
       supabase.from('reviews').select('id', { count: 'exact', head: true }),
@@ -44,16 +49,8 @@ async function getAnalyticsData(cutoff: string) {
     ]),
   ])
 
-  const searchCounts: Record<string, number> = {}
-  ;(topSearchesRes.data ?? []).forEach(({ query }: { query: string }) => {
-    if (!query) return
-    const q = query.toLowerCase().trim()
-    searchCounts[q] = (searchCounts[q] ?? 0) + 1
-  })
-  const topSearches = Object.entries(searchCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([query, count]) => ({ query, count }))
+  const topSearches = ((topSearchesRes.data as Array<{ query: string; count: number }>) ?? [])
+    .map((r) => ({ query: r.query, count: Number(r.count) }))
 
   const [toolsTotal, reviewsTotal, questionsTotal, workflowsTotal, usersTotal] = totalsRes
 
@@ -81,7 +78,7 @@ export default async function AnalyticsPage({
 }) {
   const sp = await searchParams
   const sel = parseRange(sp)
-  const data = await getAnalyticsData(sel.cutoffISO)
+  const data = await getAnalyticsData(sel)
 
   return (
     <div>

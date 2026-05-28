@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { type DayWindow, getToolAudienceDetail } from '../../queries'
+import { parseRange } from '@/lib/admin/range'
 import { BarList, MetricCard } from '../../charts'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,7 @@ export default async function ToolAudiencePage({
   const days: DayWindow = ([7, 30, 90] as DayWindow[]).includes(requested) ? requested : 30
   const includeBots = sp.include_bots === '1'
 
-  const detail = await getToolAudienceDetail(slug, days, includeBots)
+  const detail = await getToolAudienceDetail(slug, parseRange({ days: String(days) }), includeBots)
   const qs = (d: DayWindow) => `?days=${d}${includeBots ? '&include_bots=1' : ''}`
 
   return (

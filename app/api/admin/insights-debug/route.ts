@@ -4,8 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { parseRange } from '@/lib/admin/range'
 import {
-  type DayWindow,
   getBotShare,
   getChatMetrics,
   getDailyActiveUsers,
@@ -59,28 +59,28 @@ export async function GET(req: NextRequest) {
   const gate = await requireAdmin()
   if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 })
 
-  const days: DayWindow = 7
+  const sel = parseRange({ days: '7' })
   const includeBots = false
 
   const results = await Promise.all([
-    run('getBotShare', () => getBotShare(days)),
-    run('getOverviewMetrics', () => getOverviewMetrics(days, includeBots)),
-    run('getDailyActiveUsers', () => getDailyActiveUsers(days, includeBots)),
-    run('getPageViewsByDevice', () => getPageViewsByDevice(days, includeBots)),
-    run('getTopReferrers', () => getTopReferrers(days, includeBots)),
-    run('getPlanFunnel', () => getPlanFunnel(days, includeBots)),
-    run('getTopExistingTools', () => getTopExistingTools(days, includeBots)),
-    run('getTopUseCases', () => getTopUseCases(days, includeBots)),
-    run('getEngagementMetrics', () => getEngagementMetrics(days, includeBots)),
-    run('getTopEvents', () => getTopEvents(days, includeBots)),
-    run('getSearchMetrics', () => getSearchMetrics(days, includeBots)),
-    run('getTopSearches', () => getTopSearches(days, includeBots)),
-    run('getChatMetrics', () => getChatMetrics(days, includeBots)),
-    run('getTopChatTools', () => getTopChatTools(days, includeBots)),
-    run('getTopViewedTools', () => getTopViewedTools(days, includeBots)),
-    run('getTopClickedTools', () => getTopClickedTools(days, includeBots)),
-    run('getTopSavedTools', () => getTopSavedTools(days, includeBots)),
-    run('getTopComparedTools', () => getTopComparedTools(days, includeBots)),
+    run('getBotShare', () => getBotShare(sel)),
+    run('getOverviewMetrics', () => getOverviewMetrics(sel, includeBots)),
+    run('getDailyActiveUsers', () => getDailyActiveUsers(sel, includeBots)),
+    run('getPageViewsByDevice', () => getPageViewsByDevice(sel, includeBots)),
+    run('getTopReferrers', () => getTopReferrers(sel, includeBots)),
+    run('getPlanFunnel', () => getPlanFunnel(sel, includeBots)),
+    run('getTopExistingTools', () => getTopExistingTools(sel, includeBots)),
+    run('getTopUseCases', () => getTopUseCases(sel, includeBots)),
+    run('getEngagementMetrics', () => getEngagementMetrics(sel, includeBots)),
+    run('getTopEvents', () => getTopEvents(sel, includeBots)),
+    run('getSearchMetrics', () => getSearchMetrics(sel, includeBots)),
+    run('getTopSearches', () => getTopSearches(sel, includeBots)),
+    run('getChatMetrics', () => getChatMetrics(sel, includeBots)),
+    run('getTopChatTools', () => getTopChatTools(sel, includeBots)),
+    run('getTopViewedTools', () => getTopViewedTools(sel, includeBots)),
+    run('getTopClickedTools', () => getTopClickedTools(sel, includeBots)),
+    run('getTopSavedTools', () => getTopSavedTools(sel, includeBots)),
+    run('getTopComparedTools', () => getTopComparedTools(sel, includeBots)),
   ])
 
   const failures = results.filter((r) => !r.ok)
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
       passed_count: results.length - failures.length,
       failures,
       results,
-      query: { days, includeBots, url: req.url },
+      query: { days: sel.days, includeBots, url: req.url },
     },
     { status: failures.length === 0 ? 200 : 500 },
   )
