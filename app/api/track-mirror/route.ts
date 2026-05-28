@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
+import { isBotUserAgent } from '@/lib/bot-detection'
 
 // Phase 9 follow-up (2026-05-28) — short retry for transient Supabase 5xx /
 // network blips. Three attempts, exponential backoff capped at 600ms total,
@@ -41,14 +42,10 @@ async function withRetry<T>(
 }
 
 // ── Bot detection ──────────────────────────────────────────────────
-// Same regex as migration 097's backfill so historical rows align with
-// new rows. ~90% recall, ~0% false positive on real browsers.
-const BOT_UA_RE = /(googlebot|bingbot|yandex|duckduck|baiduspider|ahrefsbot|semrushbot|dotbot|mj12bot|blexbot|seokicks|petalbot|gptbot|claudebot|chatgpt-user|perplexitybot|anthropic-ai|applebot|facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|whatsapp|skypeuripreview|amazonbot|crawl|spider|slurp|headlesschrome|phantomjs|electron|python-requests|curl\/|wget\/|postman|scrapy|httpclient|node-fetch|^axios)/i
-
-function isBotUserAgent(ua: string): boolean {
-  if (!ua) return false
-  return BOT_UA_RE.test(ua)
-}
+// Phase 9.A.10 — bot detection now lives in lib/bot-detection (imported above)
+// as the single source of truth. Previously a regex lived here AND a looser
+// one in app/api/views; they disagreed on what counted as a "bot", so
+// view_count and user_events.bot_likely classified traffic differently.
 
 // One client event payload, exactly as sent from lib/analytics.ts.
 type MirrorEvent = {
@@ -121,8 +118,12 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
     case 'tool_saved':
       updates.p_inc_saves = 1
       break
-    case 'tool_visit_clicked':
     case 'tool_visit_redirected':
+      // 9.A.1 #4 — count the visit ONCE. tool_visit_clicked (client) and
+      // tool_visit_redirected (server) both fire for a single "Visit website"
+      // click, so incrementing on both double-counted tools_visited in the
+      // per-user profile. We keep only the server-authoritative redirect
+      // (also bot/prefetch-filtered at source in 9.0.2).
       updates.p_inc_tools_visited = 1
       updates.p_arr_tools_visited = arr('tool_slug')
       break

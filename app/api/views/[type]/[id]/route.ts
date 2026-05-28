@@ -19,6 +19,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { isNonHumanRequest } from '@/lib/bot-detection'
 
 export const runtime = 'nodejs'
 // Disable caching — every POST must hit the route
@@ -26,7 +27,6 @@ export const dynamic = 'force-dynamic'
 
 const COOKIE_NAME = 'rac_v_dedup'
 const DEDUP_WINDOW_SEC = 30 * 60 // 30 min
-const BOT_UA_RE = /(bot|crawler|spider|preview|HeadlessChrome|playwright|puppeteer|curl|wget|python-requests|axios|java\/)/i
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type Ctx = { params: Promise<{ type: string; id: string }> }
@@ -43,9 +43,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ error: 'invalid_id' }, { status: 400 })
   }
 
-  // Bot UA filter — silently 204 so client doesn't see an error.
-  const ua = req.headers.get('user-agent') ?? ''
-  if (BOT_UA_RE.test(ua)) return new NextResponse(null, { status: 204 })
+  // Bot / prefetch / HEAD filter — silently 204 so client doesn't see an error.
+  // 9.A.10: shared detector (same regex as track-mirror) + prefetch/HEAD guard.
+  if (isNonHumanRequest(req.headers, req.method)) return new NextResponse(null, { status: 204 })
 
   // Cookie-based dedup. Cookie value is a JSON-encoded map of
   // {entity-type-id: timestamp}. Sliding 30-min window per entity.

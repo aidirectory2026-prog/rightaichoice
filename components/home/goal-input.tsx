@@ -64,6 +64,13 @@ export function GoalInput() {
     onCommit: (p) => analytics.fieldTextChanged({ event_name: 'plan_goal_typed', ...p }),
   })
 
+  // 9.A.1 #12 — pair the homepage plan_cta_clicked with an impression so the
+  // surface CTR (clicks/impressions) is computable. The homepage hero IS the
+  // CTA, so it's "shown" on mount. Fire once.
+  useEffect(() => {
+    analytics.planCtaImpression({ surface: 'homepage', page_path: '/' })
+  }, [])
+
   // Rotate placeholder while textarea is empty + unfocused.
   useEffect(() => {
     if (goal.length > 0) return

@@ -112,40 +112,51 @@ export async function trackServer(args: TrackArgs): Promise<boolean> {
  */
 export const serverAnalytics = {
   signupCompleted(distinctId: string, method: string, ip?: string) {
+    // 9.A.1 #5 — signup fires once per user; key the id on the user so OAuth
+    // callback retries / prefetch don't create duplicate user_events rows.
+    const insertId = deterministicInsertId('signup_completed', distinctId, 'once')
     void mirrorServerEvent({
       event: 'signup_completed',
       distinctId,
       userId: distinctId,
       ip,
+      insertId,
       properties: { method, source: 'server' },
     })
     return trackServer({
       event: 'signup_completed',
       distinctId,
       ip,
+      insertId,
       properties: { method, source: 'server' },
     })
   },
   loginCompleted(distinctId: string, method: string, ip?: string) {
+    // 9.A.1 #5 — collapse retries within a UTC day (login granularity is daily).
+    const insertId = deterministicInsertId('login_completed', distinctId, utcDayKey())
     void mirrorServerEvent({
       event: 'login_completed',
       distinctId,
       userId: distinctId,
       ip,
+      insertId,
       properties: { method, source: 'server' },
     })
     return trackServer({
       event: 'login_completed',
       distinctId,
       ip,
+      insertId,
       properties: { method, source: 'server' },
     })
   },
   reviewSubmitted(distinctId: string, toolId: string, rating: number, ip?: string) {
+    // 9.A.1 #5 — one review per user per tool; key on user+tool.
     return trackServer({
       event: 'review_submitted',
       distinctId,
       ip,
+      insertId: deterministicInsertId('review_submitted', distinctId, toolId),
       properties: { tool_id: toolId, rating, source: 'server' },
     })
   },
@@ -153,18 +164,24 @@ export const serverAnalytics = {
     // Fires from the server-side /api/tools/[slug]/visit affiliate redirect
     // handler — this is the authoritative revenue event. Client also fires
     // tool_visit_clicked; Mixpanel de-dupes via $insert_id on the server call.
+    // 9.A.1 #5 — per-minute key collapses accidental double-fires / retries
+    // (prefetch already filtered upstream) while still counting genuine repeat
+    // clicks in later minutes. Same id for the mirror + Mixpanel call.
+    const insertId = deterministicInsertId('tool_visit_redirected', distinctId, `${toolSlug}|${utcMinuteKey()}`)
     const props = { tool_slug: toolSlug, referrer_path: referrerPath, source: 'server' }
     void mirrorServerEvent({
       event: 'tool_visit_redirected',
       distinctId,
       ip,
       pagePath: referrerPath,
+      insertId,
       properties: props,
     })
     return trackServer({
       event: 'tool_visit_redirected',
       distinctId,
       ip,
+      insertId,
       properties: props,
     })
   },
@@ -261,4 +278,15 @@ function deterministicInsertId(event: string, distinctId: string, payloadSignatu
     .update(`${event}|${distinctId}|${payloadSignature}`)
     .digest('hex')
     .slice(0, 32)
+}
+
+// 9.A.1 #5 — bucket helpers for deterministic ids on the revenue events.
+// UTC day for login (collapses retries within a calendar day), UTC minute for
+// affiliate redirects (collapses rapid double-fires / OAuth-style retries while
+// still counting genuine separate clicks in later minutes).
+function utcDayKey(): string {
+  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+}
+function utcMinuteKey(): string {
+  return new Date().toISOString().slice(0, 16) // YYYY-MM-DDTHH:MM
 }

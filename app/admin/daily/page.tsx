@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { CheckCircle2, Circle, ExternalLink, Mail, LinkIcon, FileText, Search } from 'lucide-react'
+import { parseRange } from '@/lib/admin/range'
 
 // Visual companion to `npm run daily`. Shows today's tasks at a glance,
 // the live state of each one (already done? still pending? skipped?),
@@ -20,27 +21,29 @@ type DailyTask = {
   icon: React.ReactNode
 }
 
-function isToday(iso: string | null | undefined): boolean {
-  if (!iso) return false
-  return iso.slice(0, 10) === new Date().toISOString().slice(0, 10)
-}
-
 export default async function DailyAdmin() {
   const supabase = await createClient()
-  const todayISO = new Date().toISOString().slice(0, 10)
+  // 9.A.1 #6 — was new Date().toISOString() (UTC), which made "today's" counts
+  // wrong for the first 5.5h of every IST day. Use the shared IST range helper.
+  const today = parseRange({ range: 'today' })
+  const todaySince = today.cutoffISO // IST midnight, as UTC ISO
+  const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
+  // 9.A.1 #6 — Monday in IST, not UTC (server day-of-week is UTC on Vercel).
+  const isMondayIST =
+    new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long' }) === 'Monday'
 
   // ── Today's RDs logged ────────────────────────────────────────
   const { data: rdsTodayRaw } = await supabase
     .from('referring_domains')
     .select('id, first_seen_at')
-    .gte('first_seen_at', `${todayISO}T00:00:00.000Z`)
+    .gte('first_seen_at', todaySince)
   const rdsToday = (rdsTodayRaw ?? []).length
 
   // ── Today's outreach sent ─────────────────────────────────────
   const { data: outreachTodayRaw } = await supabase
     .from('outreach_log')
     .select('id, sent_at, source_channel')
-    .gte('sent_at', `${todayISO}T00:00:00.000Z`)
+    .gte('sent_at', todaySince)
     .not('sent_at', 'is', null)
   const outreachToday = (outreachTodayRaw ?? []).length
   const haroToday = (outreachTodayRaw ?? []).filter(
@@ -105,8 +108,8 @@ export default async function DailyAdmin() {
       description: 'Week-over-week net-new indexed URLs. Target: 50+/week.',
       href: 'https://search.google.com/search-console',
       external: true,
-      done: new Date().getDay() !== 1,
-      meta: new Date().getDay() === 1 ? 'Today is Monday — please review' : 'Not Monday — skip',
+      done: !isMondayIST,
+      meta: isMondayIST ? 'Today is Monday — please review' : 'Not Monday — skip',
       icon: <Search className="h-4 w-4" />,
     },
   ]

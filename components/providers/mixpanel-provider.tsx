@@ -147,6 +147,10 @@ function initMixpanelOnce() {
 function PageViewCapture() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  // 9.A.1 #8 — fire page_viewed once per PATHNAME, not on every querystring
+  // change. Applying a filter / paginating / search (?q=, ?page=) previously
+  // fired a fresh page_viewed, inflating "page views" vs real page loads.
+  const lastPathRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!MIXPANEL_TOKEN) return
@@ -154,7 +158,7 @@ function PageViewCapture() {
 
     const url = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
 
-    // Persist first-touch UTM (register_once — sticks forever per device).
+    // UTM handling stays responsive to query changes (campaign links).
     const utm = parseUtm(searchParams)
     if (Object.keys(utm).length > 0) {
       mixpanel.register_once(
@@ -171,11 +175,15 @@ function PageViewCapture() {
     // EVERY subsequent event carries the current page without manual passing.
     mixpanel.register({ page_path: pathname })
 
-    analytics.pageViewed(
-      pathname,
-      url,
-      typeof document !== 'undefined' ? document.referrer : '',
-    )
+    // Only emit page_viewed when the pathname actually changed.
+    if (lastPathRef.current !== pathname) {
+      lastPathRef.current = pathname
+      analytics.pageViewed(
+        pathname,
+        url,
+        typeof document !== 'undefined' ? document.referrer : '',
+      )
+    }
   }, [pathname, searchParams])
 
   return null
@@ -188,10 +196,15 @@ function EngagementCapture() {
   const pathname = usePathname()
   const firedDepthsRef = useRef<Set<number>>(new Set())
   const mountedAtRef = useRef<number>(Date.now())
+  // 9.A.1 #9 — emit time_on_page AT MOST ONCE per page. It previously fired on
+  // pagehide AND visibilitychange→hidden AND unmount, so a tab-switch-then-
+  // navigate counted 2–3× and inflated time_on_page volume.
+  const timeFiredRef = useRef<boolean>(false)
 
   useEffect(() => {
     firedDepthsRef.current = new Set()
     mountedAtRef.current = Date.now()
+    timeFiredRef.current = false
 
     function computeDepth(): number {
       const doc = document.documentElement
@@ -212,8 +225,10 @@ function EngagementCapture() {
     }
 
     function emitTimeOnPage() {
+      if (timeFiredRef.current) return
       const seconds = Math.floor((Date.now() - mountedAtRef.current) / 1000)
       if (seconds < 1) return
+      timeFiredRef.current = true
       analytics.timeOnPage(pathname, seconds)
     }
 

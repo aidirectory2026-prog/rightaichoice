@@ -468,8 +468,10 @@ export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Phase 9 — Global Plan CTA + signup-gate funnel
   // ──────────────────────────────────────────────────────────────
-  /** Fires when the global sticky/inline CTA scrolls into view. */
-  planCtaImpression(props: { surface: 'sticky_bar' | 'inline_card'; page_path: string }) {
+  // 9.A.1 #12 — impression surfaces must MATCH the click surfaces, otherwise
+  // CTR (clicks/impressions) for navbar/homepage/plan_page reads as ∞/0%.
+  /** Fires when a plan CTA becomes visible (scroll-into-view or mount). */
+  planCtaImpression(props: { surface: 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'; page_path: string }) {
     capture('plan_cta_impression', { surface: props.surface, page_path: props.page_path })
   },
   /** Fires when the user clicks the CTA button (before any signup gate). */
