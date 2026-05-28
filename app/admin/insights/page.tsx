@@ -47,7 +47,10 @@ function relativeTime(iso: string): string {
   if (diffHr < 24) return `${diffHr}h ago`
   const diffDay = Math.round(diffHr / 24)
   if (diffDay < 30) return `${diffDay}d ago`
-  return new Date(iso).toLocaleDateString()
+  // Phase 9 follow-up (2026-05-28) — admin is IST-anchored. Show absolute
+  // dates in IST so a 31-day-old event in the "Recent visitor activity"
+  // table doesn't read as the server's UTC date.
+  return new Date(iso).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
 }
 
 function fmt(n: number): string {

@@ -50,8 +50,50 @@ type MirrorEvent = {
 const MIRROR_QUEUE: MirrorEvent[] = []
 const MIRROR_MAX_QUEUE = 100
 const MIRROR_FLUSH_MS = 8_000
+// Phase 9 follow-up (2026-05-28) — sessionStorage holding pen for events
+// that failed to mirror (Supabase down, 5xx, network error). Replayed on
+// the next successful flush so a temporary outage doesn't silently drop
+// page_viewed events on the floor. Cap = 500 events + 24h age so a long
+// outage doesn't replay stale stuff forever.
+const MIRROR_RETRY_KEY = 'mirror_retry_queue_v1'
+const MIRROR_RETRY_MAX = 500
+const MIRROR_RETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000
 let mirrorFlushTimer: ReturnType<typeof setTimeout> | null = null
 let mirrorUnloadHooked = false
+
+function loadRetryQueue(): MirrorEvent[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = sessionStorage.getItem(MIRROR_RETRY_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as MirrorEvent[]
+    if (!Array.isArray(parsed)) return []
+    // Drop events older than 24h so a long outage doesn't replay stale data.
+    const cutoff = Date.now() - MIRROR_RETRY_MAX_AGE_MS
+    return parsed.filter((e) => !e.client_time_ms || e.client_time_ms >= cutoff)
+  } catch {
+    return []
+  }
+}
+
+function saveRetryQueue(events: MirrorEvent[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    // Keep only the most recent MIRROR_RETRY_MAX events — under heavy load
+    // we'd rather lose the oldest than blow up sessionStorage quota.
+    const tail = events.length > MIRROR_RETRY_MAX
+      ? events.slice(events.length - MIRROR_RETRY_MAX)
+      : events
+    sessionStorage.setItem(MIRROR_RETRY_KEY, JSON.stringify(tail))
+  } catch {
+    /* quota or private mode — drop silently */
+  }
+}
+
+function clearRetryQueue(): void {
+  if (typeof window === 'undefined') return
+  try { sessionStorage.removeItem(MIRROR_RETRY_KEY) } catch { /* ignore */ }
+}
 
 function mirrorEnqueue(ev: MirrorEvent) {
   if (typeof window === 'undefined') return
@@ -84,17 +126,33 @@ function mirrorEnqueue(ev: MirrorEvent) {
 }
 
 async function mirrorFlush() {
-  if (MIRROR_QUEUE.length === 0) return
-  const events = MIRROR_QUEUE.splice(0)
+  // Drain any events left over from a previous failed flush (Supabase
+  // outage, 5xx, network error). They go first so chronology is preserved.
+  const retryEvents = loadRetryQueue()
+  const liveEvents = MIRROR_QUEUE.splice(0)
+  const events = retryEvents.concat(liveEvents)
+  if (events.length === 0) return
+  let ok = false
   try {
-    await fetch('/api/track-mirror', {
+    const res = await fetch('/api/track-mirror', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       keepalive: true,
       body: JSON.stringify({ events }),
     })
+    ok = res.ok
   } catch {
-    // Drop the batch on network failure — never throw to the caller.
+    ok = false
+  }
+  if (ok) {
+    // Success — clear the holding pen so we don't double-send next flush.
+    clearRetryQueue()
+  } else {
+    // Failure (5xx, network drop, Supabase blip). Persist everything we
+    // tried so the NEXT successful flush replays them. Without this, a
+    // Supabase outage silently drops every event on the floor (which is
+    // exactly what happened on 2026-05-28 during a ~7-hour incident).
+    saveRetryQueue(events)
   }
 }
 

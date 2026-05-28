@@ -17,6 +17,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 
+// Phase 9 follow-up (2026-05-28) — short retry for transient Supabase 5xx /
+// network blips. Three attempts, exponential backoff capped at 600ms total,
+// so the route stays well under Vercel's function timeout but survives the
+// kind of pool-saturation hiccups that took the site down today.
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts: number = 3,
+  baseMs: number = 100,
+): Promise<T> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastErr = err
+      if (i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, baseMs * Math.pow(2, i)))
+      }
+    }
+  }
+  throw lastErr
+}
+
 // ── Bot detection ──────────────────────────────────────────────────
 // Same regex as migration 097's backfill so historical rows align with
 // new rows. ~90% recall, ~0% false positive on real browsers.
@@ -210,13 +233,24 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  // Use onConflict: 'insert_id' to dedup retried beacons.
-  const { error: insertErr } = await db
-    .from('user_events')
-    .upsert(rows as never, { onConflict: 'insert_id', ignoreDuplicates: true })
-  if (insertErr) {
-    console.error('[track-mirror] user_events insert failed:', insertErr.message)
-    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  // Use onConflict: 'insert_id' to dedup retried beacons. Wrapped in
+  // withRetry so a transient Supabase 5xx doesn't drop the whole batch —
+  // the client's holding pen will re-flush on next attempt anyway, but
+  // recovering inside this request is much faster.
+  try {
+    await withRetry(async () => {
+      const { error } = await db
+        .from('user_events')
+        .upsert(rows as never, { onConflict: 'insert_id', ignoreDuplicates: true })
+      if (error) throw new Error(error.message)
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'unknown'
+    console.error('[track-mirror] user_events insert failed after retry:', message)
+    // 503 (not 500) signals the client to KEEP the batch in its holding
+    // pen and replay on the next flush instead of treating it as a
+    // permanent failure.
+    return NextResponse.json({ error: message }, { status: 503 })
   }
 
   // ── Update user_intent_profile per event ─────────────────────

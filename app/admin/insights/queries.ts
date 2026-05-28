@@ -36,6 +36,26 @@ function cutoffIso(days: DayWindow): string {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
+// Phase 9 follow-up (2026-05-28) — IST-aligned "midnight today" cutoff.
+// The founder runs admin from IST and "DAU today" should mean the IST
+// calendar day, not the server-side UTC day. UTC midnight is 05:30 IST,
+// so without this the "today" tile would silently miss every event that
+// fired between IST midnight and IST 05:30.
+function midnightIstIso(): string {
+  const now = new Date()
+  // Format the current instant as wall-clock parts in IST.
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const [{ value: day }, , { value: month }, , { value: year }] = fmt.formatToParts(now)
+  // Convert IST midnight (YYYY-MM-DDT00:00:00+05:30) to UTC ISO so the
+  // database comparison stays in the canonical timezone.
+  return new Date(`${year}-${month}-${day}T00:00:00+05:30`).toISOString()
+}
+
 export interface MetricResult {
   label: string
   value: number
@@ -204,7 +224,7 @@ export async function getTopUseCases(days: DayWindow, includeBots: boolean): Pro
 
 export async function getEngagementMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const todayIso = new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
+  const todayIso = midnightIstIso()
   const [today, week, month, todayKnown, weekKnown, monthKnown] = await Promise.all([
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: todayIso, p_include_bots: includeBots }).maybeSingle(),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
