@@ -14,6 +14,8 @@ import {
   getEngagementMetrics,
   getOverviewMetrics,
   getPageViewsByDevice,
+  getRecentVisitors,
+  getReturningSummary,
   getPlanFunnel,
   getSearchMetrics,
   getTopChatTools,
@@ -33,6 +35,20 @@ import {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Insights — Admin' }
+
+function relativeTime(iso: string): string {
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return '—'
+  const diffSec = Math.round((Date.now() - t) / 1000)
+  if (diffSec < 60) return `${diffSec}s ago`
+  const diffMin = Math.round(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.round(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.round(diffHr / 24)
+  if (diffDay < 30) return `${diffDay}d ago`
+  return new Date(iso).toLocaleDateString()
+}
 
 function fmt(n: number): string {
   if (!Number.isFinite(n)) return '0'
@@ -194,6 +210,7 @@ export default async function InsightsPage({
     planFunnel, topExistingTools, topUseCases, engagement, topEvents,
     searchMetrics, topSearches, chatMetrics, topChatTools,
     topViewedTools, topClickedTools, topSavedTools, topComparedTools,
+    returningSummary, recentVisitors,
   ] = await Promise.all([
     getBotShare(days),
     getOverviewMetrics(days, includeBots),
@@ -213,6 +230,8 @@ export default async function InsightsPage({
     getTopClickedTools(days, includeBots),
     getTopSavedTools(days, includeBots),
     getTopComparedTools(days, includeBots),
+    getReturningSummary(days, includeBots),
+    getRecentVisitors(50, includeBots),
   ])
 
   const qs = (opts: { days?: DayWindow; include_bots?: boolean }) => {
@@ -299,6 +318,84 @@ export default async function InsightsPage({
       <MetricRow metrics={engagement} />
       <div className="mt-4">
         <BarList title={`Top events · ${days}d`} rows={topEvents} />
+      </div>
+
+      <SectionHeading
+        title="Returning users"
+        subtitle="Who's coming back, when they first showed up, and how active they are. Click any row for the full visitor timeline."
+      />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <MetricCard label={`Active visitors · ${days}d`} value={returningSummary.total} />
+        <MetricCard label="New (first time)" value={returningSummary.new_count} />
+        <MetricCard label="Returning" value={returningSummary.returning_count} />
+        <MetricCard label="Returning rate" value={returningSummary.returning_pct} suffix="%" />
+        <MetricCard
+          label="Avg gap (days)"
+          value={returningSummary.avg_days_between ?? 0}
+          suffix={returningSummary.avg_days_between == null ? '—' : undefined}
+        />
+      </div>
+      <div className="mt-4 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+        <div className="border-b border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-300">
+          Recent visitor activity · last 50 (most-recent first)
+        </div>
+        {recentVisitors.length === 0 ? (
+          <div className="py-8 text-center text-xs text-zinc-500">No visitor activity yet</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-950/60 text-[10px] uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="px-4 py-2 text-left">Visitor</th>
+                  <th className="px-4 py-2 text-left">Type</th>
+                  <th className="px-4 py-2 text-left">First seen</th>
+                  <th className="px-4 py-2 text-left">Last seen</th>
+                  <th className="px-4 py-2 text-right">Events</th>
+                  <th className="px-4 py-2 text-right">Days active</th>
+                  <th className="px-4 py-2 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/80">
+                {recentVisitors.map((v) => (
+                  <tr key={v.distinct_id} className="hover:bg-zinc-900/60">
+                    <td className="px-4 py-2 font-mono text-xs">
+                      <Link
+                        href={`/admin/insights/user/${encodeURIComponent(v.distinct_id)}`}
+                        className="text-emerald-400 hover:text-emerald-300"
+                      >
+                        {v.distinct_id.length > 28 ? v.distinct_id.slice(0, 26) + '…' : v.distinct_id}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-xs">
+                      {v.user_id ? (
+                        <span className="inline-flex items-center rounded-full border border-emerald-700/50 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                          Logged in
+                        </span>
+                      ) : (
+                        <span className="text-zinc-500">Anon</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-zinc-400">{relativeTime(v.first_seen)}</td>
+                    <td className="px-4 py-2 text-xs text-zinc-300">{relativeTime(v.last_seen)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-zinc-300">{fmt(v.total_events)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-zinc-300">{v.active_days}</td>
+                    <td className="px-4 py-2 text-right">
+                      {v.is_returning ? (
+                        <span className="inline-flex items-center rounded-full border border-cyan-800/40 bg-cyan-950/30 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
+                          Returning
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-900/50 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                          New
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <SectionHeading title="Search" subtitle="Query progression, zero-result gaps, click-through" />

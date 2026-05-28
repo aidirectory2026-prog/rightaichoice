@@ -696,6 +696,76 @@ export interface ReconciliationStats {
   ad_block_ratio_estimate: number // not measurable directly — see notes
 }
 
+// ── Returning visitors ──────────────────────────────────────────────
+// Phase 9 (2026-05-28) — "returning users" panel. Splits the in-window
+// active visitors into new (first_seen inside window) vs returning
+// (first_seen before window), plus a per-visitor leaderboard.
+
+export type ReturningSummary = {
+  total: number
+  new_count: number
+  returning_count: number
+  returning_pct: number
+  avg_days_between: number | null
+}
+
+export type RecentVisitor = {
+  distinct_id: string
+  user_id: string | null
+  first_seen: string
+  last_seen: string
+  total_events: number
+  active_days: number
+  is_returning: boolean
+}
+
+export async function getReturningSummary(days: DayWindow, includeBots: boolean): Promise<ReturningSummary> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_returning_visitors', {
+    p_cutoff: cutoffIso(days),
+    p_include_bots: includeBots,
+  }).maybeSingle()
+  const d = (data ?? {}) as Partial<{
+    total_visitors: number
+    new_visitors: number
+    returning_visitors: number
+    returning_pct: number
+    avg_days_between: number | null
+  }>
+  return {
+    total: Number(d.total_visitors ?? 0),
+    new_count: Number(d.new_visitors ?? 0),
+    returning_count: Number(d.returning_visitors ?? 0),
+    returning_pct: Number(d.returning_pct ?? 0),
+    avg_days_between: d.avg_days_between == null ? null : Number(d.avg_days_between),
+  }
+}
+
+export async function getRecentVisitors(limit: number, includeBots: boolean): Promise<RecentVisitor[]> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_recent_visitors', {
+    p_limit: limit,
+    p_include_bots: includeBots,
+  })
+  return ((data as Array<{
+    distinct_id: string
+    user_id: string | null
+    first_seen: string
+    last_seen: string
+    total_events: number | string
+    active_days: number
+    is_returning: boolean
+  }>) ?? []).map((r) => ({
+    distinct_id: r.distinct_id,
+    user_id: r.user_id,
+    first_seen: r.first_seen,
+    last_seen: r.last_seen,
+    total_events: Number(r.total_events),
+    active_days: Number(r.active_days),
+    is_returning: !!r.is_returning,
+  }))
+}
+
 export async function getReconciliationStats(days: DayWindow): Promise<ReconciliationStats> {
   const db = getAdminClient()
   const cutoff = cutoffIso(days)
