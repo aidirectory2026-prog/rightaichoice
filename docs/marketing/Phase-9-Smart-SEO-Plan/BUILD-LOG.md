@@ -4,6 +4,79 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 3 (cont. 2) — 2026-05-28 — CTA UX overhaul + analytics: unique users, returning users, root-cause fix
+
+**Trigger:** the initial Phase 9 CTA + signup gate shipped earlier today (see `Day 3 (cont.) — 2026-05-28 — CTA + Conversion`). Three user-driven follow-ups landed across the rest of the day:
+
+1. **CTA flow felt wrong** — clicking an inline/sticky card popped the signup modal directly, but the user had nothing typed yet. Re-architected so the CTA routes to `/plan` first; signup only fires after the user types a goal AND clicks Plan it (the high-intent moment).
+2. **Card visuals were too heavy / claimed "no signup"** — shrunk the cards and removed misleading "no signup needed" copy (contradicts the new gate). Rewrote in plain user language.
+3. **Admin lacked unique-user accuracy** — the dashboard showed "Unique visitors" but no truthful per-human count; same person across devices / cookie clears appeared as N visitors. Added a true distinct-human metric AND fixed the root-cause bug (events were never being stamped with `user_id`).
+4. **No returning-user view at all** — admin had no way to see who came back and how often. Added a full Returning users panel + per-visitor activity table.
+
+### What shipped — six commits
+
+#### 1. CTA flow overhaul — gate moves from click to submit (commit `cb7d5e6`)
+
+- **PlanCTAButton** (`components/cta/plan-cta-button.tsx`) no longer mounts the signup modal. It just fires `plan_cta_clicked` and `router.push('/plan?source=<surface>&from=<page>')`. The `from` query carries the original CTA-click page through to `plan_intents.source_path` so attribution survives the `/plan` landing.
+- **`/plan` page** (`app/plan/page.tsx`) parses `?source=` and `?from=`, forwards them to `ProjectPlanner` as `sourceSurface` + `originalPagePath` props.
+- **ProjectPlanner** (`components/ai/project-planner.tsx`) opens the signup modal on submit when the user is anonymous; Skip continues in-place to the intake flow (`redirectOnSkip=false`), OAuth bounces away and auto-resumes via the existing initial-query effect. Anti-double-modal guard: when ProjectPlanner auto-submits the initial-from-URL query, the modal is suppressed (the homepage hero already gated it upstream).
+- **PlanSignupModal** (`components/cta/plan-signup-modal.tsx`) gained `redirectOnSkip` (default true for the homepage-hero caller; ProjectPlanner passes false) and `originalPagePath` so `plan_intents.source_path` attribution survives both the `/plan` landing and the OAuth round-trip.
+- **New surface `plan_page`** plumbed through `lib/cta/persist-intent.ts`, `app/api/plan/intent/route.ts` VALID_SURFACES, `lib/analytics.ts` typings, `lib/admin/plan-conversion.ts` breakdown, and the mixpanel lexicon. Anon users who land directly on `/plan` and type a goal are attributed as `source_surface='plan_page'`.
+
+#### 2. CTA polish — shrink cards, drop misleading copy (commit `8b53312`)
+
+- **Inline card** (`components/cta/plan-cta-inline.tsx`) — dropped the kicker + trust-strip and tightened description from ~115 to ~55 words. Horizontal icon + text + CTA layout that fits between article sections without dominating.
+- **Sticky bar** (`components/cta/plan-cta-sticky.tsx`) — collapsed back to a compact single-line floating bar (icon + headline + inline "Plan my stack" link + ×) — the expanded card was eating too much viewport on every page.
+- Removed "no signup needed to see your plan" from both cards and the `/plan` stats grid ("Always free to use" instead of "Always, no signup") since the flow now asks for signup at submit. Trust copy must match the actual flow.
+
+#### 3. Short user-language description on both cards (commit `f614ee3`)
+
+- **Inline** — title rephrased to user-voice ("Not sure which AI tools to pick?"); description trimmed to ~18 words ("Tell us what you want to build — we'll match the AI tools that fit your goal, budget & existing stack."). Smaller padding (`p-4`), smaller type, no vertical-margin growth — sits inline without pushing surrounding sections out of alignment.
+- **Sticky** — added one-line description under headline ("Tell us the goal — we'll match the stack.") so the bar reads as a CTA, not just a button.
+
+#### 4. Unique users metric + root-cause fix (commit `ec9b2ff`)
+
+- **Bug found**: every row in `user_events` had `user_id=null` despite 5 auth users browsing for weeks. Root cause: the track-mirror route used the admin Supabase client (no auth context) and trusted whatever `user_id` the client sent — and the client never sent one. So distinct user_id was always 0.
+- **Fix** (`app/api/track-mirror/route.ts`) — also constructs the SSR client to read the auth cookie, resolves `user_id` server-side, stamps it on every row in the batch AND on the `upsert_user_intent` RPC call so `user_intent_profile` gets correctly linked. `auth_state` is now derived from the resolved id.
+- **Migration 115** (`supabase/migrations/115_distinct_known_users.sql`) — `distinct_known_users_in_window(p_cutoff, p_include_bots)` counts distinct `user_id` (ignoring null). Wired into `getOverviewMetrics` (**Unique users (logged in)** beside **Unique visitors**) and `getEngagementMetrics` (**Unique users today / 7d / 30d** beside DAU / WAU / MAU).
+- **Backfill**: not possible — historical data has 0 user_id linkages anywhere (user_intent_profile and plan_intents both empty for user_id). Fix takes effect going forward.
+
+#### 5. Strict server-only auth resolution (commit `598761b`)
+
+- Follow-up tightening: previous fix fell back to `e.user_id` from the client when server couldn't resolve. That let a hostile client claim any user_id and inflate the unique-users metric. Dropped the fallback — `user_id` now ONLY ever set from the SSR auth cookie. `auth_state` derived from the same source so it can't lie either.
+- **Verification (live, against prod, fully cleaned up)**: inserted 7 synthetic rows covering every dedup scenario — user_X on 3 different `distinct_id` browsers (cross-device same human), user_Y on 1 browser, 2 anon rows, 1 bot-flagged row for user_Z. RPC returned **3** excluding bots (= 2 test users [X+Y] + 1 unrelated authed user in window) and **4** including bots (= 3 test users [X+Y+Z] + 1 unrelated). user_X appeared on 3 browser ids but counted as **1** — cross-device dedup confirmed. Anon rows added **0**. Bot rows excluded when `p_include_bots=false`. All synthetic rows cleaned up, 0 remaining.
+
+#### 6. Returning users panel + per-visitor activity table (commit `fb27ceb`)
+
+- **Migration 116** (`supabase/migrations/116_returning_visitors_rpcs.sql`) adds two RPCs:
+  - `insights_returning_visitors(p_cutoff, p_include_bots)` — summary: splits in-window active visitors into new (first_seen inside window) vs returning (first_seen before window), computes `returning_pct` and `avg_days_between` first-and-last seen for the returning cohort.
+  - `insights_recent_visitors(p_limit, p_include_bots)` — per-visitor rows ordered by most-recent activity. Computed from `user_events` (`min/max(created_at)` per `distinct_id`) so it includes every visitor, not just the ~5% who fired an engagement event into `user_intent_profile`.
+- **Admin UI** (`app/admin/insights/page.tsx`) — new "Returning users" section right after Engagement. 5 KPI tiles (Active visitors · Nd / New / Returning / Returning rate % / Avg gap days) + a 50-row recent-activity table (Visitor · Type [Logged in / Anon] · First seen · Last seen · Events · Days active · Status [Returning / New]). Each row links to the visitor's full event timeline.
+- **Verification (live)**: Today: 43 active, 28 new, 15 returning (**34.9%**), avg 2.2 days between visits. 7d: 732 active, 729 new, 3 returning (0.4%) — matched raw `min/max(created_at) per distinct_id` cross-check exactly. 30d: 790 active, 0 returning (correct — tracking started 2026-05-20, no first_seen exists before the 30d cutoff yet). Top visitor: 1,400 events across 9 active days.
+
+### Files touched
+
+- New: `supabase/migrations/115_distinct_known_users.sql`; `supabase/migrations/116_returning_visitors_rpcs.sql`
+- Modified: `components/cta/plan-cta-button.tsx`, `components/cta/plan-cta-inline.tsx`, `components/cta/plan-cta-sticky.tsx`, `components/cta/plan-signup-modal.tsx`, `components/ai/project-planner.tsx`, `app/plan/page.tsx`, `app/api/plan/intent/route.ts`, `app/api/track-mirror/route.ts`, `app/admin/insights/page.tsx`, `app/admin/insights/queries.ts`, `app/admin/plan-conversion/page.tsx`, `lib/cta/persist-intent.ts`, `lib/analytics.ts`, `lib/admin/plan-conversion.ts`, `scripts/mixpanel/config/events.ts`
+
+### Open follow-ups (user-action items)
+
+- **Manually enable LinkedIn OIDC** in Supabase dashboard (Authentication → Providers → LinkedIn (OIDC) → enable + paste LinkedIn app credentials with redirect URL `https://adtznghodbgkvknilfln.supabase.co/auth/v1/callback`) so the LinkedIn signup button works on prod
+- **Post-deploy smoke test**: log in to the site, visit a few pages, then refresh `/admin/insights` — the **Unique users (logged in)** tile and the **Returning users** section should start ticking up as authed pageviews land with their stamped user_id
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| `cb7d5e6` | CTA flow overhaul — signup gate moves from CTA-click to /plan submit |
+| `8b53312` | Cards shrunk + "no signup" copy removed |
+| `f614ee3` | Short user-language descriptions on both cards |
+| `ec9b2ff` | Unique users metric (mig 115) + root-cause fix (user_id never stamped) |
+| `598761b` | Strict server-only auth resolution (no client-claim fallback) |
+| `fb27ceb` | Returning users panel + per-visitor activity table (mig 116) |
+
+---
+
 ## Day 4 — 2026-05-29 — Tier-4 noindex wave 2 (29 more pages)
 
 **Trigger:** doc-12 Day-3 plan called for "first 100 noindex decisions" in the Tier-4 prune. Wave 1 (commit `de770ff`, 2026-05-28) shipped 22 — 10 hub + 12 compares. Wave 2 ships 29 more, taking total to 51. We don't try to hit 100 in this wave because the remaining gap is mostly individual tool pages (2,564 at pos > 50), and `tools` has no `noindex` column yet — that's a separate, larger workstream tied to the non-AI tool audit kicked off in the same conversation.
