@@ -1,18 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { fetchAllPages } from '@/lib/data/_pagination'
+import { sanitizeLike } from '@/lib/data/_sanitize'
 import type { ToolFilters } from '@/types'
 
 const TOOLS_PER_PAGE = 24
-
-/** Escape characters that have special meaning in Supabase ilike patterns */
-function sanitizeLike(input: string): string {
-  return input
-    .replace(/\\/g, '\\\\')
-    .replace(/%/g, '\\%')
-    .replace(/_/g, '\\_')
-    .replace(/[(),"'`;]/g, '')
-    .slice(0, 200)
-}
 
 export async function getTools(filters: ToolFilters = {}) {
   const supabase = await createClient()
@@ -188,6 +179,8 @@ export async function searchTools(query: string) {
   const supabase = await createClient()
   const term = query.trim()
   if (!term) return { tools: [], categories: [], tags: [] }
+  const safe = sanitizeLike(term) // Phase 9.0.4 — prevent .or() filter injection
+  if (!safe) return { tools: [], categories: [], tags: [] }
 
   // Search tools, categories, and tags in parallel
   const [toolsRes, catsRes, tagsRes] = await Promise.all([
@@ -195,18 +188,18 @@ export async function searchTools(query: string) {
       .from('tools')
       .select('id, name, slug, tagline, logo_url, website_url, pricing_type')
       .eq('is_published', true)
-      .or(`name.ilike.%${term}%,tagline.ilike.%${term}%`)
+      .or(`name.ilike.%${safe}%,tagline.ilike.%${safe}%`)
       .order('view_count', { ascending: false })
       .limit(6),
     supabase
       .from('categories')
       .select('id, name, slug, icon')
-      .ilike('name', `%${term}%`)
+      .ilike('name', `%${safe}%`)
       .limit(3),
     supabase
       .from('tags')
       .select('id, name, slug')
-      .ilike('name', `%${term}%`)
+      .ilike('name', `%${safe}%`)
       .limit(4),
   ])
 

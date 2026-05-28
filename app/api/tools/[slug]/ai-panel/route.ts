@@ -1,37 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+import { createClient } from '@/lib/supabase/server'
+import { getAnthropicClient } from '@/lib/ai/anthropic'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 type RouteContext = { params: Promise<{ slug: string }> }
 
+// Phase 9.0.3 — hardened. Previously this route was unauthenticated,
+// unthrottled, and built the entire Claude prompt from the REQUEST BODY,
+// allowing (a) unbounded cost-amplification on our key and (b) prompt
+// injection (caller fully controlled the model input). It now:
+//   - rate-limits per IP (5/min)
+//   - loads tool + reviews from the DB by slug (ignores any client-sent data)
+//   - lazy-inits the Anthropic client (no module-load crash on missing key)
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
 
-  const body = await req.json().catch(() => null)
-  if (!body || !body.tool) {
-    return NextResponse.json({ error: 'Missing tool data' }, { status: 400 })
+  const limit = rateLimit('ai-panel', req, { limit: 5, windowMs: 60_000 })
+  if (!limit.ok) return rateLimitResponse(limit)
+
+  const supabase = await createClient()
+
+  const { data: tool } = await supabase
+    .from('tools')
+    .select('id, name, tagline, description, pricing_type, skill_level, features, has_api, platforms')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .single()
+
+  if (!tool) {
+    return NextResponse.json({ error: 'Tool not found' }, { status: 404 })
   }
 
-  const { tool, reviews } = body as {
-    tool: {
-      name: string
-      tagline: string
-      description: string
-      pricing_type: string
-      skill_level: string
-      features: string[]
-      has_api: boolean
-      platforms: string[]
-    }
-    reviews: Array<{ pros: string; cons: string; rating: number; use_case: string }>
-  }
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('rating, pros, cons, use_case')
+    .eq('tool_id', tool.id)
+    .order('rating', { ascending: false })
+    .limit(5)
 
   const reviewContext =
     reviews && reviews.length > 0
-      ? `\nUser reviews (${reviews.length} total):\n` +
+      ? `\nUser reviews (${reviews.length} shown):\n` +
         reviews
-          .slice(0, 5)
           .map(
             (r) =>
               `- Rating: ${r.rating}/5 | Pros: ${r.pros || 'N/A'} | Cons: ${r.cons || 'N/A'} | Use case: ${r.use_case || 'N/A'}`
@@ -63,6 +73,7 @@ Return ONLY valid JSON (no markdown, no code fences) in this exact shape:
 Be specific and honest. Base best_for on actual capabilities, not marketing.`
 
   try {
+    const anthropic = getAnthropicClient()
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 512,

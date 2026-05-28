@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeLike } from '@/lib/data/_sanitize'
 
 /**
  * GET /api/tools/search?q=<query>
@@ -15,12 +16,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ tools: [] })
   }
 
+  const safe = sanitizeLike(q) // Phase 9.0.4 — prevent .or() filter injection
+  if (safe.length < 2) {
+    return NextResponse.json({ tools: [] })
+  }
+
   const supabase = await createClient()
   const { data } = await supabase
     .from('tools')
     .select('id, name, slug, logo_url, website_url')
     .eq('is_published', true)
-    .or(`name.ilike.%${q}%,tagline.ilike.%${q}%`)
+    .or(`name.ilike.%${safe}%,tagline.ilike.%${safe}%`)
     .order('view_count', { ascending: false })
     .limit(6)
 

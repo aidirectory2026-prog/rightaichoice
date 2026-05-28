@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeLike } from '@/lib/data/_sanitize'
 
 export type AISearchParams = {
   query: string
@@ -35,15 +36,8 @@ export type AIToolResult = {
   setup_time_text?: string | null
 }
 
-/** Escape characters that have special meaning in Supabase ilike patterns */
-function sanitizeLike(input: string): string {
-  return input
-    .replace(/\\/g, '\\\\')  // backslash first
-    .replace(/%/g, '\\%')
-    .replace(/_/g, '\\_')
-    .replace(/[(),"'`;]/g, '') // strip chars that could break .or() filter syntax
-    .slice(0, 200) // cap length to prevent oversized queries
-}
+// sanitizeLike now lives in ./\_sanitize so the search route + searchTools can
+// share it (Phase 9.0.4).
 
 // Words that match almost every tool in the catalog ("ai" hits ~95% of taglines,
 // "tool"/"app" hit most marketing copy, etc.) and therefore destroy ranking
