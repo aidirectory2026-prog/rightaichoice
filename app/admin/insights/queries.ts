@@ -82,13 +82,17 @@ export async function getOverviewMetrics(days: DayWindow, includeBots: boolean):
   const db = getAdminClient()
   const cutoff = cutoffIso(days)
 
-  const [pageViews, uniqueVisitors, signups, newsletter] = await Promise.all([
+  const [pageViews, uniqueVisitors, uniqueUsers, signups, newsletter] = await Promise.all([
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
         .eq('event_name', 'page_viewed').gte('created_at', cutoff),
       includeBots,
     ),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
+    // Phase 9 (2026-05-28) — true distinct-human count (auth user_id).
+    // Differs from "Unique visitors" (distinct_id), which counts each
+    // browser / cookie-cleared session as a separate visitor.
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoff, p_include_bots: includeBots }).maybeSingle(),
     maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
         .eq('event_name', 'signup_completed').gte('created_at', cutoff),
@@ -104,6 +108,7 @@ export async function getOverviewMetrics(days: DayWindow, includeBots: boolean):
   return [
     { label: 'Page views', value: pageViews.count ?? 0 },
     { label: 'Unique visitors', value: Number((uniqueVisitors.data as { count?: number } | null)?.count ?? 0) },
+    { label: 'Unique users (logged in)', value: Number((uniqueUsers.data as { count?: number } | null)?.count ?? 0) },
     { label: 'Signups', value: signups.count ?? 0 },
     { label: 'Newsletter subs', value: newsletter.count ?? 0 },
   ]
@@ -199,16 +204,25 @@ export async function getTopUseCases(days: DayWindow, includeBots: boolean): Pro
 
 export async function getEngagementMetrics(days: DayWindow, includeBots: boolean): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const [today, week, month] = await Promise.all([
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: new Date(new Date().setHours(0, 0, 0, 0)).toISOString(), p_include_bots: includeBots }).maybeSingle(),
+  const todayIso = new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
+  const [today, week, month, todayKnown, weekKnown, monthKnown] = await Promise.all([
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: todayIso, p_include_bots: includeBots }).maybeSingle(),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoffIso(30), p_include_bots: includeBots }).maybeSingle(),
+    // Phase 9 (2026-05-28) — distinct logged-in humans for the same windows.
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: todayIso, p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(30), p_include_bots: includeBots }).maybeSingle(),
   ])
   void days
+  const num = (r: { data: unknown }) => Number((r.data as { count?: number } | null)?.count ?? 0)
   return [
-    { label: 'DAU (today)', value: Number((today.data as { count?: number } | null)?.count ?? 0) },
-    { label: 'WAU (7d)', value: Number((week.data as { count?: number } | null)?.count ?? 0) },
-    { label: 'MAU (30d)', value: Number((month.data as { count?: number } | null)?.count ?? 0) },
+    { label: 'DAU (today)', value: num(today) },
+    { label: 'WAU (7d)', value: num(week) },
+    { label: 'MAU (30d)', value: num(month) },
+    { label: 'Unique users today', value: num(todayKnown) },
+    { label: 'Unique users 7d', value: num(weekKnown) },
+    { label: 'Unique users 30d', value: num(monthKnown) },
   ]
 }
 

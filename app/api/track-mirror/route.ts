@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { createClient } from '@/lib/supabase/server'
 
 // ── Bot detection ──────────────────────────────────────────────────
 // Same regex as migration 097's backfill so historical rows align with
@@ -145,6 +146,25 @@ export async function POST(req: NextRequest) {
   }
 
   const db = getAdminClient()
+
+  // Phase 9 (2026-05-28) — resolve user_id from the auth cookie server-side.
+  // Previously every row landed with user_id=null because the client never
+  // included it in the payload (and the admin client we use for the insert
+  // can't see auth context). Reading it here from the SSR client is the
+  // single source of truth: if the browser has a valid Supabase session,
+  // EVERY event in this batch is stamped with the correct auth user_id —
+  // anon batches stay null. This is what makes the new "Unique users"
+  // admin metric count real humans (distinct user_id) instead of always
+  // returning 0.
+  let serverUserId: string | null = null
+  try {
+    const ssClient = await createClient()
+    const { data } = await ssClient.auth.getUser()
+    serverUserId = data.user?.id ?? null
+  } catch {
+    /* anon — keep null */
+  }
+
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null
   const ua = (req.headers.get('user-agent') ?? '').slice(0, 300)
   const botLikely = isBotUserAgent(ua)
@@ -160,10 +180,13 @@ export async function POST(req: NextRequest) {
     // Clarity session ID rides along inside event properties; lift it to
     // a column for fast filter + JOIN to the replay deep-link.
     const claritySid = typeof props.clarity_session_id === 'string' ? props.clarity_session_id : null
+    // Server-resolved user_id wins; fall back to whatever the client sent
+    // (defensive — never trusted but harmless if cookie is missing).
+    const resolvedUserId = serverUserId ?? e.user_id ?? null
     return {
       distinct_id: e.distinct_id,
-      user_id: e.user_id ?? null,
-      auth_state: e.auth_state ?? 'anon',
+      user_id: resolvedUserId,
+      auth_state: resolvedUserId ? 'known' : (e.auth_state ?? 'anon'),
       event_name: e.event_name,
       properties: props,
       page_path: e.page_path ?? null,
@@ -200,14 +223,15 @@ export async function POST(req: NextRequest) {
   // Volume is small (max 100 per batch), so the round-trip cost is fine.
   for (const e of events) {
     const updates = profileUpdatesFor(e)
-    if (Object.keys(updates).length === 0 && !e.user_id) {
+    const effectiveUserId = serverUserId ?? e.user_id ?? null
+    if (Object.keys(updates).length === 0 && !effectiveUserId) {
       // Even with no profile updates, still upsert the bare distinct_id row
       // so we count this user as "seen" — but skip if no value to add.
       continue
     }
     const args: Record<string, unknown> = {
       p_distinct_id: e.distinct_id,
-      p_user_id: e.user_id ?? null,
+      p_user_id: effectiveUserId,
       p_page_path: e.page_path ?? null,
       p_first_touch_utm_source: e.first_touch_utm_source ?? null,
       p_first_touch_utm_medium: null,
