@@ -81,6 +81,7 @@ export function organizationJsonLd() {
       'https://twitter.com/rightaichoice',
       'https://www.linkedin.com/company/rightaichoice',
       'https://github.com/aidirectory2026-prog/rightaichoice',
+      'https://www.wikidata.org/wiki/Q139970688',
     ],
     founder: {
       '@type': 'Person',
