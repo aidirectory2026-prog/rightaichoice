@@ -78,11 +78,16 @@ export default async function StackPage({ params }: Props) {
     stack.title,
     stack.description,
     `/stacks/${slug}`,
-    stack.stages.map((stage) => ({
-      name: stage.name,
-      text: `${stage.description} — Best pick: ${stage.bestPick.name} (${stage.bestPick.pricing}). Alternatives: ${stage.alternatives.map((a) => a.name).join(', ')}.`,
-      url: `/tools/${stage.bestPick.slug}`,
-    })),
+    stack.stages.map((stage) => {
+      const altSuffix = stage.alternatives.length > 0
+        ? ` Alternatives: ${stage.alternatives.map((a) => a.name).join(', ')}.`
+        : ''
+      return {
+        name: stage.name,
+        text: `${stage.description} — Best pick: ${stage.bestPick.name} (${stage.bestPick.pricing}).${altSuffix}`,
+        url: `/tools/${stage.bestPick.slug}`,
+      }
+    }),
   )
 
   const allTools = stack.stages.flatMap((s) => [

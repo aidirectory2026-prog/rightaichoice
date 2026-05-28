@@ -1250,9 +1250,7 @@ export const STACKS: StackConfig[] = [
         name: 'Finance & Admin',
         description: 'Invoicing, bookkeeping, and expense tracking',
         bestPick: { name: 'QuickBooks', slug: 'quickbooks', reason: 'AI-categorized expenses, automatic invoice reminders, and tax-ready reports.', pricing: '$15/mo', tags: ['finance', 'accounting'] },
-        alternatives: [
-          { name: 'Wave', slug: 'wave', reason: 'Free invoicing and accounting for small businesses.', pricing: 'Free' },
-        ],
+        alternatives: [],
         costEstimate: '$0–15/mo',
       },
     ],
