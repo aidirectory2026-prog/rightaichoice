@@ -250,13 +250,15 @@ export default async function DashboardPage() {
                 )}
               </section>
 
-              {/* Recent Reviews */}
-              <section>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <Star className="h-5 w-5 text-amber-400" />
-                  Your Reviews ({reviews.length})
-                </h2>
-                {reviews.length > 0 ? (
+              {/* Recent Reviews — hidden entirely when the user has 0
+                  reviews. The "Leave a review" CTA lives on each tool page
+                  via QuickFeedback; no need for a dashboard placeholder. */}
+              {reviews.length > 0 && (
+                <section>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Star className="h-5 w-5 text-amber-400" />
+                    Your Reviews ({reviews.length})
+                  </h2>
                   <div className="space-y-3">
                     {reviews.slice(0, 5).map((review) => (
                       <div
@@ -289,13 +291,8 @@ export default async function DashboardPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center">
-                    <Star className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-500">No reviews yet. Share your experience with AI tools!</p>
-                  </div>
-                )}
-              </section>
+                </section>
+              )}
 
               {/* Reputation History */}
               {repHistory.length > 0 && (

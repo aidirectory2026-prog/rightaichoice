@@ -123,7 +123,7 @@ export default async function HomePage() {
                 source="home_hero"
                 variant="card"
                 headline="One AI tool every Friday"
-                sub="A 60-second editorial pick from across 1,200+ tools we track. Independent, no funnel."
+                sub="A 60-second editorial pick from across 2,000+ tools we track. Independent, no funnel."
               />
             </div>
 

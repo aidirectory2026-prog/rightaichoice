@@ -51,7 +51,7 @@ export async function GET() {
     body = `<div class="rac-widget">
   <div class="rac-pill">Tool of the day</div>
   <div class="rac-title">RightAIChoice</div>
-  <div class="rac-sub">Independent picks across 1,200+ AI tools.</div>
+  <div class="rac-sub">Independent picks across 2,000+ AI tools.</div>
   <a class="rac-cta" href="https://rightaichoice.com/tools?utm_source=embed&utm_medium=tool_of_day" target="_blank" rel="noopener">Browse tools →</a>
 </div>`
   } else {

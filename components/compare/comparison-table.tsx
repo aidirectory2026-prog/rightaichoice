@@ -136,29 +136,30 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
           ))}
         </CompareRow>
 
-        {/* Rating */}
-        <CompareRow label="Rating">
-          {tools.map((tool) => (
-            <div key={tool.id}>
-              {tool.avg_rating > 0 ? (
-                <div className="flex items-center gap-1.5">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-sm text-white font-medium">
-                    {Number(tool.avg_rating).toFixed(1)}
-                  </span>
-                  <span className="text-xs text-zinc-600">
-                    ({tool.review_count} reviews)
-                  </span>
-                </div>
-              ) : (
-                // Phase 6.1 (2026-05-11): em dash beats "No reviews yet" —
-                // the column still aligns and the comparison stays scannable
-                // without a placeholder stamp.
-                <span className="text-xs text-zinc-600">—</span>
-              )}
-            </div>
-          ))}
-        </CompareRow>
+        {/* Rating — hidden entirely when no tool in the comparison has a
+            rating. When at least one does, the row renders and the
+            unrated columns fall back to an em-dash (preserves alignment). */}
+        {tools.some((t) => t.avg_rating > 0) && (
+          <CompareRow label="Rating">
+            {tools.map((tool) => (
+              <div key={tool.id}>
+                {tool.avg_rating > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-sm text-white font-medium">
+                      {Number(tool.avg_rating).toFixed(1)}
+                    </span>
+                    <span className="text-xs text-zinc-600">
+                      ({tool.review_count} reviews)
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-600">—</span>
+                )}
+              </div>
+            ))}
+          </CompareRow>
+        )}
 
         {/* Popularity */}
         <CompareRow label="Popularity">
