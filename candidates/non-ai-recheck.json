@@ -1,0 +1,2101 @@
+{
+  "generatedAt": "2026-05-28T10:36:25.202Z",
+  "results": [
+    {
+      "slug": "bedrock-ocean",
+      "name": "Bedrock Ocean",
+      "prior_rationale": "Autonomous AUVs with data processing, not AI product.",
+      "verdict": "keep",
+      "reason": "AI-powered seafloor mapping with edge computing for real-time QA/QC.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "beehiiv",
+      "name": "Beehiiv",
+      "prior_rationale": "Newsletter platform with no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI-powered content editor and recommendations.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "bestow-funeral",
+      "name": "Bestow Funeral",
+      "prior_rationale": "Funeral planning platform, AI is marketing veneer.",
+      "verdict": "keep",
+      "reason": "AI-generated obituaries and personalized content generation.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "bitnet",
+      "name": "BitNet",
+      "prior_rationale": "Inference framework, not AI product.",
+      "verdict": "keep",
+      "reason": "Inference framework for 1-bit LLMs, an AI model.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "bitsgap",
+      "name": "Bitsgap",
+      "prior_rationale": "Automated crypto trading with bots, not AI.",
+      "verdict": "keep",
+      "reason": "AI Assistant provides tailored bot insights and tips.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "bluehost",
+      "name": "Bluehost",
+      "prior_rationale": "Hosting provider, AI is marketing.",
+      "verdict": "keep",
+      "reason": "AI Site Builder and content generation via WonderSuite.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "bonterra",
+      "name": "Bonterra",
+      "prior_rationale": "Traditional fundraising platform without AI core",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based CRM and fundraising platform.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "boston-dynamics-spot",
+      "name": "Boston Dynamics Spot",
+      "prior_rationale": "Hardware robot, not AI-native software.",
+      "verdict": "keep",
+      "reason": "Uses Google Gemini for AI visual inspection.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "brandwatch",
+      "name": "Brandwatch",
+      "prior_rationale": "Social listening platform; AI is not core.",
+      "verdict": "keep",
+      "reason": "Iris AI for trend discovery and generative AI features.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "brave-search",
+      "name": "Brave Search",
+      "prior_rationale": "Search API, no AI summaries or LLM",
+      "verdict": "keep",
+      "reason": "Answer with AI provides AI-powered search answers.",
+      "decided_at": "2026-05-28T10:35:51.735Z"
+    },
+    {
+      "slug": "1x-technologies",
+      "name": "1X Technologies",
+      "prior_rationale": "Hardware product (humanoid robots).",
+      "verdict": "keep",
+      "reason": "AI-powered humanoid robot; perception and learning features.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "3commas",
+      "name": "3Commas",
+      "prior_rationale": "Core is automated trading bots, AI is add-on",
+      "verdict": "keep",
+      "reason": "AI-powered strategy building with QuantPilot AI agent.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "agility-robotics",
+      "name": "Agility Robotics",
+      "prior_rationale": "Physical robot hardware, not AI software product.",
+      "verdict": "keep",
+      "reason": "AI-powered humanoid robot for warehouse automation.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "ai-prompt-library",
+      "name": "AI Prompt Library",
+      "prior_rationale": "Collection of prompts, not an AI tool.",
+      "verdict": "keep",
+      "reason": "AI prompts library; relies on generative AI models.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "airplane",
+      "name": "Airplane",
+      "prior_rationale": "Internal tools builder, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI features; code-based internal tool builder.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "aizon",
+      "name": "Aizon",
+      "prior_rationale": "Korean care service; no AI mentioned.",
+      "verdict": "delete",
+      "reason": "No AI features; offline care services company.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "alloy",
+      "name": "Alloy",
+      "prior_rationale": "Identity orchestration with rule-based risk engines.",
+      "verdict": "keep",
+      "reason": "ML fraud scoring and AI assistant for case triage.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "amazon-sage-maker",
+      "name": "Amazon Sage Maker",
+      "prior_rationale": "ML infrastructure, not user-facing AI.",
+      "verdict": "keep",
+      "reason": "Fully managed ML service for training and deployment.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "ambi-robotics",
+      "name": "Ambi Robotics",
+      "prior_rationale": "Hardware robotics, not AI software product.",
+      "verdict": "keep",
+      "reason": "AI-powered sortation robots with computer vision.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "animoto",
+      "name": "Animoto",
+      "prior_rationale": "Drag-and-drop video maker.",
+      "verdict": "delete",
+      "reason": "No AI features; template-based drag-and-drop video editor.",
+      "decided_at": "2026-05-28T10:35:52.273Z"
+    },
+    {
+      "slug": "antigravity-google",
+      "name": "Antigravity (Google)",
+      "prior_rationale": "Hardware research project, no AI component.",
+      "verdict": "keep",
+      "reason": "Uses proprietary Google AI model for code generation tasks.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "anyscale",
+      "name": "Anyscale",
+      "prior_rationale": "Infrastructure for AI training; not AI product itself.",
+      "verdict": "keep",
+      "reason": "Platform for distributed AI training and inference using ML models.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "appsheet",
+      "name": "AppSheet",
+      "prior_rationale": "No-code app builder; AI absent or minimal",
+      "verdict": "keep",
+      "reason": "AI-powered app creation with Gemini; includes ML modeling and OCR.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "appsmith",
+      "name": "Appsmith",
+      "prior_rationale": "Low-code platform, no meaningful AI component",
+      "verdict": "keep",
+      "reason": "AI copilot generates widgets and logic via natural language prompts.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "art19",
+      "name": "ART19",
+      "prior_rationale": "Podcast hosting, no meaningful AI component.",
+      "verdict": "keep",
+      "reason": "AI optimizes ad placement based on listening patterns and context.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "audiosocket",
+      "name": "Audiosocket",
+      "prior_rationale": "Music licensing platform, no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based search and licensing only.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "axelera-ai",
+      "name": "Axelera AI",
+      "prior_rationale": "Hardware accelerator, no user-facing AI product.",
+      "verdict": "keep",
+      "reason": "Edge AI accelerator with ML models and tracking algorithms.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "axolotl",
+      "name": "Axolotl",
+      "prior_rationale": "YAML-driven fine-tuning tool, no user-facing AI surface.",
+      "verdict": "keep",
+      "reason": "Tool for fine-tuning LLMs with various ML training techniques.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "bamboohr",
+      "name": "BambooHR",
+      "prior_rationale": "Cloud HR platform, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI features; HR platform with rule-based workflows only.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "baseten",
+      "name": "Baseten",
+      "prior_rationale": "Inference infrastructure; cloud platform, not user-facing AI.",
+      "verdict": "keep",
+      "reason": "Inference platform for deploying AI models, including LLMs and Whisper.",
+      "decided_at": "2026-05-28T10:35:52.707Z"
+    },
+    {
+      "slug": "brightside-health",
+      "name": "Brightside Health",
+      "prior_rationale": "Online mental health care, not AI core.",
+      "verdict": "delete",
+      "reason": "No user-facing AI feature; PrecisionRx is rule-based medication matching.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "browserless",
+      "name": "Browserless",
+      "prior_rationale": "Browser automation infrastructure without AI",
+      "verdict": "keep",
+      "reason": "Automatic CAPTCHA solving uses ML; AI agent endpoints like /smart-scrape.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "cal-com",
+      "name": "Cal.com",
+      "prior_rationale": "Open-source scheduling platform without core AI features.",
+      "verdict": "delete",
+      "reason": "Scheduling platform with no AI features; purely calendar-based logic.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "calendly",
+      "name": "Calendly",
+      "prior_rationale": "Automated scheduling no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI Notetaker provides generative meeting recaps and action items.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "capsule-editor",
+      "name": "Capsule Editor",
+      "prior_rationale": "Video editing platform; no core AI",
+      "verdict": "keep",
+      "reason": "AI-powered captions, VoiceMagic audio enhancement, and voiceover generation.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "carbon-robotics",
+      "name": "Carbon Robotics",
+      "prior_rationale": "Physical robotics, hardware product.",
+      "verdict": "keep",
+      "reason": "Computer vision AI for weed detection; Large Plant Model for crop recognition.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "carrd",
+      "name": "Carrd",
+      "prior_rationale": "Website builder with no AI features.",
+      "verdict": "delete",
+      "reason": "No AI features; static one-page site builder with forms.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "catalyst",
+      "name": "Catalyst",
+      "prior_rationale": "Customer growth platform; AI not core to product.",
+      "verdict": "keep",
+      "reason": "AI customer health scoring and expansion signal detection.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "catapult-sports",
+      "name": "Catapult Sports",
+      "prior_rationale": "Sports analytics, AI not core.",
+      "verdict": "delete",
+      "reason": "Hardware-based tracking and video analysis; no ML-powered user features.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "cerebras",
+      "name": "Cerebras",
+      "prior_rationale": "Hardware chip; AI inference enabler but not a SaaS tool.",
+      "verdict": "keep",
+      "reason": "AI inference hardware for generative AI models and code generation.",
+      "decided_at": "2026-05-28T10:35:55.710Z"
+    },
+    {
+      "slug": "coreweave",
+      "name": "CoreWeave",
+      "prior_rationale": "Cloud GPU infrastructure, not an AI product itself.",
+      "verdict": "keep",
+      "reason": "AI-native cloud platform purpose-built for AI workloads; offers NVIDIA GPUs and ML orchestration.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "coro",
+      "name": "Coro",
+      "prior_rationale": "Cybersecurity platform, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI-powered data engine, auto-resolves threats; AI agent mentioned.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "coursera",
+      "name": "Coursera",
+      "prior_rationale": "Online course platform, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI coach feature, offers AI/ML courses, integrates with GPT-4, Claude.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "coursera-coach",
+      "name": "Courseware by Coursera",
+      "prior_rationale": "Course catalog without AI core",
+      "verdict": "keep",
+      "reason": "Proprietary AI Coach feature for guided learning.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "cropx",
+      "name": "CropX",
+      "prior_rationale": "Digital farm management, not AI-native",
+      "verdict": "keep",
+      "reason": "AI-driven disease risk prediction and irrigation scheduling.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "crusoe-cloud",
+      "name": "Crusoe Cloud",
+      "prior_rationale": "GPU cloud infrastructure, not an AI product.",
+      "verdict": "keep",
+      "reason": "Managed inference service with proprietary MemoryAlloy; GPU cloud for AI.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "cryptohopper",
+      "name": "Cryptohopper",
+      "prior_rationale": "Core is cloud-based trading bot, not AI",
+      "verdict": "keep",
+      "reason": "AI-driven trading signals and automated bot strategies.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "dash0",
+      "name": "Dash0",
+      "prior_rationale": "Observability platform, no user-facing AI component.",
+      "verdict": "keep",
+      "reason": "AI-powered trace triage and AI agents (Agent0) for anomaly reduction.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "datacrunch",
+      "name": "DataCrunch",
+      "prior_rationale": "Cloud infra provider, GPU rental",
+      "verdict": "keep",
+      "reason": "Managed inference API for FLUX and Whisper; full-stack AI cloud.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "davinci-resolve",
+      "name": "DaVinci Resolve",
+      "prior_rationale": "Professional video editing, no AI core.",
+      "verdict": "keep",
+      "reason": "AI tools: IntelliSearch, CineFocus, facial refinement.",
+      "decided_at": "2026-05-28T10:35:57.085Z"
+    },
+    {
+      "slug": "cerebrium",
+      "name": "Cerebrium",
+      "prior_rationale": "Infrastructure hosting GPU, not an AI product.",
+      "verdict": "keep",
+      "reason": "Platform for deploying AI inference with GPU snapshotting and LLM serving.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "chatdb",
+      "name": "ChatDB",
+      "prior_rationale": "Browser-based data tools without AI transformation",
+      "verdict": "keep",
+      "reason": "Offers AI-powered natural language querying for CSV and Parquet.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "cin7",
+      "name": "Cin7",
+      "prior_rationale": "Inventory management with integrations, no core AI.",
+      "verdict": "keep",
+      "reason": "Includes AI demand forecasting (ForesightAI) and AMA AI assistant.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "circle-so",
+      "name": "Circle",
+      "prior_rationale": "Community platform, no meaningful AI component.",
+      "verdict": "keep",
+      "reason": "Features AI content writer and automated transcriptions.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "cloudways",
+      "name": "Cloudways",
+      "prior_rationale": "Managed cloud hosting with no AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; managed cloud hosting without ML-powered capabilities.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "cogsy",
+      "name": "Cogsy",
+      "prior_rationale": "Inventory control for Shopify, no AI core.",
+      "verdict": "keep",
+      "reason": "Uses proprietary AI for demand forecasting and restock recommendations.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "composio",
+      "name": "Composio",
+      "prior_rationale": "Toolkit integration platform, not AI.",
+      "verdict": "keep",
+      "reason": "Provides toolkits for AI agents with smart tool search.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "connected-papers",
+      "name": "Connected Papers",
+      "prior_rationale": "Visual exploration, no AI core",
+      "verdict": "delete",
+      "reason": "Rule-based graph generation; no ML/AI user-facing features.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "convertbox",
+      "name": "ConvertBox",
+      "prior_rationale": "Intelligent messages, likely rule-based, not AI.",
+      "verdict": "delete",
+      "reason": "Rule-based targeting; no generative or predictive AI features.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "convoy-digital-freight",
+      "name": "Convoy Digital Freight",
+      "prior_rationale": "Freight marketplace; no meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI; rule-based matching without ML or generative capabilities.",
+      "decided_at": "2026-05-28T10:35:57.353Z"
+    },
+    {
+      "slug": "deel",
+      "name": "Deel",
+      "prior_rationale": "Global payroll/HR platform without meaningful AI features.",
+      "verdict": "keep",
+      "reason": "Features AI-powered approvals and proprietary Deel AI models.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "deepinfra",
+      "name": "DeepInfra",
+      "prior_rationale": "Serverless inference hosting, not user-facing AI.",
+      "verdict": "keep",
+      "reason": "Inference API for LLMs, vision, image/video/audio generation models.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "default",
+      "name": "Default",
+      "prior_rationale": "Workflow automation, AI is not core to product.",
+      "verdict": "keep",
+      "reason": "Uses proprietary AI agents for lead scoring and routing.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "demio",
+      "name": "Demio",
+      "prior_rationale": "Webinar platform, no AI component.",
+      "verdict": "keep",
+      "reason": "Lists Demio AI for replay summaries and clips.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "dr-fone",
+      "name": "Dr. Fone",
+      "prior_rationale": "Mobile toolkit without meaningful AI component.",
+      "verdict": "keep",
+      "reason": "Offers AI-enhanced support; online tools with AI features.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "drata",
+      "name": "Drata",
+      "prior_rationale": "Automated compliance monitoring without NLP/generative AI.",
+      "verdict": "keep",
+      "reason": "Automated remediation suggestions imply ML-driven alerting.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "drip",
+      "name": "Drip",
+      "prior_rationale": "Email marketing automation.",
+      "verdict": "delete",
+      "reason": "No AI/ML features evident; rule-based automation and segmentation.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "dvc",
+      "name": "DVC",
+      "prior_rationale": "Data version control, not AI product.",
+      "verdict": "delete",
+      "reason": "Version control tool; no user-facing AI/ML features.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "eight-sleep",
+      "name": "Eight Sleep",
+      "prior_rationale": "Hardware product; AI is secondary feature.",
+      "verdict": "keep",
+      "reason": "Autopilot learning for temperature control; sleep tracking with ML.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "empower",
+      "name": "Empower",
+      "prior_rationale": "Financial dashboard, optional human management",
+      "verdict": "delete",
+      "reason": "No AI/ML features; rule-based financial aggregation and planning.",
+      "decided_at": "2026-05-28T10:35:59.952Z"
+    },
+    {
+      "slug": "encharge-ai",
+      "name": "EnCharge AI",
+      "prior_rationale": "Hardware chip, no user-facing AI.",
+      "verdict": "keep",
+      "reason": "Hardware for AI inference, mentions AI in description chip design.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "epidemic-sound",
+      "name": "Epidemic Sound",
+      "prior_rationale": "Royalty-free music library, no meaningful AI component.",
+      "verdict": "keep",
+      "reason": "AI-driven soundtracking tool (Studio) explicitly listed.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "eppo",
+      "name": "Eppo",
+      "prior_rationale": "Experimentation and feature flagging, no core AI.",
+      "verdict": "keep",
+      "reason": "AI Personalization with Contextual Bandits and ML models.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "etched-ai",
+      "name": "Etched AI",
+      "prior_rationale": "Hardware ASIC for inference.",
+      "verdict": "keep",
+      "reason": "Custom ASIC for transformer inference, AI-focused hardware.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "ewebinar",
+      "name": "eWebinar",
+      "prior_rationale": "Automated webinar platform, no AI core.",
+      "verdict": "delete",
+      "reason": "AI Script Generator is minor; platform is rule-based automation.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "extrahop",
+      "name": "ExtraHop",
+      "prior_rationale": "Network detection and response, no core AI",
+      "verdict": "keep",
+      "reason": "AI-driven threat detection with behavioral analytics and ML.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "falcon-llm",
+      "name": "Falcon LLM",
+      "prior_rationale": "Open-source LLM model, not a SaaS product.",
+      "verdict": "keep",
+      "reason": "Open-source LLM family with multimodal AI capabilities.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "fern-docs",
+      "name": "Fern Docs",
+      "prior_rationale": "Automates API docs/SDKs; no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI chat, llms.txt, MCP server, AI-assisted authoring features.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "finden",
+      "name": "Finden",
+      "prior_rationale": "Services firm, not a product with AI.",
+      "verdict": "keep",
+      "reason": "AI-native services, builds agentic workflows and AI products.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "flutterflow",
+      "name": "FlutterFlow",
+      "prior_rationale": "Visual app builder without AI integration",
+      "verdict": "keep",
+      "reason": "Integrates GPT-4, Claude, Gemini for AI generation in apps.",
+      "decided_at": "2026-05-28T10:36:01.239Z"
+    },
+    {
+      "slug": "foyr-neo",
+      "name": "Foyr Neo",
+      "prior_rationale": "Cloud-based 3D rendering, not AI-driven.",
+      "verdict": "keep",
+      "reason": "AI-powered auto-tagging and learning-based object placement system.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "framer",
+      "name": "Framer",
+      "prior_rationale": "No-code website builder, no AI core.",
+      "verdict": "keep",
+      "reason": "AI-generated page layouts and components.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "freshbooks",
+      "name": "FreshBooks",
+      "prior_rationale": "Traditional accounting software; AI is minimal.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based automation only.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "friend-pendant",
+      "name": "Friend Pendant",
+      "prior_rationale": "Hardware device, AI is marketing veneer.",
+      "verdict": "keep",
+      "reason": "Always-on AI companion with proactive chimes and memory.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "furiosaai",
+      "name": "FuriosaAI",
+      "prior_rationale": "AI chip hardware; not a SaaS AI tool.",
+      "verdict": "keep",
+      "reason": "AI chip for inference accelerators; ML hardware.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "future",
+      "name": "Future",
+      "prior_rationale": "Primarily human coaching; AI backs adjustments.",
+      "verdict": "delete",
+      "reason": "No AI mentioned; coach-driven with basic tracking.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "future-fitness",
+      "name": "Future Fitness",
+      "prior_rationale": "Core is human coaching; AI is augmentation.",
+      "verdict": "keep",
+      "reason": "AI voice cues and performance insights from wearables.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "giftpack",
+      "name": "Giftpack",
+      "prior_rationale": "Incentive infrastructure, not AI-driven",
+      "verdict": "keep",
+      "reason": "PulsePrint AI personalization engine for gifting.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "gigasheet",
+      "name": "Gigasheet",
+      "prior_rationale": "Price transparency analytics; AI marketing hype.",
+      "verdict": "keep",
+      "reason": "AI-driven intelligence reports for healthcare pricing.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "glasp",
+      "name": "Glasp",
+      "prior_rationale": "Social web highlighter with no meaningful AI component.",
+      "verdict": "keep",
+      "reason": "AI-powered summary and explanation of highlights.",
+      "decided_at": "2026-05-28T10:36:01.408Z"
+    },
+    {
+      "slug": "google-earth-studio",
+      "name": "Google Earth Studio",
+      "prior_rationale": "Browser animation tool, no AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; keyframe animation and 3D rendering are traditional graphics.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "greenly",
+      "name": "Greenly",
+      "prior_rationale": "Carbon accounting with generic analytics.",
+      "verdict": "keep",
+      "reason": "AI-powered EcoPilot for data collection and carbon accounting.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "groq",
+      "name": "Groq",
+      "prior_rationale": "Hardware inference platform, not a user-facing AI.",
+      "verdict": "keep",
+      "reason": "AI inference provider with LPU hardware for LLM/GenAI models.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "gusto",
+      "name": "Gusto",
+      "prior_rationale": "Payroll and HR platform.",
+      "verdict": "delete",
+      "reason": "Payroll and HR; no AI features mentioned beyond standard automation.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "hackerone",
+      "name": "HackerOne",
+      "prior_rationale": "Crowdsourced security platform; AI is auxiliary, not core.",
+      "verdict": "keep",
+      "reason": "Hai AI orchestration for triage; AI red teaming and model benchmarking.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "hailo",
+      "name": "Hailo",
+      "prior_rationale": "Hardware edge AI processor, not a SaaS tool.",
+      "verdict": "keep",
+      "reason": "AI processors for edge deep learning; supports LLMs and GenAI.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "hark",
+      "name": "Hark",
+      "prior_rationale": "Hardware device, AI is marketing.",
+      "verdict": "keep",
+      "reason": "Personal AI with multi-modal models and agentic capabilities.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "harvested-robotics",
+      "name": "Harvested Robotics",
+      "prior_rationale": "Hardware with AI, but product is robotic.",
+      "verdict": "keep",
+      "reason": "AI-powered computer vision for weed detection and laser weeding.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "hotjar",
+      "name": "Hotjar",
+      "prior_rationale": "Heatmaps and session replays; AI not central to functionality.",
+      "verdict": "keep",
+      "reason": "AI survey generator, sentiment analysis, and session replay summaries.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "housecall-pro",
+      "name": "Housecall Pro",
+      "prior_rationale": "Field service management, AI is minimal.",
+      "verdict": "keep",
+      "reason": "AI-powered call answering and booking (HCP AI) for field service.",
+      "decided_at": "2026-05-28T10:36:04.506Z"
+    },
+    {
+      "slug": "hunter-io",
+      "name": "Hunter.io",
+      "prior_rationale": "Email finding via scraping, not AI",
+      "verdict": "keep",
+      "reason": "AI Writing Assistant for email generation and intent signals.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "ilovepdf",
+      "name": "iLovePDF",
+      "prior_rationale": "Simple PDF tools, no AI component.",
+      "verdict": "keep",
+      "reason": "AI-powered Smart Split, Summarizer, and Translation features.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "inaturalist",
+      "name": "iNaturalist",
+      "prior_rationale": "Species identification via rules not neural AI.",
+      "verdict": "keep",
+      "reason": "AI-based species identification using computer vision.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "inferless",
+      "name": "Inferless",
+      "prior_rationale": "GPU infrastructure hosting, not user-facing AI.",
+      "verdict": "keep",
+      "reason": "Platform for deploying ML models; uses AI inference.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "ink-editor",
+      "name": "INK Editor",
+      "prior_rationale": "Misdescribed; actually open-source agent infrastructure.",
+      "verdict": "delete",
+      "reason": "Description mismatched; actually SmythOS, an agent platform (keep).",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "insitro",
+      "name": "Insitro",
+      "prior_rationale": "ML in drug discovery, no user AI",
+      "verdict": "keep",
+      "reason": "ML-native drug discovery; TherML AI engine for drug design.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "integrately",
+      "name": "Integrately",
+      "prior_rationale": "Automation with simple triggers, no AI",
+      "verdict": "keep",
+      "reason": "AI Automation Builder using OpenAI/Claude models.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "k2-space",
+      "name": "K2 Space",
+      "prior_rationale": "Satellite hardware with autonomy features; not AI-native.",
+      "verdict": "keep",
+      "reason": "AI-based mission planning for autonomous satellite operations.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "kagi",
+      "name": "Kagi",
+      "prior_rationale": "Search engine without AI summaries",
+      "verdict": "keep",
+      "reason": "Kagi Assistant, Summarize, Translate all use AI/ML.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "kajabi",
+      "name": "Kajabi",
+      "prior_rationale": "All-in-one platform; no meaningful AI component",
+      "verdict": "keep",
+      "reason": "AI features: Cofounder, Expert Agents, Creator Studio.",
+      "decided_at": "2026-05-28T10:36:05.556Z"
+    },
+    {
+      "slug": "khan-academy",
+      "name": "Khan Academy",
+      "prior_rationale": "Educational platform without meaningful AI component.",
+      "verdict": "keep",
+      "reason": "AI tutor Khanmigo powered by GPT-4, AI debate partner, AI writing coach.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "kindbody",
+      "name": "Kindbody",
+      "prior_rationale": "Fertility clinic, no AI component",
+      "verdict": "delete",
+      "reason": "No AI features; fertility clinic with tech-enabled but rule-based services.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "kinsta",
+      "name": "Kinsta",
+      "prior_rationale": "WordPress hosting, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "Managed WordPress hosting; no AI features beyond standard automation.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "krutrim",
+      "name": "Krutrim",
+      "prior_rationale": "Cloud infrastructure, not an AI product.",
+      "verdict": "keep",
+      "reason": "AI cloud platform with sovereign LLMs and GPU clusters for AI workloads.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "kubecost",
+      "name": "Kubecost",
+      "prior_rationale": "Cost monitoring without AI.",
+      "verdict": "delete",
+      "reason": "Cost monitoring; optimization is rule-based, no ML/AI features.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "label-studio",
+      "name": "LabelStudio",
+      "prior_rationale": "Data labeling platform, AI is not core product.",
+      "verdict": "keep",
+      "reason": "AI evaluation and labeling platform with ML model integrations.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "lambda",
+      "name": "Lambda",
+      "prior_rationale": "Cloud GPU hardware rental, no AI surface",
+      "verdict": "delete",
+      "reason": "Cloud GPU infrastructure; no user-facing AI features.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "lantern",
+      "name": "Lantern",
+      "prior_rationale": "End-of-life planning, sunsetting",
+      "verdict": "delete",
+      "reason": "End-of-life planning platform; no AI features, sunsetting.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "later",
+      "name": "Later",
+      "prior_rationale": "Social media scheduler without meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI content tools: Ideas, Caption Writer, Smart Scheduling with AI.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "lattice",
+      "name": "Lattice",
+      "prior_rationale": "HR platform without AI core.",
+      "verdict": "keep",
+      "reason": "AI Agent for HR insights and policy Q&A, AI-powered survey insights.",
+      "decided_at": "2026-05-28T10:36:05.847Z"
+    },
+    {
+      "slug": "leaddyno",
+      "name": "LeadDyno",
+      "prior_rationale": "Affiliate tracking software, no AI.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based affiliate tracking tool.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "lido",
+      "name": "Lido",
+      "prior_rationale": "Extraction template, no AI learning",
+      "verdict": "keep",
+      "reason": "AI-powered data extraction from documents with 99% accuracy.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "lightmatter",
+      "name": "Lightmatter",
+      "prior_rationale": "Hardware (photonic interconnects and chips).",
+      "verdict": "delete",
+      "reason": "Hardware for AI acceleration, no user-facing AI features.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "linearb",
+      "name": "LinearB",
+      "prior_rationale": "Engineering metrics dashboard, no AI",
+      "verdict": "delete",
+      "reason": "No AI features; analytics and automation tool.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "linkup",
+      "name": "Linkup",
+      "prior_rationale": "Web search API, AI is not the product.",
+      "verdict": "keep",
+      "reason": "AI-powered web search API with LLM integration.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "livestorm",
+      "name": "Livestorm",
+      "prior_rationale": "Browser-based webinar software without AI core.",
+      "verdict": "keep",
+      "reason": "AI transcription, live captions, and content repurposing.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "locus-robotics",
+      "name": "Locus Robotics",
+      "prior_rationale": "Warehouse robotics, hardware automation",
+      "verdict": "keep",
+      "reason": "Physical AI system for autonomous warehouse fulfillment.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "loom",
+      "name": "Loom",
+      "prior_rationale": "Core is video recording, not AI-driven",
+      "verdict": "keep",
+      "reason": "AI-generated Jira bug reports and video transcripts.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "loopify",
+      "name": "Loopify",
+      "prior_rationale": "Marketing automation; no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "Marketing automation without AI features; rule-based.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "lumen",
+      "name": "Lumen",
+      "prior_rationale": "Metabolic coach; hardware + app, not AI",
+      "verdict": "delete",
+      "reason": "Breath analysis device with no AI; rule-based guidance.",
+      "decided_at": "2026-05-28T10:36:07.996Z"
+    },
+    {
+      "slug": "m2x-energy",
+      "name": "M2X Energy",
+      "prior_rationale": "Physical chemical processing hardware.",
+      "verdict": "delete",
+      "reason": "No AI feature; physical methane conversion unit with remote monitoring only.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "make",
+      "name": "Make",
+      "prior_rationale": "Visual automation without AI core",
+      "verdict": "keep",
+      "reason": "AI-powered content generation and ChatGPT integration for automation.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "mangools",
+      "name": "Mangools",
+      "prior_rationale": "SEO suite with rule-based tools, no AI core.",
+      "verdict": "keep",
+      "reason": "AI Search Watcher for brand visibility in LLMs.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "matterport",
+      "name": "Matterport",
+      "prior_rationale": "3D capture and digital twins without AI as core",
+      "verdict": "keep",
+      "reason": "Proprietary 3D reconstruction model creates digital twins from images.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "max-engine",
+      "name": "MAX Engine",
+      "prior_rationale": "Inference engine for GPUs, not AI product.",
+      "verdict": "keep",
+      "reason": "High-performance inference engine for GenAI models with Mojo kernels.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "maze",
+      "name": "Maze",
+      "prior_rationale": "User research platform; no core AI component.",
+      "verdict": "keep",
+      "reason": "AI Moderator for interviews and AI-powered theme detection.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "mcp-hub",
+      "name": "MCP Hub",
+      "prior_rationale": "Directory and installer for MCP servers, no AI",
+      "verdict": "keep",
+      "reason": "One-click installer for MCP servers extending Claude's AI capabilities.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "mention",
+      "name": "Mention",
+      "prior_rationale": "Social listening with keyword matching, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI-assisted content creation and sentiment analysis.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "milvus",
+      "name": "Milvus",
+      "prior_rationale": "Vector database infrastructure, no user-facing AI.",
+      "verdict": "keep",
+      "reason": "Vector database for AI similarity search powering recommendation and NLP.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "mindsdb",
+      "name": "MindsDB",
+      "prior_rationale": "Platform for running AI agents, not AI itself.",
+      "verdict": "keep",
+      "reason": "Platform running open-source AI agents with model router.",
+      "decided_at": "2026-05-28T10:36:09.217Z"
+    },
+    {
+      "slug": "mlflow",
+      "name": "MLflow",
+      "prior_rationale": "ML lifecycle management infrastructure.",
+      "verdict": "keep",
+      "reason": "Platform for LLM/agent lifecycle with tracing, evaluation, and AI Gateway.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "modal",
+      "name": "Modal",
+      "prior_rationale": "Cloud infrastructure, not AI product",
+      "verdict": "keep",
+      "reason": "Cloud infrastructure for AI inference, training, and sandboxes.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "momen",
+      "name": "Momen",
+      "prior_rationale": "Visual app builder, no AI",
+      "verdict": "delete",
+      "reason": "No-core-AI-feature: no-code but lacks generative/ML features.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "mosaic",
+      "name": "Mosaic",
+      "prior_rationale": "FP&A software, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "Includes Bob AI for trend summarization and narratives.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "multiverse",
+      "name": "Multiverse",
+      "prior_rationale": "Apprenticeship platform, AI-augmented but not core.",
+      "verdict": "keep",
+      "reason": "AI-powered coaching (Atlas) and GenAI tool training.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "mux",
+      "name": "Mux",
+      "prior_rationale": "Video API for streaming and analysis, not AI-centric.",
+      "verdict": "keep",
+      "reason": "AI video analysis: subtitles, moderation, summarization, QA.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "namecheap",
+      "name": "Namecheap",
+      "prior_rationale": "Domain registrar without AI.",
+      "verdict": "delete",
+      "reason": "Domain/hosting registrar with no AI features.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "netsuite",
+      "name": "NetSuite",
+      "prior_rationale": "Traditional ERP without meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI Narrative Insights and AI Connector Service.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "neverbounce",
+      "name": "NeverBounce",
+      "prior_rationale": "Email verification without AI; rule-based.",
+      "verdict": "delete",
+      "reason": "Rule-based email verification, no ML/GAI.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "nexa-sdk",
+      "name": "Nexa SDK",
+      "prior_rationale": "SDK for on-device AI, not an AI product itself",
+      "verdict": "keep",
+      "reason": "On-device GenAI execution with hardware acceleration.",
+      "decided_at": "2026-05-28T10:36:10.281Z"
+    },
+    {
+      "slug": "nexgen-cloud",
+      "name": "NexGen Cloud",
+      "prior_rationale": "Cloud infra; no user-facing AI.",
+      "verdict": "keep",
+      "reason": "AI cloud infrastructure with GPU-as-a-Service for training and inference.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "nimbus-therapeutics",
+      "name": "Nimbus Therapeutics",
+      "prior_rationale": "Drug discovery, no user-facing AI",
+      "verdict": "keep",
+      "reason": "ML models for small-molecule optimization and AI-driven screening.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "notion-calendar",
+      "name": "Notion Calendar",
+      "prior_rationale": "Calendar tied to database, no AI",
+      "verdict": "delete",
+      "reason": "No AI features; simple calendar sync without ML or generation.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "nscale",
+      "name": "Nscale",
+      "prior_rationale": "GPU infrastructure provider, not AI product",
+      "verdict": "keep",
+      "reason": "AI infrastructure with GPU compute, inference endpoints, fine-tuning API.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "nuro-drive",
+      "name": "Nuro Drive",
+      "prior_rationale": "L4 autonomy licensing; AI is embedded, not user-facing.",
+      "verdict": "keep",
+      "reason": "L4 autonomous driving with AI-first end-to-end architecture.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "observable",
+      "name": "Observable",
+      "prior_rationale": "JavaScript notebooks for visualization, no AI component.",
+      "verdict": "keep",
+      "reason": "Includes Haiku 4.5 model for AI-powered features.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "octoai",
+      "name": "OctoAI",
+      "prior_rationale": "Infrastructure for others' models.",
+      "verdict": "keep",
+      "reason": "Inference platform for generative AI models like Llama and Stable Diffusion.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "openmcp",
+      "name": "OpenMCP",
+      "prior_rationale": "Server registry without AI component",
+      "verdict": "keep",
+      "reason": "MCP server registry for AI agents; integrates with Claude, OpenAI Agents.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "ordinary-people-prompts",
+      "name": "Ordinary People Prompts",
+      "prior_rationale": "Curated prompts, not AI.",
+      "verdict": "delete",
+      "reason": "Only prompt library; no AI features, just curated text.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "oura",
+      "name": "Oura",
+      "prior_rationale": "Smart ring hardware, AI not core product",
+      "verdict": "delete",
+      "reason": "Wearable health tracking; rule-based algorithms, no user-facing AI.",
+      "decided_at": "2026-05-28T10:36:12.718Z"
+    },
+    {
+      "slug": "pabbly-connect",
+      "name": "Pabbly Connect",
+      "prior_rationale": "No-code automation, not AI-driven",
+      "verdict": "keep",
+      "reason": "Integrates ChatGPT for automated workflows via GPT-4.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "pantera-deals",
+      "name": "Pantera Deals",
+      "prior_rationale": "Deals aggregator, no AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; simple deal aggregator without ML.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "persefoni",
+      "name": "Persefoni",
+      "prior_rationale": "Carbon accounting, AI is marketing veneer.",
+      "verdict": "keep",
+      "reason": "PersefoniAI Copilot with GPT-style chat and anomaly detection.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "pgvector",
+      "name": "pgvector",
+      "prior_rationale": "Open-source vector similarity search extension, not an AI product.",
+      "verdict": "keep",
+      "reason": "Enables vector similarity search for AI embeddings.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "phantombuster",
+      "name": "PhantomBuster",
+      "prior_rationale": "Automation bots using scripting, not AI.",
+      "verdict": "keep",
+      "reason": "AI credits for email enrichment from social profiles.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "pionex",
+      "name": "Pionex",
+      "prior_rationale": "Trading bots; rule-based, not AI-native.",
+      "verdict": "delete",
+      "reason": "Rules-based trading bots, no ML or AI features.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "pipedream",
+      "name": "Pipedream",
+      "prior_rationale": "Core product is API integration, AI optional.",
+      "verdict": "keep",
+      "reason": "AI Agent Builder and supports multiple LLMs.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "plausible",
+      "name": "Plausible Analytics",
+      "prior_rationale": "Privacy analytics, no AI component.",
+      "verdict": "keep",
+      "reason": "classifier returned no entry; keeping by default",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "podia",
+      "name": "Podia",
+      "prior_rationale": "Website and store builder without meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI features; website and email marketing platform.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "podimo",
+      "name": "Podimo",
+      "prior_rationale": "Subscription podcast/audiobook app, no AI component.",
+      "verdict": "keep",
+      "reason": "AI-driven personalized recommendations for content.",
+      "decided_at": "2026-05-28T10:36:13.117Z"
+    },
+    {
+      "slug": "post-boost",
+      "name": "Post-Boost",
+      "prior_rationale": "Cross-posting dashboard, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI features mentioned; scheduling and cross-posting only.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "posthog",
+      "name": "PostHog",
+      "prior_rationale": "Product analytics and feature flags; AI not essential.",
+      "verdict": "keep",
+      "reason": "PostHog AI for natural-language insights and automation.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "postscript",
+      "name": "Postscript",
+      "prior_rationale": "SMS marketing platform with no core AI feature",
+      "verdict": "keep",
+      "reason": "Postscript AI for message optimization and Shopper AI assistant.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "preply",
+      "name": "Preply",
+      "prior_rationale": "Tutoring marketplace without AI core",
+      "verdict": "keep",
+      "reason": "AI-driven tutor matching based on goals and preferences.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "privy",
+      "name": "Privy",
+      "prior_rationale": "Traditional email/SMS marketing tool.",
+      "verdict": "keep",
+      "reason": "Proprietary AI Marketing Assistant for campaign optimization.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "proloquo2go",
+      "name": "Proloquo2Go",
+      "prior_rationale": "AAC app with symbolic support, not AI-driven.",
+      "verdict": "delete",
+      "reason": "No AI; symbol-based AAC with rule-based vocabulary, no ML.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "publer",
+      "name": "Publer",
+      "prior_rationale": "Social media scheduler, no real AI.",
+      "verdict": "keep",
+      "reason": "AI assistant for captions, hashtags, and image generation.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "public-prompts",
+      "name": "Public Prompts",
+      "prior_rationale": "Prompt library, no AI component in product",
+      "verdict": "keep",
+      "reason": "Prompt library and model resources for Stable Diffusion.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "publicai",
+      "name": "PublicAI",
+      "prior_rationale": "Marketplace for data; AI training is use case.",
+      "verdict": "keep",
+      "reason": "AI-assisted data pre-labeling and sentiment scoring.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "pulley",
+      "name": "Pulley",
+      "prior_rationale": "Cap-table management, AI is not core functionality.",
+      "verdict": "delete",
+      "reason": "No AI features; cap table management and equity planning.",
+      "decided_at": "2026-05-28T10:36:14.176Z"
+    },
+    {
+      "slug": "qdrant",
+      "name": "Qdrant",
+      "prior_rationale": "Vector database infrastructure; no user-facing AI.",
+      "verdict": "keep",
+      "reason": "Vector database purpose-built for AI search and RAG.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "quickbooks",
+      "name": "QuickBooks",
+      "prior_rationale": "Accounting software; AI is not core to product.",
+      "verdict": "keep",
+      "reason": "AI-powered Intuit Intelligence for automated categorization and insights.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "raiinmaker",
+      "name": "Raiinmaker",
+      "prior_rationale": "Data sourcing platform, not AI-driven",
+      "verdict": "keep",
+      "reason": "Ethically sourced video data and RLHF for AI training.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "rain-ai",
+      "name": "Rain AI",
+      "prior_rationale": "Hardware chip, not a software AI product.",
+      "verdict": "keep",
+      "reason": "AI hardware for neuromorphic analog inference.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "rebellions",
+      "name": "Rebellions",
+      "prior_rationale": "AI accelerators are hardware, not software tool",
+      "verdict": "keep",
+      "reason": "AI inference accelerators for large models.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "recogni",
+      "name": "Recogni",
+      "prior_rationale": "Hardware inference systems, not software AI tool.",
+      "verdict": "keep",
+      "reason": "Custom silicon for generative AI inference.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "recruitee",
+      "name": "Recruitee",
+      "prior_rationale": "ATS with minimal AI; core is traditional",
+      "verdict": "keep",
+      "reason": "AI-powered job ad drafting and screening assistant.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "refersion",
+      "name": "Refersion",
+      "prior_rationale": "Affiliate marketing platform with no AI core.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based affiliate tracking.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "resilience-forge",
+      "name": "Resilience Forge",
+      "prior_rationale": "CDMO for biologics, no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "CDMO platform with no AI components.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "restream",
+      "name": "Restream",
+      "prior_rationale": "Multistreaming platform with no AI component.",
+      "verdict": "keep",
+      "reason": "AI-powered auto-clipping and analytics.",
+      "decided_at": "2026-05-28T10:36:16.395Z"
+    },
+    {
+      "slug": "rewardful",
+      "name": "Rewardful",
+      "prior_rationale": "No meaningful AI; just SaaS affiliate program management.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based affiliate tracking and fraud detection.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "route4me",
+      "name": "Route4Me",
+      "prior_rationale": "Route optimization software, AI is rule-based automation.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based route optimization and logistics.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "runpod",
+      "name": "RunPod",
+      "prior_rationale": "GPU cloud infrastructure, not AI product",
+      "verdict": "keep",
+      "reason": "GPU cloud for AI inference/training; supports ML models.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "saildrone",
+      "name": "Saildrone",
+      "prior_rationale": "Autonomous drones, hardware, no AI application.",
+      "verdict": "keep",
+      "reason": "Onboard AI for real-time object classification and sensor fusion.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "sailpoint",
+      "name": "SailPoint",
+      "prior_rationale": "Identity security; no meaningful AI component",
+      "verdict": "keep",
+      "reason": "AI-powered access modeling, risk scoring, and identity governance.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "salad-cloud",
+      "name": "Salad Cloud",
+      "prior_rationale": "GPU cloud infrastructure provider, not AI product.",
+      "verdict": "keep",
+      "reason": "Distributed GPU cloud for AI inference and training workloads.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "saleshandy",
+      "name": "Saleshandy",
+      "prior_rationale": "Outreach platform with no core AI; automation workflows.",
+      "verdict": "keep",
+      "reason": "AI-powered email sequence copilot and prospect enrichment.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "sambanova-cloud",
+      "name": "SambaNova Cloud",
+      "prior_rationale": "Inference runtime on custom hardware.",
+      "verdict": "keep",
+      "reason": "Fast inference runtime for agentic AI on custom RDU.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "sapien",
+      "name": "Sapien",
+      "prior_rationale": "Human-powered labeling; AI not core product.",
+      "verdict": "delete",
+      "reason": "Human-powered data labeling; no AI features in platform.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "schrodinger",
+      "name": "Schrodinger",
+      "prior_rationale": "Physics-based computational platform, not AI-driven.",
+      "verdict": "keep",
+      "reason": "ML for property prediction, AI-driven synthesis planning.",
+      "decided_at": "2026-05-28T10:36:16.829Z"
+    },
+    {
+      "slug": "semrush-advertising-toolkit",
+      "name": "Semrush Advertising Toolkit",
+      "prior_rationale": "Ad management dashboard, no AI.",
+      "verdict": "keep",
+      "reason": "Includes AI-powered ad copy generation.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "shopify",
+      "name": "Shopify",
+      "prior_rationale": "E-commerce platform without meaningful AI.",
+      "verdict": "delete",
+      "reason": "No user-facing AI features described.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "sitebulb",
+      "name": "Sitebulb",
+      "prior_rationale": "SEO crawler without AI summarization",
+      "verdict": "delete",
+      "reason": "Rule-based issue checking, no ML features.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "skool",
+      "name": "Skool",
+      "prior_rationale": "Online community platform, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "No AI features; community platform without smart features.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "smallpdf",
+      "name": "Smallpdf",
+      "prior_rationale": "Traditional PDF tool, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI features like Chat with PDF and Summarizer.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "sobrief",
+      "name": "SoBrief",
+      "prior_rationale": "Book summaries, no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "Curated summaries, no AI generation or ML.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "softr",
+      "name": "Softr",
+      "prior_rationale": "No-code app builder no AI.",
+      "verdict": "keep",
+      "reason": "AI app builder and database AI agents.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "sondermind",
+      "name": "SonderMind",
+      "prior_rationale": "Therapy matching platform, no AI core",
+      "verdict": "keep",
+      "reason": "AI-powered matching and daily reflections.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "soona",
+      "name": "soona",
+      "prior_rationale": "Creative platform; AI features not core.",
+      "verdict": "keep",
+      "reason": "AI Studio for generating scenes and props.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "spacelift",
+      "name": "Spacelift",
+      "prior_rationale": "IaC orchestration, AI is marketing veneer.",
+      "verdict": "keep",
+      "reason": "AI Infrastructure Assistant for chat-based deployment.",
+      "decided_at": "2026-05-28T10:36:17.879Z"
+    },
+    {
+      "slug": "sparktoro",
+      "name": "SparkToro",
+      "prior_rationale": "Audience research without AI summarization or generation.",
+      "verdict": "delete",
+      "reason": "No AI/ML features; purely rule-based data aggregation and keyword matching.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "squadcast",
+      "name": "SquadCast",
+      "prior_rationale": "Cloud recording studio, no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; cloud recording with progressive upload, no ML.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "stamped",
+      "name": "Stamped",
+      "prior_rationale": "Comptabilité virtuelle, pas d'IA significative",
+      "verdict": "delete",
+      "reason": "No AI features; virtual accounting service with standard tools.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "statsig",
+      "name": "Statsig",
+      "prior_rationale": "Feature flags and analytics; no core AI.",
+      "verdict": "keep",
+      "reason": "AI copilot/Knowledge Graph, Bayesian stats, proprietary ML engine.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "stonly",
+      "name": "Stonly",
+      "prior_rationale": "Interactive knowledge base, no AI necessity",
+      "verdict": "keep",
+      "reason": "AI conversational bot (92% accuracy), AI Agent Assist for summarization.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "storyblocks",
+      "name": "Storyblocks",
+      "prior_rationale": "Content library with no meaningful AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; stock media subscription with no ML.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "streamalive",
+      "name": "StreamAlive",
+      "prior_rationale": "Chat-powered engagement, not AI core",
+      "verdict": "keep",
+      "reason": "AI Interaction Generator auto-creates questions from slides.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "sunsama",
+      "name": "Sunsama",
+      "prior_rationale": "Digital planner with no meaningful AI component.",
+      "verdict": "keep",
+      "reason": "AI auto-scheduling of tasks based on priorities.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "supabase",
+      "name": "Supabase",
+      "prior_rationale": "Postgres platform without meaningful AI.",
+      "verdict": "keep",
+      "reason": "MCP AI integration, vector embeddings, AI assistant for schema.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "systeme-io",
+      "name": "Systeme.io",
+      "prior_rationale": "Marketing platform with standard automation, not AI-native.",
+      "verdict": "delete",
+      "reason": "No AI features; drag-and-drop funnel builder with templates.",
+      "decided_at": "2026-05-28T10:36:20.593Z"
+    },
+    {
+      "slug": "talkspace",
+      "name": "Talkspace",
+      "prior_rationale": "Online therapy platform; AI matching is minimal.",
+      "verdict": "keep",
+      "reason": "AI-assisted therapist matching and AI insights in clinician dashboard.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tally-so",
+      "name": "Tally",
+      "prior_rationale": "Form builder without AI features.",
+      "verdict": "keep",
+      "reason": "Answer Insights auto-calculates NPS/CSAT using AI; MCP server for AI integration.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tapfiliate",
+      "name": "Tapfiliate",
+      "prior_rationale": "Affiliate tracking platform, no AI.",
+      "verdict": "delete",
+      "reason": "AI absent; all features are rule-based commission tracking without ML.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "teachable",
+      "name": "Teachable",
+      "prior_rationale": "Platform for courses, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI course starter, quiz generator, automatic subtitles/translations (70+ languages).",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tensordock",
+      "name": "Tensordock",
+      "prior_rationale": "Cloud infra provider; no user-facing AI.",
+      "verdict": "delete",
+      "reason": "GPU cloud infrastructure; no user-facing AI features beyond hardware rental.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tensorrt-llm",
+      "name": "TensorRT-LLM",
+      "prior_rationale": "Inference toolkit; infrastructure, not product.",
+      "verdict": "keep",
+      "reason": "ML-powered LLM inference optimization with quantization and in-flight batching.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tenstorrent",
+      "name": "Tenstorrent",
+      "prior_rationale": "AI accelerator hardware, not software AI.",
+      "verdict": "delete",
+      "reason": "AI hardware manufacturer; no user-facing AI features, only compute components.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "tessera-ai",
+      "name": "Tessera AI",
+      "prior_rationale": "Domain for sale, no product exists",
+      "verdict": "keep",
+      "reason": "AI-powered test generation produces unit/integration test suites automatically.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "texture",
+      "name": "Texture",
+      "prior_rationale": "Real-time asset visibility, no user-facing AI.",
+      "verdict": "delete",
+      "reason": "Energy asset monitoring; no AI features, uses rule-based data aggregation.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "themis-compliance",
+      "name": "Themis Compliance",
+      "prior_rationale": "GRC platform, no meaningful AI.",
+      "verdict": "delete",
+      "reason": "GRC platform with manual workflows; no AI or ML features evident.",
+      "decided_at": "2026-05-28T10:36:21.512Z"
+    },
+    {
+      "slug": "thinkific",
+      "name": "Thinkific",
+      "prior_rationale": "Online course platform without significant AI.",
+      "verdict": "delete",
+      "reason": "No AI features identified; platform is rule-based course builder.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "threatlocker",
+      "name": "ThreatLocker",
+      "prior_rationale": "Zero Trust allowlisting without AI.",
+      "verdict": "delete",
+      "reason": "Zero-trust endpoint security; no AI/ML features mentioned.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "tipalti",
+      "name": "Tipalti",
+      "prior_rationale": "Global AP automation; rule-based.",
+      "verdict": "keep",
+      "reason": "AI-powered invoice processing, cash flow forecasting, and AI agents.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "tldraw",
+      "name": "Tldraw",
+      "prior_rationale": "Collaborative whiteboard, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI-assisted drawing on Plus plan; AI feature present.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "together-ai",
+      "name": "Together AI",
+      "prior_rationale": "Cloud infra for AI, not a user-facing AI product.",
+      "verdict": "keep",
+      "reason": "Full-stack AI platform for inference, training, fine-tuning.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "tractian",
+      "name": "Tractian",
+      "prior_rationale": "Predictive maintenance with sensors, AI is backend.",
+      "verdict": "keep",
+      "reason": "AI failure detection and predictive maintenance models.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "turbotenant",
+      "name": "TurboTenant",
+      "prior_rationale": "Property management software, no meaningful AI",
+      "verdict": "keep",
+      "reason": "AI lease audit and AI property description generator.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "uplight",
+      "name": "Uplight",
+      "prior_rationale": "Clean energy platform, AI not core product.",
+      "verdict": "keep",
+      "reason": "AI-powered platform for energy efficiency and demand response.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "uptake",
+      "name": "Uptake",
+      "prior_rationale": "Predictive maintenance; ML but not AI product",
+      "verdict": "keep",
+      "reason": "ML models for predictive maintenance and anomaly detection.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "userflow",
+      "name": "Userflow",
+      "prior_rationale": "No-code product tours; primarily workflow builder.",
+      "verdict": "keep",
+      "reason": "AI translation and AI flow drafting features.",
+      "decided_at": "2026-05-28T10:36:21.741Z"
+    },
+    {
+      "slug": "zerobounce",
+      "name": "ZeroBounce",
+      "prior_rationale": "Email validation service, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "Has AI Email Scoring for quality scoring.",
+      "decided_at": "2026-05-28T10:36:23.385Z"
+    },
+    {
+      "slug": "zoho-books",
+      "name": "Zoho Books",
+      "prior_rationale": "AI is marketing veneer over standard accounting SaaS",
+      "verdict": "keep",
+      "reason": "Zia AI for cash flow prediction and anomaly detection.",
+      "decided_at": "2026-05-28T10:36:23.385Z"
+    },
+    {
+      "slug": "userpilot",
+      "name": "Userpilot",
+      "prior_rationale": "Product growth platform, not AI-driven.",
+      "verdict": "keep",
+      "reason": "AI Agent Lia for data analysis and content generation",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vanta",
+      "name": "Vanta",
+      "prior_rationale": "Compliance automation, not AI.",
+      "verdict": "keep",
+      "reason": "Vanta AI for compliance insights and automation",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vast-ai",
+      "name": "Vast.ai",
+      "prior_rationale": "GPU cloud marketplace, AI is just name",
+      "verdict": "keep",
+      "reason": "Agent-ready GPU cloud with AI model templates",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vectorshift",
+      "name": "VectorShift",
+      "prior_rationale": "AI operating system claim; likely non-AI core",
+      "verdict": "keep",
+      "reason": "AI platform for VDR analysis and memo generation",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vespa",
+      "name": "Vespa",
+      "prior_rationale": "Open-source data serving engine, not AI.",
+      "verdict": "keep",
+      "reason": "ML model inference for ranking and recommendations",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vespa-ai",
+      "name": "Vespa AI",
+      "prior_rationale": "Open-source search engine, not user-facing AI.",
+      "verdict": "keep",
+      "reason": "ML-powered search and recommendation engine",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vimcal",
+      "name": "Vimcal",
+      "prior_rationale": "Fast calendar, no meaningful AI",
+      "verdict": "keep",
+      "reason": "AI scheduling via natural language input",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "vorlon",
+      "name": "Vorlon",
+      "prior_rationale": "Data security; no user-facing AI.",
+      "verdict": "keep",
+      "reason": "AI agent monitoring and behavioral detection",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "wave",
+      "name": "Wave",
+      "prior_rationale": "Free accounting software, no AI component.",
+      "verdict": "delete",
+      "reason": "No AI features; rule-based accounting tool",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "wavelo",
+      "name": "Wavelo",
+      "prior_rationale": "Event-driven BSS/OSS, AI readiness is marketing",
+      "verdict": "keep",
+      "reason": "AI-powered next-best-offer recommendation",
+      "decided_at": "2026-05-28T10:36:24.074Z"
+    },
+    {
+      "slug": "webinarjam",
+      "name": "WebinarJam",
+      "prior_rationale": "Webinar software with no AI core",
+      "verdict": "delete",
+      "reason": "No AI features: live/automated webinar platform without ML or generative AI.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "weglot",
+      "name": "Weglot",
+      "prior_rationale": "Website translation tool without AI.",
+      "verdict": "keep",
+      "reason": "Uses AI-powered translations with selectable tone and glossary.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "wellfound-reach",
+      "name": "Wellfound Reach",
+      "prior_rationale": "Hiring tool, AI is minimal.",
+      "verdict": "keep",
+      "reason": "Proprietary AI models for candidate matching and outreach.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "wgsn",
+      "name": "WGSN",
+      "prior_rationale": "Trend forecasting and analytics, no AI component",
+      "verdict": "keep",
+      "reason": "Proprietary AI for trend forecasting and consumer analytics.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "whoop",
+      "name": "Whoop",
+      "prior_rationale": "Wearable hardware, no user-facing AI",
+      "verdict": "keep",
+      "reason": "Proprietary algorithms for sleep/strain/recovery analytics.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "wistia",
+      "name": "Wistia",
+      "prior_rationale": "Video marketing platform without meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI video editing (Remix) and AI dubbing/translation.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "wolframalpha",
+      "name": "WolframAlpha",
+      "prior_rationale": "Computational intelligence, not machine learning based.",
+      "verdict": "keep",
+      "reason": "Computational intelligence engine with algorithmic computation.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "wuri",
+      "name": "Wuri",
+      "prior_rationale": "Workflow automation, no meaningful AI.",
+      "verdict": "keep",
+      "reason": "AI-powered form auto-fill, data extraction, and workflows.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "xano",
+      "name": "Xano",
+      "prior_rationale": "No-code backend platform without AI as core.",
+      "verdict": "keep",
+      "reason": "AI-assisted backend generation and AI Agent Builder.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    },
+    {
+      "slug": "xero",
+      "name": "Xero",
+      "prior_rationale": "Cloud accounting with minimal AI features",
+      "verdict": "keep",
+      "reason": "JAX AI agent using Anthropic Claude for automation.",
+      "decided_at": "2026-05-28T10:36:25.202Z"
+    }
+  ]
+}

@@ -74,6 +74,10 @@
     "tier1:candidates": "tsx --env-file=.env.local scripts/build-tier1-candidates.ts",
     "tier1:rewrite:dry": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts --dry-run",
     "tier1:rewrite": "tsx --env-file=.env.local scripts/rewrite-titles-tier1.ts",
+    "audit:non-ai": "tsx --env-file=.env.local scripts/audit-non-ai-tools.ts",
+    "preflight:non-ai": "tsx --env-file=.env.local scripts/preflight-non-ai-delete.ts",
+    "recheck:non-ai": "tsx --env-file=.env.local scripts/recheck-non-ai-tools.ts",
+    "execute:non-ai": "tsx --env-file=.env.local scripts/execute-non-ai-delete.ts",
     "gsc:inspect": "tsx --env-file=.env.local scripts/inspect-homepage.ts"
   },
   "dependencies": {

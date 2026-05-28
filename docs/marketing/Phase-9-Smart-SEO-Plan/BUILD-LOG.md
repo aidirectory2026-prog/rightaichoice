@@ -4,6 +4,86 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 4 — 2026-05-29 — Non-AI tool purge: 64 hard deletes + 410 Gone
+
+**Trigger:** user directive to ensure "no non-AI tool on our website" — the brand promise is AI tool discovery, and presence of clearly non-AI listings (hosting, accounting, payroll, hardware) dilutes the topical signal Google sees and hurts user trust on landing.
+
+### Two-pass classification
+
+A single LLM pass is too brittle for a destructive operation, so this ran as a **classify → strict-recheck → execute** pipeline:
+
+1. **First pass — full catalog audit** (`scripts/audit-non-ai-tools.ts`, `npm run audit:non-ai`)
+   - DeepSeek classifier sweep across all 2,038 published tools, batches of 25, concurrency 3
+   - Three buckets: `ai_native` | `ai_enabled` | `non_ai` — bias toward `non_ai` when uncertain
+   - Outcome: 1,092 ai_native, 684 ai_enabled, **262 flagged non_ai**
+   - Output: `candidates/non-ai-audit.json`
+
+2. **Strict re-check** (`scripts/recheck-non-ai-tools.ts`, `npm run recheck:non-ai`)
+   - Re-examined only the 262 with FULL per-tool context (description, features, models, integrations, use_cases, has_api)
+   - Stricter prompt: ANY meaningful AI feature → keep, even if bolted-on; smaller batches of 10
+   - Caught false-positives the first pass missed: DaVinci Resolve (Magic Mask / Voice Isolation), Calendly (AI Notetaker), Brandwatch (Iris AI), Bluehost (AI Site Builder), Appsmith (AI copilot), Tldraw (Make Real)
+   - Result: **193 kept, 69 confirmed delete**
+   - Output: `candidates/non-ai-recheck.json`
+
+3. **Manual exclude on top** — 5 borderline slugs pulled out before execute:
+   - `ink-editor` (classifier self-contradiction: reason said "(keep)" but verdict was "delete")
+   - `shopify` (Shopify Magic + Sidekick exist; our DB description lags)
+   - `cal-com` (Cal.ai scheduling assistant)
+   - `oura` (Personalized AI health insights)
+   - `brightside-health` (clinical AI use cases growing)
+
+   Final: **64 hard deletes.**
+
+### Execute pipeline (`scripts/execute-non-ai-delete.ts`, `npm run execute:non-ai -- --apply`)
+
+1. **Audit trail first** — insert 64 rows into the new `deleted_tools` table (slug PK, name, reason `non_ai_audit`, classification, rationale, categories, deleted_at). Plus 28 `non_ai_audit_compare` rows for the editorial compares we'll wipe. Upsert-by-slug so the script is idempotent.
+2. **Compare cleanup** — `tool_comparisons` doesn't have an FK to `tools` (uses a `tool_ids` uuid array), so manual cleanup. 28 compares deleted in 200-row chunks.
+3. **page_tool_mentions defensive sweep** — manual cleanup by `tool_slug`. 0 rows hit (preflight had predicted this — the in-content mention indexer hadn't picked up any of these tools).
+4. **Hard-delete from `tools`** — 64 rows. PostgreSQL FK cascade automatically removed dependents from `click_logs`, `page_views`, `tool_categories`, `tool_alternatives`, `tool_faqs`, `tool_sentiment_cache`, `tool_tags`, `user_saved_tools`, `reviews`, `discussions`, `refresh_logs`, `data_refresh_log`, `outbound_link_issues`, `outreach_log`, `questions` (16 tables total). `tool_candidates.ingested_tool_id` is SET NULL (kept as legacy reference).
+5. **Static slug list regenerated** — `lib/seo/deleted-tools.ts` rewritten with `DELETED_TOOL_SLUGS` (64) and `DELETED_COMPARE_SLUGS` (28) exported as `Set<string>`. The proxy imports this at build time so the 410 check is O(1) at the edge with zero DB calls.
+6. **IndexNow ping** — 92 URLs (64 tools + 28 compares) submitted to Bing/Yandex for accelerated deindexation. Google doesn't support IndexNow but discovers 410s on next crawl.
+
+### 410 Gone wiring (`proxy.ts`)
+
+The proxy now runs a `maybeGoneResponse` check BEFORE the merged-tool 308 redirect:
+- Matches `/tools/<slug>` and `/compare/<slug>` (with sub-paths allowed for the tool variant: `/tools/<slug>/alternatives`, `/report`)
+- If slug is in `DELETED_TOOL_SLUGS` / `DELETED_COMPARE_SLUGS`, returns `new NextResponse(html, { status: 410 })` with `X-Robots-Tag: noindex` and a 24h CDN cache
+- HTML body: small "Page permanently removed" notice with a `<a href="/tools">` CTA — keeps user retention even on the dead URL
+- Merged-tool redirect regex tightened to `^/tools/<slug>/?$` (bare path only) so it doesn't fight the 410 check for sub-paths
+
+### Why 410 not 404
+- 404 = "not found right now" — Google retries
+- 410 = "permanently gone" — Google fast-tracks deindexation (matters when freeing crawl budget for the 1,974 real AI tools we still want indexed)
+- `X-Robots-Tag: noindex` reinforces the signal for crawlers that ignore status
+
+### What's NOT in the static slug list (intentional)
+- Categories the deleted tools belonged to (data-analytics, productivity, code-development) — these are pure curation hubs, still useful for AI tools
+- Best-of and Stack pages — none referenced the deleted slugs by hand (verified)
+- Sitemaps — `/tools/sitemap.xml` and `/compare/sitemap.xml` query the DB so the deleted slugs are already gone from the next refresh
+
+### Final delta
+- Catalog: **2,038 → 1,974** published tools (−64, −3.1%)
+- Editorial compares: **587 → 559** (−28, −4.8%)
+- Brand promise: every remaining tool has at least one user-facing AI capability per the strict classifier
+
+### Files touched
+- New: `supabase/migrations/117_deleted_tools.sql`; `lib/seo/deleted-tools.ts`; `scripts/audit-non-ai-tools.ts`; `scripts/recheck-non-ai-tools.ts`; `scripts/preflight-non-ai-delete.ts`; `scripts/execute-non-ai-delete.ts`
+- Modified: `proxy.ts` (added `maybeGoneResponse`); `package.json` (4 new npm scripts: `audit:non-ai`, `recheck:non-ai`, `preflight:non-ai`, `execute:non-ai`)
+
+### Verification
+- `select count(*) from tools where is_published` → 1,974 ✓
+- `select count(*) from tool_comparisons` → 559 ✓
+- `select count(*) from deleted_tools where reason='non_ai_audit'` → 64 ✓
+- `select count(*) from deleted_tools where reason='non_ai_audit_compare'` → 28 ✓
+- TypeScript check clean (`tsc --noEmit`)
+
+### Reversibility
+- Audit trail in `deleted_tools` keeps name + classification + rationale + categories for every slug
+- A future re-add script can resurrect any individual tool (queue for re-ingestion via the existing tool-ingest pipeline)
+- The slug stays reserved in `deleted_tools` until manually purged — prevents accidental re-creation under the same slug with stale GSC equity
+
+---
+
 ## Day 3 (cont. 2) — 2026-05-28 — CTA UX overhaul + analytics: unique users, returning users, root-cause fix
 
 **Trigger:** the initial Phase 9 CTA + signup gate shipped earlier today (see `Day 3 (cont.) — 2026-05-28 — CTA + Conversion`). Three user-driven follow-ups landed across the rest of the day:
