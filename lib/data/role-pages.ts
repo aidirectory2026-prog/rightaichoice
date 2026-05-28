@@ -117,6 +117,7 @@ export const ROLE_PAGES: RolePageConfig[] = [
       'From generating lesson plans and quizzes to providing personalized feedback and creating interactive learning materials, these AI tools help educators save hours of prep time and focus on what matters most — their students.',
     categories: ['writing-content', 'research-education'],
     featureKeywords: ['education', 'teaching', 'lesson plan', 'grading', 'quiz', 'learning'],
+    noindex: true,
   },
   {
     slug: 'sales-teams',

@@ -296,6 +296,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'Generate natural-sounding voiceovers for videos, ads, audiobooks, and e-learning with AI. Compare ElevenLabs, Murf, Play.ht, and more.',
     categories: ['voice-speech'],
     featureKeywords: ['text-to-speech', 'voiceover', 'voice cloning', 'TTS'],
+    noindex: true,
   },
   {
     slug: 'accounting',
@@ -314,6 +315,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI tools for hiring teams — automated resume screening, candidate sourcing, interview scheduling, employee onboarding, and performance management.',
     categories: ['business-finance'],
     featureKeywords: ['HR', 'recruiting', 'hiring', 'talent'],
+    noindex: true,
   },
   {
     slug: 'healthcare-ai',
@@ -332,6 +334,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI tools that help teachers create lesson plans, generate quizzes, personalize learning, grade assignments, and save hours of prep time every week.',
     categories: ['research-education'],
     featureKeywords: ['education', 'teaching', 'lesson plan', 'quiz'],
+    noindex: true,
   },
   {
     slug: 'cybersecurity',
@@ -350,6 +353,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI tools for indie and professional game developers — generate 2D/3D assets, write dialogue, design levels, create music, and test gameplay.',
     categories: ['code-development'],
     featureKeywords: ['game', 'game development', '3D', 'assets'],
+    noindex: true,
   },
   {
     slug: 'architecture',
@@ -438,6 +442,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'AI video editors that cut, caption, generate B-roll, remove silence, and add effects automatically. Compare Descript, Runway, CapCut, and more.',
     categories: ['video-audio'],
     featureKeywords: ['video editing', 'video creation', 'captions'],
+    noindex: true,
   },
   {
     slug: 'copywriting',
@@ -447,6 +452,7 @@ export const BEST_PAGES: BestPageConfig[] = [
       'Write high-converting ad copy, landing pages, product descriptions, and marketing emails with AI. Compare Jasper, Copy.ai, Writesonic, and more.',
     categories: ['writing-content'],
     featureKeywords: ['copywriting', 'ad copy', 'landing page', 'marketing copy'],
+    noindex: true,
   },
   {
     slug: 'social-media-scheduling',

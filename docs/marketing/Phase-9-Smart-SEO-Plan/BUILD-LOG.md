@@ -4,6 +4,49 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 4 — 2026-05-29 — Tier-4 noindex wave 2 (29 more pages)
+
+**Trigger:** doc-12 Day-3 plan called for "first 100 noindex decisions" in the Tier-4 prune. Wave 1 (commit `de770ff`, 2026-05-28) shipped 22 — 10 hub + 12 compares. Wave 2 ships 29 more, taking total to 51. We don't try to hit 100 in this wave because the remaining gap is mostly individual tool pages (2,564 at pos > 50), and `tools` has no `noindex` column yet — that's a separate, larger workstream tied to the non-AI tool audit kicked off in the same conversation.
+
+### What shipped
+
+- **22 comparison pages** flagged `noindex=true` in `tool_comparisons` (DB update only — no schema change needed; column added in migration 113). All at pos > 50, single-digit-to-low-double-digit impressions. Two buckets:
+  - Off-domain non-AI (sales, support, fintech, payroll, analytics, email, video): apollo-io-vs-zoominfo, freshdesk-vs-gorgias, helpscout-vs-zendesk, brex-vs-ramp, deel-vs-gusto, instantly-vs-lemlist, lemlist-vs-smartlead, clari-vs-salesloft, clari-vs-gong, gong-vs-outreach, loom-vs-vidyard, klaviyo-vs-yotpo, fullstory-vs-mixpanel, phrase-vs-smartling
+  - AI-but-no-recovery (pos > 50 with negligible impressions, Writesonic-loser pattern, niche video): jasper-vs-writesonic, copy-ai-vs-writesonic, chatgpt-vs-writesonic, rytr-vs-writesonic, frase-vs-neuronwriter, canva-vs-capcut, capcut-vs-descript, opus-clip-vs-submagic
+- **7 hub pages** — `noindex: true` flag added to static config:
+  - `/best/copywriting` (pos 83, 26 impr — overlaps already-noindex'd `/best/writing`)
+  - `/best/hr-recruiting` (pos 86, 33 impr — niche, no AI density)
+  - `/best/voiceover` (pos 70, 6 impr — niche)
+  - `/best/video-editing` (pos 67, 10 impr — overlaps `/best/video`)
+  - `/best/education` (pos 65, 23 impr — will be replaced by `/categories/education-learning` cornerstone)
+  - `/best/game-dev` (pos 60, 13 impr — niche, no AI density)
+  - `/for/educators` (pos 73, 6 impr — overlaps `/best/education`)
+
+### Deliberately NOT noindex'd (kept for "improve later")
+
+Pages with meaningful impressions (>30) or strategic AI relevance stay indexed:
+- `/compare/freshdesk-vs-zendesk` (261 impr — too much visibility to throw)
+- `/compare/brand24-vs-mention` (90), `/compare/chorus-vs-gong` (73) — improve targets
+- `/compare/langgraph-vs-crewai-vs-autogen` (just shipped editorial)
+- `/compare/decagon-vs-sierra`, `/compare/deepgram-vs-whisper` — strategic AI
+- `/best/seo` (276), `/best/automation` (70), `/best/meeting-notes` (91), `/best/accounting` (62) — strategic clusters; Tier-2 candidates
+
+### Why not 78 (the plan's gap)
+
+Plan called for 100 noindex; wave 1+2 = 51. The remaining ~49 gap lives in individual tool pages — 2,564 are at pos > 50 in the latest 28d snapshot, almost all with <10 impressions. Cleaning these requires:
+1. A `noindex` column on `tools` (DDL change)
+2. A non-AI tool audit (in flight — first pass found 38 in top-500 GSC targets, e.g. Mangools, Brandwatch, Calendly, FreshBooks, Gusto, Hotjar, Supabase, Cloudways) plus 2,000+ more in the long tail to classify
+
+That work continues in a separate workstream tracked as Task #74.
+
+### Commits
+
+| Commit | What it gave us |
+| :--- | :--- |
+| (pending push) | Tier-4 wave 2 — 22 compare + 7 hub pages noindex'd; total Tier-4 noindex now 51 |
+
+---
+
 ## Day 3 (cont.) — 2026-05-28 — Tool-indexation long-tail sweep (B4)
 
 **Trigger:** the B3 `--all` audit (1996 URLs) surfaced **540 "Discovered - currently not indexed" tool URLs** plus 9 "Crawled - not indexed" plus 109 "URL unknown to Google". 540 ≫ 9 is the crawl-budget signature, not a quality problem. Compare elevation (B1, doc 07) addresses 66 un-indexed compares; B4 attacks the much bigger absolute-volume tool bucket using the **two halves doc-05 always called for** — internal linking (humans + crawlers re-find them) and IndexNow re-pinging (crawler gets a fresh nudge).
