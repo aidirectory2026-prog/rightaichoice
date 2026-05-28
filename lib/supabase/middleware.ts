@@ -1,7 +1,39 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Paths where we MUST resolve the auth state (protect, or bounce signed-in
+// users off /login + /signup). Every other path — tool pages, compares,
+// homepage, categories, blog, public APIs — skips the Supabase auth round-trip.
+function pathNeedsAuth(path: string): boolean {
+  if (path === '/login' || path === '/signup') return true
+  return (
+    path.startsWith('/dashboard') ||
+    path.startsWith('/admin') ||
+    path.startsWith('/profile') ||
+    path.startsWith('/submit-tool') ||
+    path.startsWith('/saved') ||
+    path.startsWith('/api/admin') ||
+    path.startsWith('/api/account')
+  )
+}
+
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  // Fast path: anonymous browse traffic skips the auth round-trip entirely.
+  // Also skip if there's no sb-* session cookie present — nothing to refresh.
+  if (!pathNeedsAuth(path)) {
+    return NextResponse.next({ request })
+  }
+  const hasSessionCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))
+  // /login + /signup still need a getUser() to bounce already-authed users —
+  // but only if a session cookie exists. No cookie → definitely anonymous.
+  if (!hasSessionCookie && (path === '/login' || path === '/signup')) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

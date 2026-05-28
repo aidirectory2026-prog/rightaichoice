@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
@@ -76,19 +77,40 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Phase 9 perf (2026-05-29): skip the Supabase auth + profile round-trips
+  // for anonymous traffic. 99% of visitors are signed-out — paying ~150ms per
+  // page render for a getUser() that returns null is wasted Tokyo round-trip.
+  // Only resolve the user when an sb-*-auth-token cookie is actually present.
+  const cookieStore = await cookies();
+  const hasSessionCookie = cookieStore
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"));
 
-  let profile = null;
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, username, full_name, avatar_url, is_admin")
-      .eq("id", user.id)
-      .single();
-    profile = data;
+  let user: { id: string; email: string | null } | null = null;
+  let profile: {
+    id: string;
+    username: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    is_admin: boolean;
+  } | null = null;
+
+  if (hasSessionCookie) {
+    const supabase = await createClient();
+    const {
+      data: { user: resolved },
+    } = await supabase.auth.getUser();
+    user = resolved
+      ? { id: resolved.id, email: resolved.email ?? null }
+      : null;
+    if (user) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, is_admin")
+        .eq("id", user.id)
+        .single();
+      profile = data as typeof profile;
+    }
   }
 
   return (
