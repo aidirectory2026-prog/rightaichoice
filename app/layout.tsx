@@ -126,6 +126,18 @@ export default async function RootLayout({
             verification for an early-stage brand that doesn't yet have a
             Wikipedia entry. */}
         <script {...jsonLdScriptProps([organizationJsonLd(), websiteJsonLd(), founderPersonJsonLd()])} />
+        {/* Phase 9 Day-4 (2026-05-29): rel=me cross-verification edges to
+            owned brand profiles. Each link declares "this profile belongs
+            to the same entity as this site"; combined with reciprocal
+            links from the profiles back to rightaichoice.com, this closes
+            the verification loop that AI assistants and search engines
+            use to bind a brand to its social presence. Next.js hoists
+            these into <head> automatically. */}
+        <link rel="me" href="https://x.com/rightaichoice" />
+        <link rel="me" href="https://twitter.com/rightaichoice" />
+        <link rel="me" href="https://www.linkedin.com/company/rightaichoice" />
+        <link rel="me" href="https://github.com/aidirectory2026-prog/rightaichoice" />
+        <link rel="me" href="https://www.linkedin.com/in/tanmayverma99" />
         <ClarityProvider />
         <MixpanelProvider>
           <GlobalInteractionTracker />
