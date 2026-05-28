@@ -3,6 +3,10 @@ import { getAllComparisonSlugs } from '@/lib/data/comparisons'
 
 const BASE_URL = 'https://rightaichoice.com'
 
+// Phase 9 Day-4 (2026-05-29): force on-demand generation so a slow build-time
+// Supabase round-trip can't kill the deploy (saw 60s+ hangs after the non-AI
+// purge). First request after deploy generates + caches via the 1h revalidate.
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

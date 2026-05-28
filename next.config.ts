@@ -22,6 +22,10 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // Phase 9 Day-4 (2026-05-29): build kept timing out at 60s on
+  // /compare/sitemap.xml after the non-AI purge. Bump to 180s so a slow
+  // Supabase round-trip from the Vercel build runner can't kill the deploy.
+  staticPageGenerationTimeout: 180,
   async headers() {
     return [
       {
