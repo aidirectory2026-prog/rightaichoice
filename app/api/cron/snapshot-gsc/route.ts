@@ -198,6 +198,15 @@ export const GET = cronRoute({ pipelineKey: 'snapshot-gsc' }, async (ctx) => {
     summary[`${scope}_diff`] = diff
   }
 
+  // Refresh the per-tool weighted-position table off the snapshot we just
+  // wrote — it biases internal-link rails toward buried-but-indexed tools.
+  try {
+    const { data: refreshed } = await getAdminClient().rpc('refresh_gsc_tool_positions')
+    summary.tool_positions_refreshed = refreshed ?? null
+  } catch (e) {
+    summary.tool_positions_refreshed = `error: ${(e as Error).message}`
+  }
+
   ctx.recordItems({ processed: 2, succeeded: 2 })
   ctx.recordMetadata(summary)
   return { ok: true, ...summary }

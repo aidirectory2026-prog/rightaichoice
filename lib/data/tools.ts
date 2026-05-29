@@ -409,6 +409,55 @@ async function getUnindexedToolSlugs(): Promise<Set<string>> {
 }
 
 /**
+ * Phase 9 Smart SEO (2026-05-29): cached read of BURIED-but-indexed tool
+ * slugs (weighted GSC position ~20-50) from gsc_tool_positions. These pages
+ * ARE indexed but rank on page 3-5; the legitimate lever to lift them is
+ * internal links, so we fold them into the same sibling-rail "needs help"
+ * bias as un-indexed pages. 5-min TTL (table refreshes weekly off the GSC
+ * snapshot).
+ */
+const BURIED_POS_MIN = 20
+const BURIED_POS_MAX = 50
+let buriedToolSlugsCache: { slugs: Set<string>; loadedAt: number } | null = null
+
+async function getBuriedToolSlugs(): Promise<Set<string>> {
+  const now = Date.now()
+  if (
+    buriedToolSlugsCache &&
+    now - buriedToolSlugsCache.loadedAt < UNINDEXED_CACHE_TTL_MS
+  ) {
+    return buriedToolSlugsCache.slugs
+  }
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('gsc_tool_positions')
+    .select('slug')
+    .gte('weighted_position', BURIED_POS_MIN)
+    .lte('weighted_position', BURIED_POS_MAX)
+  const slugs = new Set<string>()
+  for (const row of (data ?? []) as Array<{ slug: string }>) {
+    if (row.slug) slugs.add(row.slug)
+  }
+  buriedToolSlugsCache = { slugs, loadedAt: now }
+  return slugs
+}
+
+/**
+ * Union of un-indexed + buried-but-indexed tool slugs — every tool page that
+ * benefits from more internal-link equity. One call, both signals cached.
+ */
+async function getLinkBoostToolSlugs(): Promise<Set<string>> {
+  const [unindexed, buried] = await Promise.all([
+    getUnindexedToolSlugs(),
+    getBuriedToolSlugs(),
+  ])
+  if (buried.size === 0) return unindexed
+  const union = new Set(unindexed)
+  for (const s of buried) union.add(s)
+  return union
+}
+
+/**
  * Phase 4.5 audit fix (2026-05-09): Loose category-based "tools you might
  * also like" fallback used by the page handler when getAlternativeTools'
  * strict identity-tag ranker returns nothing. This is intentionally
@@ -447,7 +496,7 @@ export async function getTopInCategory(
         .order('view_count', { ascending: false })
         .limit(Math.max(limit * 5, 40))
       if (data && data.length > 0) {
-        const unindexed = await getUnindexedToolSlugs()
+        const unindexed = await getLinkBoostToolSlugs()
         // Promote un-indexed siblings into the first slots while keeping
         // the relative view_count order within each tier. Result: ~half
         // of the `limit` slots tend to be un-indexed when there are
@@ -562,7 +611,7 @@ export async function getAlternativeTools(
   const sourceIsGeneralLLM = sourceTagsRaw.has(GENERAL_LLM_TAG)
   // Phase 9 B4 (2026-05-28): authoritative un-indexed signal from
   // gsc_url_inspections (replaces the view_count=0 proxy below).
-  const unindexedSlugs = await getUnindexedToolSlugs()
+  const unindexedSlugs = await getLinkBoostToolSlugs()
 
   const scored = (data as unknown as Row[])
     .map((row) => {
