@@ -45,3 +45,12 @@ scripts/.*-progress.json
 scripts/.*-opportunities.json
 scripts/.bing-submit-checkpoint.json
 scripts/.daily-orchestrator-state.json
+
+# agent tooling + scratch dirs (Phase 9 cleanup)
+.serena/
+logs/
+tmp_b37/
+supabase/.temp/
+candidates/.tmp/
+scripts/.tmp-*.ts
+scripts/.gsc-indexation-report.json
