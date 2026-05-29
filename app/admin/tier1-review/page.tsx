@@ -8,10 +8,14 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Tier-1 Review' }
 
 type Bucket = '1A' | '1B' | '1C'
+type BindingConstraint = 'title' | 'mixed' | 'rank'
 
 type Rewrite = {
   page: string
   bucket: Bucket
+  section?: string
+  priority?: number
+  bindingConstraint?: BindingConstraint
   currentTitle: string
   weightedPosition: number
   totalImpressions: number
@@ -23,9 +27,9 @@ type Rewrite = {
 export default async function Tier1ReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bucket?: string }>
+  searchParams: Promise<{ bucket?: string; constraint?: string }>
 }) {
-  const { bucket } = await searchParams
+  const { bucket, constraint } = await searchParams
   const path = resolve(process.cwd(), 'candidates/tier1-rewrites.json')
 
   if (!existsSync(path)) {
@@ -50,9 +54,19 @@ export default async function Tier1ReviewPage({
     totals?: { totalInOutput?: number; newSucceeded?: number; newFailed?: number }
     generatedAt?: string
   }
-  let rewrites = file.rewrites ?? []
+  let rewrites = (file.rewrites ?? [])
+    .slice()
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
   if (bucket === '1A' || bucket === '1B' || bucket === '1C') {
     rewrites = rewrites.filter((r) => r.bucket === bucket)
+  }
+  if (constraint === 'title' || constraint === 'mixed' || constraint === 'rank') {
+    rewrites = rewrites.filter((r) => r.bindingConstraint === constraint)
+  }
+  const constraintCounts = {
+    title: (file.rewrites ?? []).filter((r) => r.bindingConstraint === 'title').length,
+    mixed: (file.rewrites ?? []).filter((r) => r.bindingConstraint === 'mixed').length,
+    rank: (file.rewrites ?? []).filter((r) => r.bindingConstraint === 'rank').length,
   }
 
   const supabase = await createClient()
@@ -83,12 +97,30 @@ export default async function Tier1ReviewPage({
             {file.generatedAt && ` · generated ${file.generatedAt.slice(0, 10)}`}
           </p>
         </div>
-        <nav className="flex gap-2 text-xs">
-          <FilterLink href="/admin/tier1-review" label={`All (${counts['1A'] + counts['1B'] + counts['1C']})`} active={!bucket} />
-          <FilterLink href="/admin/tier1-review?bucket=1A" label={`1A (${counts['1A']})`} active={bucket === '1A'} />
-          <FilterLink href="/admin/tier1-review?bucket=1B" label={`1B (${counts['1B']})`} active={bucket === '1B'} />
-          <FilterLink href="/admin/tier1-review?bucket=1C" label={`1C (${counts['1C']})`} active={bucket === '1C'} />
-        </nav>
+        <div className="flex flex-col gap-2">
+          <nav className="flex flex-wrap gap-2 text-xs">
+            <FilterLink href="/admin/tier1-review" label={`All (${counts['1A'] + counts['1B'] + counts['1C']})`} active={!bucket && !constraint} />
+            <FilterLink href="/admin/tier1-review?constraint=title" label={`🟢 Title-bound (${constraintCounts.title})`} active={constraint === 'title'} />
+            <FilterLink href="/admin/tier1-review?constraint=mixed" label={`🟡 Mixed (${constraintCounts.mixed})`} active={constraint === 'mixed'} />
+            <FilterLink href="/admin/tier1-review?constraint=rank" label={`🔴 Rank-bound (${constraintCounts.rank})`} active={constraint === 'rank'} />
+          </nav>
+          <nav className="flex gap-2 text-xs">
+            <FilterLink href="/admin/tier1-review?bucket=1A" label={`1A pos≤10 (${counts['1A']})`} active={bucket === '1A'} />
+            <FilterLink href="/admin/tier1-review?bucket=1B" label={`1B 11–20 (${counts['1B']})`} active={bucket === '1B'} />
+            <FilterLink href="/admin/tier1-review?bucket=1C" label={`1C 21–30 (${counts['1C']})`} active={bucket === '1C'} />
+          </nav>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-emerald-900/60 bg-emerald-950/30 p-4 text-sm text-emerald-100/90">
+        <p className="font-medium text-emerald-300 mb-1">How to work this queue (ROI order)</p>
+        <p>
+          Rows are sorted by <span className="font-mono">priority</span> = impressions × title-leverage. Start with{' '}
+          <span className="text-emerald-300">🟢 Title-bound</span> — page-1 compares/blog where a sharper title directly
+          lifts clicks. <span className="text-amber-300">🟡 Mixed</span> (pos 11–20) can break onto page 1.{' '}
+          <span className="text-rose-300">🔴 Rank-bound</span> pages (buried or templated tool pages) need ranking work,
+          not titles — skip them here. Approve ~10/day; we measure the lift after 7 days.
+        </p>
       </div>
 
       <div className="space-y-4">

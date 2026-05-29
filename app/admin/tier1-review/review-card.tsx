@@ -4,10 +4,14 @@ import { useState, useTransition } from 'react'
 import { approveTitleOverride, revertTitleOverride } from './actions'
 
 type Bucket = '1A' | '1B' | '1C'
+type BindingConstraint = 'title' | 'mixed' | 'rank'
 
 type Rewrite = {
   page: string
   bucket: Bucket
+  section?: string
+  priority?: number
+  bindingConstraint?: BindingConstraint
   currentTitle: string
   weightedPosition: number
   totalImpressions: number
@@ -20,6 +24,12 @@ const BUCKET_STYLE: Record<Bucket, string> = {
   '1A': 'border-emerald-700 text-emerald-300 bg-emerald-950/60',
   '1B': 'border-amber-700 text-amber-300 bg-amber-950/60',
   '1C': 'border-rose-700 text-rose-300 bg-rose-950/60',
+}
+
+const CONSTRAINT_META: Record<BindingConstraint, { label: string; style: string }> = {
+  title: { label: '🟢 Title-bound', style: 'border-emerald-700 text-emerald-300 bg-emerald-950/60' },
+  mixed: { label: '🟡 Mixed', style: 'border-amber-700 text-amber-300 bg-amber-950/60' },
+  rank: { label: '🔴 Rank-bound', style: 'border-rose-700 text-rose-300 bg-rose-950/60' },
 }
 
 export function ReviewCard({
@@ -70,13 +80,19 @@ export function ReviewCard({
           <p className="text-xs text-zinc-500 mt-1">
             pos {rewrite.weightedPosition.toFixed(1)} · {rewrite.totalImpressions} impr ·{' '}
             {rewrite.totalClicks} clk{rewrite.topQuery ? ` · top: "${rewrite.topQuery}"` : ''}
+            {typeof rewrite.priority === 'number' ? ` · priority ${rewrite.priority}` : ''}
           </p>
         </div>
-        <span
-          className={`text-xs px-2 py-0.5 rounded border shrink-0 ${BUCKET_STYLE[rewrite.bucket]}`}
-        >
-          {rewrite.bucket}
-        </span>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          {rewrite.bindingConstraint && (
+            <span className={`text-xs px-2 py-0.5 rounded border ${CONSTRAINT_META[rewrite.bindingConstraint].style}`}>
+              {CONSTRAINT_META[rewrite.bindingConstraint].label}
+            </span>
+          )}
+          <span className={`text-xs px-2 py-0.5 rounded border ${BUCKET_STYLE[rewrite.bucket]}`}>
+            {rewrite.bucket}
+          </span>
+        </div>
       </div>
 
       <div>

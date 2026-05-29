@@ -26,15 +26,20 @@ import { callDeepSeek, stripJsonFences } from '../lib/plan/deepseek'
 
 type Bucket = '1A' | '1B' | '1C'
 
+type BindingConstraint = 'title' | 'mixed' | 'rank'
+
 type Candidate = {
   page: string
   canonicalUrl: string
   currentTitle: string
   bucket: Bucket
+  section: string
   weightedPosition: number
   totalImpressions: number
   totalClicks: number
   avgCtr: number
+  priority: number
+  bindingConstraint: BindingConstraint
   topQuery: { query: string; impressions: number; position: number }
   queries: Array<{
     query: string
@@ -50,6 +55,9 @@ type Suggestion = { title: string; rationale: string }
 type Rewrite = {
   page: string
   bucket: Bucket
+  section: string
+  priority: number
+  bindingConstraint: BindingConstraint
   currentTitle: string
   weightedPosition: number
   totalImpressions: number
@@ -57,6 +65,13 @@ type Rewrite = {
   topQuery: string
   suggestions: Suggestion[]
   generatedAt: string
+}
+
+/** Detect question-intent queries → ask for an answer-style title (snippet bait). */
+function isQuestionQuery(q: string | undefined): boolean {
+  if (!q) return false
+  const s = q.toLowerCase().replace(/["“”]/g, '').trim()
+  return /\?$/.test(s) || /^(is|are|can|does|do|how|what|which|why|should|when|will)\b/.test(s)
 }
 
 const IN_PATH = resolve(process.cwd(), 'candidates/tier1-candidates.json')
@@ -111,13 +126,17 @@ async function rewriteOne(c: Candidate): Promise<Rewrite> {
     )
     .join('\n')
 
+  const questionHint = isQuestionQuery(c.topQuery?.query)
+    ? `\nNOTE: the top query is a QUESTION. Make at least one of the 3 titles an answer-style title that mirrors that question — it can win the featured snippet / People-Also-Ask box.`
+    : ''
+
   const userPrompt = `Page: ${c.page}
 Current title: ${c.currentTitle}
 Bucket: ${c.bucket} — ${BUCKET_GUIDE[c.bucket]}
 Weighted position: ${c.weightedPosition.toFixed(2)}
 28-day impressions: ${c.totalImpressions}  clicks: ${c.totalClicks}  CTR: ${(c.avgCtr * 100).toFixed(2)}%
 Top queries:
-${topQueries}
+${topQueries}${questionHint}
 
 Write 3 candidate titles. Each must improve on the current title against the bucket's bottleneck. Vary the angle.`
 
@@ -146,6 +165,9 @@ Write 3 candidate titles. Each must improve on the current title against the buc
   return {
     page: c.page,
     bucket: c.bucket,
+    section: c.section,
+    priority: c.priority,
+    bindingConstraint: c.bindingConstraint,
     currentTitle: c.currentTitle,
     weightedPosition: c.weightedPosition,
     totalImpressions: c.totalImpressions,
@@ -239,7 +261,7 @@ async function main() {
       totalInOutput: results.length,
     },
     failures: fails,
-    rewrites: results.sort((a, b) => b.totalImpressions - a.totalImpressions),
+    rewrites: results.sort((a, b) => b.priority - a.priority),
   }
 
   if (isDry) {

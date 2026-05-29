@@ -1,33 +1,36 @@
 {
-  "generated_at": "2026-05-27T08:56:04.642Z",
-  "snapshot_date": "2026-05-26",
+  "generated_at": "2026-05-29T20:43:54.838Z",
+  "snapshot_date": "2026-05-29",
   "scope": "28d",
   "totals": {
-    "1A": 32,
-    "1B": 30,
-    "1C": 38
+    "1A": 29,
+    "1B": 29,
+    "1C": 41
   },
   "candidates": [
     {
       "page": "/compare/duolingo-vs-loora",
       "canonicalUrl": "https://rightaichoice.com/compare/duolingo-vs-loora",
-      "currentTitle": "Duolingo vs Loora — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "Duolingo vs Loora: Which Language App Wins? | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 8.05,
-      "totalImpressions": 223,
+      "section": "compare",
+      "weightedPosition": 8.1,
+      "totalImpressions": 273,
       "totalClicks": 1,
-      "avgCtr": 0.0045,
+      "avgCtr": 0.0037,
+      "priority": 273,
+      "bindingConstraint": "title",
       "topQuery": {
         "query": "duolingo vs loora",
-        "impressions": 213,
-        "position": 8.18
+        "impressions": 263,
+        "position": 8.2
       },
       "queries": [
         {
           "query": "duolingo vs loora",
-          "impressions": 213,
+          "impressions": 263,
           "clicks": 0,
-          "position": 8.178403755868544,
+          "position": 8.20152091254753,
           "ctr": 0
         },
         {
@@ -49,30 +52,33 @@
     {
       "page": "/compare/duolingo-vs-talkpal",
       "canonicalUrl": "https://rightaichoice.com/compare/duolingo-vs-talkpal",
-      "currentTitle": "Duolingo vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "Duolingo vs TalkPal (2026): Which Is Better? | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 7.06,
-      "totalImpressions": 164,
+      "section": "compare",
+      "weightedPosition": 7.12,
+      "totalImpressions": 167,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 167,
+      "bindingConstraint": "title",
       "topQuery": {
         "query": "duolingo vs talkpal",
-        "impressions": 161,
-        "position": 7.01
+        "impressions": 163,
+        "position": 7.04
       },
       "queries": [
         {
           "query": "duolingo vs talkpal",
-          "impressions": 161,
+          "impressions": 163,
           "clicks": 0,
-          "position": 7.0062111801242235,
+          "position": 7.042944785276074,
           "ctr": 0
         },
         {
           "query": "talkpal vs duolingo",
-          "impressions": 3,
+          "impressions": 4,
           "clicks": 0,
-          "position": 10,
+          "position": 10.25,
           "ctr": 0
         }
       ]
@@ -80,23 +86,26 @@
     {
       "page": "/compare/openhands-vs-devin",
       "canonicalUrl": "https://rightaichoice.com/compare/openhands-vs-devin",
-      "currentTitle": "OpenHands vs Devin — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "OpenHands vs Devin: CLI Chat &amp; Features (2026) | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 7.83,
-      "totalImpressions": 156,
+      "section": "compare",
+      "weightedPosition": 7.8,
+      "totalImpressions": 127,
       "totalClicks": 1,
-      "avgCtr": 0.0064,
+      "avgCtr": 0.0079,
+      "priority": 127,
+      "bindingConstraint": "title",
       "topQuery": {
         "query": "\"devin chat\" cli",
-        "impressions": 101,
-        "position": 8.57
+        "impressions": 73,
+        "position": 8.71
       },
       "queries": [
         {
           "query": "\"devin chat\" cli",
-          "impressions": 101,
+          "impressions": 73,
           "clicks": 0,
-          "position": 8.574257425742573,
+          "position": 8.712328767123289,
           "ctr": 0
         },
         {
@@ -115,9 +124,9 @@
         },
         {
           "query": "\"devin chat\" \"devin\" cli",
-          "impressions": 9,
+          "impressions": 10,
           "clicks": 0,
-          "position": 6.888888888888889,
+          "position": 7.2,
           "ctr": 0
         },
         {
@@ -149,104 +158,86 @@
           "ctr": 0
         },
         {
-          "query": "opendevin vs openhands 2025",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 3,
-          "ctr": 0
-        },
-        {
           "query": "opendevin vs openhands current status 2026",
           "impressions": 1,
           "clicks": 0,
           "position": 7,
           "ctr": 0
+        },
+        {
+          "query": "openhands vs devin ai",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 5,
+          "ctr": 0
         }
       ]
     },
     {
-      "page": "/blog/ai-coding-assistant-leaderboard-swe-bench-humaneval-2026",
-      "canonicalUrl": "https://rightaichoice.com/blog/ai-coding-assistant-leaderboard-swe-bench-humaneval-2026",
-      "currentTitle": "AI Coding Assistant Leaderboard 2026: SWE-bench, HumanEval, and What the Numbers Actually Mean | RightAIChoice",
+      "page": "/compare/dify-vs-langflow-vs-fastgpt",
+      "canonicalUrl": "https://rightaichoice.com/compare/dify-vs-langflow-vs-fastgpt",
+      "currentTitle": "FastGPT vs Dify vs Langflow: 2026 Comparison | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 5.99,
-      "totalImpressions": 156,
+      "section": "compare",
+      "weightedPosition": 8.67,
+      "totalImpressions": 46,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 46,
+      "bindingConstraint": "title",
       "topQuery": {
-        "query": "aider polyglot benchmark leaderboard 2026",
-        "impressions": 17,
-        "position": 4.18
+        "query": "fastgpt vs dify",
+        "impressions": 30,
+        "position": 5.8
       },
       "queries": [
         {
-          "query": "aider polyglot benchmark leaderboard 2026",
-          "impressions": 17,
+          "query": "fastgpt vs dify",
+          "impressions": 30,
           "clicks": 0,
-          "position": 4.1764705882352935,
+          "position": 5.8,
           "ctr": 0
         },
         {
-          "query": "aider polyglot leaderboard april 2026",
-          "impressions": 17,
-          "clicks": 0,
-          "position": 3.2941176470588234,
-          "ctr": 0
-        },
-        {
-          "query": "aider polyglot benchmark 2026",
-          "impressions": 14,
-          "clicks": 0,
-          "position": 5.571428571428571,
-          "ctr": 0
-        },
-        {
-          "query": "aider polyglot leaderboard 2026",
-          "impressions": 14,
-          "clicks": 0,
-          "position": 5.928571428571429,
-          "ctr": 0
-        },
-        {
-          "query": "aider polyglot benchmark leaderboard 2026 coding models",
-          "impressions": 8,
-          "clicks": 0,
-          "position": 7.875,
-          "ctr": 0
-        },
-        {
-          "query": "aider polyglot leaderboard coding models 2026",
+          "query": "fastgpt vs dify comparison",
           "impressions": 7,
           "clicks": 0,
-          "position": 4.142857142857142,
+          "position": 6.571428571428571,
           "ctr": 0
         },
         {
-          "query": "humaneval leaderboard april 2026",
-          "impressions": 7,
+          "query": "ragflow vs fastgpt",
+          "impressions": 3,
           "clicks": 0,
-          "position": 5.428571428571429,
+          "position": 37.666666666666664,
           "ctr": 0
         },
         {
-          "query": "aider polyglot coding benchmark leaderboard 2026",
-          "impressions": 6,
+          "query": "fastgpt vs dify 2026",
+          "impressions": 2,
           "clicks": 0,
-          "position": 7.333333333333333,
+          "position": 6,
           "ctr": 0
         },
         {
-          "query": "aider polyglot benchmark leaderboard coding models 2026",
-          "impressions": 5,
+          "query": "fastgpt vs ragflow",
+          "impressions": 2,
           "clicks": 0,
-          "position": 7.8,
+          "position": 10,
           "ctr": 0
         },
         {
-          "query": "aider polyglot leaderboard 2026 coding models",
-          "impressions": 5,
+          "query": "dify vs fastgpt comparison",
+          "impressions": 1,
           "clicks": 0,
-          "position": 7.6,
+          "position": 8,
+          "ctr": 0
+        },
+        {
+          "query": "maxkb vs dify",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 26,
           "ctr": 0
         }
       ]
@@ -254,110 +245,33 @@
     {
       "page": "/compare/expensify-vs-wave",
       "canonicalUrl": "https://rightaichoice.com/compare/expensify-vs-wave",
-      "currentTitle": "Expensify vs Wave — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": null,
       "bucket": "1B",
-      "weightedPosition": 17.17,
-      "totalImpressions": 64,
+      "section": "compare",
+      "weightedPosition": 19.75,
+      "totalImpressions": 71,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 42.6,
+      "bindingConstraint": "mixed",
       "topQuery": {
         "query": "expensify vs wave",
-        "impressions": 64,
-        "position": 17.17
+        "impressions": 70,
+        "position": 19.41
       },
       "queries": [
         {
           "query": "expensify vs wave",
-          "impressions": 64,
+          "impressions": 70,
           "clicks": 0,
-          "position": 17.171875,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/stripe-radar",
-      "canonicalUrl": "https://rightaichoice.com/tools/stripe-radar",
-      "currentTitle": "Stripe Radar: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 26.57,
-      "totalImpressions": 58,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "stripe radar",
-        "impressions": 16,
-        "position": 37.38
-      },
-      "queries": [
-        {
-          "query": "stripe radar",
-          "impressions": 16,
-          "clicks": 0,
-          "position": 37.375,
+          "position": 19.414285714285715,
           "ctr": 0
         },
         {
-          "query": "radar for fraud teams pricing",
-          "impressions": 9,
-          "clicks": 0,
-          "position": 22.555555555555557,
-          "ctr": 0
-        },
-        {
-          "query": "radar for fraud teams",
-          "impressions": 8,
-          "clicks": 0,
-          "position": 26.625,
-          "ctr": 0
-        },
-        {
-          "query": "radar for fraud teams stripe",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 28.2,
-          "ctr": 0
-        },
-        {
-          "query": "stripe radar pricing",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 11.8,
-          "ctr": 0
-        },
-        {
-          "query": "how does stripe radar work",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 30.5,
-          "ctr": 0
-        },
-        {
-          "query": "stripe radar fees",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 19.5,
-          "ctr": 0
-        },
-        {
-          "query": "stripe radar for fraud teams pricing",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 15,
-          "ctr": 0
-        },
-        {
-          "query": "how much does stripe radar cost",
+          "query": "wave vs expensify",
           "impressions": 1,
           "clicks": 0,
-          "position": 9,
-          "ctr": 0
-        },
-        {
-          "query": "is stripe radar free",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 8,
+          "position": 43,
           "ctr": 0
         }
       ]
@@ -365,30 +279,26 @@
     {
       "page": "/blog/how-much-do-ai-coding-assistants-cost-2026-real-usage-math",
       "canonicalUrl": "https://rightaichoice.com/blog/how-much-do-ai-coding-assistants-cost-2026-real-usage-math",
-      "currentTitle": "How Much Do AI Coding Assistants Really Cost in 2026? The Real-Usage Math | RightAIChoice",
+      "currentTitle": "AI Coding Assistant Pricing 2026: Real Cost Per Dev | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 7.91,
-      "totalImpressions": 56,
+      "section": "blog",
+      "weightedPosition": 7.79,
+      "totalImpressions": 38,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 34.2,
+      "bindingConstraint": "title",
       "topQuery": {
         "query": "aider pricing 2026",
-        "impressions": 19,
-        "position": 7
+        "impressions": 13,
+        "position": 7.62
       },
       "queries": [
         {
           "query": "aider pricing 2026",
-          "impressions": 19,
+          "impressions": 13,
           "clicks": 0,
-          "position": 7,
-          "ctr": 0
-        },
-        {
-          "query": "ai coding assistant pricing 2026",
-          "impressions": 7,
-          "clicks": 0,
-          "position": 8,
+          "position": 7.615384615384615,
           "ctr": 0
         },
         {
@@ -399,10 +309,10 @@
           "ctr": 0
         },
         {
-          "query": "aider ai coding agent pricing 2026",
-          "impressions": 7,
+          "query": "ai coding assistant pricing 2026",
+          "impressions": 6,
           "clicks": 0,
-          "position": 8,
+          "position": 7.666666666666667,
           "ctr": 0
         },
         {
@@ -427,17 +337,10 @@
           "ctr": 0
         },
         {
-          "query": "ai coding assistant pricing",
+          "query": "aider ai coding agent pricing 2026",
           "impressions": 1,
           "clicks": 0,
-          "position": 21,
-          "ctr": 0
-        },
-        {
-          "query": "aider ai coding assistant pricing 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
+          "position": 11,
           "ctr": 0
         },
         {
@@ -446,78 +349,19 @@
           "clicks": 0,
           "position": 11,
           "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/dify-vs-langflow-vs-fastgpt",
-      "canonicalUrl": "https://rightaichoice.com/compare/dify-vs-langflow-vs-fastgpt",
-      "currentTitle": "Dify vs Langflow vs FastGPT — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 9.22,
-      "totalImpressions": 51,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "fastgpt vs dify",
-        "impressions": 31,
-        "position": 5.71
-      },
-      "queries": [
-        {
-          "query": "fastgpt vs dify",
-          "impressions": 31,
-          "clicks": 0,
-          "position": 5.709677419354839,
-          "ctr": 0
         },
         {
-          "query": "fastgpt vs dify comparison",
-          "impressions": 7,
-          "clicks": 0,
-          "position": 6.571428571428571,
-          "ctr": 0
-        },
-        {
-          "query": "ragflow vs fastgpt",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 32.6,
-          "ctr": 0
-        },
-        {
-          "query": "dify vs fastgpt comparison",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 6.5,
-          "ctr": 0
-        },
-        {
-          "query": "fastgpt vs dify 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 6,
-          "ctr": 0
-        },
-        {
-          "query": "fastgpt vs ragflow",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "fastgpt pricing",
+          "query": "aider ai pricing or cost 2026",
           "impressions": 1,
           "clicks": 0,
-          "position": 13,
+          "position": 9,
           "ctr": 0
         },
         {
-          "query": "maxkb vs dify",
+          "query": "aider coding agent features pricing 2026",
           "impressions": 1,
           "clicks": 0,
-          "position": 26,
+          "position": 8,
           "ctr": 0
         }
       ]
@@ -525,12 +369,15 @@
     {
       "page": "/blog/open-source-ai-coding-agents-2026-self-hosting-guide",
       "canonicalUrl": "https://rightaichoice.com/blog/open-source-ai-coding-agents-2026-self-hosting-guide",
-      "currentTitle": "Open-Source AI Coding Agents in 2026: The Self-Hosting Guide (Cline, Aider, Continue, OpenHands) | RightAIChoice",
+      "currentTitle": "Run AI Coding Agents Locally: Open-Source Guide 2026 | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 7.55,
-      "totalImpressions": 42,
+      "section": "blog",
+      "weightedPosition": 7.86,
+      "totalImpressions": 36,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 32.4,
+      "bindingConstraint": "title",
       "topQuery": {
         "query": "openhands local llm coding agent documentation 2026",
         "impressions": 13,
@@ -545,13 +392,6 @@
           "ctr": 0
         },
         {
-          "query": "openhands open source coding agent 2026",
-          "impressions": 6,
-          "clicks": 0,
-          "position": 8.666666666666668,
-          "ctr": 0
-        },
-        {
           "query": "openhands ai coding agent official docs 2026",
           "impressions": 5,
           "clicks": 0,
@@ -559,24 +399,17 @@
           "ctr": 0
         },
         {
+          "query": "openhands open source coding agent 2026",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 8.5,
+          "ctr": 0
+        },
+        {
           "query": "cursor ide agent plugin cline deepseek 2026",
           "impressions": 3,
           "clicks": 0,
           "position": 11.333333333333334,
-          "ctr": 0
-        },
-        {
-          "query": "cline ai coding agent local ollama 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 6,
-          "ctr": 0
-        },
-        {
-          "query": "cline ai coding agent ollama setup 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 2,
           "ctr": 0
         },
         {
@@ -606,36 +439,198 @@
           "clicks": 0,
           "position": 10,
           "ctr": 0
+        },
+        {
+          "query": "cline sandbox",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 1,
+          "ctr": 0
+        },
+        {
+          "query": "openhands ai software development agent documentation 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/veedio",
-      "canonicalUrl": "https://rightaichoice.com/tools/veedio",
-      "currentTitle": "VEED.IO: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 21.29,
-      "totalImpressions": 42,
+      "page": "/blog/ai-coding-assistant-leaderboard-swe-bench-humaneval-2026",
+      "canonicalUrl": "https://rightaichoice.com/blog/ai-coding-assistant-leaderboard-swe-bench-humaneval-2026",
+      "currentTitle": "AI Coding Leaderboard: SWE-bench &amp; HumanEval 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "blog",
+      "weightedPosition": 5.77,
+      "totalImpressions": 35,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 31.5,
+      "bindingConstraint": "title",
       "topQuery": {
-        "query": "veedio",
-        "impressions": 41,
-        "position": 20.05
+        "query": "aider polyglot leaderboard april 2026",
+        "impressions": 9,
+        "position": 3.22
       },
       "queries": [
         {
-          "query": "veedio",
-          "impressions": 41,
+          "query": "aider polyglot leaderboard april 2026",
+          "impressions": 9,
           "clicks": 0,
-          "position": 20.048780487804876,
+          "position": 3.2222222222222223,
           "ctr": 0
         },
         {
-          "query": "veed. io",
+          "query": "aider polyglot benchmark leaderboard 2026",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 3.5,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot benchmark 2026",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 5.666666666666667,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot leaderboard 2026",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 6.666666666666667,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot benchmark leaderboard ai coding models 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 7,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot coding benchmark leaderboard 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 4,
+          "ctr": 0
+        },
+        {
+          "query": "best coding ai model april 2026 leaderboard swe-bench humaneval",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 10.5,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot benchmark leaderboard 2026 coding models",
           "impressions": 1,
           "clicks": 0,
-          "position": 72,
+          "position": 12,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot benchmark leaderboard coding models 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        },
+        {
+          "query": "aider polyglot leaderboard 2026 coding models",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 6,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/clay-vs-phantombuster",
+      "canonicalUrl": "https://rightaichoice.com/compare/clay-vs-phantombuster",
+      "currentTitle": "Is Clay Better Than PhantomBuster? (2026) | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 6.47,
+      "totalImpressions": 30,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 30,
+      "bindingConstraint": "title",
+      "topQuery": {
+        "query": "“is phantombuster safe to use on linkedin?”",
+        "impressions": 27,
+        "position": 5.85
+      },
+      "queries": [
+        {
+          "query": "“is phantombuster safe to use on linkedin?”",
+          "impressions": 27,
+          "clicks": 0,
+          "position": 5.851851851851852,
+          "ctr": 0
+        },
+        {
+          "query": "is clay better than phantombuster",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/moises-vs-suno",
+      "canonicalUrl": "https://rightaichoice.com/compare/moises-vs-suno",
+      "currentTitle": "Moises vs Suno: Which AI Music Tool Wins? | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 8.59,
+      "totalImpressions": 27,
+      "totalClicks": 1,
+      "avgCtr": 0.037,
+      "priority": 27,
+      "bindingConstraint": "title",
+      "topQuery": {
+        "query": "moises vs suno",
+        "impressions": 9,
+        "position": 9.33
+      },
+      "queries": [
+        {
+          "query": "moises vs suno",
+          "impressions": 9,
+          "clicks": 0,
+          "position": 9.333333333333334,
+          "ctr": 0
+        },
+        {
+          "query": "suno vs moises",
+          "impressions": 8,
+          "clicks": 0,
+          "position": 8.875,
+          "ctr": 0
+        },
+        {
+          "query": "suno studio vs moises ai studio",
+          "impressions": 7,
+          "clicks": 1,
+          "position": 7.571428571428571,
+          "ctr": 0.14285714285714285
+        },
+        {
+          "query": "moises ai studio vs suno studio",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 7,
+          "ctr": 0
+        },
+        {
+          "query": "moises ai vs suno",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
           "ctr": 0
         }
       ]
@@ -643,30 +638,33 @@
     {
       "page": "/compare/cline-vs-aider-vs-continue",
       "canonicalUrl": "https://rightaichoice.com/compare/cline-vs-aider-vs-continue",
-      "currentTitle": "Cline vs Aider vs Continue — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19.08,
-      "totalImpressions": 39,
-      "totalClicks": 4,
-      "avgCtr": 0.1026,
+      "currentTitle": "Continue vs Cline vs Aider: 2026 Comparison | RightAIChoice",
+      "bucket": "1C",
+      "section": "compare",
+      "weightedPosition": 21.05,
+      "totalImpressions": 37,
+      "totalClicks": 3,
+      "avgCtr": 0.0811,
+      "priority": 11.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "continue vs cline",
-        "impressions": 10,
-        "position": 15
+        "impressions": 9,
+        "position": 21.11
       },
       "queries": [
         {
           "query": "continue vs cline",
-          "impressions": 10,
-          "clicks": 2,
-          "position": 15,
-          "ctr": 0.2
+          "impressions": 9,
+          "clicks": 1,
+          "position": 21.11111111111111,
+          "ctr": 0.1111111111111111
         },
         {
           "query": "cline vs continue",
-          "impressions": 7,
+          "impressions": 6,
           "clicks": 0,
-          "position": 19.857142857142858,
+          "position": 22.833333333333332,
           "ctr": 0
         },
         {
@@ -728,14 +726,305 @@
       ]
     },
     {
-      "page": "/tools/autodesk-forma",
-      "canonicalUrl": "https://rightaichoice.com/tools/autodesk-forma",
-      "currentTitle": "Autodesk Forma: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 12.11,
-      "totalImpressions": 28,
+      "page": "/compare/alphasense-vs-claude",
+      "canonicalUrl": "https://rightaichoice.com/compare/alphasense-vs-claude",
+      "currentTitle": "AlphaSense vs Claude: Which Wins? (2026) | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 3.82,
+      "totalImpressions": 11,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 11,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "alphasense vs claude",
+        "impressions": 8,
+        "position": 1.88
+      },
+      "queries": [
+        {
+          "query": "alphasense vs claude",
+          "impressions": 8,
+          "clicks": 0,
+          "position": 1.875,
+          "ctr": 0
+        },
+        {
+          "query": "alphasense claude",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 10.5,
+          "ctr": 0
+        },
+        {
+          "query": "claude alphasense",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 6,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/motiff",
+      "canonicalUrl": "https://rightaichoice.com/tools/motiff",
+      "currentTitle": "Motiff Discontinued June 2026? Official News | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 6.95,
+      "totalImpressions": 21,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 7.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "motiff discontinued june 23 2026 official",
+        "impressions": 21,
+        "position": 6.95
+      },
+      "queries": [
+        {
+          "query": "motiff discontinued june 23 2026 official",
+          "impressions": 21,
+          "clicks": 0,
+          "position": 6.9523809523809526,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/parspec",
+      "canonicalUrl": "https://rightaichoice.com/tools/parspec",
+      "currentTitle": "Parspec ERP Integrations: Eclipse, Prophet 21, SAP | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 11.54,
+      "totalImpressions": 35,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 7.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "parspec erp integrations eclipse prophet 21 sap",
+        "impressions": 22,
+        "position": 2.95
+      },
+      "queries": [
+        {
+          "query": "parspec erp integrations eclipse prophet 21 sap",
+          "impressions": 22,
+          "clicks": 0,
+          "position": 2.9545454545454546,
+          "ctr": 0
+        },
+        {
+          "query": "parspec integrations erp eclipse prophet 21 sap",
+          "impressions": 7,
+          "clicks": 0,
+          "position": 8.285714285714285,
+          "ctr": 0
+        },
+        {
+          "query": "parspec",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 57.75,
+          "ctr": 0
+        },
+        {
+          "query": "parspec cost",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 42,
+          "ctr": 0
+        },
+        {
+          "query": "parspec erp integrations",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/lindy-vs-superhuman",
+      "canonicalUrl": "https://rightaichoice.com/compare/lindy-vs-superhuman",
+      "currentTitle": "Lindy vs Superhuman for Email Management (2026) | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 8.71,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 7,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "lindy vs superhuman for email",
+        "impressions": 5,
+        "position": 7.4
+      },
+      "queries": [
+        {
+          "query": "lindy vs superhuman for email",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 7.4,
+          "ctr": 0
+        },
+        {
+          "query": "i'm getting overwhelmed with email and need an ai assistant that can draft responses and manage my inbox. is lindy the right fit for this, and how does it compare to superhuman in terms of learning my communication style?",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        },
+        {
+          "query": "lindy vs superhuman for email management",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/speak-vs-talkpal",
+      "canonicalUrl": "https://rightaichoice.com/compare/speak-vs-talkpal",
+      "currentTitle": "Speak vs TalkPal: Which App Wins in 2026? | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 8.14,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 7,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "talkpal vs speak",
+        "impressions": 4,
+        "position": 8.25
+      },
+      "queries": [
+        {
+          "query": "talkpal vs speak",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 8.25,
+          "ctr": 0
+        },
+        {
+          "query": "speak vs talkpal",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/stripe-radar",
+      "canonicalUrl": "https://rightaichoice.com/tools/stripe-radar",
+      "currentTitle": "Stripe Radar Pricing &amp; Alternatives 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 26.15,
+      "totalImpressions": 66,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 6.9,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "stripe radar",
+        "impressions": 19,
+        "position": 35.21
+      },
+      "queries": [
+        {
+          "query": "stripe radar",
+          "impressions": 19,
+          "clicks": 0,
+          "position": 35.21052631578947,
+          "ctr": 0
+        },
+        {
+          "query": "radar for fraud teams pricing",
+          "impressions": 11,
+          "clicks": 0,
+          "position": 23.545454545454547,
+          "ctr": 0
+        },
+        {
+          "query": "radar for fraud teams",
+          "impressions": 10,
+          "clicks": 0,
+          "position": 26.5,
+          "ctr": 0
+        },
+        {
+          "query": "radar for fraud teams stripe",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 28.2,
+          "ctr": 0
+        },
+        {
+          "query": "stripe radar pricing",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 11.8,
+          "ctr": 0
+        },
+        {
+          "query": "how does stripe radar work",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 30.5,
+          "ctr": 0
+        },
+        {
+          "query": "is stripe radar free",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 7,
+          "ctr": 0
+        },
+        {
+          "query": "stripe radar fees",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 19.5,
+          "ctr": 0
+        },
+        {
+          "query": "stripe radar for fraud teams pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 15,
+          "ctr": 0
+        },
+        {
+          "query": "how much does stripe radar cost",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/autodesk-forma",
+      "canonicalUrl": "https://rightaichoice.com/tools/autodesk-forma",
+      "currentTitle": "Autodesk Forma Pricing 2026: Cost, Plans &amp; Pros/Cons | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 12.12,
+      "totalImpressions": 26,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 5.5,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "autodesk forma features pricing pros cons",
         "impressions": 11,
@@ -792,13 +1081,6 @@
           "ctr": 0
         },
         {
-          "query": "forma data management cost pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 15,
-          "ctr": 0
-        },
-        {
           "query": "forma data management features pricing",
           "impressions": 1,
           "clicks": 0,
@@ -811,504 +1093,12 @@
           "clicks": 0,
           "position": 13,
           "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/clay-vs-phantombuster",
-      "canonicalUrl": "https://rightaichoice.com/compare/clay-vs-phantombuster",
-      "currentTitle": "Clay vs PhantomBuster — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 6.58,
-      "totalImpressions": 24,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "“is phantombuster safe to use on linkedin?”",
-        "impressions": 21,
-        "position": 5.81
-      },
-      "queries": [
-        {
-          "query": "“is phantombuster safe to use on linkedin?”",
-          "impressions": 21,
-          "clicks": 0,
-          "position": 5.809523809523809,
-          "ctr": 0
         },
         {
-          "query": "is clay better than phantombuster",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/tavus",
-      "canonicalUrl": "https://rightaichoice.com/tools/tavus",
-      "currentTitle": "Tavus: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 24.08,
-      "totalImpressions": 24,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "tavus api",
-        "impressions": 17,
-        "position": 24.24
-      },
-      "queries": [
-        {
-          "query": "tavus api",
-          "impressions": 17,
-          "clicks": 0,
-          "position": 24.235294117647058,
-          "ctr": 0
-        },
-        {
-          "query": "tavus platform integration",
-          "impressions": 7,
-          "clicks": 0,
-          "position": 23.714285714285715,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/freshbooks",
-      "canonicalUrl": "https://rightaichoice.com/tools/freshbooks",
-      "currentTitle": "FreshBooks: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 25.22,
-      "totalImpressions": 23,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "freshbooks buy now pay later bnpl",
-        "impressions": 19,
-        "position": 18.11
-      },
-      "queries": [
-        {
-          "query": "freshbooks buy now pay later bnpl",
-          "impressions": 19,
-          "clicks": 0,
-          "position": 18.105263157894736,
-          "ctr": 0
-        },
-        {
-          "query": "freshbooks europe",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 59,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/moises-vs-suno",
-      "canonicalUrl": "https://rightaichoice.com/compare/moises-vs-suno",
-      "currentTitle": "Moises vs Suno — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 8.57,
-      "totalImpressions": 21,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "moises vs suno",
-        "impressions": 7,
-        "position": 9.29
-      },
-      "queries": [
-        {
-          "query": "moises vs suno",
-          "impressions": 7,
-          "clicks": 0,
-          "position": 9.285714285714286,
-          "ctr": 0
-        },
-        {
-          "query": "suno studio vs moises ai studio",
-          "impressions": 6,
-          "clicks": 0,
-          "position": 7.833333333333333,
-          "ctr": 0
-        },
-        {
-          "query": "suno vs moises",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 8.8,
-          "ctr": 0
-        },
-        {
-          "query": "moises ai studio vs suno studio",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 7,
-          "ctr": 0
-        },
-        {
-          "query": "moises ai vs suno",
+          "query": "forma for buildings cost",
           "impressions": 1,
           "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/procurement-sciences-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/procurement-sciences-ai",
-      "currentTitle": "Procurement Sciences AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19.19,
-      "totalImpressions": 21,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "procurementsciences rfp automation",
-        "impressions": 12,
-        "position": 14.58
-      },
-      "queries": [
-        {
-          "query": "procurementsciences rfp automation",
-          "impressions": 12,
-          "clicks": 0,
-          "position": 14.583333333333334,
-          "ctr": 0
-        },
-        {
-          "query": "procurement sciences",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 46.666666666666664,
-          "ctr": 0
-        },
-        {
-          "query": "procurementsciences proposal writing company",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        },
-        {
-          "query": "evaluate the proposal writing company procurementsciences on bid management software",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 11,
-          "ctr": 0
-        },
-        {
-          "query": "procurement sciences ai g2 reviews rating",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "procurement sciences pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 7,
-          "ctr": 0
-        },
-        {
-          "query": "procurementsciences capture management software",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/epidemic-sound",
-      "canonicalUrl": "https://rightaichoice.com/tools/epidemic-sound",
-      "currentTitle": "Epidemic Sound: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 23.85,
-      "totalImpressions": 20,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "is epidemic sound still worth it?",
-        "impressions": 16,
-        "position": 25.44
-      },
-      "queries": [
-        {
-          "query": "is epidemic sound still worth it?",
-          "impressions": 16,
-          "clicks": 0,
-          "position": 25.4375,
-          "ctr": 0
-        },
-        {
-          "query": "epidemic sound plans for youtube creators pricing coverage",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 16.666666666666664,
-          "ctr": 0
-        },
-        {
-          "query": "epidemic sound vs pond5 for youtube music licensing comparison",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/qoves",
-      "canonicalUrl": "https://rightaichoice.com/tools/qoves",
-      "currentTitle": "QOVES: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 20.47,
-      "totalImpressions": 19,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "qoves price",
-        "impressions": 8,
-        "position": 17.13
-      },
-      "queries": [
-        {
-          "query": "qoves price",
-          "impressions": 8,
-          "clicks": 0,
-          "position": 17.125,
-          "ctr": 0
-        },
-        {
-          "query": "qoves cheaper alternative",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 8,
-          "ctr": 0
-        },
-        {
-          "query": "apps like qoves",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 19,
-          "ctr": 0
-        },
-        {
-          "query": "is qoves free",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 55,
-          "ctr": 0
-        },
-        {
-          "query": "is qoves worth it?",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 26,
-          "ctr": 0
-        },
-        {
-          "query": "qoves alternative",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 27,
-          "ctr": 0
-        },
-        {
-          "query": "qoves alternatives",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        },
-        {
-          "query": "qoves review",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 43,
-          "ctr": 0
-        },
-        {
-          "query": "qoves reviews",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 38,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/stable-audio",
-      "canonicalUrl": "https://rightaichoice.com/tools/stable-audio",
-      "currentTitle": "Stable Audio: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 26.68,
-      "totalImpressions": 19,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "stable audio",
-        "impressions": 4,
-        "position": 76.75
-      },
-      "queries": [
-        {
-          "query": "stable audio",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 76.75,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio pricing commercial use official 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio pricing free plan 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 8,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio pricing plans 2026",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio 2",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 79,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio free plan 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio free plan 2026 official",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio official pricing 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 6,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio pricing 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 3,
-          "ctr": 0
-        },
-        {
-          "query": "stable audio pricing commercial use 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/parspec",
-      "canonicalUrl": "https://rightaichoice.com/tools/parspec",
-      "currentTitle": "Parspec: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 16.18,
-      "totalImpressions": 17,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "parspec erp integrations eclipse prophet 21 sap",
-        "impressions": 9,
-        "position": 3
-      },
-      "queries": [
-        {
-          "query": "parspec erp integrations eclipse prophet 21 sap",
-          "impressions": 9,
-          "clicks": 0,
-          "position": 3,
-          "ctr": 0
-        },
-        {
-          "query": "parspec integrations erp eclipse prophet 21 sap",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 7.5,
-          "ctr": 0
-        },
-        {
-          "query": "parspec",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 58.666666666666664,
-          "ctr": 0
-        },
-        {
-          "query": "parspec cost",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 42,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/stagehq-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/stagehq-ai",
-      "currentTitle": "StageHQ AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 22.24,
-      "totalImpressions": 17,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "stagehq ai",
-        "impressions": 12,
-        "position": 7.58
-      },
-      "queries": [
-        {
-          "query": "stagehq ai",
-          "impressions": 12,
-          "clicks": 0,
-          "position": 7.583333333333333,
-          "ctr": 0
-        },
-        {
-          "query": "stage ai",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 90,
-          "ctr": 0
-        },
-        {
-          "query": "stagehq",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 8.5,
+          "position": 16,
           "ctr": 0
         }
       ]
@@ -1316,12 +1106,15 @@
     {
       "page": "/compare/glean-vs-moveworks",
       "canonicalUrl": "https://rightaichoice.com/compare/glean-vs-moveworks",
-      "currentTitle": "Glean vs Moveworks — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "Moveworks vs Glean: Which AI Wins? (2026) | RightAIChoice",
       "bucket": "1C",
-      "weightedPosition": 26.56,
-      "totalImpressions": 16,
+      "section": "compare",
+      "weightedPosition": 26.35,
+      "totalImpressions": 17,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 5.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "moveworks vs glean",
         "impressions": 10,
@@ -1344,9 +1137,9 @@
         },
         {
           "query": "glean vs moveworks​",
-          "impressions": 1,
+          "impressions": 2,
           "clicks": 0,
-          "position": 22,
+          "position": 22.5,
           "ctr": 0
         },
         {
@@ -1359,25 +1152,89 @@
       ]
     },
     {
-      "page": "/compare/duolingo-vs-speak",
-      "canonicalUrl": "https://rightaichoice.com/compare/duolingo-vs-speak",
-      "currentTitle": "Duolingo vs Speak — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 23,
-      "totalImpressions": 15,
+      "page": "/compare/ivo-vs-spellbook",
+      "canonicalUrl": "https://rightaichoice.com/compare/ivo-vs-spellbook",
+      "currentTitle": "Spellbook vs Ivo: Which AI Drafts Better? | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 6,
+      "totalImpressions": 5,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 5,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "spellbook vs ivo",
+        "impressions": 5,
+        "position": 6
+      },
+      "queries": [
+        {
+          "query": "spellbook vs ivo",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 6,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/veedio",
+      "canonicalUrl": "https://rightaichoice.com/tools/veedio",
+      "currentTitle": "VEED.IO: Pricing, Features &amp; Alternatives | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 21.77,
+      "totalImpressions": 48,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 5,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "veedio",
+        "impressions": 47,
+        "position": 20.7
+      },
+      "queries": [
+        {
+          "query": "veedio",
+          "impressions": 47,
+          "clicks": 0,
+          "position": 20.70212765957447,
+          "ctr": 0
+        },
+        {
+          "query": "veed. io",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 72,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/duolingo-vs-speak",
+      "canonicalUrl": "https://rightaichoice.com/compare/duolingo-vs-speak",
+      "currentTitle": "Duolingo vs Speak: Which App Wins in 2026? | RightAIChoice",
+      "bucket": "1C",
+      "section": "compare",
+      "weightedPosition": 25,
+      "totalImpressions": 16,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 4.8,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "duolingo vs speak",
-        "impressions": 11,
-        "position": 15.55
+        "impressions": 12,
+        "position": 18.83
       },
       "queries": [
         {
           "query": "duolingo vs speak",
-          "impressions": 11,
+          "impressions": 12,
           "clicks": 0,
-          "position": 15.545454545454545,
+          "position": 18.833333333333332,
           "ctr": 0
         },
         {
@@ -1397,14 +1254,126 @@
       ]
     },
     {
+      "page": "/tools/tavus",
+      "canonicalUrl": "https://rightaichoice.com/tools/tavus",
+      "currentTitle": "Tavus API: Pricing &amp; Integration Guide 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 24.11,
+      "totalImpressions": 44,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 4.6,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "tavus api",
+        "impressions": 28,
+        "position": 24
+      },
+      "queries": [
+        {
+          "query": "tavus api",
+          "impressions": 28,
+          "clicks": 0,
+          "position": 24,
+          "ctr": 0
+        },
+        {
+          "query": "tavus platform integration",
+          "impressions": 16,
+          "clicks": 0,
+          "position": 24.3125,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/kagi-vs-perplexity",
+      "canonicalUrl": "https://rightaichoice.com/compare/kagi-vs-perplexity",
+      "currentTitle": "Kagi vs Perplexity: Which AI Assistant Wins? (2026) | RightAIChoice",
+      "bucket": "1B",
+      "section": "compare",
+      "weightedPosition": 14.57,
+      "totalImpressions": 7,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 4.2,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "kagi assistant vs perplexity",
+        "impressions": 5,
+        "position": 10.2
+      },
+      "queries": [
+        {
+          "query": "kagi assistant vs perplexity",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 10.2,
+          "ctr": 0
+        },
+        {
+          "query": "kagi vs perplexity",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 25.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/socket-dev",
+      "canonicalUrl": "https://rightaichoice.com/tools/socket-dev",
+      "currentTitle": "Socket.dev Pricing 2026: Plans &amp; Cost | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 12.47,
+      "totalImpressions": 19,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 4,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "socket.dev pricing",
+        "impressions": 15,
+        "position": 8.2
+      },
+      "queries": [
+        {
+          "query": "socket.dev pricing",
+          "impressions": 15,
+          "clicks": 0,
+          "position": 8.2,
+          "ctr": 0
+        },
+        {
+          "query": "socket dev",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 35,
+          "ctr": 0
+        },
+        {
+          "query": "what is socket.dev",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
       "page": "/tools/assemblyai",
       "canonicalUrl": "https://rightaichoice.com/tools/assemblyai",
-      "currentTitle": "AssemblyAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "AssemblyAI Pricing: Speech-to-Text &amp; Diarization | RightAIChoice",
       "bucket": "1B",
+      "section": "tools",
       "weightedPosition": 10.33,
       "totalImpressions": 15,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 3.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "assemblyai pricing speech-to-text official",
         "impressions": 3,
@@ -1484,14 +1453,1052 @@
       ]
     },
     {
-      "page": "/tools/cometapi",
-      "canonicalUrl": "https://rightaichoice.com/tools/cometapi",
-      "currentTitle": "CometAPI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/fontjoy",
+      "canonicalUrl": "https://rightaichoice.com/tools/fontjoy",
+      "currentTitle": "Fontjoy: Founder &amp; Co-Founder Explained | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 16.8,
+      "totalImpressions": 15,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 3.1,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "\"fontjoy\" founder or co-founder or cofounder",
+        "impressions": 8,
+        "position": 7.13
+      },
+      "queries": [
+        {
+          "query": "\"fontjoy\" founder or co-founder or cofounder",
+          "impressions": 8,
+          "clicks": 0,
+          "position": 7.125,
+          "ctr": 0
+        },
+        {
+          "query": "\"fontjoy\" founder or co-founder",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 7.8,
+          "ctr": 0
+        },
+        {
+          "query": "font joy",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 86,
+          "ctr": 0
+        },
+        {
+          "query": "fontjoy",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 70,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/stable-audio",
+      "canonicalUrl": "https://rightaichoice.com/tools/stable-audio",
+      "currentTitle": "Stable Audio Pricing 2026: Free Plan &amp; Costs | RightAIChoice",
       "bucket": "1C",
-      "weightedPosition": 22,
+      "section": "tools",
+      "weightedPosition": 29.67,
+      "totalImpressions": 30,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 3.1,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "stable audio",
+        "impressions": 6,
+        "position": 78.5
+      },
+      "queries": [
+        {
+          "query": "stable audio",
+          "impressions": 6,
+          "clicks": 0,
+          "position": 78.5,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing official 2026",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 8.333333333333332,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing commercial use official 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing free plan 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing free plan 2026 official",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9.5,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing plans 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio pricing plans official 2026",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9.5,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio 2",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 79,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio 2.0",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 80,
+          "ctr": 0
+        },
+        {
+          "query": "stable audio ai",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 75,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/fathom-vs-tldv",
+      "canonicalUrl": "https://rightaichoice.com/compare/fathom-vs-tldv",
+      "currentTitle": "Fathom vs tl;dv: Which is Best in 2026? | RightAIChoice",
+      "bucket": "1C",
+      "section": "compare",
+      "weightedPosition": 27.7,
+      "totalImpressions": 10,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "tldv vs fathom",
+        "impressions": 5,
+        "position": 24
+      },
+      "queries": [
+        {
+          "query": "tldv vs fathom",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 24,
+          "ctr": 0
+        },
+        {
+          "query": "fathom vs tldv",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 30.333333333333332,
+          "ctr": 0
+        },
+        {
+          "query": "tl;dv vs fathom",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 33,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/loora-vs-speak",
+      "canonicalUrl": "https://rightaichoice.com/compare/loora-vs-speak",
+      "currentTitle": "Speak vs Loora: Which App Wins in 2026? | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 7.33,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 3,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "speak vs loora",
+        "impressions": 3,
+        "position": 7.33
+      },
+      "queries": [
+        {
+          "query": "speak vs loora",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 7.333333333333333,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/meshy-vs-rodin",
+      "canonicalUrl": "https://rightaichoice.com/compare/meshy-vs-rodin",
+      "currentTitle": "Meshy vs Rodin: Which 3D AI Wins in 2026? | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 9.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 3,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "meshy ai vs rodin",
+        "impressions": 1,
+        "position": 5
+      },
+      "queries": [
+        {
+          "query": "meshy ai vs rodin",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 5,
+          "ctr": 0
+        },
+        {
+          "query": "meshy vs rodin",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 16,
+          "ctr": 0
+        },
+        {
+          "query": "rodin vs meshy",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/starwriter-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/starwriter-ai",
+      "currentTitle": "StarWriter AI Pricing, Features &amp; Plans 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 10.21,
       "totalImpressions": 14,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 2.9,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "starwriter",
+        "impressions": 14,
+        "position": 10.21
+      },
+      "queries": [
+        {
+          "query": "starwriter",
+          "impressions": 14,
+          "clicks": 0,
+          "position": 10.214285714285714,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/autosana",
+      "canonicalUrl": "https://rightaichoice.com/tools/autosana",
+      "currentTitle": "Autosana Pricing: Plans &amp; Costs 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 9,
+      "totalImpressions": 8,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.8,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "autosana pricing",
+        "impressions": 8,
+        "position": 9
+      },
+      "queries": [
+        {
+          "query": "autosana pricing",
+          "impressions": 8,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/qoves",
+      "canonicalUrl": "https://rightaichoice.com/tools/qoves",
+      "currentTitle": "Is QOVES Worth It? 2026 Pricing &amp; Review | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 24.08,
+      "totalImpressions": 25,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.6,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "qoves price",
+        "impressions": 8,
+        "position": 17.13
+      },
+      "queries": [
+        {
+          "query": "qoves price",
+          "impressions": 8,
+          "clicks": 0,
+          "position": 17.125,
+          "ctr": 0
+        },
+        {
+          "query": "qoves cheaper alternative",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        },
+        {
+          "query": "is qoves worth it?",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 28,
+          "ctr": 0
+        },
+        {
+          "query": "qoves cost",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 49.5,
+          "ctr": 0
+        },
+        {
+          "query": "qoves review",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 38,
+          "ctr": 0
+        },
+        {
+          "query": "apps like qoves",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 19,
+          "ctr": 0
+        },
+        {
+          "query": "is qoves free",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 55,
+          "ctr": 0
+        },
+        {
+          "query": "is qoves worth it",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 23,
+          "ctr": 0
+        },
+        {
+          "query": "qoves alternative",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 27,
+          "ctr": 0
+        },
+        {
+          "query": "qoves alternatives",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/epidemic-sound",
+      "canonicalUrl": "https://rightaichoice.com/tools/epidemic-sound",
+      "currentTitle": "Is Epidemic Sound Worth It in 2026? | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 25.35,
+      "totalImpressions": 23,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.4,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "is epidemic sound still worth it?",
+        "impressions": 19,
+        "position": 27
+      },
+      "queries": [
+        {
+          "query": "is epidemic sound still worth it?",
+          "impressions": 19,
+          "clicks": 0,
+          "position": 27,
+          "ctr": 0
+        },
+        {
+          "query": "epidemic sound plans for youtube creators pricing coverage",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 16.666666666666664,
+          "ctr": 0
+        },
+        {
+          "query": "epidemic sound vs pond5 for youtube music licensing comparison",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 20,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/freshbooks",
+      "canonicalUrl": "https://rightaichoice.com/tools/freshbooks",
+      "currentTitle": null,
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 25.22,
+      "totalImpressions": 23,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.4,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "freshbooks buy now pay later bnpl",
+        "impressions": 19,
+        "position": 18.11
+      },
+      "queries": [
+        {
+          "query": "freshbooks buy now pay later bnpl",
+          "impressions": 19,
+          "clicks": 0,
+          "position": 18.105263157894736,
+          "ctr": 0
+        },
+        {
+          "query": "freshbooks europe",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 59,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/gitguardian",
+      "canonicalUrl": "https://rightaichoice.com/tools/gitguardian",
+      "currentTitle": "GitGuardian Pricing &amp; Features 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 25.45,
+      "totalImpressions": 22,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "gitguardian",
+        "impressions": 12,
+        "position": 28.33
+      },
+      "queries": [
+        {
+          "query": "gitguardian",
+          "impressions": 12,
+          "clicks": 0,
+          "position": 28.333333333333332,
+          "ctr": 0
+        },
+        {
+          "query": "gitguardian weaknesses limitations nhi governance vs secrets detection",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 11.5,
+          "ctr": 0
+        },
+        {
+          "query": "is gitguardian free",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 11,
+          "ctr": 0
+        },
+        {
+          "query": "git guardian",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 24,
+          "ctr": 0
+        },
+        {
+          "query": "gitgaurdian",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 34,
+          "ctr": 0
+        },
+        {
+          "query": "gitguardian alternatives",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 24,
+          "ctr": 0
+        },
+        {
+          "query": "gitguardian cost",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 32,
+          "ctr": 0
+        },
+        {
+          "query": "gitguardian gitlab",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 28,
+          "ctr": 0
+        },
+        {
+          "query": "what is gitguardian",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 33,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/procurement-sciences-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/procurement-sciences-ai",
+      "currentTitle": "Procurement Sciences AI: RFP Automation &amp; Pricing | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 20.41,
+      "totalImpressions": 22,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "procurementsciences rfp automation",
+        "impressions": 12,
+        "position": 14.58
+      },
+      "queries": [
+        {
+          "query": "procurementsciences rfp automation",
+          "impressions": 12,
+          "clicks": 0,
+          "position": 14.583333333333334,
+          "ctr": 0
+        },
+        {
+          "query": "procurement sciences",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 46.5,
+          "ctr": 0
+        },
+        {
+          "query": "procurementsciences proposal writing company",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 20,
+          "ctr": 0
+        },
+        {
+          "query": "evaluate the proposal writing company procurementsciences on bid management software",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 11,
+          "ctr": 0
+        },
+        {
+          "query": "procurement sciences ai g2 reviews rating",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        },
+        {
+          "query": "procurement sciences pricing",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 7,
+          "ctr": 0
+        },
+        {
+          "query": "procurementsciences capture management software",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 20,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/kagi",
+      "canonicalUrl": "https://rightaichoice.com/tools/kagi",
+      "currentTitle": "Kagi: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 28.71,
+      "totalImpressions": 21,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "kagi",
+        "impressions": 9,
+        "position": 35.67
+      },
+      "queries": [
+        {
+          "query": "kagi",
+          "impressions": 9,
+          "clicks": 0,
+          "position": 35.666666666666664,
+          "ctr": 0
+        },
+        {
+          "query": "kagi ai",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 16.8,
+          "ctr": 0
+        },
+        {
+          "query": "kagi billing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        },
+        {
+          "query": "kagi family plan",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 11,
+          "ctr": 0
+        },
+        {
+          "query": "kagi payment",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 47,
+          "ctr": 0
+        },
+        {
+          "query": "kagi pricing",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 57,
+          "ctr": 0
+        },
+        {
+          "query": "kagi pricing 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        },
+        {
+          "query": "what is kagi",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 55,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/spiritt",
+      "canonicalUrl": "https://rightaichoice.com/tools/spiritt",
+      "currentTitle": "Founder Review: Spiritt Pricing &amp; Features 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 7.5,
+      "totalImpressions": 6,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2.1,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "\"spiritt\" \"founder\" or \"ceo\" or \"cto\" review",
+        "impressions": 6,
+        "position": 7.5
+      },
+      "queries": [
+        {
+          "query": "\"spiritt\" \"founder\" or \"ceo\" or \"cto\" review",
+          "impressions": 6,
+          "clicks": 0,
+          "position": 7.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/docusign-vs-smallpdf",
+      "canonicalUrl": "https://rightaichoice.com/compare/docusign-vs-smallpdf",
+      "currentTitle": "DocuSign or Smallpdf for Contracts? (2026) | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 9.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "smallpdf vs docusign for signing contracts",
+        "impressions": 2,
+        "position": 9.5
+      },
+      "queries": [
+        {
+          "query": "smallpdf vs docusign for signing contracts",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/ivo-vs-spellbook-legal",
+      "canonicalUrl": "https://rightaichoice.com/compare/ivo-vs-spellbook-legal",
+      "currentTitle": "Spellbook vs Ivo: 2026 Legal AI Showdown | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 9,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "spellbook vs ivo",
+        "impressions": 2,
+        "position": 9
+      },
+      "queries": [
+        {
+          "query": "spellbook vs ivo",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/loora-vs-talkpal",
+      "canonicalUrl": "https://rightaichoice.com/compare/loora-vs-talkpal",
+      "currentTitle": "Loora vs TalkPal: Which Is Better? (2026) | RightAIChoice",
+      "bucket": "1A",
+      "section": "compare",
+      "weightedPosition": 6.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "loora vs talkpal",
+        "impressions": 2,
+        "position": 6.5
+      },
+      "queries": [
+        {
+          "query": "loora vs talkpal",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 6.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/tavily",
+      "canonicalUrl": "https://rightaichoice.com/tools/tavily",
+      "currentTitle": "Tavily Student Plan: Pricing &amp; Features 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 25.05,
+      "totalImpressions": 19,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "tavily student plan",
+        "impressions": 14,
+        "position": 10.64
+      },
+      "queries": [
+        {
+          "query": "tavily student plan",
+          "impressions": 14,
+          "clicks": 0,
+          "position": 10.642857142857142,
+          "ctr": 0
+        },
+        {
+          "query": "tavily pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 69,
+          "ctr": 0
+        },
+        {
+          "query": "what is tavily",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 67.5,
+          "ctr": 0
+        },
+        {
+          "query": "tavily",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 54,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/gitlab-duo",
+      "canonicalUrl": "https://rightaichoice.com/tools/gitlab-duo",
+      "currentTitle": "GitLab Duo Pro &amp; Enterprise Pricing 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 22.72,
+      "totalImpressions": 18,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 1.9,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "gitlab duo pro pricing",
+        "impressions": 4,
+        "position": 11
+      },
+      "queries": [
+        {
+          "query": "gitlab duo pro pricing",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 11,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 30.666666666666668,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo pricing",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 34,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo enterprise pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 30,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo self-hosted pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 10.5,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo enterprise pricing official 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo pricing official 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        },
+        {
+          "query": "gitlab duo vs github copilot",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 51,
+          "ctr": 0
+        },
+        {
+          "query": "is gitlab duo free",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 17,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/sightsai",
+      "canonicalUrl": "https://rightaichoice.com/tools/sightsai",
+      "currentTitle": "SightsAI Pricing &amp; Features (2026) | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 16.11,
+      "totalImpressions": 9,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 1.9,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "sightsai",
+        "impressions": 9,
+        "position": 16.11
+      },
+      "queries": [
+        {
+          "query": "sightsai",
+          "impressions": 9,
+          "clicks": 0,
+          "position": 16.11111111111111,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/stagehq-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/stagehq-ai",
+      "currentTitle": "StageHQ AI Pricing &amp; Features in 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 26.28,
+      "totalImpressions": 18,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 1.9,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "stagehq ai",
+        "impressions": 12,
+        "position": 7.58
+      },
+      "queries": [
+        {
+          "query": "stagehq ai",
+          "impressions": 12,
+          "clicks": 0,
+          "position": 7.583333333333333,
+          "ctr": 0
+        },
+        {
+          "query": "stage ai",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 91.25,
+          "ctr": 0
+        },
+        {
+          "query": "stagehq",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 8.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/blog/best-ai-coding-assistant-for-data-scientists-2026",
+      "canonicalUrl": "https://rightaichoice.com/blog/best-ai-coding-assistant-for-data-scientists-2026",
+      "currentTitle": "Top AI Coding Tools for Data Scientists in 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "blog",
+      "weightedPosition": 11,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 1.6,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "as a data scientist using pandas notebooks inside pycharm, i want a coding assistant that suggests vectorized alternatives to loops and auto-generates edge-case tests. which tools excel at this?",
+        "impressions": 2,
+        "position": 9.5
+      },
+      "queries": [
+        {
+          "query": "as a data scientist using pandas notebooks inside pycharm, i want a coding assistant that suggests vectorized alternatives to loops and auto-generates edge-case tests. which tools excel at this?",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9.5,
+          "ctr": 0
+        },
+        {
+          "query": "best ai code editor for data scientists 2025 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 14,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/cometapi",
+      "canonicalUrl": "https://rightaichoice.com/tools/cometapi",
+      "currentTitle": "CometAPI Pricing &amp; Free Trial 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 22.8,
+      "totalImpressions": 15,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 1.6,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "cometapi free trial",
         "impressions": 3,
@@ -1541,6 +2548,13 @@
           "ctr": 0
         },
         {
+          "query": "cometapi",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 34,
+          "ctr": 0
+        },
+        {
           "query": "how does cometapi billing work",
           "impressions": 1,
           "clicks": 0,
@@ -1550,636 +2564,55 @@
       ]
     },
     {
-      "page": "/tools/gitguardian",
-      "canonicalUrl": "https://rightaichoice.com/tools/gitguardian",
-      "currentTitle": "GitGuardian: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 25.64,
-      "totalImpressions": 14,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "gitguardian",
-        "impressions": 9,
-        "position": 27.89
-      },
-      "queries": [
-        {
-          "query": "gitguardian",
-          "impressions": 9,
-          "clicks": 0,
-          "position": 27.88888888888889,
-          "ctr": 0
-        },
-        {
-          "query": "git guardian",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 24,
-          "ctr": 0
-        },
-        {
-          "query": "gitguardian gitlab",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 28,
-          "ctr": 0
-        },
-        {
-          "query": "gitguardian weaknesses limitations nhi governance vs secrets detection",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 11,
-          "ctr": 0
-        },
-        {
-          "query": "is gitguardian free",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        },
-        {
-          "query": "what is gitguardian",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 33,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/starwriter-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/starwriter-ai",
-      "currentTitle": "StarWriter AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 8.15,
-      "totalImpressions": 13,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "starwriter",
-        "impressions": 13,
-        "position": 8.15
-      },
-      "queries": [
-        {
-          "query": "starwriter",
-          "impressions": 13,
-          "clicks": 0,
-          "position": 8.153846153846153,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/motiff",
-      "canonicalUrl": "https://rightaichoice.com/tools/motiff",
-      "currentTitle": "Motiff: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 6.92,
-      "totalImpressions": 12,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "motiff discontinued june 23 2026 official",
-        "impressions": 12,
-        "position": 6.92
-      },
-      "queries": [
-        {
-          "query": "motiff discontinued june 23 2026 official",
-          "impressions": 12,
-          "clicks": 0,
-          "position": 6.916666666666667,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/socket-dev",
-      "canonicalUrl": "https://rightaichoice.com/tools/socket-dev",
-      "currentTitle": "Socket.dev: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/letterbook",
+      "canonicalUrl": "https://rightaichoice.com/tools/letterbook",
+      "currentTitle": "Letterbook Pricing &amp; Features 2026 | RightAIChoice",
       "bucket": "1B",
-      "weightedPosition": 16.25,
-      "totalImpressions": 12,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "socket.dev pricing",
-        "impressions": 8,
-        "position": 10.13
-      },
-      "queries": [
-        {
-          "query": "socket.dev pricing",
-          "impressions": 8,
-          "clicks": 0,
-          "position": 10.125,
-          "ctr": 0
-        },
-        {
-          "query": "socket dev",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 35,
-          "ctr": 0
-        },
-        {
-          "query": "what is socket.dev",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/tavily",
-      "canonicalUrl": "https://rightaichoice.com/tools/tavily",
-      "currentTitle": "Tavily: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 20.42,
-      "totalImpressions": 12,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "tavily student plan",
-        "impressions": 10,
-        "position": 10.9
-      },
-      "queries": [
-        {
-          "query": "tavily student plan",
-          "impressions": 10,
-          "clicks": 0,
-          "position": 10.9,
-          "ctr": 0
-        },
-        {
-          "query": "tavily pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 68,
-          "ctr": 0
-        },
-        {
-          "query": "what is tavily",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 68,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/alphasense-vs-claude",
-      "canonicalUrl": "https://rightaichoice.com/compare/alphasense-vs-claude",
-      "currentTitle": "AlphaSense vs Claude — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 3.6,
-      "totalImpressions": 10,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "alphasense vs claude",
-        "impressions": 8,
-        "position": 1.88
-      },
-      "queries": [
-        {
-          "query": "alphasense vs claude",
-          "impressions": 8,
-          "clicks": 0,
-          "position": 1.875,
-          "ctr": 0
-        },
-        {
-          "query": "alphasense claude",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 10.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/fontjoy",
-      "canonicalUrl": "https://rightaichoice.com/tools/fontjoy",
-      "currentTitle": "Fontjoy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 23.22,
-      "totalImpressions": 9,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "\"fontjoy\" founder or co-founder",
-        "impressions": 4,
-        "position": 7.75
-      },
-      "queries": [
-        {
-          "query": "\"fontjoy\" founder or co-founder",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 7.75,
-          "ctr": 0
-        },
-        {
-          "query": "\"fontjoy\" founder or co-founder or cofounder",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 7.333333333333333,
-          "ctr": 0
-        },
-        {
-          "query": "font joy",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 86,
-          "ctr": 0
-        },
-        {
-          "query": "fontjoy",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 70,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/gitlab-duo",
-      "canonicalUrl": "https://rightaichoice.com/tools/gitlab-duo",
-      "currentTitle": "GitLab Duo: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19.89,
-      "totalImpressions": 9,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "gitlab duo pro pricing",
-        "impressions": 3,
-        "position": 11
-      },
-      "queries": [
-        {
-          "query": "gitlab duo pro pricing",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 11,
-          "ctr": 0
-        },
-        {
-          "query": "gitlab duo",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 22,
-          "ctr": 0
-        },
-        {
-          "query": "gitlab duo enterprise pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 41,
-          "ctr": 0
-        },
-        {
-          "query": "gitlab duo enterprise pricing official 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        },
-        {
-          "query": "gitlab duo pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 43,
-          "ctr": 0
-        },
-        {
-          "query": "gitlab duo self-hosted pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 11,
-          "ctr": 0
-        },
-        {
-          "query": "is gitlab duo free",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 17,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/fathom-vs-tldv",
-      "canonicalUrl": "https://rightaichoice.com/compare/fathom-vs-tldv",
-      "currentTitle": "Fathom vs tl;dv — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 27.88,
-      "totalImpressions": 8,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "fathom vs tldv",
-        "impressions": 3,
-        "position": 30.33
-      },
-      "queries": [
-        {
-          "query": "fathom vs tldv",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 30.333333333333332,
-          "ctr": 0
-        },
-        {
-          "query": "tldv vs fathom",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 22,
-          "ctr": 0
-        },
-        {
-          "query": "tl;dv vs fathom",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 33,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/kagi-vs-perplexity",
-      "canonicalUrl": "https://rightaichoice.com/compare/kagi-vs-perplexity",
-      "currentTitle": "Kagi vs Perplexity — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 14.57,
+      "section": "tools",
+      "weightedPosition": 13.57,
       "totalImpressions": 7,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 1.5,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "kagi assistant vs perplexity",
-        "impressions": 5,
-        "position": 10.2
-      },
-      "queries": [
-        {
-          "query": "kagi assistant vs perplexity",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 10.2,
-          "ctr": 0
-        },
-        {
-          "query": "kagi vs perplexity",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 25.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/lindy-vs-superhuman",
-      "canonicalUrl": "https://rightaichoice.com/compare/lindy-vs-superhuman",
-      "currentTitle": "Lindy vs Superhuman — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 8.71,
-      "totalImpressions": 7,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "lindy vs superhuman for email",
-        "impressions": 5,
-        "position": 7.4
-      },
-      "queries": [
-        {
-          "query": "lindy vs superhuman for email",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 7.4,
-          "ctr": 0
-        },
-        {
-          "query": "i'm getting overwhelmed with email and need an ai assistant that can draft responses and manage my inbox. is lindy the right fit for this, and how does it compare to superhuman in terms of learning my communication style?",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        },
-        {
-          "query": "lindy vs superhuman for email management",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/autosana",
-      "canonicalUrl": "https://rightaichoice.com/tools/autosana",
-      "currentTitle": "Autosana: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 8.86,
-      "totalImpressions": 7,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "autosana pricing",
+        "query": "letterbook",
         "impressions": 7,
-        "position": 8.86
+        "position": 13.57
       },
       "queries": [
         {
-          "query": "autosana pricing",
+          "query": "letterbook",
           "impressions": 7,
           "clicks": 0,
-          "position": 8.857142857142858,
+          "position": 13.571428571428571,
           "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/curai-health",
-      "canonicalUrl": "https://rightaichoice.com/tools/curai-health",
-      "currentTitle": "Curai Health: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 28.67,
-      "totalImpressions": 6,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "is curai health legit",
-        "impressions": 3,
-        "position": 10.33
-      },
-      "queries": [
-        {
-          "query": "is curai health legit",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 10.333333333333334,
-          "ctr": 0
-        },
-        {
-          "query": "curai",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 58,
-          "ctr": 0
-        },
-        {
-          "query": "curai health reviews",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 39,
-          "ctr": 0
-        },
-        {
-          "query": "cure choice",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 44,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/sightsai",
-      "canonicalUrl": "https://rightaichoice.com/tools/sightsai",
-      "currentTitle": "SightsAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 14.67,
-      "totalImpressions": 6,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "sightsai",
-        "impressions": 6,
-        "position": 14.67
-      },
-      "queries": [
-        {
-          "query": "sightsai",
-          "impressions": 6,
-          "clicks": 0,
-          "position": 14.666666666666666,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/snowseo",
-      "canonicalUrl": "https://rightaichoice.com/tools/snowseo",
-      "currentTitle": "SnowSEO: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 26,
-      "totalImpressions": 6,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "snowseo",
-        "impressions": 5,
-        "position": 23.6
-      },
-      "queries": [
-        {
-          "query": "snowseo",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 23.6,
-          "ctr": 0
-        },
-        {
-          "query": "snow seo",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 38,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/ivo-vs-spellbook",
-      "canonicalUrl": "https://rightaichoice.com/compare/ivo-vs-spellbook",
-      "currentTitle": "Ivo vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
+      "page": "/tools/nanaimage",
+      "canonicalUrl": "https://rightaichoice.com/tools/nanaimage",
+      "currentTitle": "NanaImage: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
       "bucket": "1A",
-      "weightedPosition": 6,
-      "totalImpressions": 5,
+      "section": "tools",
+      "weightedPosition": 6.5,
+      "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 1.4,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "spellbook vs ivo",
-        "impressions": 5,
-        "position": 6
+        "query": "nanaimage",
+        "impressions": 4,
+        "position": 6.5
       },
       "queries": [
         {
-          "query": "spellbook vs ivo",
-          "impressions": 5,
+          "query": "nanaimage",
+          "impressions": 4,
           "clicks": 0,
-          "position": 6,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/speak-vs-talkpal",
-      "canonicalUrl": "https://rightaichoice.com/compare/speak-vs-talkpal",
-      "currentTitle": "Speak vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 7.8,
-      "totalImpressions": 5,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "talkpal vs speak",
-        "impressions": 3,
-        "position": 8.33
-      },
-      "queries": [
-        {
-          "query": "talkpal vs speak",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 8.333333333333332,
-          "ctr": 0
-        },
-        {
-          "query": "speak vs talkpal",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 7,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/semrush-advertising-toolkit",
-      "canonicalUrl": "https://rightaichoice.com/tools/semrush-advertising-toolkit",
-      "currentTitle": "Semrush Advertising Toolkit: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 24.8,
-      "totalImpressions": 5,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "semrush ads tool",
-        "impressions": 5,
-        "position": 24.8
-      },
-      "queries": [
-        {
-          "query": "semrush ads tool",
-          "impressions": 5,
-          "clicks": 0,
-          "position": 24.8,
+          "position": 6.5,
           "ctr": 0
         }
       ]
@@ -2187,12 +2620,15 @@
     {
       "page": "/compare/ambience-vs-ambient",
       "canonicalUrl": "https://rightaichoice.com/compare/ambience-vs-ambient",
-      "currentTitle": "Ambience vs Ambient — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "Ambience vs Ambient: AI Search Comparison 2026 | RightAIChoice",
       "bucket": "1C",
+      "section": "compare",
       "weightedPosition": 28.25,
       "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 1.2,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "ambience personalized search engine",
         "impressions": 3,
@@ -2216,25 +2652,35 @@
       ]
     },
     {
-      "page": "/tools/aidelly",
-      "canonicalUrl": "https://rightaichoice.com/tools/aidelly",
-      "currentTitle": "Aidelly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 29,
-      "totalImpressions": 4,
+      "page": "/compare/capcut-vs-captions",
+      "canonicalUrl": "https://rightaichoice.com/compare/capcut-vs-captions",
+      "currentTitle": "CapCut vs Captions for Reels (2026) | RightAIChoice",
+      "bucket": "1B",
+      "section": "compare",
+      "weightedPosition": 18,
+      "totalImpressions": 2,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 1.2,
+      "bindingConstraint": "mixed",
       "topQuery": {
-        "query": "aidelly",
-        "impressions": 4,
-        "position": 29
+        "query": "capcut auto captions free or pro",
+        "impressions": 1,
+        "position": 20
       },
       "queries": [
         {
-          "query": "aidelly",
-          "impressions": 4,
+          "query": "capcut auto captions free or pro",
+          "impressions": 1,
           "clicks": 0,
-          "position": 29,
+          "position": 20,
+          "ctr": 0
+        },
+        {
+          "query": "capcut vs captions app for instagram reels",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 16,
           "ctr": 0
         }
       ]
@@ -2242,23 +2688,33 @@
     {
       "page": "/tools/bible-chat",
       "canonicalUrl": "https://rightaichoice.com/tools/bible-chat",
-      "currentTitle": "Bible Chat: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Bible Chat Daily Devotional Cost &amp; Free vs Paid | RightAIChoice",
       "bucket": "1C",
-      "weightedPosition": 28.5,
-      "totalImpressions": 4,
+      "section": "tools",
+      "weightedPosition": 25.33,
+      "totalImpressions": 9,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.9,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "bible chat daily devotional cost",
-        "impressions": 3,
-        "position": 12.33
+        "impressions": 7,
+        "position": 12.57
       },
       "queries": [
         {
           "query": "bible chat daily devotional cost",
-          "impressions": 3,
+          "impressions": 7,
           "clicks": 0,
-          "position": 12.333333333333334,
+          "position": 12.571428571428571,
+          "ctr": 0
+        },
+        {
+          "query": "bible chat app cost",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 63,
           "ctr": 0
         },
         {
@@ -2271,314 +2727,150 @@
       ]
     },
     {
-      "page": "/tools/heuritech",
-      "canonicalUrl": "https://rightaichoice.com/tools/heuritech",
-      "currentTitle": "Heuritech: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 29,
-      "totalImpressions": 4,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "heuritech",
-        "impressions": 3,
-        "position": 35.67
-      },
-      "queries": [
-        {
-          "query": "heuritech",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 35.666666666666664,
-          "ctr": 0
-        },
-        {
-          "query": "heuritech pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/ifoto",
-      "canonicalUrl": "https://rightaichoice.com/tools/ifoto",
-      "currentTitle": "iFoto: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 28.5,
-      "totalImpressions": 4,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "ifoto",
-        "impressions": 4,
-        "position": 28.5
-      },
-      "queries": [
-        {
-          "query": "ifoto",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 28.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/spiritt",
-      "canonicalUrl": "https://rightaichoice.com/tools/spiritt",
-      "currentTitle": "Spiritt: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 6.5,
-      "totalImpressions": 4,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "\"spiritt\" \"founder\" or \"ceo\" or \"cto\" review",
-        "impressions": 4,
-        "position": 6.5
-      },
-      "queries": [
-        {
-          "query": "\"spiritt\" \"founder\" or \"ceo\" or \"cto\" review",
-          "impressions": 4,
-          "clicks": 0,
-          "position": 6.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/blog/best-ai-coding-assistant-for-data-scientists-2026",
-      "canonicalUrl": "https://rightaichoice.com/blog/best-ai-coding-assistant-for-data-scientists-2026",
-      "currentTitle": "Best AI Coding Assistant for Data Scientists in 2026: Python, Jupyter, and ML Workflows | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 11,
-      "totalImpressions": 3,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "as a data scientist using pandas notebooks inside pycharm, i want a coding assistant that suggests vectorized alternatives to loops and auto-generates edge-case tests. which tools excel at this?",
-        "impressions": 2,
-        "position": 9.5
-      },
-      "queries": [
-        {
-          "query": "as a data scientist using pandas notebooks inside pycharm, i want a coding assistant that suggests vectorized alternatives to loops and auto-generates edge-case tests. which tools excel at this?",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 9.5,
-          "ctr": 0
-        },
-        {
-          "query": "best ai code editor for data scientists 2025 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 14,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/loora-vs-speak",
-      "canonicalUrl": "https://rightaichoice.com/compare/loora-vs-speak",
-      "currentTitle": "Loora vs Speak — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 7.33,
-      "totalImpressions": 3,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "speak vs loora",
-        "impressions": 3,
-        "position": 7.33
-      },
-      "queries": [
-        {
-          "query": "speak vs loora",
-          "impressions": 3,
-          "clicks": 0,
-          "position": 7.333333333333333,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/chattts",
-      "canonicalUrl": "https://rightaichoice.com/tools/chattts",
-      "currentTitle": "ChatTTS: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 24,
-      "totalImpressions": 3,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "chattts license commercial use",
-        "impressions": 2,
-        "position": 6
-      },
-      "queries": [
-        {
-          "query": "chattts license commercial use",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 6,
-          "ctr": 0
-        },
-        {
-          "query": "chattts",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 60,
-          "ctr": 0
-        }
-      ]
-    },
-    {
       "page": "/tools/creative-fast-aid",
       "canonicalUrl": "https://rightaichoice.com/tools/creative-fast-aid",
-      "currentTitle": "Creative Fast AID: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Creative Fast AID Review: Pricing &amp; Features 2026 | RightAIChoice",
       "bucket": "1B",
-      "weightedPosition": 16,
-      "totalImpressions": 3,
+      "section": "tools",
+      "weightedPosition": 17,
+      "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "creative fast aid",
-        "impressions": 3,
-        "position": 16
+        "impressions": 4,
+        "position": 17
       },
       "queries": [
         {
           "query": "creative fast aid",
-          "impressions": 3,
+          "impressions": 4,
           "clicks": 0,
-          "position": 16,
+          "position": 17,
           "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/letterbook",
-      "canonicalUrl": "https://rightaichoice.com/tools/letterbook",
-      "currentTitle": "Letterbook: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/rightjoin",
+      "canonicalUrl": "https://rightaichoice.com/tools/rightjoin",
+      "currentTitle": "RightJoin Pricing &amp; Features (2026) | RightAIChoice",
       "bucket": "1B",
-      "weightedPosition": 12.67,
-      "totalImpressions": 3,
+      "section": "tools",
+      "weightedPosition": 19,
+      "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "letterbook",
-        "impressions": 3,
-        "position": 12.67
+        "query": "rightjoin",
+        "impressions": 4,
+        "position": 19
       },
       "queries": [
         {
-          "query": "letterbook",
-          "impressions": 3,
+          "query": "rightjoin",
+          "impressions": 4,
           "clicks": 0,
-          "position": 12.666666666666666,
+          "position": 19,
           "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/lumana",
-      "canonicalUrl": "https://rightaichoice.com/tools/lumana",
-      "currentTitle": "Lumana: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/semrush-advertising-toolkit",
+      "canonicalUrl": "https://rightaichoice.com/tools/semrush-advertising-toolkit",
+      "currentTitle": "Semrush Ads Tool: Pricing &amp; Features 2026 | RightAIChoice",
       "bucket": "1C",
-      "weightedPosition": 24.33,
-      "totalImpressions": 3,
+      "section": "tools",
+      "weightedPosition": 25.25,
+      "totalImpressions": 8,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "lumana g2 reviews",
-        "impressions": 2,
-        "position": 16.5
+        "query": "semrush ads tool",
+        "impressions": 7,
+        "position": 25.14
       },
       "queries": [
         {
-          "query": "lumana g2 reviews",
-          "impressions": 2,
+          "query": "semrush ads tool",
+          "impressions": 7,
           "clicks": 0,
-          "position": 16.5,
+          "position": 25.142857142857142,
           "ctr": 0
         },
         {
-          "query": "lumana ai",
+          "query": "semrush advertising toolkit",
           "impressions": 1,
           "clicks": 0,
-          "position": 40,
+          "position": 26,
           "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/pitch",
-      "canonicalUrl": "https://rightaichoice.com/tools/pitch",
-      "currentTitle": "Pitch: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 27.67,
-      "totalImpressions": 3,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "custom pitch",
-        "impressions": 1,
-        "position": 16
-      },
-      "queries": [
-        {
-          "query": "custom pitch",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 16,
-          "ctr": 0
-        },
-        {
-          "query": "pitch com pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 51,
-          "ctr": 0
-        },
-        {
-          "query": "pitch pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 16,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/spacelift",
-      "canonicalUrl": "https://rightaichoice.com/tools/spacelift",
-      "currentTitle": "Spacelift: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/seowritex",
+      "canonicalUrl": "https://rightaichoice.com/tools/seowritex",
+      "currentTitle": "SEOWriteX Alternatives &amp; Pricing 2026 | RightAIChoice",
       "bucket": "1B",
-      "weightedPosition": 19.67,
-      "totalImpressions": 3,
+      "section": "tools",
+      "weightedPosition": 19.75,
+      "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "spacelift intelligence",
-        "impressions": 2,
-        "position": 25.5
+        "query": "seowritex",
+        "impressions": 4,
+        "position": 19.75
       },
       "queries": [
         {
-          "query": "spacelift intelligence",
-          "impressions": 2,
+          "query": "seowritex",
+          "impressions": 4,
           "clicks": 0,
-          "position": 25.5,
+          "position": 19.75,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/snowseo",
+      "canonicalUrl": "https://rightaichoice.com/tools/snowseo",
+      "currentTitle": "SnowSEO: Features, Pricing &amp; Alternatives | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 26.25,
+      "totalImpressions": 8,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "snowseo",
+        "impressions": 7,
+        "position": 24.57
+      },
+      "queries": [
+        {
+          "query": "snowseo",
+          "impressions": 7,
+          "clicks": 0,
+          "position": 24.571428571428573,
           "ctr": 0
         },
         {
-          "query": "spacelift free tier",
+          "query": "snow seo",
           "impressions": 1,
           "clicks": 0,
-          "position": 8,
+          "position": 38,
           "ctr": 0
         }
       ]
@@ -2586,12 +2878,15 @@
     {
       "page": "/tools/thinkdiffusion",
       "canonicalUrl": "https://rightaichoice.com/tools/thinkdiffusion",
-      "currentTitle": "Thinkdiffusion: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 7,
-      "totalImpressions": 3,
+      "currentTitle": "Thinkdiffusion Pricing &amp; ComfyUI Cloud 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 18.5,
+      "totalImpressions": 4,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.8,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "thinkdiffusion pricing comfyui cloud 2026",
         "impressions": 2,
@@ -2606,6 +2901,13 @@
           "ctr": 0
         },
         {
+          "query": "think diffusion",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 53,
+          "ctr": 0
+        },
+        {
           "query": "what does thinkdiffusion pro plan include monthly?",
           "impressions": 1,
           "clicks": 0,
@@ -2615,104 +2917,83 @@
       ]
     },
     {
-      "page": "/compare/docusign-vs-smallpdf",
-      "canonicalUrl": "https://rightaichoice.com/compare/docusign-vs-smallpdf",
-      "currentTitle": "DocuSign vs Smallpdf — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 9.5,
-      "totalImpressions": 2,
+      "page": "/tools/mymind",
+      "canonicalUrl": "https://rightaichoice.com/tools/mymind",
+      "currentTitle": "mymind: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 28.57,
+      "totalImpressions": 7,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.7,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "smallpdf vs docusign for signing contracts",
+        "query": "mymind pricing",
         "impressions": 2,
-        "position": 9.5
+        "position": 73.5
       },
       "queries": [
         {
-          "query": "smallpdf vs docusign for signing contracts",
+          "query": "mymind pricing",
           "impressions": 2,
           "clicks": 0,
-          "position": 9.5,
+          "position": 73.5,
           "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/ivo-vs-spellbook-legal",
-      "canonicalUrl": "https://rightaichoice.com/compare/ivo-vs-spellbook-legal",
-      "currentTitle": "Ivo vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 9,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "spellbook vs ivo",
-        "impressions": 2,
-        "position": 9
-      },
-      "queries": [
+        },
         {
-          "query": "spellbook vs ivo",
+          "query": "mymind pricing official 2026",
           "impressions": 2,
           "clicks": 0,
           "position": 9,
           "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/loora-vs-talkpal",
-      "canonicalUrl": "https://rightaichoice.com/compare/loora-vs-talkpal",
-      "currentTitle": "Loora vs TalkPal — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 6.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "loora vs talkpal",
-        "impressions": 2,
-        "position": 6.5
-      },
-      "queries": [
+        },
         {
-          "query": "loora vs talkpal",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 6.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/meshy-vs-rodin",
-      "canonicalUrl": "https://rightaichoice.com/compare/meshy-vs-rodin",
-      "currentTitle": "Meshy vs Rodin — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 6.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "meshy ai vs rodin",
-        "impressions": 1,
-        "position": 5
-      },
-      "queries": [
-        {
-          "query": "meshy ai vs rodin",
+          "query": "mymind pricing 2026",
           "impressions": 1,
           "clicks": 0,
-          "position": 5,
+          "position": 10,
           "ctr": 0
         },
         {
-          "query": "rodin vs meshy",
+          "query": "mymind pricing plans 2026",
           "impressions": 1,
           "clicks": 0,
-          "position": 8,
+          "position": 7,
+          "ctr": 0
+        },
+        {
+          "query": "mymind student discount",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 18,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/compare/claude-vs-spellbook-legal",
+      "canonicalUrl": "https://rightaichoice.com/compare/claude-vs-spellbook-legal",
+      "currentTitle": "Claude vs Spellbook for Legal Work (2026) | RightAIChoice",
+      "bucket": "1B",
+      "section": "compare",
+      "weightedPosition": 19,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "mixed",
+      "topQuery": {
+        "query": "spellbook vs claude",
+        "impressions": 1,
+        "position": 19
+      },
+      "queries": [
+        {
+          "query": "spellbook vs claude",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 19,
           "ctr": 0
         }
       ]
@@ -2720,12 +3001,15 @@
     {
       "page": "/compare/opus-clip-vs-riverside-fm",
       "canonicalUrl": "https://rightaichoice.com/compare/opus-clip-vs-riverside-fm",
-      "currentTitle": "Opus Clip vs Riverside — Side-by-Side Comparison (2026) | RightAIChoice",
+      "currentTitle": "Opus Clip vs Riverside: Which Is Better? (2026) | RightAIChoice",
       "bucket": "1C",
+      "section": "compare",
       "weightedPosition": 27.5,
       "totalImpressions": 2,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "opus clip vs riverside",
         "impressions": 2,
@@ -2742,56 +3026,55 @@
       ]
     },
     {
-      "page": "/tools/ceartas-dmca",
-      "canonicalUrl": "https://rightaichoice.com/tools/ceartas-dmca",
-      "currentTitle": "Ceartas DMCA: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "page": "/tools/aidelly",
+      "canonicalUrl": "https://rightaichoice.com/tools/aidelly",
+      "currentTitle": "Aidelly Review, Pricing &amp; Features 2026 | RightAIChoice",
       "bucket": "1C",
-      "weightedPosition": 22,
-      "totalImpressions": 2,
+      "section": "tools",
+      "weightedPosition": 28.83,
+      "totalImpressions": 6,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "ceartas alternative",
-        "impressions": 2,
-        "position": 22
+        "query": "aidelly",
+        "impressions": 6,
+        "position": 28.83
       },
       "queries": [
         {
-          "query": "ceartas alternative",
-          "impressions": 2,
+          "query": "aidelly",
+          "impressions": 6,
           "clicks": 0,
-          "position": 22,
+          "position": 28.833333333333332,
           "ctr": 0
         }
       ]
     },
     {
-      "page": "/tools/context7",
-      "canonicalUrl": "https://rightaichoice.com/tools/context7",
-      "currentTitle": "Context7: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 10,
-      "totalImpressions": 2,
+      "page": "/tools/chromox",
+      "canonicalUrl": "https://rightaichoice.com/tools/chromox",
+      "currentTitle": "Chromox: Key Features &amp; Pricing (2026) | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 17,
+      "totalImpressions": 3,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "context7 pricing free tier",
-        "impressions": 1,
-        "position": 11
+        "query": "chromox",
+        "impressions": 3,
+        "position": 17
       },
       "queries": [
         {
-          "query": "context7 pricing free tier",
-          "impressions": 1,
+          "query": "chromox",
+          "impressions": 3,
           "clicks": 0,
-          "position": 11,
-          "ctr": 0
-        },
-        {
-          "query": "context7 pricing plans",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
+          "position": 17,
           "ctr": 0
         }
       ]
@@ -2799,75 +3082,179 @@
     {
       "page": "/tools/customerly",
       "canonicalUrl": "https://rightaichoice.com/tools/customerly",
-      "currentTitle": "Customerly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Customerly Review: Pricing, Features &amp; More | RightAIChoice",
       "bucket": "1C",
+      "section": "tools",
       "weightedPosition": 28.5,
-      "totalImpressions": 2,
+      "totalImpressions": 6,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "customerly",
-        "impressions": 2,
-        "position": 28.5
+        "impressions": 5,
+        "position": 28.8
       },
       "queries": [
         {
           "query": "customerly",
-          "impressions": 2,
+          "impressions": 5,
           "clicks": 0,
-          "position": 28.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/intrascope",
-      "canonicalUrl": "https://rightaichoice.com/tools/intrascope",
-      "currentTitle": "Intrascope: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 20.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "intrascope",
-        "impressions": 2,
-        "position": 20.5
-      },
-      "queries": [
-        {
-          "query": "intrascope",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 20.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/lex-markets",
-      "canonicalUrl": "https://rightaichoice.com/tools/lex-markets",
-      "currentTitle": "Lex: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 26,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "lex markets",
-        "impressions": 1,
-        "position": 44
-      },
-      "queries": [
-        {
-          "query": "lex markets",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 44,
+          "position": 28.8,
           "ctr": 0
         },
         {
-          "query": "lex markets review",
+          "query": "customerly alternatíva",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 27,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/heuritech",
+      "canonicalUrl": "https://rightaichoice.com/tools/heuritech",
+      "currentTitle": "Heuritech Pricing &amp; Alternatives 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 27.67,
+      "totalImpressions": 6,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "heuritech",
+        "impressions": 4,
+        "position": 37.5
+      },
+      "queries": [
+        {
+          "query": "heuritech",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 37.5,
+          "ctr": 0
+        },
+        {
+          "query": "heuritech pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 8,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/portfoliogpt",
+      "canonicalUrl": "https://rightaichoice.com/tools/portfoliogpt",
+      "currentTitle": "PortfolioGPT: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 12.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "portfoliogpt",
+        "impressions": 3,
+        "position": 12.67
+      },
+      "queries": [
+        {
+          "query": "portfoliogpt",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 12.666666666666666,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/velona",
+      "canonicalUrl": "https://rightaichoice.com/tools/velona",
+      "currentTitle": "Velona AI: Pricing, Features &amp; Alternatives 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 19.67,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.6,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "velona ai",
+        "impressions": 3,
+        "position": 19.67
+      },
+      "queries": [
+        {
+          "query": "velona ai",
+          "impressions": 3,
+          "clicks": 0,
+          "position": 19.666666666666668,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/ifoto",
+      "canonicalUrl": "https://rightaichoice.com/tools/ifoto",
+      "currentTitle": "iFoto: Pricing, Features &amp; Reviews | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 29.2,
+      "totalImpressions": 5,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.5,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "ifoto",
+        "impressions": 5,
+        "position": 29.2
+      },
+      "queries": [
+        {
+          "query": "ifoto",
+          "impressions": 5,
+          "clicks": 0,
+          "position": 29.2,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/spacelift",
+      "canonicalUrl": "https://rightaichoice.com/tools/spacelift",
+      "currentTitle": "Spacelift Intelligence Features &amp; Pricing | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 23.6,
+      "totalImpressions": 5,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.5,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "spacelift intelligence",
+        "impressions": 4,
+        "position": 27.5
+      },
+      "queries": [
+        {
+          "query": "spacelift intelligence",
+          "impressions": 4,
+          "clicks": 0,
+          "position": 27.5,
+          "ctr": 0
+        },
+        {
+          "query": "spacelift free tier",
           "impressions": 1,
           "clicks": 0,
           "position": 8,
@@ -2876,45 +3263,17 @@
       ]
     },
     {
-      "page": "/tools/molypix-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/molypix-ai",
-      "currentTitle": "MolyPix.AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 28.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "molypix",
-        "impressions": 1,
-        "position": 33
-      },
-      "queries": [
-        {
-          "query": "molypix",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 33,
-          "ctr": 0
-        },
-        {
-          "query": "molypix ai",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 24,
-          "ctr": 0
-        }
-      ]
-    },
-    {
       "page": "/tools/post-boost",
       "canonicalUrl": "https://rightaichoice.com/tools/post-boost",
-      "currentTitle": "Post-Boost: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": null,
       "bucket": "1B",
+      "section": "tools",
       "weightedPosition": 18,
       "totalImpressions": 2,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.4,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "postboost product info and reviews",
         "impressions": 1,
@@ -2938,62 +3297,17 @@
       ]
     },
     {
-      "page": "/tools/promptdrive-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/promptdrive-ai",
-      "currentTitle": "PromptDrive.ai: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 29,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "promptdrive",
-        "impressions": 2,
-        "position": 29
-      },
-      "queries": [
-        {
-          "query": "promptdrive",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 29,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/rightjoin",
-      "canonicalUrl": "https://rightaichoice.com/tools/rightjoin",
-      "currentTitle": "RightJoin: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "rightjoin",
-        "impressions": 2,
-        "position": 19.5
-      },
-      "queries": [
-        {
-          "query": "rightjoin",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 19.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
       "page": "/tools/superhuman",
       "canonicalUrl": "https://rightaichoice.com/tools/superhuman",
-      "currentTitle": "Superhuman: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Superhuman Pricing 2026: Plans &amp; Costs | RightAIChoice",
       "bucket": "1B",
+      "section": "tools",
       "weightedPosition": 19,
       "totalImpressions": 2,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.4,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "superhuman api",
         "impressions": 1,
@@ -3017,14 +3331,619 @@
       ]
     },
     {
+      "page": "/tools/ceartas-dmca",
+      "canonicalUrl": "https://rightaichoice.com/tools/ceartas-dmca",
+      "currentTitle": "Best Ceartas DMCA Alternatives Compared | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 29.33,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "ceartas alternative",
+        "impressions": 2,
+        "position": 22
+      },
+      "queries": [
+        {
+          "query": "ceartas alternative",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 22,
+          "ctr": 0
+        },
+        {
+          "query": "ceartas dmca",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 44,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/chattts",
+      "canonicalUrl": "https://rightaichoice.com/tools/chattts",
+      "currentTitle": "ChatTTS Commercial License &amp; Pricing 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 24,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "chattts license commercial use",
+        "impressions": 2,
+        "position": 6
+      },
+      "queries": [
+        {
+          "query": "chattts license commercial use",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 6,
+          "ctr": 0
+        },
+        {
+          "query": "chattts",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 60,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/civitai",
+      "canonicalUrl": "https://rightaichoice.com/tools/civitai",
+      "currentTitle": "CivitAI AI Models: Price &amp; Free vs Paid | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 7,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "civitai vs civitai red",
+        "impressions": 1,
+        "position": 7
+      },
+      "queries": [
+        {
+          "query": "civitai vs civitai red",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 7,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/context7",
+      "canonicalUrl": "https://rightaichoice.com/tools/context7",
+      "currentTitle": "Context7: Pricing, Plans &amp; Free Tier 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 9,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "context7 pricing plans",
+        "impressions": 1,
+        "position": 9
+      },
+      "queries": [
+        {
+          "query": "context7 pricing plans",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/lex-markets",
+      "canonicalUrl": "https://rightaichoice.com/tools/lex-markets",
+      "currentTitle": "Lex Markets Review: Pricing &amp; Features | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 21,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "lex markets review",
+        "impressions": 2,
+        "position": 9.5
+      },
+      "queries": [
+        {
+          "query": "lex markets review",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 9.5,
+          "ctr": 0
+        },
+        {
+          "query": "lex markets",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 44,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/locofy",
+      "canonicalUrl": "https://rightaichoice.com/tools/locofy",
+      "currentTitle": "Locofy Pricing: Figma to Code Cost 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 9,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "locofy pricing figma to code",
+        "impressions": 1,
+        "position": 9
+      },
+      "queries": [
+        {
+          "query": "locofy pricing figma to code",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/muze-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/muze-ai",
+      "currentTitle": "Muze AI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "muze ai cmo",
+        "impressions": 1,
+        "position": 10
+      },
+      "queries": [
+        {
+          "query": "muze ai cmo",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/option-alpha",
+      "canonicalUrl": "https://rightaichoice.com/tools/option-alpha",
+      "currentTitle": "Option Alpha 2026: Pricing &amp; Features | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 9,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "option alpha pricing plans 2026",
+        "impressions": 1,
+        "position": 9
+      },
+      "queries": [
+        {
+          "query": "option alpha pricing plans 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 9,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/pdf-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/pdf-ai",
+      "currentTitle": "PDF.ai Pricing 2026: Plans &amp; Cost | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "pdf.ai pricing official",
+        "impressions": 1,
+        "position": 10
+      },
+      "queries": [
+        {
+          "query": "pdf.ai pricing official",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/tensor-art",
+      "canonicalUrl": "https://rightaichoice.com/tools/tensor-art",
+      "currentTitle": "Tensor.art Free Plan: Daily Credits 2026 | RightAIChoice",
+      "bucket": "1A",
+      "section": "tools",
+      "weightedPosition": 10,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "tensor.art daily credits free plan 2026",
+        "impressions": 1,
+        "position": 10
+      },
+      "queries": [
+        {
+          "query": "tensor.art daily credits free plan 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 10,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/vectorize",
+      "canonicalUrl": "https://rightaichoice.com/tools/vectorize",
+      "currentTitle": "Vectorize Pricing &amp; Alternatives 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 28.33,
+      "totalImpressions": 3,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.3,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "hindsight vectorize pricing",
+        "impressions": 2,
+        "position": 2.5
+      },
+      "queries": [
+        {
+          "query": "hindsight vectorize pricing",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 2.5,
+          "ctr": 0
+        },
+        {
+          "query": "vectorizable",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 80,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/andi",
+      "canonicalUrl": "https://rightaichoice.com/tools/andi",
+      "currentTitle": "Andi AI: Pricing, Features &amp; Alternatives | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 16,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "ad and i",
+        "impressions": 1,
+        "position": 16
+      },
+      "queries": [
+        {
+          "query": "ad and i",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 16,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/coinfeeds",
+      "canonicalUrl": "https://rightaichoice.com/tools/coinfeeds",
+      "currentTitle": "Coinfeeds Pricing &amp; Alternatives 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 18,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "coinfeeds",
+        "impressions": 1,
+        "position": 18
+      },
+      "queries": [
+        {
+          "query": "coinfeeds",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 18,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/coze-studio",
+      "canonicalUrl": "https://rightaichoice.com/tools/coze-studio",
+      "currentTitle": "Coze Studio: Official Pricing 2026 &amp; Features | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 21,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "coze pricing official 2026",
+        "impressions": 1,
+        "position": 12
+      },
+      "queries": [
+        {
+          "query": "coze pricing official 2026",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 12,
+          "ctr": 0
+        },
+        {
+          "query": "coze studio",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 30,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/intrascope",
+      "canonicalUrl": "https://rightaichoice.com/tools/intrascope",
+      "currentTitle": "Intrascope Pricing &amp; Features 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 20.5,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "intrascope",
+        "impressions": 2,
+        "position": 20.5
+      },
+      "queries": [
+        {
+          "query": "intrascope",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 20.5,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/mem0",
+      "canonicalUrl": "https://rightaichoice.com/tools/mem0",
+      "currentTitle": "Mem0: Pricing &amp; Top Alternatives 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "mem0 pricing",
+        "impressions": 1,
+        "position": 20
+      },
+      "queries": [
+        {
+          "query": "mem0 pricing",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 20,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/postly",
+      "canonicalUrl": "https://rightaichoice.com/tools/postly",
+      "currentTitle": "Postly Pricing 2026: How Much Does Postly Cost? | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 18,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "postly pricing",
+        "impressions": 1,
+        "position": 18
+      },
+      "queries": [
+        {
+          "query": "postly pricing",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 18,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/promptdrive-ai",
+      "canonicalUrl": "https://rightaichoice.com/tools/promptdrive-ai",
+      "currentTitle": "PromptDrive.ai Pricing &amp; Features Guide 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 29,
+      "totalImpressions": 2,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "promptdrive",
+        "impressions": 2,
+        "position": 29
+      },
+      "queries": [
+        {
+          "query": "promptdrive",
+          "impressions": 2,
+          "clicks": 0,
+          "position": 29,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/recursion-pharma",
+      "canonicalUrl": "https://rightaichoice.com/tools/recursion-pharma",
+      "currentTitle": "Recursion Pharmaceuticals: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 19,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "recursion pharmaceuticals dataset size petabytes",
+        "impressions": 1,
+        "position": 19
+      },
+      "queries": [
+        {
+          "query": "recursion pharmaceuticals dataset size petabytes",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 19,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/rowspeak",
+      "canonicalUrl": "https://rightaichoice.com/tools/rowspeak",
+      "currentTitle": "RowSpeak: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 15,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "rowspeak",
+        "impressions": 1,
+        "position": 15
+      },
+      "queries": [
+        {
+          "query": "rowspeak",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 15,
+          "ctr": 0
+        }
+      ]
+    },
+    {
+      "page": "/tools/shipixen",
+      "canonicalUrl": "https://rightaichoice.com/tools/shipixen",
+      "currentTitle": "Shipixen Alternatives &amp; Pricing 2026 | RightAIChoice",
+      "bucket": "1B",
+      "section": "tools",
+      "weightedPosition": 20,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
+      "topQuery": {
+        "query": "shipixen",
+        "impressions": 1,
+        "position": 20
+      },
+      "queries": [
+        {
+          "query": "shipixen",
+          "impressions": 1,
+          "clicks": 0,
+          "position": 20,
+          "ctr": 0
+        }
+      ]
+    },
+    {
       "page": "/tools/tango-us",
       "canonicalUrl": "https://rightaichoice.com/tools/tango-us",
-      "currentTitle": "Tango: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Get Tango Pricing &amp; Enterprise Costs | RightAIChoice",
       "bucket": "1C",
+      "section": "tools",
       "weightedPosition": 23.5,
       "totalImpressions": 2,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.2,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "get tango pricing",
         "impressions": 1,
@@ -3048,265 +3967,28 @@
       ]
     },
     {
-      "page": "/tools/vectorize",
-      "canonicalUrl": "https://rightaichoice.com/tools/vectorize",
-      "currentTitle": "Vectorize: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 2.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "hindsight vectorize pricing",
-        "impressions": 2,
-        "position": 2.5
-      },
-      "queries": [
-        {
-          "query": "hindsight vectorize pricing",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 2.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/velona",
-      "canonicalUrl": "https://rightaichoice.com/tools/velona",
-      "currentTitle": "Velona: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19.5,
-      "totalImpressions": 2,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "velona ai",
-        "impressions": 2,
-        "position": 19.5
-      },
-      "queries": [
-        {
-          "query": "velona ai",
-          "impressions": 2,
-          "clicks": 0,
-          "position": 19.5,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/capcut-vs-captions",
-      "canonicalUrl": "https://rightaichoice.com/compare/capcut-vs-captions",
-      "currentTitle": "CapCut vs Captions — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 16,
+      "page": "/tools/canva",
+      "canonicalUrl": "https://rightaichoice.com/tools/canva",
+      "currentTitle": "Canva: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "bucket": "1C",
+      "section": "tools",
+      "weightedPosition": 24,
       "totalImpressions": 1,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.1,
+      "bindingConstraint": "rank",
       "topQuery": {
-        "query": "capcut vs captions app for instagram reels",
+        "query": "canva io",
         "impressions": 1,
-        "position": 16
+        "position": 24
       },
       "queries": [
         {
-          "query": "capcut vs captions app for instagram reels",
+          "query": "canva io",
           "impressions": 1,
           "clicks": 0,
-          "position": 16,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/compare/claude-vs-spellbook-legal",
-      "canonicalUrl": "https://rightaichoice.com/compare/claude-vs-spellbook-legal",
-      "currentTitle": "Claude vs Spellbook — Side-by-Side Comparison (2026) | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "spellbook vs claude",
-        "impressions": 1,
-        "position": 19
-      },
-      "queries": [
-        {
-          "query": "spellbook vs claude",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 19,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/andi",
-      "canonicalUrl": "https://rightaichoice.com/tools/andi",
-      "currentTitle": "Andi: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 16,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "ad and i",
-        "impressions": 1,
-        "position": 16
-      },
-      "queries": [
-        {
-          "query": "ad and i",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 16,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/boost-space",
-      "canonicalUrl": "https://rightaichoice.com/tools/boost-space",
-      "currentTitle": "boost.space: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 20,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "boost.space product data hub review pricing features",
-        "impressions": 1,
-        "position": 20
-      },
-      "queries": [
-        {
-          "query": "boost.space product data hub review pricing features",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/chromox",
-      "canonicalUrl": "https://rightaichoice.com/tools/chromox",
-      "currentTitle": "Chromox: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 18,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "chromox",
-        "impressions": 1,
-        "position": 18
-      },
-      "queries": [
-        {
-          "query": "chromox",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 18,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/civitai",
-      "canonicalUrl": "https://rightaichoice.com/tools/civitai",
-      "currentTitle": "CivitAI: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 7,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "civitai vs civitai red",
-        "impressions": 1,
-        "position": 7
-      },
-      "queries": [
-        {
-          "query": "civitai vs civitai red",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 7,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/coinfeeds",
-      "canonicalUrl": "https://rightaichoice.com/tools/coinfeeds",
-      "currentTitle": "Coinfeeds: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 18,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "coinfeeds",
-        "impressions": 1,
-        "position": 18
-      },
-      "queries": [
-        {
-          "query": "coinfeeds",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 18,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/corti",
-      "canonicalUrl": "https://rightaichoice.com/tools/corti",
-      "currentTitle": "Corti: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 10,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "corti.ai pricing",
-        "impressions": 1,
-        "position": 10
-      },
-      "queries": [
-        {
-          "query": "corti.ai pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/coze-studio",
-      "canonicalUrl": "https://rightaichoice.com/tools/coze-studio",
-      "currentTitle": "Coze Studio: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 12,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "coze pricing official 2026",
-        "impressions": 1,
-        "position": 12
-      },
-      "queries": [
-        {
-          "query": "coze pricing official 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 12,
+          "position": 24,
           "ctr": 0
         }
       ]
@@ -3314,12 +3996,15 @@
     {
       "page": "/tools/crush",
       "canonicalUrl": "https://rightaichoice.com/tools/crush",
-      "currentTitle": "Crush: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "Crush IDE: Pricing, Features &amp; Alternatives 2026 | RightAIChoice",
       "bucket": "1C",
+      "section": "tools",
       "weightedPosition": 21,
       "totalImpressions": 1,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "crush ide",
         "impressions": 1,
@@ -3338,12 +4023,15 @@
     {
       "page": "/tools/happycapy",
       "canonicalUrl": "https://rightaichoice.com/tools/happycapy",
-      "currentTitle": "happycapy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "HappyCapy AI Tool: Pricing &amp; Features (2026) | RightAIChoice",
       "bucket": "1C",
+      "section": "tools",
       "weightedPosition": 27,
       "totalImpressions": 1,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "happycapy",
         "impressions": 1,
@@ -3360,38 +4048,17 @@
       ]
     },
     {
-      "page": "/tools/locofy",
-      "canonicalUrl": "https://rightaichoice.com/tools/locofy",
-      "currentTitle": "Locofy: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 9,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "locofy pricing figma to code",
-        "impressions": 1,
-        "position": 9
-      },
-      "queries": [
-        {
-          "query": "locofy pricing figma to code",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
-          "ctr": 0
-        }
-      ]
-    },
-    {
       "page": "/tools/magicphotos",
       "canonicalUrl": "https://rightaichoice.com/tools/magicphotos",
-      "currentTitle": "MagicPhotos: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "currentTitle": "MagicPhotos Pricing &amp; Features (2026) | RightAIChoice",
       "bucket": "1C",
+      "section": "tools",
       "weightedPosition": 24,
       "totalImpressions": 1,
       "totalClicks": 0,
       "avgCtr": 0,
+      "priority": 0.1,
+      "bindingConstraint": "rank",
       "topQuery": {
         "query": "magicphotos",
         "impressions": 1,
@@ -3403,246 +4070,6 @@
           "impressions": 1,
           "clicks": 0,
           "position": 24,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/mem0",
-      "canonicalUrl": "https://rightaichoice.com/tools/mem0",
-      "currentTitle": "Mem0: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 20,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "mem0 pricing",
-        "impressions": 1,
-        "position": 20
-      },
-      "queries": [
-        {
-          "query": "mem0 pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/multion",
-      "canonicalUrl": "https://rightaichoice.com/tools/multion",
-      "currentTitle": "MultiOn: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 3,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "multion mobile app agentic features 2026",
-        "impressions": 1,
-        "position": 3
-      },
-      "queries": [
-        {
-          "query": "multion mobile app agentic features 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 3,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/option-alpha",
-      "canonicalUrl": "https://rightaichoice.com/tools/option-alpha",
-      "currentTitle": "Option Alpha: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 9,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "option alpha pricing plans 2026",
-        "impressions": 1,
-        "position": 9
-      },
-      "queries": [
-        {
-          "query": "option alpha pricing plans 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 9,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/pdf-ai",
-      "canonicalUrl": "https://rightaichoice.com/tools/pdf-ai",
-      "currentTitle": "PDF.ai: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 10,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "pdf.ai pricing official",
-        "impressions": 1,
-        "position": 10
-      },
-      "queries": [
-        {
-          "query": "pdf.ai pricing official",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/postly",
-      "canonicalUrl": "https://rightaichoice.com/tools/postly",
-      "currentTitle": "Postly: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 18,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "postly pricing",
-        "impressions": 1,
-        "position": 18
-      },
-      "queries": [
-        {
-          "query": "postly pricing",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 18,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/recursion-pharma",
-      "canonicalUrl": "https://rightaichoice.com/tools/recursion-pharma",
-      "currentTitle": "Recursion Pharmaceuticals: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 19,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "recursion pharmaceuticals dataset size petabytes",
-        "impressions": 1,
-        "position": 19
-      },
-      "queries": [
-        {
-          "query": "recursion pharmaceuticals dataset size petabytes",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 19,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/seowritex",
-      "canonicalUrl": "https://rightaichoice.com/tools/seowritex",
-      "currentTitle": "SEOWriteX: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 20,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "seowritex",
-        "impressions": 1,
-        "position": 20
-      },
-      "queries": [
-        {
-          "query": "seowritex",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/shipixen",
-      "canonicalUrl": "https://rightaichoice.com/tools/shipixen",
-      "currentTitle": "Shipixen: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1B",
-      "weightedPosition": 20,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "shipixen",
-        "impressions": 1,
-        "position": 20
-      },
-      "queries": [
-        {
-          "query": "shipixen",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 20,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/talkpal",
-      "canonicalUrl": "https://rightaichoice.com/tools/talkpal",
-      "currentTitle": "TalkPal: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1C",
-      "weightedPosition": 25,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "talkpal kosten",
-        "impressions": 1,
-        "position": 25
-      },
-      "queries": [
-        {
-          "query": "talkpal kosten",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 25,
-          "ctr": 0
-        }
-      ]
-    },
-    {
-      "page": "/tools/tensor-art",
-      "canonicalUrl": "https://rightaichoice.com/tools/tensor-art",
-      "currentTitle": "Tensor.art: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
-      "bucket": "1A",
-      "weightedPosition": 10,
-      "totalImpressions": 1,
-      "totalClicks": 0,
-      "avgCtr": 0,
-      "topQuery": {
-        "query": "tensor.art daily credits free plan 2026",
-        "impressions": 1,
-        "position": 10
-      },
-      "queries": [
-        {
-          "query": "tensor.art daily credits free plan 2026",
-          "impressions": 1,
-          "clicks": 0,
-          "position": 10,
           "ctr": 0
         }
       ]

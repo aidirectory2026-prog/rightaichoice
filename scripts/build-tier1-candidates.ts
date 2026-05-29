@@ -60,17 +60,64 @@ type SnapshotRow = {
   rows_count: number
 }
 
+type BindingConstraint = 'title' | 'mixed' | 'rank'
+
 type Candidate = {
   page: string
   canonicalUrl: string
   currentTitle: string | null
   bucket: '1A' | '1B' | '1C'
+  section: string
   weightedPosition: number
   totalImpressions: number
   totalClicks: number
   avgCtr: number
+  /**
+   * ROI score for ordering the review queue. impressions × title-
+   * responsiveness × position-leverage. A high-impression page-1 compare
+   * (title is the binding constraint) outranks a deep tool page (where a
+   * title rewrite can't move position). See bindingConstraint.
+   */
+  priority: number
+  /**
+   * What's actually blocking the click:
+   *   title — page-1, title-responsive: a sharper title directly lifts CTR.
+   *   rank  — buried or templated (tool pages): needs ranking work, not a title.
+   *   mixed — pos 11–20: a tighter title can help it break onto page 1.
+   */
+  bindingConstraint: BindingConstraint
   topQuery: { query: string; impressions: number; position: number } | null
   queries: Array<{ query: string; impressions: number; clicks: number; position: number; ctr: number }>
+}
+
+// How much a <title> rewrite can move the needle, by page type. Compares and
+// blog posts live and die by their title/snippet; tool pages are templated and
+// rank-limited by domain authority, so a title tweak does little.
+const TITLE_RESPONSIVENESS: Record<string, number> = {
+  compare: 1.0,
+  blog: 0.9,
+  best: 0.7,
+  categories: 0.7,
+  for: 0.6,
+  stacks: 0.6,
+  tools: 0.35,
+}
+
+function sectionOf(path: string): string {
+  return path.split('/').filter(Boolean)[0] ?? ''
+}
+
+function scorePriority(section: string, wpos: number, impressions: number): number {
+  const responsiveness = TITLE_RESPONSIVENESS[section] ?? 0.5
+  const leverage = wpos <= 10 ? 1.0 : wpos <= 20 ? 0.6 : 0.3
+  return +(impressions * responsiveness * leverage).toFixed(1)
+}
+
+function bindingConstraintOf(section: string, wpos: number, impressions: number): BindingConstraint {
+  const responsive = (TITLE_RESPONSIVENESS[section] ?? 0.5) >= 0.7
+  if (responsive && wpos <= 12 && impressions >= 15) return 'title'
+  if (wpos > 20 || section === 'tools') return 'rank'
+  return 'mixed'
 }
 
 async function main() {
@@ -88,7 +135,7 @@ async function main() {
 
   const candidates = Array.from(grouped.values())
     .filter((c) => c.weightedPosition >= 1 && c.weightedPosition <= 30)
-    .sort((a, b) => b.totalImpressions - a.totalImpressions)
+    .sort((a, b) => b.priority - a.priority)
 
   console.log(`[tier1] ${candidates.length} candidates in positions 1–30`)
   const byBucket = countByBucket(candidates)
@@ -159,10 +206,13 @@ function groupByPage(rows: GscRow[]): Map<string, Candidate> {
         canonicalUrl: `${BASE_URL}${path}`,
         currentTitle: null,
         bucket: '1C',
+        section: sectionOf(path),
         weightedPosition: 0,
         totalImpressions: 0,
         totalClicks: 0,
         avgCtr: 0,
+        priority: 0,
+        bindingConstraint: 'mixed',
         topQuery: null,
         queries: [],
       }
@@ -189,6 +239,8 @@ function groupByPage(rows: GscRow[]): Map<string, Candidate> {
     candidate.weightedPosition = +(weighted / candidate.totalImpressions).toFixed(2)
     candidate.avgCtr = +(candidate.totalClicks / candidate.totalImpressions).toFixed(4)
     candidate.bucket = bucketFor(candidate.weightedPosition)
+    candidate.priority = scorePriority(candidate.section, candidate.weightedPosition, candidate.totalImpressions)
+    candidate.bindingConstraint = bindingConstraintOf(candidate.section, candidate.weightedPosition, candidate.totalImpressions)
     candidate.queries.sort((a, b) => b.impressions - a.impressions)
     candidate.queries = candidate.queries.slice(0, 10)
     candidate.topQuery = candidate.queries[0]
