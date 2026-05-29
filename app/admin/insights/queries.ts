@@ -130,7 +130,7 @@ export async function getOverviewMetrics(sel: RangeSelection, includeBots: boole
   return [
     { label: 'Page views', value: pageViews.count ?? 0 },
     { label: 'Unique visitors', value: Number((uniqueVisitors.data as { count?: number } | null)?.count ?? 0) },
-    { label: 'Unique users (logged in)', value: Number((uniqueUsers.data as { count?: number } | null)?.count ?? 0) },
+    { label: 'Signed-in accounts', value: Number((uniqueUsers.data as { count?: number } | null)?.count ?? 0) },
     { label: 'Signups', value: signups.count ?? 0 },
     { label: 'Newsletter subs', value: newsletter.count ?? 0 },
   ]
@@ -251,9 +251,9 @@ export async function getEngagementMetrics(sel: RangeSelection, includeBots: boo
     { label: 'DAU (today)', value: num(today) },
     { label: 'WAU (7d)', value: num(week) },
     { label: 'MAU (30d)', value: num(month) },
-    { label: 'Unique users today', value: num(todayKnown) },
-    { label: 'Unique users 7d', value: num(weekKnown) },
-    { label: 'Unique users 30d', value: num(monthKnown) },
+    { label: 'Signed-in accounts (today)', value: num(todayKnown) },
+    { label: 'Signed-in accounts (7d)', value: num(weekKnown) },
+    { label: 'Signed-in accounts (30d)', value: num(monthKnown) },
   ]
 }
 
@@ -335,7 +335,7 @@ export async function getChatMetrics(sel: RangeSelection, includeBots: boolean):
   ])
   return [
     { label: 'Messages', value: messages.count ?? 0 },
-    { label: 'Unique users', value: Number((uniqueUsers.data as { count?: number } | null)?.count ?? 0) },
+    { label: 'Unique chatters', value: Number((uniqueUsers.data as { count?: number } | null)?.count ?? 0) },
     { label: 'Tool clicks', value: toolClicks.count ?? 0 },
   ]
 }
