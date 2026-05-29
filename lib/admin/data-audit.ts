@@ -246,6 +246,51 @@ export const AUDIT_CHECKS: AuditCheck[] = [
       }
     },
   },
+  {
+    id: 'coverage-uncategorized',
+    category: 'triangulation',
+    label: 'No published tool is uncategorized',
+    // 9.B — the sum-of-assignments check above can pass while tools have ZERO
+    // categories (others carry 2-3). This counts tools with no category at all
+    // — they appear on NO category page (discovery + SEO gap).
+    rationale: 'A published tool with no category is invisible in category browse and internal linking.',
+    sql: `SELECT count(*)::int AS n FROM tools t
+            WHERE t.is_published = true
+              AND NOT EXISTS (SELECT 1 FROM tool_categories tc WHERE tc.tool_id = t.id)`,
+    interpret: (r) => {
+      const n = Number(r.n)
+      return {
+        pass: n === 0,
+        actual: `${n} uncategorized`,
+        expected: '0',
+        note: n > 0 ? `${n} published tools have no category — run the classification backfill` : undefined,
+      }
+    },
+  },
+  {
+    id: 'coverage-logos',
+    category: 'triangulation',
+    label: 'Logo coverage ≥ 60% (graceful favicon fallback below)',
+    // 9.B — missing logo_url is not a broken image (resolveToolLogoUrl falls
+    // back to a favicon, then a letter avatar), so this is a quality tripwire,
+    // not a hard failure — warn-style threshold.
+    rationale: 'Real logos look better than favicons; track coverage so the backfill is visible.',
+    sql: `SELECT
+            (SELECT count(*)::int FROM tools WHERE is_published = true) AS total,
+            (SELECT count(*)::int FROM tools WHERE is_published = true
+               AND logo_url IS NOT NULL AND logo_url <> '') AS with_logo`,
+    interpret: (r) => {
+      const total = Number(r.total)
+      const withLogo = Number(r.with_logo)
+      const pct = total > 0 ? Math.round((withLogo / total) * 100) : 100
+      return {
+        pass: pct >= 60,
+        actual: `${pct}% (${withLogo}/${total})`,
+        expected: '≥ 60%',
+        note: pct < 60 ? `${total - withLogo} tools fall back to favicon — run the logo backfill` : undefined,
+      }
+    },
+  },
 
   // ── BOUNDARIES (time-window monotonicity) ───────────────────────────────
   {
