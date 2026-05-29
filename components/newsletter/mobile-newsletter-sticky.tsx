@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { X, Mail } from 'lucide-react'
 import { NewsletterForm } from './newsletter-form'
+import { isEligibleForCTA } from '@/lib/cta/eligible-path'
 
 const DISMISS_KEY = 'rac_newsletter_dismissed_v1'
 const DISMISS_DAYS = 14
 
 export function MobileNewsletterSticky() {
+  const pathname = usePathname()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -29,7 +32,12 @@ export function MobileNewsletterSticky() {
     setVisible(false)
   }
 
-  if (!visible) return null
+  // Avoid stacking on top of the global Plan-Your-Stack sticky (same bottom
+  // band + z-40). The plan CTA is the higher-intent conversion surface, so on
+  // pages where it's eligible we suppress the newsletter sticky and show only
+  // one bar at a time. On excluded pages (home, /tools list, footer URLs) the
+  // plan CTA is hidden, so the newsletter sticky is free to appear.
+  if (!visible || isEligibleForCTA(pathname)) return null
 
   return (
     <div className="lg:hidden fixed left-3 right-3 bottom-[68px] z-40 rounded-xl border border-emerald-700/50 bg-zinc-950/95 backdrop-blur-sm shadow-xl p-4">

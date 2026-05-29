@@ -57,6 +57,8 @@ export function NewsletterForm({
   if (state === 'ok') {
     return (
       <div
+        role="status"
+        aria-live="polite"
         className={
           variant === 'card'
             ? 'rounded-xl border border-emerald-700 bg-emerald-950/30 p-5 text-sm text-emerald-200 flex items-center gap-2'
@@ -98,7 +100,11 @@ export function NewsletterForm({
             {state === 'sending' ? 'Sending…' : ctaLabel}
           </button>
         </form>
-        {errorMsg && <p className="text-xs text-rose-400 mt-2">{errorMsg}</p>}
+        {errorMsg && (
+          <p role="status" aria-live="polite" className="text-xs text-rose-400 mt-2">
+            {errorMsg}
+          </p>
+        )}
       </div>
     )
   }

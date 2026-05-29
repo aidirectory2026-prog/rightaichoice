@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Sparkles, RotateCcw, AlertCircle } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
+import { Footer } from '@/components/layout/footer'
 import { RecommendationWizard } from '@/components/recommendations/recommendation-wizard'
 import { RecommendedToolCard } from '@/components/recommendations/recommended-tool-card'
 import { getRecommendations } from '@/lib/data/recommendations'
@@ -62,6 +63,7 @@ export default async function RecommendPage({ searchParams }: Props) {
             <RecommendationWizard />
           </div>
         </main>
+        <Footer />
       </>
     )
   }
@@ -159,6 +161,7 @@ export default async function RecommendPage({ searchParams }: Props) {
           </div>
         </div>
       </main>
+      <Footer />
     </>
   )
 }

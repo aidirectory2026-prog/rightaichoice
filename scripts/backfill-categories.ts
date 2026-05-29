@@ -245,7 +245,7 @@ async function main() {
 
       const { error: insErr } = await supabase
         .from('tool_categories')
-        .upsert(rows, { onConflict: 'tool_id,category_id', ignoreDuplicates: true })
+        .upsert(rows as never, { onConflict: 'tool_id,category_id', ignoreDuplicates: true })
       if (insErr) {
         skipped.push({ id: tool.id, name: tool.name, reason: `insert error: ${insErr.message}` })
         continue

@@ -552,7 +552,7 @@ async function runApply(sb: ReturnType<typeof getAdminClient>) {
     // Only update rows still null/empty (idempotent at write time too).
     const { error: updErr, count } = await sb
       .from('tools')
-      .update({ logo_url: publicUrl }, { count: 'exact' })
+      .update({ logo_url: publicUrl } as never, { count: 'exact' })
       .eq('id', t.id)
       .or('logo_url.is.null,logo_url.eq.')
     if (updErr) {

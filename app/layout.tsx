@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Inter, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
@@ -72,6 +72,12 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
   },
+};
+
+// Matches the zinc-950 dark theme so mobile browser chrome (address bar /
+// status bar) blends with the app rather than flashing white.
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default async function RootLayout({

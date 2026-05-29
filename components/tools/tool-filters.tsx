@@ -119,6 +119,7 @@ export function ToolFilters({
 
         {/* Sort */}
         <select
+          aria-label="Sort tools"
           value={currentSort}
           onChange={(e) => updateParam('sort', e.target.value)}
           className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 min-h-[40px] text-sm text-white focus:border-emerald-600 focus:outline-none"
@@ -235,6 +236,7 @@ function FilterSelect({
 }) {
   return (
     <select
+      aria-label={`Filter by ${label}`}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={`rounded-lg border px-3 min-h-[40px] text-sm focus:border-emerald-600 focus:outline-none transition-colors ${

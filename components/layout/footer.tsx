@@ -18,6 +18,8 @@ const PRODUCT_LINKS: Array<{ href: string; label: string }> = [
   { href: '/categories', label: 'Categories' },
   { href: '/search', label: 'Search' },
   { href: '/plan', label: 'Plan my stack' },
+  { href: '/recommend', label: 'Find my AI tool' },
+  { href: '/ai-chat', label: 'AI chat' },
   { href: '/compare', label: 'Compare' },
 ]
 

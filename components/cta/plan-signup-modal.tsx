@@ -75,7 +75,14 @@ export function PlanSignupModal({
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // Lock body scroll while the modal is open so the page behind doesn't
+    // scroll under the overlay; restore the prior value on close/unmount.
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
   }, [open, sourceSurface, typedGoal.length, onClose])
 
   if (!open) return null

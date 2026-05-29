@@ -61,9 +61,15 @@ export function PlanCTASticky() {
 
   if (!visible) return null
 
+  // Tool-detail pages mount a MobileActionBar pinned just above the nav
+  // (bottom-[60px], ~56px tall). Sit this sticky above that bar there so the
+  // two don't overlap; elsewhere the only thing below us is the 60px nav.
+  const onToolDetail = (pathname ?? '').startsWith('/tools/')
+  const mobileBottom = onToolDetail ? 'bottom-[128px]' : 'bottom-[72px]'
+
   return (
     <div
-      className="fixed bottom-[72px] lg:bottom-4 left-3 right-3 lg:left-auto lg:right-4 lg:max-w-[320px] z-40 animate-in slide-in-from-bottom-4 duration-300"
+      className={`fixed ${mobileBottom} lg:bottom-4 left-3 right-3 lg:left-auto lg:right-4 lg:max-w-[320px] z-40 animate-in slide-in-from-bottom-4 duration-300`}
       role="region"
       aria-label="Plan your AI stack"
     >
