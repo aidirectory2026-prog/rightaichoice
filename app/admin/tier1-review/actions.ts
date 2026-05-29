@@ -3,6 +3,44 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { bumpFreshness, type FreshnessPageType } from '@/lib/seo/freshness'
+import { submitToIndexNow } from '@/lib/indexnow'
+
+const BASE_URL = 'https://rightaichoice.com'
+
+function pageTypeFromPath(path: string): FreshnessPageType {
+  if (path.startsWith('/compare/')) return 'compare'
+  if (path.startsWith('/blog/')) return 'blog'
+  if (path.startsWith('/categories/')) return 'category'
+  if (path.startsWith('/best/')) return 'best'
+  if (path.startsWith('/for/')) return 'role'
+  if (path.startsWith('/stacks/')) return 'stack'
+  return 'tool'
+}
+
+/**
+ * After a title change goes live, the page is invisible to Google until it
+ * recrawls. Bump pages_freshness (so the sitemap <lastmod> updates → recrawl
+ * signal) and ping IndexNow directly. Best-effort: a failure here must never
+ * block the approval, which already succeeded.
+ */
+async function signalRecrawl(path: string, event: string): Promise<void> {
+  try {
+    await bumpFreshness(path, {
+      pageType: pageTypeFromPath(path),
+      source: 'admin_manual',
+      event,
+      reason: 'tier1 title rewrite',
+    })
+  } catch (e) {
+    console.warn(`[tier1] bumpFreshness(${path}) failed:`, (e as Error).message)
+  }
+  try {
+    await submitToIndexNow(`${BASE_URL}${path}`)
+  } catch (e) {
+    console.warn(`[tier1] IndexNow ping(${path}) failed:`, (e as Error).message)
+  }
+}
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -65,6 +103,7 @@ export async function approveTitleOverride(
 
     revalidatePath(args.pagePath)
     revalidatePath('/admin/tier1-review')
+    await signalRecrawl(args.pagePath, 'tier1_title_approved')
     return { ok: true }
   } catch (e) {
     return { error: (e as Error).message }
@@ -87,6 +126,7 @@ export async function revertTitleOverride(args: {
     if (error) return { error: error.message }
     revalidatePath(args.pagePath)
     revalidatePath('/admin/tier1-review')
+    await signalRecrawl(args.pagePath, 'tier1_title_reverted')
     return { ok: true }
   } catch (e) {
     return { error: (e as Error).message }
