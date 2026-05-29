@@ -12,6 +12,8 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
 import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -156,6 +158,13 @@ export default async function RootLayout({
         {/* Phase 9 — global Plan Your Stack CTA. Hidden on excluded paths
             (footer URLs, auth, admin, planner itself) via isEligibleForCTA. */}
         <PlanCTASticky />
+        {/* 9.A.3 — independent THIRD tracking source. Vercel Web Analytics is
+            edge-collected and far harder to ad-block than Mixpanel (which our
+            data shows loses ~most client events), so it's the cross-check
+            counter in /admin/insights/reconciliation. Speed Insights gives
+            real-user Core Web Vitals (SEO/ranking guardrail). */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
