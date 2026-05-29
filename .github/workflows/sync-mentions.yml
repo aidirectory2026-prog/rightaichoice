@@ -1,0 +1,83 @@
+name: Sync page_tool_mentions
+
+# 1.1 freshness-cascade — rebuilds the page_tool_mentions bridge table.
+#
+# Two halves:
+#   1. SQL function `sync_page_tool_mentions_db()` — db_join rows
+#      (tool pages, category pages, compare pages). Run via Supabase RPC.
+#   2. Code-config + blog scripts — code_config and blog_frontmatter rows
+#      (best/role/stack pages + blog posts).
+#
+# Manual trigger only for now. Will move to a schedule once the 1.1
+# rollout is verified live.
+#
+# Required secrets:
+#   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_db_join:
+        description: 'Also run sync_page_tool_mentions_db() RPC (db_join rows)'
+        required: false
+        type: boolean
+        default: true
+      dry_run:
+        description: 'Dry run (no writes)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Sync code_config mentions (best / role / stack)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRY: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            npx tsx scripts/sync-page-mentions-from-code.ts --dry-run
+          else
+            npx tsx scripts/sync-page-mentions-from-code.ts
+          fi
+
+      - name: Sync blog_frontmatter mentions
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRY: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            npx tsx scripts/sync-page-mentions-from-blog.ts --dry-run
+          else
+            npx tsx scripts/sync-page-mentions-from-blog.ts
+          fi
+
+      - name: Sync db_join mentions (via SQL RPC)
+        if: ${{ github.event.inputs.include_db_join == 'true' && github.event.inputs.dry_run != 'true' }}
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -sS -X POST "$SUPABASE_URL/rest/v1/rpc/sync_page_tool_mentions_db" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo  # newline after numeric response

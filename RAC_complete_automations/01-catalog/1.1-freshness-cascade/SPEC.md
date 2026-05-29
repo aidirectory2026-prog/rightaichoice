@@ -283,8 +283,7 @@ Run order: backfill `page_tool_mentions` first, then `pages_freshness`. Run on a
 ## 10. Files to create / modify
 
 ### Create
-- `supabase/migrations/094_pages_freshness.sql` — `pages_freshness` + `page_tool_mentions` tables, indexes, trigger function, triggers
-- `supabase/migrations/095_sync_page_mentions_function.sql` — `sync_page_tool_mentions_db()` Postgres function
+- `supabase/migrations/103_pages_freshness.sql` — `pages_freshness` + `page_tool_mentions` tables, indexes, `propagate_freshness()`, `sync_page_tool_mentions_db()`, triggers on `tools` and `tool_comparisons`. (Note: SPEC originally said 094 — bumped to 103 because 094–102 are already used. Sync function folded into the same migration.)
 - `lib/seo/freshness.ts` — `getLastChangedAt(path)`, `getLastChangedAtBatch(paths[])`, `bumpFreshness(path, source, event, reason)`
 - `app/api/cron/cascade-hubs/route.ts` — 1h cron handler
 - `app/api/internal/revalidate/route.ts` — protected ISR endpoint (if not already there)
@@ -368,7 +367,7 @@ After deploy, run in order:
 
 ## 12. Build order
 
-1. Migration 094 + 095 — schema + functions
+1. Migration 103 — schema + functions + triggers (single file)
 2. `lib/seo/freshness.ts` helper
 3. `scripts/sync-page-mentions-from-code.ts` + first sync run
 4. `scripts/backfill-pages-freshness.ts` + dry-run on staging clone
