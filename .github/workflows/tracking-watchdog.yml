@@ -7,9 +7,10 @@ name: Tracking Watchdog
 
 on:
   schedule:
-    # Mondays at 8:00 AM UTC — early enough to spot a Friday-night
-    # deploy breaking tracking before the work-week dashboards matter.
-    - cron: '0 8 * * 1'
+    # Daily at 8:00 AM UTC. The in-DB invariant suite (pg_cron) runs nightly at
+    # 19:30 UTC; this reads tracking_health each morning and alerts on any fail
+    # (9.A.4), plus the original event-freshness checks.
+    - cron: '0 8 * * *'
   workflow_dispatch:
 
 jobs:

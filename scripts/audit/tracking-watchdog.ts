@@ -80,7 +80,43 @@ async function runChecks(): Promise<Check[]> {
   const authUsers = authUsersCount ?? 0
   const drift = authUsers > 0 ? Math.abs(authUsers - signupsInEvents) / authUsers : 0
 
+  // Check E — in-DB invariant suite (9.A.4). Read the latest tracking_health
+  // run (populated nightly by pg_cron run_tracking_invariants()) and fail if
+  // any invariant failed. This is the out-of-band reader of the in-DB checks.
+  const { data: latestRun } = await db
+    .from('tracking_health')
+    .select('run_at')
+    .order('run_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const ehRunAt = (latestRun as { run_at: string } | null)?.run_at
+  let ehFails: string[] = []
+  let ehStale = false
+  if (!ehRunAt) {
+    ehStale = true
+  } else {
+    ehStale = Date.now() - new Date(ehRunAt).getTime() > 36 * 60 * 60 * 1000 // > 36h = pg_cron not running
+    const { data: ehRows } = await db
+      .from('tracking_health')
+      .select('check_key, status, value')
+      .eq('run_at', ehRunAt)
+    ehFails = ((ehRows as { check_key: string; status: string; value: number }[]) ?? [])
+      .filter((r) => r.status === 'fail')
+      .map((r) => `${r.check_key}=${r.value}`)
+  }
+
   return [
+    {
+      name: 'E. In-DB invariant suite (tracking_health)',
+      ok: !ehStale && ehFails.length === 0,
+      value: ehStale ? 'STALE (pg_cron not running?)' : ehFails.length ? ehFails.join(', ') : 'all pass',
+      expected: 'fresh run, 0 fails',
+      detail: ehStale
+        ? 'No tracking_health run in 36h — check pg_cron job tracking-invariants-nightly'
+        : ehFails.length
+          ? `Failed invariants: ${ehFails.join(', ')}`
+          : undefined,
+    },
     {
       name: 'A. page_viewed freshness (24h)',
       ok: pageViewed24h >= 1,
