@@ -1259,11 +1259,50 @@ Captured 2026-05-26, before any Phase 9 work landed. This is the "before" pictur
 
 ---
 
+## Day 5 — 2026-05-29 (cont.) — Frontier commit · freshness→sitemaps · Tier-1 live · ranking boost
+
+Big session. Resumed Smart SEO alongside the parallel Opus 4.8 Review (which had reached 9.E); coordinated against the collision boundary (next migration = 125; new tables RLS-on; events registered; shared files append-only).
+
+### S0 — Committed the uncommitted frontier (8 commits, `main`, not pushed)
+103 uncommitted files → clean themed commits: `chore: gitignore scratch dirs` · `chore(db): never-tracked migrations 038–110 + seed` (the real root of the duplicate-number mess — committed as-is, not renumbered) · `freshness cascade` · `sitemap+IndexNow` · `weekly GSC loop` · `candidates/scripts/docs`. **Restored `035_tool_sentiment_cache.sql`** which had been accidentally emptied in the working tree. Fixed a latent broken state: committed crons imported an uncommitted `lib/seo/freshness.ts`.
+
+### S1 — Sitemap `lastmod` accuracy + IndexNow hygiene (`3bebb7a`)
+- All sitemaps (`app/sitemap.ts`, `tools`, `compare`) now overlay `pages_freshness` over the real source-row timestamp and **omit `lastmod` rather than emitting `new Date()`** (which had trained Google to ignore our `lastmod`). New `getSectionFreshness()` gives section-index URLs an honest date.
+- Ran the backfill chain: `sync_page_tool_mentions_db()` (SQL) + `sync:mentions:code` (22,065 pairs) + `sync:mentions:blog` (79) → `backfill:freshness`. **`pages_freshness` now 2,619 rows across all 7 page types** (was 90 compare-only).
+- IndexNow (`app/api/indexnow/route.ts`): filters `noindex` compares, **deleted the dead `/questions/` block** (no such route → was pinging 404s), filters noindex best/stacks/role.
+
+### S2 — Tier-1 made ROI-smart + regenerated from today's GSC (`b0c32cb`)
+- Builder + rewriter now score each candidate `priority = impressions × title-responsiveness × position-leverage` and classify a **binding constraint**: `title` (page-1, title-responsive), `mixed` (pos 11–20), `rank` (buried/templated tool pages). Review UI (`/admin/tier1-review`) sorts + badges by it with a guidance banner; rewriter adds answer-style titles for question queries.
+- Regenerated from the **2026-05-29 28d snapshot**: 99 candidates → 98 rewrites = **9 🟢 title / 14 🟡 mixed / 75 🔴 rank** (1 DeepSeek parse fail: `/tools/seowritex`, retriable).
+
+### GSC analysis (live 2026-05-29) — the strategic reframe
+- 99 pos-1–30 pages hold only **1,691 impr / 6 clicks** (0.35% CTR). But the **pos 31–50 cohort has MORE impressions (2,141) — 131 tool pages, 0 clicks** — rank-bound, not title-fixable.
+- Tier-1 value concentrates in **15 page-1 compares (712 impr, 3 of 6 clicks)**.
+- Checked a canonical scare (`stable-audio` pos 78 for "stable audio"): **false alarm** — Google canonical = self, `user_canonical` null is a capture artifact. Brand-term collapse is normal SERP competition. Winnable queries = comparisons / long-tail / questions.
+
+### Approvals — Claude curated + applied 39 live title overrides (`scripts/approve-tier1-titles.ts`)
+Operator delegated approval ("approve smartly on your own, I'll review next time"). Applied **6 title-bound (compares + leaderboard blog) + 33 tool pages ranking pos 1–20**. **Held 3** where the current title was already optimal (cost-math blog, open-source-agents blog, moises-vs-suno) — smart > volume. Most tool titles had a literal `&amp;` HTML-entity bug → fixing it is a real SERP-display win. Each approval is recrawl-signalled.
+
+### Recrawl loop (`9316baf`) — answers "what do we do in GSC after?"
+Approve/revert now **bump `pages_freshness` (→ sitemap `lastmod`) + ping IndexNow**. Honest mechanics: **IndexNow notifies Bing/Yandex instantly; Google is NOT pinged** — it recrawls on its own schedule but now sees an honest, newer `lastmod`. Google's only on-demand lever is the manual GSC "Request Indexing" (≤10/day) — reserved for top compares. The sitemap-ping-to-Google endpoint was removed by Google in 2023.
+
+### Ranking lever for "other pages" (`7bf6212`, mig 125)
+Rejected a fake recrawl-wave (would contradict the freshness-honesty we just shipped). Built the legitimate lever: `gsc_tool_positions` (per-tool weighted position from the snapshot; **709 tools, 168 buried pos 20–50**) + `getBuriedToolSlugs()` unioned into the existing sibling-rail bias so internal PageRank flows to indexed-but-buried pages too. Refreshed weekly inside the `snapshot-gsc` cron.
+
+### Verification
+`tsc --noEmit` clean at every step. Migration 125 applied to prod via MCP (`SET search_path=''`, SECURITY DEFINER, anon/authenticated revoked — clean per 9.C rules). 39 overrides confirmed live in `title_overrides`.
+
+### Next
+- **Operator:** review the 39 approvals at `/admin/tier1-review`; optionally GSC "Request Indexing" the top ~10 compares; measure Day-7/28 lift.
+- **Build:** `/seo-impact` (4-week lift job) to close the loop; then Tier-2 content depth for the pos-31–50 cohort.
+
+---
+
 ## Open tasks blocking next ship
 
 1. **#43 Brand SERP audit** — open incognito, search "rightaichoice", paste top-5 URLs back. 5 minutes. Tells us what to do for brand defense.
-2. **#37 Apply pending migrations** — several `supabase/migrations/*.sql` files locally that haven't been applied to the live DB. Audit and apply.
-3. **#47 Tier-1 rewrites** — needs the candidates script to run first (Supabase-blocked at the time of Day-1 ship). Then build the DeepSeek title rewriter and `/admin/tier1-review` UI.
+2. ~~**#37 Apply pending migrations**~~ — ✅ committed (038–110 recorded as-is; mig 125 applied). Duplicate-number cleanup still pending as tech debt.
+3. ~~**#47 Tier-1 rewrites**~~ — ✅ shipped + 39 titles live (engine, ROI ranking, recrawl loop, batch approval). Remaining = operator review + `/seo-impact` lift measurement.
 
 ---
 
