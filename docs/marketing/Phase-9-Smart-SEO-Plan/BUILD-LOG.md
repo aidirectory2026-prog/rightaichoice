@@ -4,6 +4,138 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 4 — 2026-05-29 — Brand entity binding: Wikidata Q-item, rel=me verification, awesome-list inclusion, perf-cluster fixes
+
+**Trigger:** brand SERP is still weak (rank #2 for "rightaichoice", unknown competitor at #1 — Open Task #43). Google's Knowledge Graph and AI assistants need a verified entity to anchor the brand to; the existing Organization JSON-LD on its own isn't enough without a Wikidata Q-item or strong rel=me cross-verification. In parallel, ~150ms of unnecessary Supabase round-trips per page render on anonymous traffic were dragging TTFB on every non-cached page.
+
+### 1. Wikidata Q139970688 created and bound
+
+- New item at https://www.wikidata.org/wiki/Q139970688
+- Statements: instance of (website), official website (https://rightaichoice.com), founder (Tanmay Verma, with own Person Q-item), inception (2026), country (India), official name (RightAIChoice/EN), X (Twitter) username (rightaichoice)
+- Wikidata is the single strongest entity-binding anchor short of a Wikipedia page — Google's Knowledge Graph treats it as first-class identity, AI assistants resolve brand entities through it before falling back to web search
+- Q-item URL added to Organization JSON-LD `sameAs` array — closes the verification loop in both directions (site → Wikidata via JSON-LD; Wikidata → site via official-website statement)
+
+### 2. rel=me social verification edges (`app/layout.tsx`)
+
+Added five `<link rel="me">` tags emitting from the root layout `<body>` (Next.js hoists these into `<head>` automatically):
+- `https://x.com/rightaichoice`
+- `https://twitter.com/rightaichoice` (legacy handle)
+- `https://www.linkedin.com/company/rightaichoice`
+- `https://github.com/aidirectory2026-prog/rightaichoice`
+- `https://www.linkedin.com/in/tanmayverma99` (founder)
+
+`rel=me` is the IndieAuth / identity-verification convention — each link declares "this profile belongs to the same entity as this site." Combined with reciprocal links from each profile back to rightaichoice.com (already in place on X, LinkedIn, GitHub), the verification loop closes. AI assistants increasingly use this to bind a brand to its social presence.
+
+### 3. JSON-LD `sameAs` expanded
+
+`lib/seo/json-ld.ts` Organization `sameAs` now lists: X, Twitter (legacy), LinkedIn company, GitHub org, **Wikidata Q139970688**. Founder Person JSON-LD keeps its own `sameAs` (LinkedIn personal). Both ends of `Organization.founder ↔ Person.worksFor` remain wired — Google reads both directions when building the knowledge graph.
+
+### 4. Awesome-list inclusion (PR-based authority backlinks)
+
+Opened two PRs that, when merged, place RightAIChoice in trusted curated GitHub directories — high-quality backlinks plus inclusion in AI-training-data corpora:
+
+| Repo | PR | Section | Status |
+|---|---|---|---|
+| `mahseema/awesome-ai-tools` | [#1412](https://github.com/mahseema/awesome-ai-tools/pull/1412) | Related Awesome Lists | Open, no conflicts |
+| `steven2358/awesome-generative-ai` | [#812](https://github.com/steven2358/awesome-generative-ai/pull/812) | More lists | Open, no conflicts |
+
+Both PRs are clean one-line additions, checklist items confirmed, format matches neighbors. Typical merge time for these lists: 3 days to 3 weeks. If unmerged after 3 weeks, follow up with a polite comment.
+
+Other candidate lists surveyed (`wsxiaoys/awesome-ai-tools` → 404 dead repo; `Hannibal046/Awesome-LLM` → poor fit, focused on academic LLM work, not editorial review platforms).
+
+### 5. Deleted-URL deindex blast (`scripts/blast-deleted-urls-indexnow.ts`)
+
+New dedicated script (vs. overloading the existing IndexNow submitter with flags) for 410-blasting the 64 deleted tools + 28 deleted compares (from yesterday's non-AI purge):
+- Reads `DELETED_TOOL_SLUGS` + `DELETED_COMPARE_SLUGS` from `lib/seo/deleted-tools.ts`
+- Submits to IndexNow only (Bing direct submit is for add/update; IndexNow handles deletion semantics — the URL returns 410, IndexNow tells Bing/Yandex to recrawl, they observe the 410, deindex follows)
+- Key: `1ddd347878cead47f293292da0707a19`; host file at `/public/1ddd347878cead47f293292da0707a19.txt`
+- Wired up: `npm run indexnow:deleted[:dry]`
+
+### 6. Wayback Machine archival (`scripts/save-wayback.ts`)
+
+New script that pings web.archive.org's Save Page Now endpoint for 25 structural URLs (homepage + tools/compare/plan/methodology/about + sitemap-index + llms.txt + llms-full.txt + feed.xml + 15 category indexes). Why:
+1. AI assistants increasingly cite archived URLs as the "stable" source when canonical pages move — a fresh snapshot makes the current canonical state the reference point
+2. archive.org is itself a crawlable corpus — fresh snapshots get picked up by Google's archived-content discovery and by some independent AI training pipelines
+3. Free baseline audit trail — timestamped proof of priority if a competitor later mirrors content
+
+Run result: 21 succeeded first pass; 4 rate-limited (HTTP 429) on URLs 11–13 + 1 fetch failure; retried with 15s gap individually — all 4 succeeded on retry. Total 25/25 archived. Sleep 5s between requests stayed well under the unauthenticated ~15 req/min limit; should bump to 10s for future runs to avoid the 429 retry loop.
+
+Wired up: `npm run wayback:save[:dry]`.
+
+### 7. Bing Webmaster smart-submit
+
+Ran `npm run bing:submit -- --smart` — submitted 33 alternative-URL pages. Bing lifetime submitted now 733. The `--smart` flag picks URLs by a multi-factor score (freshness + traffic + indexation gap) rather than just newest-first.
+
+### 8. Perf cluster — three fixes, deployed earlier today
+
+Fixes A/B/C from the perf audit that were starving the site of TTFB on every anonymous page render:
+
+- **Fix A — Skip `supabase.auth.getUser()` on browse paths** (`app/layout.tsx`, `lib/supabase/middleware.ts`). The root layout was unconditionally calling Supabase auth + profile fetch on every page render, paying ~150ms per request to confirm "yes, you're still anonymous" for 99% of traffic. Now: cookie-gated — only resolve the user when an `sb-*-auth-token` cookie is present. `pathNeedsAuth()` in the proxy returns true only for /login, /signup, /dashboard, /admin, /profile, /submit-tool, /saved, /api/admin, /api/account; everything else returns `NextResponse.next({ request })` immediately.
+
+- **Fix B — Static merged-tool redirect map** (`lib/seo/merged-redirects.ts`, `proxy.ts`). The proxy was doing a per-request DB query to check whether the requested `/tools/<slug>` was a merged-into legacy slug. Replaced with a `MERGED_TOOL_REDIRECTS` object baked at build time via `scripts/build-merged-redirects.ts`. 67 mappings in the static map, O(1) lookup at the edge, zero DB hops. Verified clean: no 308→410 chains, no double-hops. Wired up: `npm run merged:build[:dry]`.
+
+- **Fix C — Drop `export const dynamic = 'force-dynamic'` from `/compare/[slug]`**. The editorial compare pages had `force-dynamic` set, forcing a per-request SSR on pages that already had ISR-grade caching infrastructure. Dropped to default. 500 editorial compare pages now serve from edge cache.
+
+- **Fix D — Supabase read replica** (`#90`) — **deferred** (option C). Measure compute scale-up impact first before adding read-replica complexity. Re-evaluate after 1 week of post-RESIZING traffic data.
+
+### 9. Stack page hygiene (`lib/data/stacks.ts`, `app/stacks/[slug]/page.tsx`)
+
+Removed Wave from the solopreneur stack's Finance & Admin alternatives — Wave is one of the 64 deleted non-AI tools. Two changes:
+- `lib/data/stacks.ts:1254` — removed the Wave alternative entry; `alternatives: []` now
+- `app/stacks/[slug]/page.tsx:83` — guarded the JSON-LD HowTo step builder against empty alternatives arrays so the schema doesn't emit a dangling "Alternatives: ." suffix
+
+Regenerated `public/llms-full.txt` (1974 tools, 500 editorial compares, 15 categories, 2,478,992 bytes). Verified 0 deleted-slug leaks.
+
+### 10. GSC baseline snapshot captured
+
+Ran `npm run snapshot:gsc` at end of day so we have a frozen "before Phase 9 entity work" measurement to diff against next week. Numbers:
+
+```
+7-day  (May 20–26):  22 clicks, 18,672 impr, 0.12% CTR, avg pos 52.9
+28-day (Apr 29–May 26): 50 clicks, 31,670 impr, 0.16% CTR, avg pos 44.7
+```
+
+Avg position has drifted further (52.9 on 7d window vs 39 noted in Day-1 baseline). Today's brand-entity work is precisely the right intervention for that drift — Google's entity confusion is a known cause of position decay when SERPs can't bind a query to a trusted brand entity.
+
+### Commits shipped today
+
+| Commit | What |
+|---|---|
+| `9cf56e1` | Phase 8.f — per-tool depth + history on edit page (pre-existing, pushed today) |
+| `dd925b1` | Fix B — static merged-redirects map populated (67 entries) |
+| `25215ba` | Deleted-URL IndexNow blast script |
+| `e64f5f9` | Wayback Machine archival script |
+| `35f8178` | JSON-LD HowTo cleanup + Wave removal + llms-full regenerate |
+| `0e83435` | rel=me social verification links |
+| `f1db62a` | Wikidata Q139970688 added to Organization JSON-LD sameAs |
+
+### What's NOT in this ship (and why)
+
+- **GSC weekly optimization loop crons** (`snapshot-gsc` + `diff-gsc` as daily Vercel cron) — manual `npm run snapshot:gsc` works today; automation is Day-5 work (Option B from the end-of-day check-in).
+- **Founder outreach drafts** — `outreach:draft` script exists but not run today; high-leverage but slow, scheduling for Week 2.
+- **Tier-1 candidate title rewrites** — Open Task #47, blocked on the DeepSeek title rewriter UI; not addressed today.
+- **Newsletter sends** — 700+ subs captured, still 0 sent. Blocked on Beehiiv setup (Day-14 ESP budget item per roadmap).
+- **Dataset entity in JSON-LD** — `lib/seo/json-ld.ts` doesn't yet expose a Dataset schema for the catalog itself. Considered but deferred; would help with AI-citation discoverability of "the dataset of AI tools" as a queryable entity, but the marginal entity-binding lift from Wikidata + rel=me today is larger.
+
+### What's measurable from this ship
+
+| When | Check |
+|---|---|
+| Today +1h | Vercel deploy live; view-source on any page shows Wikidata `sameAs` + 5 `<link rel="me">` tags |
+| Today +24h | Wayback snapshots appear in `https://web.archive.org/web/*/rightaichoice.com` |
+| Day +3 | Brand SERP re-check: did Wikidata Q-item start surfacing in the right rail? |
+| Day +7 | `npm run diff:gsc` vs today's baseline — first signal of brand-entity lift on impr/pos |
+| Day +14 | Awesome-list PRs typically merged by now; backlink graph updated |
+| Day +21 | Google entity-cache typically refreshed; full effect of Wikidata + rel=me visible |
+
+### Files touched
+
+- New: `lib/seo/merged-redirects.ts`, `scripts/build-merged-redirects.ts`, `scripts/blast-deleted-urls-indexnow.ts`, `scripts/save-wayback.ts`, `public/1ddd347878cead47f293292da0707a19.txt`
+- Modified: `app/layout.tsx` (cookie-gated auth, rel=me tags), `lib/supabase/middleware.ts` (path-scoped auth), `proxy.ts` (static merged-redirects), `lib/seo/json-ld.ts` (Wikidata sameAs), `app/compare/[slug]/page.tsx` (drop force-dynamic), `app/stacks/[slug]/page.tsx` (HowTo guard), `lib/data/stacks.ts` (Wave removal), `package.json` (6 new scripts)
+- External: Wikidata Q139970688, GitHub PR #1412 (mahseema), GitHub PR #812 (steven2358)
+
+---
+
 ## Day 4 — 2026-05-29 — Non-AI tool purge: 64 hard deletes + 410 Gone
 
 **Trigger:** user directive to ensure "no non-AI tool on our website" — the brand promise is AI tool discovery, and presence of clearly non-AI listings (hosting, accounting, payroll, hardware) dilutes the topical signal Google sees and hurts user trust on landing.
