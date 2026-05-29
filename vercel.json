@@ -14,6 +14,14 @@
       "schedule": "30 6 * * 1"
     },
     {
+      "path": "/api/cron/triage-gsc",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/email-weekly-digest",
+      "schedule": "0 8 * * 1"
+    },
+    {
       "path": "/api/cron/submit-urls-bing",
       "schedule": "0 9 * * *"
     },
