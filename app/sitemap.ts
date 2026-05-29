@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { getSectionFreshness } from '@/lib/seo/freshness'
 
 const BASE_URL = 'https://rightaichoice.com'
 
@@ -20,22 +21,41 @@ const BASE_URL = 'https://rightaichoice.com'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Each section-index URL's <lastmod> = the freshest content inside it
+  // (from pages_freshness). NEVER `new Date()` — a hub that claims it changed
+  // on every crawl is the fastest way to get our <lastmod> ignored. Truly
+  // static editorial pages omit lastmod entirely (honest: Google then uses
+  // its own crawl cadence). Empty until backfill:freshness has run.
+  const sf = await getSectionFreshness()
+  const newest = (...types: Array<Parameters<typeof sf.get>[0]>): Date | undefined => {
+    let best: Date | undefined
+    for (const t of types) {
+      const d = sf.get(t)
+      if (d && (!best || d > best)) best = d
+    }
+    return best
+  }
+  const lm = (d: Date | undefined) => (d ? { lastModified: d } : {})
+
+  // Homepage reflects the whole catalog's freshest signal.
+  const homepageFresh = newest('tool', 'compare', 'blog', 'category', 'best', 'stack', 'role')
+
   return [
-    { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: `${BASE_URL}/tools`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE_URL}/compare`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE_URL}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/best`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/stacks`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${BASE_URL}/for`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/recommend`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/ai-chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/viability`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${BASE_URL}/viability/at-risk`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/viability/safe-bets`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/methodology`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE_URL}/team`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/embed`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.55 },
+    { url: BASE_URL, ...lm(homepageFresh), changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE_URL}/tools`, ...lm(sf.get('tool')), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/compare`, ...lm(sf.get('compare')), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/categories`, ...lm(sf.get('category')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/best`, ...lm(sf.get('best')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/stacks`, ...lm(sf.get('stack')), changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${BASE_URL}/for`, ...lm(sf.get('role')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/blog`, ...lm(sf.get('blog')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/recommend`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/ai-chat`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/viability`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${BASE_URL}/viability/at-risk`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/viability/safe-bets`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/methodology`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE_URL}/team`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/embed`, changeFrequency: 'monthly', priority: 0.55 },
   ]
 }

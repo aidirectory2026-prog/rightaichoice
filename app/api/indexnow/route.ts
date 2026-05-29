@@ -44,23 +44,20 @@ export async function POST(request: Request) {
     urls.push(...(tools as { slug: string }[]).map((t) => `${BASE}/tools/${t.slug}`))
   }
 
-  // Editorial comparison pages only — user-saved comparisons stay private
+  // Editorial comparison pages only — user-saved comparisons stay private.
+  // Exclude noindex'd compares (Phase 9 noindex sweep) so we don't ask
+  // Bing/IndexNow to crawl URLs we're telling Google not to index.
   const { data: comparisons } = await db
     .from('tool_comparisons')
     .select('slug')
     .eq('is_editorial', true)
+    .eq('noindex', false)
   if (comparisons) {
     urls.push(...(comparisons as { slug: string }[]).map((c) => `${BASE}/compare/${c.slug}`))
   }
 
-  // Question pages
-  const { data: questions } = await db
-    .from('questions')
-    .select('id')
-    .eq('is_flagged', false)
-  if (questions) {
-    urls.push(...(questions as { id: string }[]).map((q) => `${BASE}/questions/${q.id}`))
-  }
+  // (Removed: /questions/<id> URLs — there is no /questions route, so these
+  // were submitting 404s and wasting IndexNow quota + crawl budget.)
 
   // Category pages
   const { data: categories } = await db
@@ -70,15 +67,15 @@ export async function POST(request: Request) {
     urls.push(...(categories as { slug: string }[]).map((c) => `${BASE}/categories/${c.slug}`))
   }
 
-  // Best-of pages (static data)
-  urls.push(...BEST_PAGES.map((p) => `${BASE}/best/${p.slug}`))
+  // Best-of pages (static data) — skip noindex'd ones (match the sitemaps)
+  urls.push(...BEST_PAGES.filter((p) => !p.noindex).map((p) => `${BASE}/best/${p.slug}`))
 
-  // Stack pages (static data)
-  urls.push(...STACKS.map((s) => `${BASE}/stacks/${s.slug}`))
+  // Stack pages (static data) — skip noindex'd ones
+  urls.push(...STACKS.filter((s) => !s.noindex).map((s) => `${BASE}/stacks/${s.slug}`))
 
-  // Role pages (static data)
+  // Role pages (static data) — skip noindex'd ones
   urls.push(`${BASE}/for`)
-  urls.push(...ROLE_PAGES.map((r) => `${BASE}/for/${r.slug}`))
+  urls.push(...ROLE_PAGES.filter((r) => !r.noindex).map((r) => `${BASE}/for/${r.slug}`))
 
   // Blog post URLs (file-based)
   urls.push(`${BASE}/blog`)
