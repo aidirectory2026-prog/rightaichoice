@@ -20,19 +20,17 @@ export const metadata: Metadata = {
 export default async function CategoriesPage() {
   const categories = await getCategories()
 
-  // Phase 7 Step 56 (BUG-018): count published tools per category, not raw
-  // tool_categories rows. Inner-joining `tools` with is_published=true filters
-  // out drafts/unpublished tools so the per-category count matches what
-  // /tools?category=<slug> actually renders. Without the filter, drafts and
-  // hidden tools inflate every category's count and erode trust.
+  // Phase 9.B — count published tools per category via a grouped-count RPC.
+  // The previous approach selected the whole tool_categories junction and
+  // tallied in JS, but PostgREST caps an un-paginated select at 1000 rows and
+  // there are 3,500+ published junction rows — so every category count was
+  // silently undercounted. The RPC returns ~one row per category (group by),
+  // well under the cap, and matches what /tools?category=<slug> renders.
   const supabase = await createClient()
-  const { data: counts } = await supabase
-    .from('tool_categories')
-    .select('category_id, tools!inner(is_published)')
-    .eq('tools.is_published', true)
+  const { data: counts } = await supabase.rpc('category_published_counts')
   const countMap: Record<string, number> = {}
-  ;(counts ?? []).forEach((row: { category_id: string }) => {
-    countMap[row.category_id] = (countMap[row.category_id] ?? 0) + 1
+  ;(counts ?? []).forEach((row: { category_id: string; n: number }) => {
+    countMap[row.category_id] = Number(row.n)
   })
 
   return (
