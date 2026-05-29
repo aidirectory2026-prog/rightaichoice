@@ -1,0 +1,4299 @@
+[
+  {
+    "name": "Twig",
+    "url": "https://twig.so",
+    "description": "Autonomous AI ticket-resolution agent with RAG quality for customer support teams. Per-resolved-ticket pricing $3-5.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Intercom Fin",
+    "url": "https://www.intercom.com/fin",
+    "description": "AI agent built by Intercom that resolves customer support end-to-end and takes actions inside connected systems (refunds, order tracking, multi-step workflows).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Tidio Lyro",
+    "url": "https://www.tidio.com/lyro/",
+    "description": "SMB-focused AI chatbot resolving up to 67% of common customer questions without human intervention.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Chatbase",
+    "url": "https://www.chatbase.co",
+    "description": "Custom GPT chatbots trained on your data, embedded on your site for support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Gorgias",
+    "url": "https://www.gorgias.com",
+    "description": "Ecommerce-specific helpdesk + AI chatbot with Shopify, BigCommerce, Magento integrations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Forethought",
+    "url": "https://forethought.ai",
+    "description": "Generative AI for customer support with case routing, triage, and ticket resolution.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Ada",
+    "url": "https://www.ada.cx",
+    "description": "AI-native customer service automation for enterprise with multilingual support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Kore.ai",
+    "url": "https://kore.ai",
+    "description": "Enterprise conversational AI for customer service, employee experience, and search.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Decagon",
+    "url": "https://decagon.ai",
+    "description": "Enterprise AI customer service agent with per-resolution pricing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Sierra",
+    "url": "https://sierra.ai",
+    "description": "Conversational AI platform for customer-facing agents built by Bret Taylor's team.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Kustomer",
+    "url": "https://www.kustomer.com",
+    "description": "AI-powered helpdesk platform with omnichannel customer view.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Saleshandy",
+    "url": "https://www.saleshandy.com",
+    "description": "Full outbound workflow from one dashboard \u2014 leads from 830M+ B2B database with email warm-up.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Amplemarket",
+    "url": "https://amplemarket.com",
+    "description": "AI sales agent (Duo Copilot) for outbound prospecting. 4.6/5 G2 with 571+ reviews.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "usageSignal": {
+        "reviewCount": 571,
+        "rating": 4.6
+      }
+    }
+  },
+  {
+    "name": "Seamless.AI",
+    "url": "https://seamless.ai",
+    "description": "Real-time contact discovery and AI-powered data verification for sales prospecting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Regie.ai",
+    "url": "https://www.regie.ai",
+    "description": "Generative AI for sales sequences and outbound campaign content.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Clay",
+    "url": "https://www.clay.com",
+    "description": "GTM data and outbound enrichment platform with AI signal capture across 100+ sources.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Apollo.io",
+    "url": "https://www.apollo.io",
+    "description": "All-in-one sales intelligence + engagement platform with 270M+ contacts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Persana AI",
+    "url": "https://www.persana.ai",
+    "description": "AI sales prospecting agent that finds and enriches leads autonomously.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Smartlead.ai",
+    "url": "https://www.smartlead.ai",
+    "description": "Cold email automation with unlimited mailboxes and AI personalisation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Trellus",
+    "url": "https://www.trellus.ai",
+    "description": "AI sales coaching during outbound calls with real-time guidance.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "ColdReach",
+    "url": "https://coldreach.ai",
+    "description": "AI signals and personalised outreach for B2B sales teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Topo",
+    "url": "https://www.topo.io",
+    "description": "AI outbound platform built for SDRs with playbooks and signals.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Spellbook",
+    "url": "https://www.spellbook.legal",
+    "description": "AI contract drafting and review inside Microsoft Word with clause library and benchmarking.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Definely",
+    "url": "https://www.definely.com",
+    "description": "AI contract review solution for legal teams handling complex contracts with context and risk highlighting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "ContractPodAI",
+    "url": "https://contractpodai.com",
+    "description": "Enterprise CLM with Leah, an AI agent automating contract creation, analysis, review, and negotiation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "LEGALFLY",
+    "url": "https://www.legalfly.com",
+    "description": "GDPR-compliant AI contract review built for in-house legal teams in complex jurisdictions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Diligen",
+    "url": "https://www.diligen.com",
+    "description": "Machine-learning due diligence platform for contract clause and provision analysis.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Superlegal",
+    "url": "https://www.superlegal.ai",
+    "description": "AI contract redlining with licensed-attorney human-in-the-loop oversight.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Luminance",
+    "url": "https://www.luminance.com",
+    "description": "Legal-Grade AI agents for contract drafting, negotiation, analysis, compliance, and investigation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Ironclad",
+    "url": "https://ironcladapp.com",
+    "description": "Enterprise CLM with AI-powered contract workflows for legal operations teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Clio Duo",
+    "url": "https://www.clio.com/products/clio-duo/",
+    "description": "AI assistant inside Clio for law firms \u2014 drafts, summaries, task workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "GC AI",
+    "url": "https://gc.ai",
+    "description": "AI for in-house legal teams covering contracts, research, and matter management.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ada Health",
+    "url": "https://ada.com",
+    "description": "Clinical-grade AI symptom assessment evaluating symptoms against thousands of conditions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Viz.ai",
+    "url": "https://www.viz.ai",
+    "description": "Time-critical AI imaging analysis for stroke and cardiac events with care-team coordination.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "PathAI",
+    "url": "https://www.pathai.com",
+    "description": "FDA-cleared AI diagnostic support for pathologists in cancer and disease diagnosis.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Nuance DAX",
+    "url": "https://www.nuance.com/healthcare/dragon-ambient-experience.html",
+    "description": "Ambient AI writes clinical notes from patient conversations in real time.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Medicai",
+    "url": "https://medicai.io",
+    "description": "Cloud PACS + medical imaging with AI-assisted reporting and case collaboration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Nanox.AI",
+    "url": "https://www.nanox.vision/ai",
+    "description": "FDA-cleared AI suite analysing routine CT scans for early chronic-disease signs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Tempus",
+    "url": "https://www.tempus.com",
+    "description": "AI matching genomic + clinical data to clinical studies, combining DNA/RNA biomarkers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Rankability",
+    "url": "https://www.rankability.com",
+    "description": "SEO content optimisation combining IBM Watson and Google NLP with real-time scoring + monthly coaching.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Clearscope",
+    "url": "https://www.clearscope.io",
+    "description": "SEO content optimisation platform with topic suggestions and content grading.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Surfer SEO",
+    "url": "https://surferseo.com",
+    "description": "On-page SEO optimisation using NLP across 500+ web signals.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Semrush One",
+    "url": "https://www.semrush.com",
+    "description": "All-in-one SEO + AI Visibility toolkit: keyword research, backlinks, content, prompt tracking.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "CrowdStrike Falcon",
+    "url": "https://www.crowdstrike.com/platform/",
+    "description": "AI-powered endpoint protection with threat detection and response.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "SentinelOne Singularity",
+    "url": "https://www.sentinelone.com",
+    "description": "AI-driven XDR platform combining EDR with extended detection across endpoints, cloud, and identity.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Darktrace",
+    "url": "https://darktrace.com",
+    "description": "Unsupervised ML for network anomaly detection and autonomous response.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Vectra AI",
+    "url": "https://www.vectra.ai",
+    "description": "AI-driven attack signal intelligence for SOC teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Microsoft Security Copilot",
+    "url": "https://www.microsoft.com/en-us/security/business/ai-machine-learning/microsoft-security-copilot",
+    "description": "Generative AI security assistant for SOC, threat hunting, and incident response.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Cortex XSIAM",
+    "url": "https://www.paloaltonetworks.com/cortex/cortex-xsiam",
+    "description": "Palo Alto AI-driven SOC platform unifying SIEM, EDR, and SOAR.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Checkmarx",
+    "url": "https://checkmarx.com",
+    "description": "AI-powered AppSec platform with deep code analysis and ASPM-driven prioritisation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Mindgard",
+    "url": "https://mindgard.ai",
+    "description": "AI security testing platform for ML models, LLMs, and AI applications.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Cycode",
+    "url": "https://cycode.com",
+    "description": "Application security posture management with AI-driven code-to-cloud risk analysis.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Legit Security",
+    "url": "https://www.legitsecurity.com",
+    "description": "AI-native ASPM platform for securing the software supply chain.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "UpGuard",
+    "url": "https://www.upguard.com",
+    "description": "Third-party cyber risk management with AI threat detection.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Anomaly AI",
+    "url": "https://www.findanomaly.ai",
+    "description": "AI data agent inspecting schemas, cleaning data, generating analysis, and building dashboards.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Querio",
+    "url": "https://querio.ai",
+    "description": "Conversational AI for data with SQL and Python transparency for mid-sized enterprises.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Julius AI",
+    "url": "https://julius.ai",
+    "description": "Conversational data analysis: upload a spreadsheet or connect a dataset and ask questions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "ThoughtSpot",
+    "url": "https://www.thoughtspot.com",
+    "description": "Natural-language search BI on top of your data warehouse with SQL generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Formula Bot",
+    "url": "https://formulabot.com",
+    "description": "Plain-language to Excel/Google Sheets formula generator with SQL support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Tableau Pulse",
+    "url": "https://www.tableau.com/products/pulse",
+    "description": "Personalised metric insights and guided BI on top of Tableau dashboards.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Harver",
+    "url": "https://harver.com",
+    "description": "AI-powered candidate screening and assessment platform for high-volume hiring.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "HireVue",
+    "url": "https://www.hirevue.com",
+    "description": "Video-interview platform with AI assessments, games, and structured rubrics.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Paradox",
+    "url": "https://www.paradox.ai",
+    "description": "Conversational AI (Olivia) for hiring \u2014 schedules, screens, and engages candidates.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Eightfold AI",
+    "url": "https://eightfold.ai",
+    "description": "Talent intelligence platform using AI for sourcing, screening, and internal mobility.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Fetcher",
+    "url": "https://fetcher.ai",
+    "description": "AI-powered sourcing platform delivering qualified candidates to recruiters' inboxes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Manatal",
+    "url": "https://www.manatal.com",
+    "description": "AI-native ATS + CRM with AI interviewer that automates first-touch screening.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Humanly",
+    "url": "https://humanly.io",
+    "description": "Conversational AI recruiting with chat screening and interview note-taking.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Juicebox PeopleGPT",
+    "url": "https://juicebox.ai",
+    "description": "AI candidate search using natural-language queries across 800M+ profiles.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Fish Audio",
+    "url": "https://fish.audio",
+    "description": "Voice cloning from 15-sec sample across 80+ languages, ranked #1 ELO benchmark.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Play.ht",
+    "url": "https://play.ht",
+    "description": "Long-form text-to-speech with 800+ voices, ideal for podcasts and audiobooks.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Hume AI Octave 2",
+    "url": "https://www.hume.ai",
+    "description": "Emotional TTS you can steer with plain-English instructions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Murf.ai",
+    "url": "https://murf.ai",
+    "description": "Integrated studio for video voiceovers with 120+ voices in 20 languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Google Cloud TTS Chirp 3 HD",
+    "url": "https://cloud.google.com/text-to-speech",
+    "description": "30 styles HD text-to-speech at a fraction of ElevenLabs price.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Suno",
+    "url": "https://suno.com",
+    "description": "Prompt-based music generation with vocals and full songs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Udio",
+    "url": "https://www.udio.com",
+    "description": "AI music generation with polished, expressive song output.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "AIVA",
+    "url": "https://www.aiva.ai",
+    "description": "AI composer for instrumental and cinematic background scores.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "LangGraph",
+    "url": "https://langchain-ai.github.io/langgraph/",
+    "description": "Specialised agent framework within LangChain \u2014 24,800+ GitHub stars, 34.5M monthly downloads.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 24800
+    }
+  },
+  {
+    "name": "CrewAI",
+    "url": "https://www.crewai.com",
+    "description": "Multi-agent framework orchestrating role-playing agents \u2014 44,300+ GitHub stars.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 44300,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Microsoft Agent Framework",
+    "url": "https://learn.microsoft.com/en-us/agent-framework/",
+    "description": "Unified AutoGen + Semantic Kernel agent framework from Microsoft, GA Q1 2026.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Google ADK",
+    "url": "https://google.github.io/adk-docs/",
+    "description": "Agent Development Kit from Google for building production agents.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Dify",
+    "url": "https://dify.ai",
+    "description": "Open-source LLM app development platform with visual workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 50000,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Mastra",
+    "url": "https://mastra.ai",
+    "description": "TypeScript-first agent framework with built-in workflows and tools.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Vellum AI",
+    "url": "https://www.vellum.ai",
+    "description": "Enterprise agent platform with observability, governance, and deployment flexibility.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Pydantic AI",
+    "url": "https://ai.pydantic.dev",
+    "description": "Type-safe Python agent framework from the Pydantic team.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "smolagents",
+    "url": "https://huggingface.co/docs/smolagents/",
+    "description": "Hugging Face's lightweight code-execution agent framework.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Firecrawl",
+    "url": "https://www.firecrawl.dev",
+    "description": "LLM-ready web scraping and crawling API for agent pipelines.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "QuickBooks Online Intuit Assist",
+    "url": "https://quickbooks.intuit.com/intuit-assist/",
+    "description": "AI bookkeeping assistant for categorisation, reports, and natural-language queries.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Xero",
+    "url": "https://www.xero.com",
+    "description": "AI-powered accounting with reconciliation, invoicing, and integration ecosystem.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "FreshBooks",
+    "url": "https://www.freshbooks.com",
+    "description": "AI-supported invoicing, expense tracking, and time tracking for freelancers and SMBs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Zeni",
+    "url": "https://www.zeni.ai",
+    "description": "AI bookkeeping + FP&A for startups with real-time dashboards for burn, runway, and unit economics.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Docyt",
+    "url": "https://docyt.com",
+    "description": "Multi-location AI accounting + AP + reporting for franchises and multi-entity businesses.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Botkeeper",
+    "url": "https://www.botkeeper.com",
+    "description": "Hybrid AI + human bookkeeping for accountants and SMBs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ramp",
+    "url": "https://ramp.com",
+    "description": "AI corporate cards + spend management with automated categorisation and approvals.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Khanmigo",
+    "url": "https://www.khanmigo.ai",
+    "description": "Khan Academy's AI tutoring assistant \u2014 guided learning, equivalent to 2-3 weeks extra instruction.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Socratic by Google",
+    "url": "https://socratic.org",
+    "description": "Free AI homework helper covering math, science, history, literature.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Brisk Teaching",
+    "url": "https://www.briskteaching.com",
+    "description": "Chrome extension with AI tools for teacher feedback, curriculum, and differentiation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Duolingo Max",
+    "url": "https://www.duolingo.com/max",
+    "description": "AI conversation + roleplay + explanations layered on Duolingo's language curriculum.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Quizizz AI",
+    "url": "https://quizizz.com",
+    "description": "AI-powered quiz generation and gamified classroom assessments.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "MagicSchool",
+    "url": "https://www.magicschool.ai",
+    "description": "AI for teachers \u2014 lesson planning, rubrics, IEP support, parent communication.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Diffit",
+    "url": "https://beta.diffit.me",
+    "description": "AI tool for teachers to differentiate reading materials for every learner.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sudowrite",
+    "url": "https://www.sudowrite.com",
+    "description": "AI writing assistant for fiction \u2014 custom Muse LLM trained on fiction with Story Bible feature.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "NovelCrafter",
+    "url": "https://www.novelcrafter.com",
+    "description": "Novel writing workspace with AI integrations and codex world-building.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Squibler",
+    "url": "https://www.squibler.io",
+    "description": "Visual novel and screenplay planner with corkboard scene organisation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Inkfluence AI",
+    "url": "https://www.inkfluenceai.com",
+    "description": "AI for full novel generation with consistent characters and plot continuity.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Originality.ai",
+    "url": "https://originality.ai",
+    "description": "AI content detection + plagiarism checker for writers and publishers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Anyword",
+    "url": "https://anyword.com",
+    "description": "Predictive AI writing for marketing copy and social media with performance scoring.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Writer",
+    "url": "https://writer.com",
+    "description": "Enterprise AI writing with proprietary Palmyra LLMs and brand-voice compliance.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "ProWritingAid",
+    "url": "https://prowritingaid.com",
+    "description": "Writing analysis for grammar, style, creativity, and consistency.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Botpress",
+    "url": "https://botpress.com",
+    "description": "Developer-focused platform for building custom AI agents and chatbots.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "githubStars": 12000
+    }
+  },
+  {
+    "name": "Manus",
+    "url": "https://manus.ai",
+    "description": "Action engine executing multi-step tasks autonomously across software.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Granola",
+    "url": "https://www.granola.ai",
+    "description": "Intelligent meeting notes with action items extraction.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Avoma",
+    "url": "https://www.avoma.com",
+    "description": "Meeting lifecycle management with conversation intelligence.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Komo",
+    "url": "https://komo.ai",
+    "description": "Customisable AI search with multiple models and research modes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Glean",
+    "url": "https://www.glean.com",
+    "description": "Enterprise search across internal company knowledge and documents.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "You.com",
+    "url": "https://you.com",
+    "description": "Real-time AI search with domain-specific indexes and source attribution.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Windsurf",
+    "url": "https://windsurf.com",
+    "description": "AI IDE with beginner guidance and FedRAMP enterprise compliance.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Devin",
+    "url": "https://devin.ai",
+    "description": "Autonomous AI software engineer agent from Cognition Labs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Lovable",
+    "url": "https://lovable.dev",
+    "description": "Rapid MVP builder with integrated Supabase and visual polish.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "NxCode",
+    "url": "https://nxcode.io",
+    "description": "Full-stack app builder with permanent free credits and code ownership.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Glide",
+    "url": "https://www.glideapps.com",
+    "description": "Spreadsheet-based app builder with AI workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Meshy",
+    "url": "https://www.meshy.ai",
+    "description": "Generate 3D models from text or images with automated PBR textures.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Google Stitch",
+    "url": "https://stitch.withgoogle.com",
+    "description": "Free Google Labs AI UI design tool \u2014 550 designs/month.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ideogram",
+    "url": "https://ideogram.ai",
+    "description": "AI image generator specialising in text rendering within images.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Nano Banana",
+    "url": "https://nanobanana.ai",
+    "description": "High-quality AI image generation and editing tool.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Pika",
+    "url": "https://pika.art",
+    "description": "Video generation tool supporting 1080p with cinematic morphing effects.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Synthesia",
+    "url": "https://www.synthesia.io",
+    "description": "Enterprise video platform with 230+ avatars and 140+ languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Gamma",
+    "url": "https://gamma.app",
+    "description": "AI presentation generator creating visually polished slide decks.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "v0 by Vercel",
+    "url": "https://v0.dev",
+    "description": "React + Tailwind component generator with Figma-to-code pipeline.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Bolt.new",
+    "url": "https://bolt.new",
+    "description": "Browser-based app builder using WebContainers for zero setup.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Riverside.fm",
+    "url": "https://riverside.fm",
+    "description": "Recording + AI editing for podcasts and conversation content.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Replit Agent",
+    "url": "https://replit.com/site/agent",
+    "description": "Natural-language app building with testing and deployment from Replit.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Figma Make",
+    "url": "https://www.figma.com/ai/",
+    "description": "Figma's native AI feature generating UI designs from prompts using your existing components.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "UX Pilot",
+    "url": "https://uxpilot.ai",
+    "description": "AI UI generator with Figma plugin \u2014 text-to-wireframes plus predictive attention heatmaps.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Flowstep",
+    "url": "https://flowstep.ai",
+    "description": "AI generates complete product experiences from conversational prompts on infinite canvas with instant Figma paste.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Attention Insight",
+    "url": "https://attentioninsight.com",
+    "description": "Neuroscience-based AI predicting where users look first, generates attention heatmaps and clarity scores.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ando",
+    "url": "https://ando.studio",
+    "description": "Visual AI copilot inside Figma \u2014 generate images, icons, textures from text prompts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Locofy",
+    "url": "https://www.locofy.ai",
+    "description": "Figma plugin converting designs directly into front-end code (React, HTML/CSS).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Anima",
+    "url": "https://www.animaapp.com",
+    "description": "Figma plugin turning designs into working code, focused on UI accuracy and interactions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Photoroom",
+    "url": "https://www.photoroom.com",
+    "description": "AI photo editor with industry-leading background removal \u2014 default for serious e-commerce.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Pixelcut",
+    "url": "https://www.pixelcut.ai",
+    "description": "Mobile-first AI photo editor with watermark-free transparent PNGs, batch + API.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Clipdrop",
+    "url": "https://clipdrop.co",
+    "description": "Web + mobile + plugins for background removal, object cleanup, relighting, image generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Let's Enhance",
+    "url": "https://letsenhance.io",
+    "description": "AI upscaling + background removal + quality improvement \u2014 complete optimization pipeline.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Claid",
+    "url": "https://claid.ai",
+    "description": "AI image enhancement for e-commerce \u2014 background, resize, upscaling, AI backgrounds in one place.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "NoBG.space",
+    "url": "https://nobg.space",
+    "description": "On-device browser AI background removal \u2014 photos never leave your computer.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Taskade",
+    "url": "https://www.taskade.com",
+    "description": "AI second brain combining multi-layer search, agents with 22+ tools, automation, 100+ integrations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Logseq",
+    "url": "https://logseq.com",
+    "description": "Open-source outliner-based note-taking storing files locally in Markdown.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 35000
+    }
+  },
+  {
+    "name": "Roam Research",
+    "url": "https://roamresearch.com",
+    "description": "Networked thought tool with block-level linking and bi-directional references.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Heptabase",
+    "url": "https://heptabase.com",
+    "description": "Visual whiteboard thinking tool for connecting ideas across documents.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Atlas Workspace",
+    "url": "https://www.atlasworkspace.ai",
+    "description": "AI-grounded retrieval across PDFs and notes \u2014 second-brain alternative to Obsidian.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Kortex",
+    "url": "https://kortex.co",
+    "description": "AI-savvy note-taking with chat over your notes using Claude/Gemini.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Capacities",
+    "url": "https://capacities.io",
+    "description": "Note-taking with Notion's flexibility + Obsidian's data-ownership principles.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AFFiNE",
+    "url": "https://affine.pro",
+    "description": "Open-source second brain combining docs, kanban, and whiteboard in one tool.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 40000
+    }
+  },
+  {
+    "name": "OphyAI",
+    "url": "https://ophyai.com",
+    "description": "AI resume builder with ATS scoring, AI cover letters, and interview prep at $9/month.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Rezi",
+    "url": "https://www.rezi.ai",
+    "description": "ATS-compliant resume builder with section-by-section feedback and keyword density tracking.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Wobo",
+    "url": "https://www.wobo.ai",
+    "description": "Free unlimited resume builder with 24-point ATS optimisation using STAR/CAR frameworks.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Kickresume",
+    "url": "https://www.kickresume.com",
+    "description": "AI resume builder with GPT-powered summary + bullet point generation tuned on recruiter feedback.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Qwyse",
+    "url": "https://www.qwyse.com",
+    "description": "AI-native resume builder that coaches career story positioning.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Prentus",
+    "url": "https://prentus.com",
+    "description": "All-in-one AI career coaching: mock interviews + resume builder + 24/7 advisor + job tracker.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Superhuman",
+    "url": "https://superhuman.com",
+    "description": "Premium email client with Auto Drafts, Auto Labels, and Grammarly-powered AI writing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Shortwave",
+    "url": "https://www.shortwave.com",
+    "description": "Best free AI email experience for Gmail users.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "SaneBox",
+    "url": "https://www.sanebox.com",
+    "description": "Proven inbox filtering with AI sorting across email providers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Alfred",
+    "url": "https://get-alfred.ai",
+    "description": "AI email management for professionals \u2014 handles inbox autonomously.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Unboxd",
+    "url": "https://unboxd.ai",
+    "description": "AI that reads emails and extracts action items with deadlines.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Gmelius",
+    "url": "https://gmelius.com",
+    "description": "AI email management + Gmail team collaboration platform.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Fyxer AI",
+    "url": "https://fyxer.com",
+    "description": "AI executive assistant for email management and triage.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "DeepL",
+    "url": "https://www.deepl.com",
+    "description": "Top AI translation for business \u2014 best-looking output for major languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Lokalise",
+    "url": "https://lokalise.com",
+    "description": "AI localisation platform smart-routing across multiple LLMs by language pair.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "LILT",
+    "url": "https://lilt.com",
+    "description": "Enterprise localisation with adaptive neural models + human-in-the-loop workflow.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Crowdin",
+    "url": "https://crowdin.com",
+    "description": "Localisation platform for software, mobile apps, and games with GitHub/GitLab integration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Weglot",
+    "url": "https://www.weglot.com",
+    "description": "Frictionless website localisation \u2014 translate enterprise sites in under 5 minutes, no code.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Smartling",
+    "url": "https://www.smartling.com",
+    "description": "Enterprise translation management with AI-driven workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Maxim AI",
+    "url": "https://www.getmaxim.ai",
+    "description": "End-to-end prompt management with experimentation and evaluation for LLM apps.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "PromptLayer",
+    "url": "https://promptlayer.com",
+    "description": "Git-like version control with automatic prompt capture for LLM applications.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Mirascope",
+    "url": "https://mirascope.com",
+    "description": "Lightweight Python library for structured prompt engineering.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1200
+    }
+  },
+  {
+    "name": "PromptPerfect",
+    "url": "https://promptperfect.jina.ai",
+    "description": "Automatic prompt optimisation across multiple AI models.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Braintrust",
+    "url": "https://www.braintrust.dev",
+    "description": "Enterprise LLM eval and observability platform.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "PromptHub",
+    "url": "https://www.prompthub.us",
+    "description": "Prompt library and collaboration platform for teams managing LLM prompts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Galileo",
+    "url": "https://www.galileo.ai",
+    "description": "LLM observability + eval platform for production AI systems.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Promptfoo",
+    "url": "https://www.promptfoo.dev",
+    "description": "Open-source LLM eval framework for testing prompts at scale.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 6500
+    }
+  },
+  {
+    "name": "Helicone",
+    "url": "https://helicone.ai",
+    "description": "Open-source LLM observability and monitoring platform.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4200,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "LangSmith",
+    "url": "https://www.langchain.com/langsmith",
+    "description": "LangChain's hosted observability + prompt management for LLM applications.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "21st.dev",
+    "url": "https://21st.dev",
+    "description": "Prompt library for AI-assisted software development with curated UI components.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AIPRM",
+    "url": "https://www.aiprm.com",
+    "description": "Curated prompt library for ChatGPT, Claude, and other LLMs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "PromptBase",
+    "url": "https://promptbase.com",
+    "description": "Marketplace for AI prompts across image, text, and code.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "PromptHero",
+    "url": "https://prompthero.com",
+    "description": "Largest prompt library for image generation AI (Midjourney, Stable Diffusion).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "FlowGPT",
+    "url": "https://flowgpt.com",
+    "description": "Community-driven prompt library and chatbot platform.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Describely",
+    "url": "https://www.describely.ai",
+    "description": "Shopify-integrated AI product description generator for entire catalogs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Hypotenuse AI",
+    "url": "https://www.hypotenuse.ai",
+    "description": "Bulk ecommerce content generation \u2014 CSV upload generates descriptions for thousands of products.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Copy.ai",
+    "url": "https://www.copy.ai",
+    "description": "Multi-purpose AI copy for product descriptions, emails, ads, social posts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Later",
+    "url": "https://later.com",
+    "description": "Visual social media planner with Smart Scheduling, Reels, Canva integration, and inbox.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "PostEverywhere",
+    "url": "https://posteverywhere.ai",
+    "description": "AI scheduler combining caption + image + video generation + best-time-to-post across 8 platforms.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Buffer",
+    "url": "https://buffer.com",
+    "description": "Social media scheduling with AI Assistant for caption brainstorming across major platforms.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Viraly",
+    "url": "https://viraly.com",
+    "description": "Versatile social media planner for Instagram, TikTok, LinkedIn scheduling.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sprout Social",
+    "url": "https://sproutsocial.com",
+    "description": "Enterprise social media management with AI-powered listening + reporting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Tripo AI",
+    "url": "https://www.tripo3d.ai",
+    "description": "Fast text/image-to-3D generation with modeling, texturing, retopology, rigging in one pipeline.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Kaedim",
+    "url": "https://www.kaedim3d.com",
+    "description": "Image-to-3D AI with human QA, producing models compatible with Unreal/Unity.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Luma AI",
+    "url": "https://lumalabs.ai",
+    "description": "AI-captured real-world objects + Genie text-to-3D + Dream Machine video generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Hitem3D",
+    "url": "https://hitem3d.ai",
+    "description": "High-fidelity image-to-3D with dual-engine technology for geometric accuracy.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Hark",
+    "url": "https://hark.ai",
+    "description": "Universal agentic AI interface \u2014 $700M Series A raised May 2026 at $6B valuation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Rhoda AI",
+    "url": "https://rhoda.ai",
+    "description": "Robotic intelligence with FutureVision video-predictive control \u2014 $450M Series A.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Adobe Podcast",
+    "url": "https://podcast.adobe.com",
+    "description": "Free AI audio enhancement removing background noise, hiss, echo, and inconsistent levels.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Cleanvoice",
+    "url": "https://cleanvoice.ai",
+    "description": "AI podcast editor catching filler words, awkward pauses, and stutters at unmatched rates.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Auphonic",
+    "url": "https://auphonic.com",
+    "description": "Gold standard for automated audio mastering \u2014 loudness normalisation, noise reduction, distribution.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Gong",
+    "url": "https://www.gong.io",
+    "description": "Market leader for revenue intelligence and call coaching with deal-risk scoring.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Chorus.ai",
+    "url": "https://www.chorus.ai",
+    "description": "ZoomInfo-owned conversation intelligence platform for sales call analysis.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Mindtickle",
+    "url": "https://www.mindtickle.com",
+    "description": "Sales readiness platform with AI coaching and conversation intelligence.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Hyperbound",
+    "url": "https://www.hyperbound.ai",
+    "description": "AI roleplay platform for SDR + AE training with realistic prospect simulations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Nooks",
+    "url": "https://www.nooks.ai",
+    "description": "AI dialer + conversation analysis for outbound sales teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Jiminny",
+    "url": "https://www.jiminny.com",
+    "description": "Revenue intelligence with conversation analytics + coaching workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Clari Copilot",
+    "url": "https://www.clari.com/products/copilot/",
+    "description": "AI for sales calls + revenue insights from Clari's revenue platform.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Hive Moderation",
+    "url": "https://hivemoderation.com",
+    "description": "Full-stack AI content moderation across text, image, video, audio with tunable thresholds.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Mixpeek",
+    "url": "https://mixpeek.com",
+    "description": "AI content moderation with curated lists and multi-modal classifiers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Spectrum Labs",
+    "url": "https://www.spectrumlabsai.com",
+    "description": "Behaviour-based moderation detecting toxicity, grooming, and radicalisation patterns.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Confluence",
+    "url": "https://www.atlassian.com/software/confluence",
+    "description": "Enterprise wiki with Rovo AI engine for knowledge graph + intelligent search.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Atlassian Rovo",
+    "url": "https://www.atlassian.com/software/rovo",
+    "description": "AI engine treating organisation as knowledge graph to solve enterprise silos.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Buildin",
+    "url": "https://buildin.ai",
+    "description": "AI knowledge management for high-growth teams treating docs as a core product.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Guru",
+    "url": "https://www.getguru.com",
+    "description": "AI-powered knowledge management delivering verified info inside team workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Pylon",
+    "url": "https://www.usepylon.com",
+    "description": "Modern B2B support platform with AI knowledge base for support teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Eesel AI",
+    "url": "https://www.eesel.ai",
+    "description": "AI agent connecting to your docs, support tickets, and Slack to answer team questions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Gumloop",
+    "url": "https://www.gumloop.com",
+    "description": "AI-first workflow platform building agents triggered in context, especially inside Slack.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Airtable AI",
+    "url": "https://www.airtable.com/ai",
+    "description": "AI workflow platform building custom agents that think dynamically across operations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Lindy",
+    "url": "https://www.lindy.ai",
+    "description": "No-code AI agent builder for personal + business automation across email, calendar, CRM.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Microsoft Power Automate",
+    "url": "https://www.microsoft.com/power-platform/products/power-automate",
+    "description": "Microsoft's workflow automation with cloud flows + desktop RPA for the Office ecosystem.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Bika.ai",
+    "url": "https://bika.ai",
+    "description": "No-code AI workflow automation platform with templates and integrations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "QuillBot",
+    "url": "https://quillbot.com",
+    "description": "AI writing assistant with summariser, paraphraser, grammar check, and Chrome/Docs integration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Paperguide",
+    "url": "https://paperguide.ai",
+    "description": "Best research paper summariser \u2014 structured, research-grade analysis from full PDFs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Scholarcy",
+    "url": "https://www.scholarcy.com",
+    "description": "Generates structured section-based summaries of academic papers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sembly AI",
+    "url": "https://www.sembly.ai",
+    "description": "AI meeting transcription with semantic search and topic extraction.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "ClickUp AI",
+    "url": "https://clickup.com/ai",
+    "description": "Project management with built-in AI summarisation, action items, and content generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "NoteGPT",
+    "url": "https://notegpt.io",
+    "description": "Mobile-first AI summariser turning audio, PDFs, and YouTube into easy summaries.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Origin",
+    "url": "https://useorigin.com",
+    "description": "Complete AI investing platform with portfolio construction adapting to life changes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Magnifi",
+    "url": "https://magnifi.com",
+    "description": "AI investing search engine for plain-language investment questions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Empower",
+    "url": "https://www.empower.com",
+    "description": "Personal Capital rebrand \u2014 financial tracking + investment analysis + retirement planning.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Betterment",
+    "url": "https://www.betterment.com",
+    "description": "Robo-advisor with algorithms for automatic rebalancing + tax-loss harvesting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Boldin",
+    "url": "https://www.boldin.com",
+    "description": "Financial planning with scenario modeling for retirement, spending, and life decisions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AdStellar",
+    "url": "https://www.adstellar.ai",
+    "description": "AI Meta ad platform: generates creatives + builds campaigns + scores winning ads.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Lapis",
+    "url": "https://www.trylapis.com",
+    "description": "Auto-sized creatives for all 5 Meta placements with performance forecasting (YC F25, G2 4.9).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up",
+      "usageSignal": {
+        "rating": 4.9
+      }
+    }
+  },
+  {
+    "name": "AdCreative.ai",
+    "url": "https://www.adcreative.ai",
+    "description": "Conversion-focused ad creative generation with ML scoring trained on millions of ads.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Atria",
+    "url": "https://www.tryatria.com",
+    "description": "Meta-only AI ad generator with $5B+ market spend data overlay.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Creatify",
+    "url": "https://creatify.ai",
+    "description": "AI video ads for Reels and TikTok \u2014 15-60 second from product URLs with avatars + voiceovers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Stippl",
+    "url": "https://www.stippl.io",
+    "description": "AI travel planner with day-by-day itinerary, budget, packing list, expense tracking, group sharing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Mindtrip",
+    "url": "https://mindtrip.ai",
+    "description": "Plan-and-book AI travel with map-rich hotel selection and itinerary auto-update.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Travelry",
+    "url": "https://travelry.ai",
+    "description": "AI group travel planning + booking with direct booking integration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Layla",
+    "url": "https://layla.ai",
+    "description": "Conversational AI travel planner with live pricing and full itinerary generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "LANDR",
+    "url": "https://www.landr.com",
+    "description": "Established AI music mastering since 2014 \u2014 DAW plugin for real-time mastering.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "iZotope Ozone 12",
+    "url": "https://www.izotope.com/en/products/ozone.html",
+    "description": "Industry-standard mastering with AI Master Assistant and Stem Focus features.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "eMastered",
+    "url": "https://emastered.com",
+    "description": "AI mastering by Grammy-winning engineers with manual adjustment controls.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Veena Studio",
+    "url": "https://veena.studio",
+    "description": "Browser-based AI DAW with CoProducer handling MIDI generation, mixing, and mastering.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Automix",
+    "url": "https://www.automix.ai",
+    "description": "Multi-track AI mixing with research-backed processing and reference track matching.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "BandLab",
+    "url": "https://www.bandlab.com",
+    "description": "Free AI music production platform with cloud collaboration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Reap",
+    "url": "https://reap.video",
+    "description": "Subtitle translator for creators \u2014 translation + clipping + publishing workflow.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Magic Hour",
+    "url": "https://magichour.ai",
+    "description": "All-in-one AI subtitle generator with fast captions and styling.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "VEED.io",
+    "url": "https://www.veed.io",
+    "description": "All-in-one video editor adding subtitles in 125+ languages with cross-platform repurposing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Kapwing",
+    "url": "https://www.kapwing.com",
+    "description": "Online video editor with AI captions, B-roll, and meme tools.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Rev.ai",
+    "url": "https://www.rev.com",
+    "description": "Professional AI + human-generated transcription/subtitles for broadcast and business.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "NovaDub",
+    "url": "https://novadub.ai",
+    "description": "Translated subtitles + full AI dubbing in the same workflow with SRT/VTT export.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Happy Scribe",
+    "url": "https://www.happyscribe.com",
+    "description": "AI transcription + subtitle translation across 60+ languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Rask AI",
+    "url": "https://www.rask.ai",
+    "description": "Browser-based AI subtitle editor + translator in 60+ languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Checksub",
+    "url": "https://www.checksub.com",
+    "description": "Subtitle and caption translation with hybrid AI+human review across 120+ languages.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Captions",
+    "url": "https://www.captions.ai",
+    "description": "Mobile-first AI video tool with avatars, dubbing, and creator-focused editing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "OpusClip",
+    "url": "https://www.opus.pro",
+    "description": "AI video clipping for viral shorts \u2014 10M+ users, 172M+ clips generated.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "CodeRabbit",
+    "url": "https://www.coderabbit.ai",
+    "description": "Most comprehensive automated PR review with contextual understanding and GitHub-native feedback.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Codium AI",
+    "url": "https://www.codium.ai",
+    "description": "AI test generation and code review alongside coding.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Sourcery",
+    "url": "https://sourcery.ai",
+    "description": "Python-focused AI code review with style enforcement and refactoring.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Qodo",
+    "url": "https://www.qodo.ai",
+    "description": "Enterprise-scale code review indexing codebase and dependency graph \u2014 saved 450K dev hours.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Macroscope",
+    "url": "https://www.macroscope.ai",
+    "description": "AI code review claiming 98% precision on PR comments.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "SonarQube",
+    "url": "https://www.sonarsource.com/products/sonarqube/",
+    "description": "Mature open-source code quality enforcement (~10.3K stars).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 10300
+    }
+  },
+  {
+    "name": "QA Wolf",
+    "url": "https://www.qawolf.com",
+    "description": "Managed E2E testing with 80% coverage guarantee in 4 months.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Applitools",
+    "url": "https://applitools.com",
+    "description": "Visual AI for cross-browser visual testing and regression detection.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Testim",
+    "url": "https://www.testim.io",
+    "description": "AI-assisted test authoring with full control for QA teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Augment Code",
+    "url": "https://www.augmentcode.com",
+    "description": "AI coding assistant trained on massive monorepos with context-aware suggestions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Deepsource",
+    "url": "https://deepsource.com",
+    "description": "Static analysis + AI code review platform integrated into CI/CD.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "HouseCanary",
+    "url": "https://www.housecanary.com",
+    "description": "AVM (automated valuation) for 136M+ US residential properties with forecasting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Reonomy",
+    "url": "https://www.reonomy.com",
+    "description": "Commercial real estate data with AI-driven property and owner intelligence.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Matterport",
+    "url": "https://matterport.com",
+    "description": "3D virtual tours with AI-generated floor plans and smart tagging.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Strongr Fastr",
+    "url": "https://www.strongrfastr.com",
+    "description": "AI nutrition + workout planner with personalized meals, recipes, evidence-based routines.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Fitia",
+    "url": "https://www.fitia.app",
+    "description": "AI nutrition coaching personalizing calories + macros based on metrics and performance.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Fitbod",
+    "url": "https://www.fitbod.me",
+    "description": "AI workout planner adapting reps, sets, and weight from logged performance (4.7\u2605 iOS).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "usageSignal": {
+        "rating": 4.7
+      }
+    }
+  },
+  {
+    "name": "Welling",
+    "url": "https://www.welling.ai",
+    "description": "AI food tracker + calorie counter built as a diet coach with photo + chat logging.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Alai",
+    "url": "https://getalai.com",
+    "description": "Best overall Gamma alternative \u2014 design quality + PPTX exports + multiple layouts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Plus AI",
+    "url": "https://www.plusdocs.com",
+    "description": "Strongest AI presentation tool for PowerPoint and Google Slides power users.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Beautiful.ai",
+    "url": "https://www.beautiful.ai",
+    "description": "Smart presentation templates that auto-adjust layout \u2014 impossible to create ugly slides.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "MagicSlides",
+    "url": "https://www.magicslides.app",
+    "description": "Google Slides add-on turning YouTube videos and PDFs into presentations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Pitch",
+    "url": "https://pitch.com",
+    "description": "Collaborative presentation tool with AI generation and team workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Looka",
+    "url": "https://looka.com",
+    "description": "Best overall AI logo creator \u2014 comprehensive brand packages, no design skills needed.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Design.com",
+    "url": "https://www.design.com",
+    "description": "AI logo + design suite rated 4.7 on Trustpilot with 3000+ verified reviews.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "usageSignal": {
+        "rating": 4.7,
+        "reviewCount": 3000
+      }
+    }
+  },
+  {
+    "name": "Designs.ai",
+    "url": "https://designs.ai",
+    "description": "Logo + brand identity suite with voiceovers, image, and video generators.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "LogoAI",
+    "url": "https://www.logoai.com",
+    "description": "Clean, contemporary, minimalist AI logo design.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "BrandCrowd",
+    "url": "https://www.brandcrowd.com",
+    "description": "Comprehensive brand identity tools \u2014 logos, business cards, social posts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Recraft",
+    "url": "https://www.recraft.ai",
+    "description": "AI-native vector generator producing SVG artwork for logos, icons, posters, brand assets.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Woebot",
+    "url": "https://woebothealth.com",
+    "description": "Clinical-grade mental health chatbot \u2014 most-published mental health AI with research backing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Wysa",
+    "url": "https://www.wysa.com",
+    "description": "AI mental health chatbot used by 5M+ users in 90+ countries with 150+ therapeutic exercises.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Replika",
+    "url": "https://replika.com",
+    "description": "AI companion chatbot for connection, identity exploration, and emotional support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Youper",
+    "url": "https://www.youper.ai",
+    "description": "AI emotional health assistant with daily mood tracking and CBT exercises.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ebb by Headspace",
+    "url": "https://www.headspace.com/ebb",
+    "description": "Headspace's AI companion for guided mindfulness and emotional support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Flourish",
+    "url": "https://www.myflourish.ai",
+    "description": "Mental wellness AI app with RCT-proven efficacy for well-being.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Khan Academy Kids",
+    "url": "https://learn.khanacademy.org/khan-academy-kids/",
+    "description": "AI-personalised K-2 learning with adaptive math + reading + social-emotional skills.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Photomath",
+    "url": "https://photomath.com",
+    "description": "Step-by-step AI math problem solver via camera scan.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "ABCmouse",
+    "url": "https://www.abcmouse.com",
+    "description": "AI-personalized early learning across language arts, math, science, and art.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "InVideo AI",
+    "url": "https://invideo.io/ai",
+    "description": "Text-to-video AI generation with B-roll, voiceovers, and platform-specific output.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Bytecap",
+    "url": "https://www.bytecap.io",
+    "description": "Complete workflow for turning long videos into short-form content.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Mintlify",
+    "url": "https://mintlify.com",
+    "description": "Modern developer docs platform used by Cursor, Perplexity, Coinbase, Anthropic.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Apidog",
+    "url": "https://apidog.com",
+    "description": "All-in-one API design + test + documentation with interactive Try It Out.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Fern Docs",
+    "url": "https://buildwithfern.com",
+    "description": "OpenAPI-driven docs + SDK generation + docs-as-code workflow for API teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "ReadMe",
+    "url": "https://readme.com",
+    "description": "API documentation platform with AI content creation and audit workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "GitBook",
+    "url": "https://www.gitbook.com",
+    "description": "WYSIWYG docs editor accessible for non-developers with AI assist.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Topaz Gigapixel AI",
+    "url": "https://www.topazlabs.com/gigapixel-ai",
+    "description": "Industry-standard image upscaling running locally with portrait restoration.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Magnific AI",
+    "url": "https://magnific.ai",
+    "description": "Creative AI upscaler enhancing AI-generated images with convincing new detail.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Leonardo AI",
+    "url": "https://leonardo.ai",
+    "description": "AI image generation with creative upscaling for game art and illustrations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Remini",
+    "url": "https://remini.ai",
+    "description": "Quick mobile face enhancement and photo restoration AI.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Upscayl",
+    "url": "https://upscayl.org",
+    "description": "Open-source AI image upscaler running locally on Windows, Mac, Linux.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 30000
+    }
+  },
+  {
+    "name": "Chattermill",
+    "url": "https://chattermill.com",
+    "description": "AI sentiment analysis platform \u2014 unified consumer feedback across all touchpoints.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Brandwatch",
+    "url": "https://www.brandwatch.com",
+    "description": "Consumer intelligence with sentiment analysis across social media at scale.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "SentiSum",
+    "url": "https://www.sentisum.com",
+    "description": "AI-native sentiment platform with Kyo domain-trained AI engine for CX.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Clootrack",
+    "url": "https://www.clootrack.com",
+    "description": "AI sentiment from reviews, surveys, contact center, and digital channels.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sprinklr",
+    "url": "https://www.sprinklr.com",
+    "description": "Unified customer experience platform with AI listening and engagement.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "AI2SQL",
+    "url": "https://ai2sql.io",
+    "description": "Natural language to SQL with live schema connection for accurate runnable queries.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "SQL Chat",
+    "url": "https://www.sqlchat.ai",
+    "description": "Chat-based SQL client with natural language interface to databases.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "TablePlus",
+    "url": "https://tableplus.com",
+    "description": "Best SQL client on Mac with integrated text-to-SQL AI capabilities.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Chat2DB",
+    "url": "https://chat2db.ai",
+    "description": "AI Copilot for SQL generation across multiple database engines.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "BlazeSQL",
+    "url": "https://www.blazesql.com",
+    "description": "Plain English to optimized T-SQL \u2014 AI data analyst for SQL Server.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Playcode",
+    "url": "https://playcode.io",
+    "description": "Plain-English AI site builder producing real React/Vue/Tailwind code, not just templates.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Wix Studio AI",
+    "url": "https://www.wix.com/studio/ai",
+    "description": "Full-stack AI website builder \u2014 describe business and get a site with copy + images + SEO.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Webflow AI Site Builder",
+    "url": "https://webflow.com/ai",
+    "description": "Professional-grade AI site builder for teams needing AI assistance with design control.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Base44",
+    "url": "https://base44.com",
+    "description": "Beginner-friendly AI app builder with drag-and-drop editing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Bubble",
+    "url": "https://bubble.io",
+    "description": "Full-stack no-code dev environment for complex web apps \u2014 3M+ users.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Grantable",
+    "url": "https://grantable.co",
+    "description": "AI grant writing + management with funder discovery from 990 data.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "GrantBoost",
+    "url": "https://www.grantboost.io",
+    "description": "Tested top AI grant writing tool with proposal generation at $19.99/month.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "FundRobin",
+    "url": "https://www.fundrobin.com",
+    "description": "End-to-end grant writing automation with global compliance for nonprofits.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Instrumentl",
+    "url": "https://www.instrumentl.com",
+    "description": "Grant discovery + writing aggregating federal, state, foundation, corporate funding sources.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Grant Assistant",
+    "url": "https://www.grantassistant.ai",
+    "description": "Most advanced AI grant writer \u2014 trained on 7000+ successful proposals.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sixfold",
+    "url": "https://www.sixfold.ai",
+    "description": "Generative AI for insurance underwriting \u2014 risk summarization and decision support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "DataRobot",
+    "url": "https://www.datarobot.com",
+    "description": "Enterprise AI platform with automated ML for underwriting + claims prediction.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Cape Analytics",
+    "url": "https://capeanalytics.com",
+    "description": "Geospatial AI extracting 70+ property attributes from satellite imagery for insurance underwriting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Gradient AI",
+    "url": "https://www.gradientai.com",
+    "description": "Pretrained ML models for workers' comp + group health underwriting and claims.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "V7 Go",
+    "url": "https://www.v7labs.com/go",
+    "description": "Document automation platform with ready-to-use AI agents for complex underwriting workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "C3 AI",
+    "url": "https://c3.ai",
+    "description": "Enterprise AI applications for predictive maintenance, supply chain, and manufacturing optimisation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Sight Machine",
+    "url": "https://sightmachine.com",
+    "description": "AI-native industrial platform analyzing real-time manufacturing data for productivity gains.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Augury",
+    "url": "https://www.augury.com",
+    "description": "Machine-health AI for predictive maintenance on industrial equipment.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Uptake",
+    "url": "https://www.uptake.com",
+    "description": "Industrial AI platform for asset performance management in heavy industries.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Tulip",
+    "url": "https://tulip.co",
+    "description": "Frontline operations platform with AI for assembly + quality + warehouse work.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "IBM Watson Supply Chain",
+    "url": "https://www.ibm.com/products/supply-chain-intelligence-suite",
+    "description": "Supply chain AI for risk identification, what-if simulation, and actionable insights.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "SAP IBP",
+    "url": "https://www.sap.com/products/scm/integrated-business-planning.html",
+    "description": "Integrated business planning with AI demand forecasting and scenario planning.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Arkestro",
+    "url": "https://www.arkestro.com",
+    "description": "Predictive sourcing intelligence \u2014 autonomously suggests optimal pricing strategies.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Tastewise",
+    "url": "https://tastewise.io",
+    "description": "AI food intelligence \u2014 real-time consumption signals + emerging menu trends.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Toast",
+    "url": "https://pos.toasttab.com",
+    "description": "Restaurant POS with AI menu management, analytics, and dynamic upsell prompts.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "AI Chef Pro",
+    "url": "https://aichef.pro",
+    "description": "Restaurant cost estimation + menu engineering AI for profit margin optimization.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Snaptrude",
+    "url": "https://www.snaptrude.com",
+    "description": "AI BIM software generating compliant floor plans from a room schedule in minutes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "SWAPP",
+    "url": "https://www.swapp.ai",
+    "description": "AI generates complete construction document sets from 3D models.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "TestFit",
+    "url": "https://www.testfit.io",
+    "description": "AI deal analysis for real estate \u2014 identifies which building configurations make money.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Veras by Chaos",
+    "url": "https://www.evolvelab.io/veras",
+    "description": "AI visualization plugin for CAD/BIM turning geometric models into detailed renders.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Autodesk Forma",
+    "url": "https://www.autodesk.com/products/forma/overview",
+    "description": "Site analysis at city scale with hundreds of environmental simulations (absorbed Spacemaker).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Buildots",
+    "url": "https://buildots.com",
+    "description": "Construction site progress AI \u2014 analyzes video to compare installed work against BIM schedule.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Optimal Dynamics",
+    "url": "https://www.optimaldynamics.com",
+    "description": "AI logistics optimization with continuous learning for cost + delivery + driver evaluation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Samsara",
+    "url": "https://www.samsara.com",
+    "description": "Connected Operations cloud with AI-driven routing and fleet safety scoring.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Locus Dispatcher",
+    "url": "https://locus.sh",
+    "description": "Deep learning route optimization for enterprise logistics with adaptive replanning.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Onfleet",
+    "url": "https://onfleet.com",
+    "description": "Multi-stop delivery route optimization with continuous in-day adjustments.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Route4Me",
+    "url": "https://www.route4me.com",
+    "description": "Residential delivery route sequencing \u2014 handles thousands of stops in seconds.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "SimpliRoute",
+    "url": "https://simpliroute.com",
+    "description": "Last-mile delivery optimization for urban environments with high variability.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "NextBillion.ai",
+    "url": "https://nextbillion.ai",
+    "description": "Flexible routing API with time windows, vehicle attributes, and operational constraints.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Circuit for Teams",
+    "url": "https://getcircuit.com/teams",
+    "description": "Driver-friendly delivery routing with Google Maps-like simplicity for gig-economy fleets.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Geotab",
+    "url": "https://www.geotab.com",
+    "description": "Fleet management AI with granular engine data for fuel-efficient route optimization.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Deep 6 AI",
+    "url": "https://deep6.ai",
+    "description": "AI clinical trial patient screening analyzing unstructured EHR + clinical notes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Saama",
+    "url": "https://www.saama.com",
+    "description": "AI for clinical data \u2014 automating trial monitoring + clinical insights generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Owkin",
+    "url": "https://owkin.com",
+    "description": "AI biotech using federated learning for drug discovery + patient stratification.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Quibim",
+    "url": "https://quibim.com",
+    "description": "AI medical imaging biomarkers for clinical trials + precision medicine.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Schrodinger",
+    "url": "https://www.schrodinger.com",
+    "description": "Computational platform with AI/ML for molecular design + drug discovery.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Insilico Medicine",
+    "url": "https://insilico.com",
+    "description": "End-to-end AI drug discovery \u2014 target identification through preclinical candidates.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Isomorphic Labs",
+    "url": "https://www.isomorphiclabs.com",
+    "description": "Google DeepMind spin-out applying AlphaFold to drug discovery.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Recursion",
+    "url": "https://www.recursion.com",
+    "description": "AI-enabled biotech with phenomics + automated wet labs for drug discovery.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Atomwise",
+    "url": "https://www.atomwise.com",
+    "description": "Deep learning for small-molecule drug discovery \u2014 convolutional NN structure-based screening.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "BenevolentAI",
+    "url": "https://www.benevolent.com",
+    "description": "AI knowledge graph drug discovery \u2014 target hypothesis to clinical asset generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Exscientia",
+    "url": "https://www.exscientia.ai",
+    "description": "End-to-end AI drug design platform with precision oncology focus.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Pinecone",
+    "url": "https://www.pinecone.io",
+    "description": "Dominant managed vector database for production RAG with serverless architecture.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Weaviate",
+    "url": "https://weaviate.io",
+    "description": "Open-source vector database with rich schema and hybrid search.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "githubStars": 15000
+    }
+  },
+  {
+    "name": "Qdrant",
+    "url": "https://qdrant.tech",
+    "description": "Open-source vector DB written in Rust \u2014 best price-performance per benchmarks.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "githubStars": 25000
+    }
+  },
+  {
+    "name": "Chroma",
+    "url": "https://www.trychroma.com",
+    "description": "Developer-first open-source embedding database for LLM apps.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 18000,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Milvus",
+    "url": "https://milvus.io",
+    "description": "Cloud-native open-source vector DB designed for production scale.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 35000
+    }
+  },
+  {
+    "name": "pgvector",
+    "url": "https://github.com/pgvector/pgvector",
+    "description": "Postgres extension for vector similarity \u2014 default for teams already on Postgres.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 14000
+    }
+  },
+  {
+    "name": "Zilliz Cloud",
+    "url": "https://zilliz.com/cloud",
+    "description": "Enterprise managed Milvus \u2014 fully hosted vector database.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Bland AI",
+    "url": "https://www.bland.ai",
+    "description": "Voice AI for phone agents \u2014 up to 1M concurrent calls, Conversational Pathways.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Retell AI",
+    "url": "https://www.retellai.com",
+    "description": "Voice AI for phone automation with fast setup and developer-friendly APIs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Air AI",
+    "url": "https://www.air.ai",
+    "description": "Conversational phone agents for extended multi-minute voice interactions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "PolyAI",
+    "url": "https://poly.ai",
+    "description": "Multilingual voice assistants for enterprise contact centers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Vapi",
+    "url": "https://vapi.ai",
+    "description": "Voice AI infrastructure \u2014 fully custom voice pipelines for developers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "Synthflow",
+    "url": "https://synthflow.ai",
+    "description": "No-code white-label voice AI for agencies.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "ElevenLabs Conversational AI",
+    "url": "https://elevenlabs.io/conversational-ai",
+    "description": "Real-time conversational voice AI with best-in-class voice quality.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Copyleaks",
+    "url": "https://copyleaks.com",
+    "description": "All-in-one plagiarism + AI content detection with 99%+ accuracy.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Turnitin",
+    "url": "https://www.turnitin.com",
+    "description": "Standard academic-integrity platform with established policy + appeals workflows.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "GPTZero",
+    "url": "https://gptzero.me",
+    "description": "AI content detector with 99-100% accuracy for human + AI text.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "TurboTax Business",
+    "url": "https://turbotax.intuit.com/small-business-taxes/",
+    "description": "Entity-specific business tax filing with AI-assisted guidance and K-1 generation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "TaxAct",
+    "url": "https://www.taxact.com",
+    "description": "Mid-tier tax prep with strong Partnership and S-Corp business editions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Zoho Books",
+    "url": "https://www.zoho.com/books/",
+    "description": "Affordable AI accounting with fraud detection + multi-currency for SMBs and freelancers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Showdigs",
+    "url": "https://www.showdigs.com",
+    "description": "AI leasing for single-family property managers \u2014 listing protection + smart scheduling.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AppFolio",
+    "url": "https://www.appfolio.com",
+    "description": "Property management with Realm-X AI assistant \u2014 answers, prequalifies, schedules showings 24/7.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Buildium",
+    "url": "https://www.buildium.com",
+    "description": "Property management with Lumina AI embedded in accounting, leasing, maintenance, reporting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Funnel Leasing",
+    "url": "https://www.funnelleasing.com",
+    "description": "Renter-centric CRM + AI for multifamily leasing \u2014 gives teams 35% time back.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Conduit AI",
+    "url": "https://conduit.ai",
+    "description": "AI voice agent for property management \u2014 understands work orders, units, lease terms.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "STAN.AI",
+    "url": "https://www.stan.ai",
+    "description": "Virtual assistant for HOAs, condos, student housing, and property managers.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "HappyCo",
+    "url": "https://www.happyco.com",
+    "description": "AI work-order management + inspection automation reducing resolution time 40%+.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Upfirst",
+    "url": "https://upfirst.ai",
+    "description": "AI answering service for property managers \u2014 calls answered + summarized in real time.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "DoorLoop",
+    "url": "https://www.doorloop.com",
+    "description": "All-in-one property management with AI tenant screening and automated rent collection.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "TurboTenant",
+    "url": "https://www.turbotenant.com",
+    "description": "Free landlord property management with AI listing optimization.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Duetto",
+    "url": "https://www.duettocloud.com",
+    "description": "AI revenue management for hotels \u2014 dynamic pricing + demand forecasting.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "FLYR Hospitality",
+    "url": "https://flyr.com/hospitality/",
+    "description": "AI-native commercial platform combining RMS + BI + demand forecasting for hotels.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Lighthouse",
+    "url": "https://www.mylighthouse.com",
+    "description": "Commercial platform for hospitality with actionable market insights + BI + pricing.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Cloudbeds",
+    "url": "https://www.cloudbeds.com",
+    "description": "Hotel PMS + revenue management with AI optimization across 22K+ properties.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "eviivo",
+    "url": "https://eviivo.com",
+    "description": "PMS for small hotels + B&Bs with native AI for messaging, content, listing optimization.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Chatlyn",
+    "url": "https://chatlyn.com",
+    "description": "AI messaging + guest experience platform for hotels.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "WiseYield",
+    "url": "https://www.wiseyield.co",
+    "description": "AI farming software \u2014 95% accurate yield predictions with multi-provider AI validation.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Farmonaut",
+    "url": "https://farmonaut.com",
+    "description": "Satellite-based precision agriculture with AI yield monitoring and water management.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AgriWebb",
+    "url": "https://www.agriwebb.com",
+    "description": "Livestock management with AI for breeding records, pasture management, compliance.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Climate FieldView",
+    "url": "https://climate.com",
+    "description": "Bayer's precision agriculture platform with AI seed + crop planning.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "John Deere See & Spray",
+    "url": "https://www.deere.com/en/sprayers/see-spray-select/",
+    "description": "Computer vision herbicide spray system \u2014 weed-only application reducing chemical use.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "CropX",
+    "url": "https://cropx.com",
+    "description": "AI soil-sensor network + irrigation scheduling reducing water use 25-50%.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Taranis",
+    "url": "https://www.taranis.com",
+    "description": "Drone + satellite AI imagery for crop health monitoring + early disease detection.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Instacrops",
+    "url": "https://www.instacrops.com",
+    "description": "IoT + satellite + AI precision agriculture for irrigation and crop optimization.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "JAWS",
+    "url": "https://www.freedomscientific.com/products/software/jaws/",
+    "description": "Screen reader with Picture Smart AI for detailed image descriptions without alt text.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Proloquo2Go",
+    "url": "https://www.assistiveware.com/products/proloquo2go",
+    "description": "Acclaimed AAC app \u2014 symbol-based communication for users with speech disabilities.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Voiceitt",
+    "url": "https://www.voiceitt.com",
+    "description": "AI speech recognition adapted to non-standard speech patterns for users with disabilities.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Polly",
+    "url": "https://polly.ai",
+    "description": "AI wheelchair companion \u2014 voice assistance + cognitive support that learns user needs.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AudioEye",
+    "url": "https://www.audioeye.com",
+    "description": "AI website accessibility platform with auto WCAG compliance fixes.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Heuritech",
+    "url": "https://www.heuritech.com",
+    "description": "AI fashion trend forecasting \u2014 3M images/day for 24-month-ahead trends (LV, Dior, Adidas).",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "WGSN",
+    "url": "https://www.wgsn.com",
+    "description": "Trend forecasting + consumer insight platform \u2014 runway + retail + social + ecommerce data.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Edited",
+    "url": "https://edited.com",
+    "description": "Retail trend intelligence (WGSN-owned) with real-time pricing + assortment data.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "The New Black",
+    "url": "https://thenewblack.ai",
+    "description": "All-in-one AI fashion design platform \u2014 500K+ designers, virtual try-on, tech packs, trends.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "ZMO.ai",
+    "url": "https://www.zmo.ai",
+    "description": "AI on-model fashion photography \u2014 flat-lay to lifelike model images in poses.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Lalaland.ai",
+    "url": "https://lalaland.ai",
+    "description": "Synthetic fashion models \u2014 diverse sizes, ethnicities, poses without traditional photography.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "FindMine",
+    "url": "https://www.findmine.com",
+    "description": "AI merchandising \u2014 automated product pairing reducing merchandiser workload 95%.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Style3D",
+    "url": "https://www.style3d.com",
+    "description": "3D fashion design + visualization with AI-assisted draping and rendering.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "CLO 3D",
+    "url": "https://www.clo3d.com",
+    "description": "3D garment design + virtual prototyping for fashion brands.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Browzwear",
+    "url": "https://browzwear.com",
+    "description": "3D apparel design platform with VStitcher + Lotta tools for digital prototyping.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Unsloth",
+    "url": "https://unsloth.ai",
+    "description": "Single-GPU LLM fine-tuning \u2014 2x speed + 70% less memory than baseline.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 35000,
+      "trafficTrend": "up"
+    }
+  },
+  {
+    "name": "LlamaIndex",
+    "url": "https://www.llamaindex.ai",
+    "description": "Data framework bridging raw data and LLM contextual reasoning over custom datasets.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 40000,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Haystack",
+    "url": "https://haystack.deepset.ai",
+    "description": "Industrial-strength open-source RAG framework from deepset.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 18000,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "RAGFlow",
+    "url": "https://ragflow.io",
+    "description": "Enterprise-oriented RAG engine with deep document understanding.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 20000
+    }
+  },
+  {
+    "name": "Arize Phoenix",
+    "url": "https://phoenix.arize.com",
+    "description": "Open-source AI observability \u2014 tracing, evaluation, troubleshooting for LLM apps.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4500,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "RAGAS",
+    "url": "https://docs.ragas.io",
+    "description": "Open-source RAG evaluation framework with reference-free metrics.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 8000
+    }
+  },
+  {
+    "name": "TruLens",
+    "url": "https://www.trulens.org",
+    "description": "Open-source eval + tracking for LLM apps with feedback functions.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2500
+    }
+  },
+  {
+    "name": "LangChain",
+    "url": "https://www.langchain.com",
+    "description": "Developer framework for building LLM applications with components + integrations.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 100000,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Axolotl",
+    "url": "https://github.com/axolotl-ai-cloud/axolotl",
+    "description": "Configuration-driven open-source LLM fine-tuning for production pipelines.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 9000
+    }
+  },
+  {
+    "name": "LLaMA-Factory",
+    "url": "https://github.com/hiyouga/LLaMA-Factory",
+    "description": "Web-UI fine-tuning for 100+ open LLMs with LoRA + QLoRA support.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 45000
+    }
+  },
+  {
+    "name": "Labelbox",
+    "url": "https://labelbox.com",
+    "description": "Data labeling + RLHF + RAG eval platform for ML teams.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Label Studio",
+    "url": "https://labelstud.io",
+    "description": "Open-source data labeling with RAG eval + project templates.",
+    "source": "discovery_2026_05_25_listicles",
+    "signals": {
+      "recentList": true,
+      "githubStars": 22000
+    }
+  }
+]

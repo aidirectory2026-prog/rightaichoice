@@ -182,56 +182,42 @@ const BOARDS: Board[] = [
   },
   {
     title: 'RAC — Plan Funnel',
-    description: 'The plan flow — your highest-intent vendor signal. Where users drop off in the flow.',
+    description: 'Plan flow — highest-intent vendor signal. Full per-step funnel in /admin/insights.',
     tiles: [
-      { title: 'Plan started — 7d', event: 'plan_started', chart: 'metric', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Plan intake submitted — 7d', event: 'plan_intake_submitted', chart: 'metric', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
+      // 1 essential tile — the conversion signal vendors care about
       { title: 'Plan completed — 7d', event: 'plan_completed', chart: 'metric', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Plan results clicked — 7d', event: 'plan_results_tool_clicked', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Plan tools added (existing) — 7d', event: 'plan_existing_tool_added', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 7 }, breakdownProperty: 'tool_name' },
     ],
   },
   {
     title: 'RAC — Engagement',
-    description: 'Active users, retention proxy, top events. The "is the site alive?" board.',
+    description: 'Are users coming back? Full DAU/WAU/MAU breakdown in /admin/insights.',
     tiles: [
-      { title: 'Active users today', event: '$all_events', chart: 'metric', measurement: 'unique', time: { kind: 'today_minutes' } },
-      { title: 'Active users — 7d', event: '$all_events', chart: 'metric', measurement: 'unique', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Active users — 30d', event: '$all_events', chart: 'metric', measurement: 'unique', time: { kind: 'last_n_days', days: 30 } },
+      // 1 essential tile — daily-active trend
       { title: 'Daily active users — 30d trend', event: '$all_events', chart: 'line', measurement: 'unique', time: { kind: 'last_n_days', days: 30 } },
-      { title: 'Tool page views — 7d', event: 'tool_page_viewed', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Tools saved — 7d', event: 'tool_saved', chart: 'metric', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
     ],
   },
   {
     title: 'RAC — Search',
-    description: 'Search behaviour. Zero-result rate reveals catalog gaps. Top queries reveal new content opportunities.',
+    description: 'Search demand signal. Zero-result rate + top queries in /admin/insights.',
     tiles: [
-      { title: 'Searches — 7d', event: 'search_query_submitted', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Search results clicked — 7d', event: 'search_result_clicked', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Top searched terms — 30d', event: 'search_query_submitted', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'query' },
-      { title: 'Search typing volume — 7d', event: 'search_typing', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
+      // 1 essential tile — search-volume trend
+      { title: 'Searches — 7d trend', event: 'search_query_submitted', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
     ],
   },
   {
     title: 'RAC — AI Chat',
-    description: 'AI chat usage. Which tools users ask about. Conversation depth.',
+    description: 'AI chat engagement. Top tools mentioned in /admin/insights.',
     tiles: [
+      // 1 essential tile — chat-volume trend
       { title: 'AI chat messages — 7d', event: 'ai_chat_message', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Unique AI chat users — 7d', event: 'ai_chat_message', chart: 'metric', measurement: 'unique', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'AI tool clicked from chat — 7d', event: 'ai_chat_tool_clicked', chart: 'line', measurement: 'total', time: { kind: 'last_n_days', days: 7 } },
-      { title: 'Tools mentioned in chat — 30d', event: 'ai_chat_message', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'mentioned_tool_slugs' },
     ],
   },
   {
     title: 'RAC — Vendor Audience Snapshot',
-    description: 'THE SALABLE ARTIFACT. Per-tool audience: visitors, save rate, click-through, comparisons. Filter date range by 30d to pitch vendors.',
+    description: 'THE SALABLE ARTIFACT — top tools. Full per-tool drill-down in /admin/insights/tool/[slug].',
     tiles: [
-      { title: 'Most viewed tools — 30d', event: 'tool_page_viewed', chart: 'bar', measurement: 'unique', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'tool_slug' },
-      { title: 'Most clicked-out tools — 30d', event: 'tool_visit_redirected', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'tool_slug' },
-      { title: 'Most saved tools — 30d', event: 'tool_saved', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'tool_slug' },
-      { title: 'Most compared tools — 30d', event: 'comparison_viewed', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'tools' },
-      { title: 'Most recommended in plan — 30d', event: 'plan_results_displayed', chart: 'bar', measurement: 'total', time: { kind: 'last_n_days', days: 30 }, breakdownProperty: 'recommended_tool_slugs' },
+      // 1 essential tile — revenue-relevant signal (click-outs to affiliates)
+      { title: 'Most clicked-out (affiliate visits) — 30d', event: 'tool_visit_redirected', chart: 'metric', measurement: 'total', time: { kind: 'last_n_days', days: 30 } },
     ],
   },
 ]

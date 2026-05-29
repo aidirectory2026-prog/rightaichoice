@@ -1,0 +1,1982 @@
+[
+  {
+    "name": "Speechki",
+    "url": "https://speechki.org",
+    "description": "AI text-to-speech audiobook narration with 1100+ voices in 80+ languages for publishers and indie authors.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Murf",
+    "url": "https://murf.ai",
+    "description": "AI voice generator with studio-grade voices for videos, audiobooks, podcasts, and e-learning narration.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Resound",
+    "url": "https://resound.fm",
+    "description": "AI podcast editor that removes silences, ums, and creates shareable clips automatically.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Alitu",
+    "url": "https://alitu.com",
+    "description": "AI podcast maker for solo creators \u2014 automated levelling, noise removal, and one-click episode publishing.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Podsqueeze",
+    "url": "https://podsqueeze.com",
+    "description": "AI generates show notes, timestamps, tweets, blog articles, and emails from a single podcast episode.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Swell AI",
+    "url": "https://swellai.com",
+    "description": "AI content multiplier for podcasters \u2014 turns episodes into shorts, blogs, social posts, and newsletters.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Recast Studio",
+    "url": "https://recast.studio",
+    "description": "AI converts podcast audio into branded video clips for Instagram, TikTok, and YouTube Shorts.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Headliner",
+    "url": "https://headliner.app",
+    "description": "AI audiograms and video clip generation for podcasts with auto-captions and waveform animation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "podcasters_audiobooks"
+    }
+  },
+  {
+    "name": "Letterhead",
+    "url": "https://tryletterhead.com",
+    "description": "AI-powered newsletter platform with built-in ad sales, audience analytics, and curation tools for publishers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Bullet",
+    "url": "https://bulletnewsletters.com",
+    "description": "AI newsletter platform with generative summarization and smart curation for niche publishers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Stoop Inbox",
+    "url": "https://stoopinbox.com",
+    "description": "Newsletter reader app with AI summarization and personalized digest generation across subscriptions.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Kit",
+    "url": "https://kit.com",
+    "description": "Creator email platform (formerly ConvertKit) with AI subject-line, segmentation, and sequence assistants.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "MailerLite AI",
+    "url": "https://mailerlite.com",
+    "description": "Email marketing platform with AI writing assistant, smart sending, and subject-line generator.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Curated",
+    "url": "https://curated.co",
+    "description": "Newsletter platform with AI link summarization and curation for niche professional audiences.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Mailmodo AI",
+    "url": "https://mailmodo.com",
+    "description": "AMP email and newsletter platform with AI subject-line, design, and segmentation generation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Hyper",
+    "url": "https://hyperhuman.deemos.com",
+    "description": "Rodin AI 3D model generation from text prompts for indie game devs and product designers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "solopreneurs"
+    }
+  },
+  {
+    "name": "Wonderchat",
+    "url": "https://wonderchat.io",
+    "description": "Build custom AI chatbots from your website or PDF docs in minutes \u2014 no-code support agent for solopreneurs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "solopreneurs"
+    }
+  },
+  {
+    "name": "Stammer",
+    "url": "https://stammer.ai",
+    "description": "White-label AI agent platform for agencies \u2014 resell branded chatbots to local businesses.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "solopreneurs"
+    }
+  },
+  {
+    "name": "MagicForm",
+    "url": "https://magicform.ai",
+    "description": "Sales-focused AI chatbot that qualifies leads, books meetings, and answers product questions for SMBs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "solopreneurs"
+    }
+  },
+  {
+    "name": "Maven",
+    "url": "https://maven.com",
+    "description": "Cohort-based course platform with AI-assisted curriculum design, student matching, and Q&A automation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Podia",
+    "url": "https://podia.com",
+    "description": "All-in-one course/digital-product platform with AI writing assistant for landing pages and emails.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Mighty Networks",
+    "url": "https://mightynetworks.com",
+    "description": "Community + courses platform with AI host that recommends connections, content, and events to members.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Thinkific AI",
+    "url": "https://thinkific.com",
+    "description": "Course creator platform with AI curriculum builder, quiz generator, and student engagement insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Kajabi AI",
+    "url": "https://kajabi.com",
+    "description": "Creator commerce platform with AI assistants for course outlines, sales pages, and email sequences.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Heights Platform",
+    "url": "https://heightsplatform.com",
+    "description": "Course platform with AI course coach that helps students complete lessons and reflect on progress.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "course_creators"
+    }
+  },
+  {
+    "name": "Geneva",
+    "url": "https://geneva.com",
+    "description": "Community platform with AI-assisted moderation, smart channel routing, and member engagement insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Bettermode",
+    "url": "https://bettermode.com",
+    "description": "AI-powered customer community platform with smart Q&A, content moderation, and analytics.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Tribe",
+    "url": "https://tribe.so",
+    "description": "White-label community platform with AI content generation and automated member onboarding flows.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Heartbeat",
+    "url": "https://heartbeat.chat",
+    "description": "Community-first platform for cohorts and clubs with AI message summarization and event automation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Hivebrite",
+    "url": "https://hivebrite.com",
+    "description": "Enterprise community platform with AI member matching and content recommendation engines.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Bevy",
+    "url": "https://bevy.com",
+    "description": "AI-powered community events platform with smart chapter management and member intelligence.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "community_builders"
+    }
+  },
+  {
+    "name": "Bambuser",
+    "url": "https://bambuser.com",
+    "description": "Live shopping platform with AI-driven product recommendations, real-time captions, and shoppable video.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "Whatnot",
+    "url": "https://whatnot.com",
+    "description": "Live auction marketplace with AI-driven discovery, smart bidding suggestions, and seller automation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "NTWRK",
+    "url": "https://ntwrk.com",
+    "description": "Live-streamed shoppable video marketplace for collectibles with AI personalized drops and recommendations.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "Firework",
+    "url": "https://firework.com",
+    "description": "Shoppable video platform with AI clip generation and live commerce widgets for brand websites.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "Tolstoy",
+    "url": "https://gotolstoy.com",
+    "description": "Interactive shoppable video platform with AI personalization and conversational commerce flows.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "Smartzer",
+    "url": "https://smartzer.com",
+    "description": "Shoppable video tech with AI auto-tagging of products in retailer streams and creator content.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "live_commerce"
+    }
+  },
+  {
+    "name": "Inworld",
+    "url": "https://inworld.ai",
+    "description": "Generative AI character engine for game studios \u2014 NPCs with memory, voice, emotion, and personality.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Promethean AI",
+    "url": "https://prometheanai.com",
+    "description": "AI assistant for 3D world-building \u2014 helps artists assemble Unreal/Unity scenes from natural language.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Rosebud AI",
+    "url": "https://rosebud.ai",
+    "description": "Text-to-game platform that turns prompts into playable web games \u2014 JavaScript code and assets generated.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Ludo.ai",
+    "url": "https://ludo.ai",
+    "description": "AI research and ideation assistant for game designers \u2014 concepts, art, market trends, and competitor analysis.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Modl.ai",
+    "url": "https://modl.ai",
+    "description": "AI bots that automatically playtest games for bugs, balance, and player experience issues.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Charisma.ai",
+    "url": "https://charisma.ai",
+    "description": "Conversational narrative engine for games and interactive stories \u2014 AI characters with persistent memory.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Vidya AI",
+    "url": "https://vidya.us",
+    "description": "K-12 AI tutoring platform with grade-aligned lesson plans, quizzes, and Socratic-style student dialogues.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Brisk Teaching",
+    "url": "https://briskteaching.com",
+    "description": "Chrome extension that generates rubrics, feedback, lesson plans, and quizzes from any webpage for teachers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Eduaide.Ai",
+    "url": "https://eduaide.ai",
+    "description": "AI teaching assistant with 100+ resource generators for lesson plans, assessments, and differentiation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Diffit",
+    "url": "https://diffit.me",
+    "description": "AI tool that adapts any reading text to multiple grade levels with comprehension questions and vocab.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "School AI",
+    "url": "https://schoolai.com",
+    "description": "AI assistant for K-12 educators with safe student chatbots, lesson generation, and admin automation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Khanmigo",
+    "url": "https://khanmigo.ai",
+    "description": "Khan Academy AI tutor and teaching assistant powered by GPT \u2014 Socratic dialogue for students K-12.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Quizizz AI",
+    "url": "https://quizizz.com",
+    "description": "AI generates standards-aligned quizzes, lessons, and activities from any text or topic in seconds.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Education Copilot",
+    "url": "https://educationcopilot.com",
+    "description": "AI lesson plan, writing prompt, project, and handout generator for K-12 and higher-ed teachers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "MagicStudent",
+    "url": "https://magicstudent.com",
+    "description": "Sister product to MagicSchool \u2014 safe AI tutor for K-12 students with teacher-monitored conversations.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "education"
+    }
+  },
+  {
+    "name": "Bedtime Story AI",
+    "url": "https://bedtimestory.ai",
+    "description": "Personalized AI-generated bedtime stories featuring your child as the protagonist with custom themes.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Storywizard",
+    "url": "https://storywizard.ai",
+    "description": "AI children's storybook generator \u2014 illustrated, customizable tales for kids by age and theme.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Oscar Stories",
+    "url": "https://oscarstories.com",
+    "description": "AI generates personalized bedtime stories starring your child with custom moral lessons and themes.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Speakaboos",
+    "url": "https://speakaboos.com",
+    "description": "AI-powered interactive storybook library for early readers with read-along and comprehension games.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Pok Pok",
+    "url": "https://pokpok.com",
+    "description": "AI-personalized digital playroom for toddlers with adaptive learning toys and parent-curated content.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Khan Kids",
+    "url": "https://learn.khanacademy.org/khan-kids",
+    "description": "Khan Academy's free AI-adaptive learning app for kids 2-8 in reading, math, and social-emotional skills.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "parents"
+    }
+  },
+  {
+    "name": "Hallow",
+    "url": "https://hallow.com",
+    "description": "Catholic prayer and meditation app with AI-personalized prayer journeys and reflections.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "Pray.com",
+    "url": "https://pray.com",
+    "description": "Christian audio prayer and Bible app with AI-recommended daily devotionals and sleep stories.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "Glorify",
+    "url": "https://glorify-app.com",
+    "description": "Christian devotional app with AI-curated Bible plans, prayers, and worship audio personalization.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "Catholic-Link AI",
+    "url": "https://catholic-link.org",
+    "description": "Catholic AI assistant for catechesis, scripture study, and homily preparation grounded in Magisterium.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "Bible.is AI",
+    "url": "https://bible.is",
+    "description": "Audio Bible app with AI-personalized reading plans and conversational Bible study assistant.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "QuranGPT",
+    "url": "https://qurangpt.live",
+    "description": "AI-powered Quran study assistant \u2014 semantic search, contextual tafsir, and verse-level Q&A.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "religious_spiritual"
+    }
+  },
+  {
+    "name": "Anaplan AI",
+    "url": "https://anaplan.com",
+    "description": "Enterprise planning platform with predictive AI for FP&A, supply chain, and workforce scenarios.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Pigment",
+    "url": "https://pigment.com",
+    "description": "AI-powered business planning platform with conversational scenario modeling for FP&A teams.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Mosaic.tech",
+    "url": "https://mosaic.tech",
+    "description": "Strategic finance platform with AI-driven forecasting, KPI dashboards, and board reporting automation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Cube",
+    "url": "https://cubesoftware.com",
+    "description": "AI-powered FP&A platform that connects to spreadsheets for forecasting, budgeting, and reporting.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Datarails",
+    "url": "https://datarails.com",
+    "description": "FP&A platform with AI conversational insights and self-service financial reporting in Excel.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Vena Insights",
+    "url": "https://venasolutions.com",
+    "description": "Excel-native FP&A platform with AI-driven anomaly detection and predictive forecasting.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Planful Predict",
+    "url": "https://planful.com",
+    "description": "AI-driven financial planning with predictive forecasting, signal detection, and projection accuracy.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Causal",
+    "url": "https://causal.app",
+    "description": "AI-native financial modeling with natural language calculations and live scenario comparison.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Coalition",
+    "url": "https://coalitioninc.com",
+    "description": "Active cyber-insurance with AI underwriting and continuous risk monitoring for SMB security posture.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Coro",
+    "url": "https://coro.net",
+    "description": "Modular SMB cybersecurity platform with AI-driven email, endpoint, network, and cloud protection.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Huntress",
+    "url": "https://huntress.com",
+    "description": "Managed detection and response for SMBs with AI threat hunting and human SOC analyst response.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "ThreatLocker",
+    "url": "https://threatlocker.com",
+    "description": "Zero-trust endpoint protection with AI application allowlisting and ringfencing for MSPs and SMBs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Acronis Cyber Protect",
+    "url": "https://acronis.com",
+    "description": "Integrated backup and AI-driven cybersecurity for SMBs and MSPs with anti-ransomware protection.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Field Effect",
+    "url": "https://fieldeffect.com",
+    "description": "Cybersecurity-as-a-service platform with AI threat detection and managed response tailored to SMBs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Todyl",
+    "url": "https://todyl.com",
+    "description": "Single-agent SASE and security platform with AI-driven SIEM, MDR, and endpoint protection for SMBs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Defendify",
+    "url": "https://defendify.com",
+    "description": "All-in-one cybersecurity platform for SMBs with AI assessments, training, and incident response.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Adlumin",
+    "url": "https://adlumin.com",
+    "description": "AI-driven SIEM and XDR platform for mid-market with automated threat hunting and compliance reporting.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "cybersecurity_smb"
+    }
+  },
+  {
+    "name": "Around",
+    "url": "https://around.co",
+    "description": "Compact video meeting app with AI noise removal, eye-contact alignment, and dynamic camera framing.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Mmhmm",
+    "url": "https://mmhmm.app",
+    "description": "AI-powered presentation video app with virtual stage, teleprompter, and async video messaging.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Vowel",
+    "url": "https://vowel.com",
+    "description": "Video meeting platform with AI summaries, action items, transcripts, and searchable meeting library.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Spatial Chat",
+    "url": "https://spatial.chat",
+    "description": "Spatial video meeting platform with AI breakouts, summaries, and proximity-based audio for events.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Headroom",
+    "url": "https://headroom.com",
+    "description": "AI video meeting platform with real-time transcripts, gesture recognition, and engagement insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Butter",
+    "url": "https://butter.us",
+    "description": "Facilitator-friendly meeting app with AI agenda timing, summaries, and interactive breakouts.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Switchboard",
+    "url": "https://switchboard.app",
+    "description": "Persistent collaboration rooms with AI session recaps and shared multi-app workspaces for hybrid teams.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "video_meetings"
+    }
+  },
+  {
+    "name": "Beatoven",
+    "url": "https://beatoven.ai",
+    "description": "Royalty-free AI music generator that composes mood-based instrumental tracks for videos and podcasts.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "music"
+    }
+  },
+  {
+    "name": "Splash Pro",
+    "url": "https://splashmusic.com",
+    "description": "Roblox-native AI music studio for creators to compose original tracks and vocal performances.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "music"
+    }
+  },
+  {
+    "name": "Voicemod AI",
+    "url": "https://voicemod.net",
+    "description": "Real-time AI voice changer and soundboard for streamers, gamers, and content creators.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "music"
+    }
+  },
+  {
+    "name": "Kits.ai",
+    "url": "https://kits.ai",
+    "description": "AI voice conversion studio for musicians \u2014 train custom voice models and convert vocals to any artist.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "music"
+    }
+  },
+  {
+    "name": "Lumen",
+    "url": "https://lumen.me",
+    "description": "Metabolic AI device and app that measures breath to track fat vs carb burn and give nutrition guidance.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Levels",
+    "url": "https://levelshealth.com",
+    "description": "Continuous glucose monitoring app with AI insights to optimize food, sleep, and exercise for metabolic health.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Eight Sleep",
+    "url": "https://eightsleep.com",
+    "description": "AI-powered smart mattress with autopilot temperature, sleep stage tracking, and health coaching insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Oura",
+    "url": "https://ouraring.com",
+    "description": "AI health tracking ring with sleep, readiness, stress, and chronic-condition risk insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Zing Coach",
+    "url": "https://zingcoach.com",
+    "description": "AI personal trainer app that designs adaptive workouts using your phone camera and movement analysis.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Future",
+    "url": "https://future.co",
+    "description": "AI-augmented remote personal training with elite coaches who design and adjust your weekly plan.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Centr",
+    "url": "https://centr.com",
+    "description": "Chris Hemsworth's AI fitness app with personalized workouts, meal plans, and meditation programs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "Lifesum AI",
+    "url": "https://lifesum.com",
+    "description": "AI nutrition app with food recognition, personalized meal plans, and habit-change coaching.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "fitness_nutrition"
+    }
+  },
+  {
+    "name": "PromptHub",
+    "url": "https://prompthub.us",
+    "description": "Team platform for collaborative prompt versioning, testing, deployment, and observability across LLMs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Pezzo",
+    "url": "https://pezzo.ai",
+    "description": "Open-source LLMOps platform for prompt management, observability, cost tracking, and version control.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Phoenix",
+    "url": "https://phoenix.arize.com",
+    "description": "Arize Phoenix open-source LLM tracing, evaluation, and prompt management for production AI apps.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Agenta",
+    "url": "https://agenta.ai",
+    "description": "Open-source LLMOps with prompt versioning, evaluation, observability, and human feedback collection.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Parea AI",
+    "url": "https://parea.ai",
+    "description": "LLM observability, evaluation, and prompt experimentation platform for production AI applications.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Comet Opik",
+    "url": "https://comet.com/opik",
+    "description": "Open-source LLM evaluation and observability platform from Comet for prompt testing and tracing.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Lilypad",
+    "url": "https://lilypad.so",
+    "description": "Versioned prompt engineering and LLM observability platform with collaborative evaluation tooling.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Eleven Reader",
+    "url": "https://elevenreader.io",
+    "description": "ElevenLabs AI app that reads articles, PDFs, and ebooks aloud with natural celebrity-quality voices.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Krea",
+    "url": "https://krea.ai",
+    "description": "AI image and video generator with real-time canvas, video upscaling, and creative model orchestration.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Flora",
+    "url": "https://florafauna.ai",
+    "description": "Infinite canvas AI creative tool for designers \u2014 chain image, text, and video models in node workflows.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Higgsfield",
+    "url": "https://higgsfield.ai",
+    "description": "AI video generator focused on cinematic motion, camera controls, and character consistency for shorts.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Tracecat",
+    "url": "https://tracecat.com",
+    "description": "YC W24 open-source AI SOC platform \u2014 security workflow automation with LLM-driven case triage.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "yc_recent"
+    }
+  },
+  {
+    "name": "Reka",
+    "url": "https://reka.ai",
+    "description": "Multimodal frontier AI models (Core, Flash, Edge) with text, image, video, and audio understanding.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "yc_recent"
+    }
+  },
+  {
+    "name": "Adept",
+    "url": "https://adept.ai",
+    "description": "Foundation model and agent platform for enterprise knowledge work \u2014 multimodal action transformers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ai50_recent"
+    }
+  },
+  {
+    "name": "Crew AI",
+    "url": "https://crewai.com",
+    "description": "Open-source multi-agent orchestration framework \u2014 build crews of role-based AI agents that collaborate.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ai50_recent"
+    }
+  },
+  {
+    "name": "Cognition AI",
+    "url": "https://cognition.ai",
+    "description": "Devin autonomous software engineer agent \u2014 plans, codes, and ships PRs end-to-end with minimal input.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ai50_recent"
+    }
+  },
+  {
+    "name": "Poolside",
+    "url": "https://poolside.ai",
+    "description": "Foundation model lab building developer-focused frontier model trained for end-to-end software engineering.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ai50_recent"
+    }
+  },
+  {
+    "name": "Imbue",
+    "url": "https://imbue.com",
+    "description": "AI lab building reasoning agents for software with focus on robustness and verified outputs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ai50_recent"
+    }
+  },
+  {
+    "name": "Goose",
+    "url": "https://block.github.io/goose",
+    "description": "Block's open-source on-machine AI agent with extensions for filesystem, browser, and developer tasks.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "Open Interpreter",
+    "url": "https://openinterpreter.com",
+    "description": "Open-source AI interpreter that runs code locally via natural language \u2014 files, browser, shell tasks.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "Smol Developer",
+    "url": "https://github.com/smol-ai/developer",
+    "description": "AI junior developer agent that scaffolds entire codebases from a single product prompt.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "OpenDevin",
+    "url": "https://opendevin.github.io",
+    "description": "OpenHands open-source autonomous AI software engineer that browses, codes, and uses developer tools.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "Codium PR Agent",
+    "url": "https://qodo.ai",
+    "description": "Qodo open-source AI agent for automated PR review, description, code suggestions, and test generation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "FlutterFlow AI Gen",
+    "url": "https://flutterflow.io",
+    "description": "No-code Flutter app builder with AI page, schema, and component generation from text descriptions.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "nocode_ai"
+    }
+  },
+  {
+    "name": "WeWeb",
+    "url": "https://weweb.io",
+    "description": "No-code frontend builder with AI page generation, design system integration, and Xano/Supabase backends.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "nocode_ai"
+    }
+  },
+  {
+    "name": "Plasmic AI",
+    "url": "https://plasmic.app",
+    "description": "Visual page builder with AI design-to-code generation and headless CMS integration for React/Next.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "nocode_ai"
+    }
+  },
+  {
+    "name": "Flowise",
+    "url": "https://flowiseai.com",
+    "description": "Open-source no-code visual builder for LangChain LLM flows, RAG pipelines, and AI agents.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "nocode_ai"
+    }
+  },
+  {
+    "name": "Coda AI",
+    "url": "https://coda.io/ai",
+    "description": "Doc-and-app platform with embedded AI assistant for tables, formulas, summaries, and writing.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Reflect AI",
+    "url": "https://reflect.app",
+    "description": "Daily notes app with AI assistant for summarization, transcription, and writing in your voice.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Saner.AI",
+    "url": "https://saner.ai",
+    "description": "AI productivity assistant for ADHD knowledge workers \u2014 captures notes, tasks, calendar in one chat.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Zep",
+    "url": "https://getzep.com",
+    "description": "Memory and context platform for AI agents with temporal knowledge graphs and persistent chat history.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Instructor",
+    "url": "https://python.useinstructor.com",
+    "description": "Open-source Python library for structured LLM outputs with Pydantic validation and retries.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "BAML",
+    "url": "https://boundaryml.com",
+    "description": "Programming language and toolkit for building reliable LLM applications with structured outputs.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Guardrails AI",
+    "url": "https://guardrailsai.com",
+    "description": "Open-source framework for validating, structuring, and securing LLM outputs in production.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Goodcall",
+    "url": "https://goodcall.com",
+    "description": "AI phone agent for SMBs \u2014 books appointments, answers FAQs, captures leads 24/7 with natural voice.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "voice_ai"
+    }
+  },
+  {
+    "name": "Hyperbound",
+    "url": "https://hyperbound.ai",
+    "description": "AI sales role-play platform \u2014 practice cold calls and discovery on lifelike buyer personas with coaching.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "voice_ai"
+    }
+  },
+  {
+    "name": "Tactiq",
+    "url": "https://tactiq.io",
+    "description": "Real-time AI meeting transcription and summary for Google Meet, Zoom, Teams \u2014 Chrome extension.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "meeting_notes"
+    }
+  },
+  {
+    "name": "Sembly AI",
+    "url": "https://sembly.ai",
+    "description": "AI meeting assistant with multilingual notes, action items, decisions, and CRM sync for sales teams.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "meeting_notes"
+    }
+  },
+  {
+    "name": "Krisp AI Notetaker",
+    "url": "https://krisp.ai",
+    "description": "AI noise cancellation, transcription, and meeting notes app with on-device privacy for calls.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "meeting_notes"
+    }
+  },
+  {
+    "name": "Liner",
+    "url": "https://liner.com",
+    "description": "AI search and research highlight tool with PDF chat, citation tracking, and academic source curation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "research_ai"
+    }
+  },
+  {
+    "name": "Klaviyo AI",
+    "url": "https://klaviyo.com",
+    "description": "Email and SMS marketing platform with AI predictive analytics, segment building, and content generation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Rebuy Engine",
+    "url": "https://rebuyengine.com",
+    "description": "AI personalization engine for Shopify \u2014 upsells, smart carts, recommendations, retention quizzes.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Tapcart AI",
+    "url": "https://tapcart.com",
+    "description": "AI mobile commerce platform for Shopify \u2014 push notifications, personalized merchandising, deep links.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Postscript AI",
+    "url": "https://postscript.io",
+    "description": "Shopify SMS marketing platform with AI message generation, segmentation, and conversational sales.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Recharge",
+    "url": "https://rechargepayments.com",
+    "description": "Subscription commerce platform with AI churn prediction and dunning recovery for Shopify brands.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Smartwriter AI",
+    "url": "https://smartwriter.ai",
+    "description": "AI cold email and outreach personalization at scale \u2014 researches prospects and writes custom openers.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Pearl Diver",
+    "url": "https://pearldiver.io",
+    "description": "AI website visitor identification \u2014 turns anonymous traffic into named B2C leads with consumer data.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "ecommerce_ai"
+    }
+  },
+  {
+    "name": "Otto",
+    "url": "https://otto.so",
+    "description": "Multi-agent web automation platform \u2014 chain AI workflows across browsers, APIs, and data sources.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "automation_ai"
+    }
+  },
+  {
+    "name": "Magick",
+    "url": "https://magickml.com",
+    "description": "Open-source no-code AI agent IDE \u2014 build complex multimodal pipelines visually with custom nodes.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "automation_ai"
+    }
+  },
+  {
+    "name": "BuildShip",
+    "url": "https://buildship.com",
+    "description": "Visual low-code backend and AI workflow builder with native LLM, vector, and API integrations.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "automation_ai"
+    }
+  },
+  {
+    "name": "Listen Labs",
+    "url": "https://listenlabs.ai",
+    "description": "AI user-research platform \u2014 runs and analyzes hundreds of interviews simultaneously with synthesis.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Outset",
+    "url": "https://outset.ai",
+    "description": "AI user-research moderator that conducts and analyzes qualitative interviews at scale, asynchronously.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Strella",
+    "url": "https://strella.ai",
+    "description": "AI-moderated user interview platform \u2014 runs hundreds of live interviews with intelligent probing.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Looppanel",
+    "url": "https://looppanel.com",
+    "description": "AI research assistant for UX teams \u2014 transcripts, tags, and insights from user interview recordings.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Notably",
+    "url": "https://notably.ai",
+    "description": "AI research repository \u2014 analyzes interview transcripts and surfaces patterns across customer data.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Maze AI",
+    "url": "https://maze.co",
+    "description": "Rapid user research platform with AI-generated study briefs, synthesis, and follow-up question suggestions.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "HyperWrite",
+    "url": "https://hyperwriteai.com",
+    "description": "Personal AI assistant with autopilot agent that completes web tasks across email, research, and shopping.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "yc_recent"
+    }
+  },
+  {
+    "name": "Wordware",
+    "url": "https://wordware.ai",
+    "description": "IDE for building LLM-powered apps with prompts as code with collaborative prompt engineering and deploy.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "yc_recent"
+    }
+  },
+  {
+    "name": "Bito AI",
+    "url": "https://bito.ai",
+    "description": "AI code assistant with PR review, codebase chat, and contextual generation across VS Code and JetBrains.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "Tabby ML",
+    "url": "https://tabbyml.com",
+    "description": "Self-hosted open-source AI coding assistant for privacy-focused teams as an alternative to GitHub Copilot.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "showhn_recent"
+    }
+  },
+  {
+    "name": "Polymet",
+    "url": "https://polymet.ai",
+    "description": "AI design tool that turns prompts into multi-screen product designs with editable Figma export.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "design_ai"
+    }
+  },
+  {
+    "name": "Crayon AI",
+    "url": "https://crayon.com",
+    "description": "AI-powered competitive intelligence platform that tracks competitor moves and surfaces battlecard insights.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "HelpKit AI",
+    "url": "https://helpkit.so",
+    "description": "Turn Notion pages into a help center with AI search and chat answers for customer questions.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "solopreneurs"
+    }
+  },
+  {
+    "name": "Featurebase AI",
+    "url": "https://featurebase.app",
+    "description": "Customer feedback platform with AI feature-request clustering and roadmap intelligence.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Productlane AI",
+    "url": "https://productlane.com",
+    "description": "AI-powered customer feedback hub linked to Linear that auto-tags insights from calls and tickets.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Glean Assistant",
+    "url": "https://glean.com",
+    "description": "Enterprise AI work assistant for search and chat across all company apps with personalized context.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "GoSearch",
+    "url": "https://gosearch.ai",
+    "description": "AI-powered enterprise search across all SaaS tools with conversational answers and source citations.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Mendable",
+    "url": "https://mendable.ai",
+    "description": "AI search and chat for docs and websites, train on your content, embed answers, track analytics.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Brainfish",
+    "url": "https://brainfish.ai",
+    "description": "AI customer self-service platform for instant answers from your knowledge base before tickets are filed.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Squibler AI",
+    "url": "https://squibler.io",
+    "description": "AI novel-writing platform with outlines, scene generation, character arcs, and full-book drafting.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Atticus",
+    "url": "https://atticus.io",
+    "description": "Book formatting and writing platform with AI editing assistance for self-publishing authors.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "newsletter_writers"
+    }
+  },
+  {
+    "name": "Inspect AI",
+    "url": "https://inspect.ai-safety-institute.org.uk",
+    "description": "UK AISI open-source framework for LLM evaluation, capability testing, and safety benchmarking.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "prompt_management"
+    }
+  },
+  {
+    "name": "Sprig AI",
+    "url": "https://sprig.com",
+    "description": "Product research platform with AI-generated surveys, replay analysis, and feedback synthesis.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Voicepanel",
+    "url": "https://voicepanel.com",
+    "description": "AI-moderated voice interview platform that runs 100+ user interviews simultaneously with synthesis.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "user_research_ai"
+    }
+  },
+  {
+    "name": "Tonic AI",
+    "url": "https://tonic.ai",
+    "description": "Synthetic data platform with AI generation of safe, realistic test data for engineering and ML teams.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Gretel",
+    "url": "https://gretel.ai",
+    "description": "Synthetic data platform with privacy-preserving generation, differential privacy, and ML evaluation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Hypatos",
+    "url": "https://hypatos.ai",
+    "description": "Enterprise document AI for finance that extracts and processes invoices, contracts, and receipts at scale.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "finance_pro"
+    }
+  },
+  {
+    "name": "Affinda",
+    "url": "https://affinda.com",
+    "description": "Document AI platform for resume parsing, invoice extraction, and form processing with industry models.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "automation_ai"
+    }
+  },
+  {
+    "name": "Veed AI",
+    "url": "https://veed.io",
+    "description": "Browser-based video editor with AI captions, eye contact, avatar generation, and dubbing in 100+ languages.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Vidyo AI",
+    "url": "https://vidyo.ai",
+    "description": "AI video repurposing that turns podcasts and webinars into branded short-form clips for social.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Eklipse",
+    "url": "https://eklipse.gg",
+    "description": "AI clip generator for streamers that captures highlights from Twitch/YouTube and posts to TikTok.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "PixVerse",
+    "url": "https://pixverse.ai",
+    "description": "AI text-to-video and image-to-video generator with anime, cinematic, and realistic style controls.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Vidu",
+    "url": "https://vidu.studio",
+    "description": "Shengshu text-to-video AI with high-fidelity motion, character consistency, and longer clip generation.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "MiniMax Hailuo",
+    "url": "https://hailuoai.video",
+    "description": "MiniMax text-to-video AI with cinematic quality, character consistency, and director-style controls.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Lensgo",
+    "url": "https://lensgo.ai",
+    "description": "AI video style transfer that transforms videos into anime, oil painting, or custom artistic styles.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "MotherDuck",
+    "url": "https://motherduck.com",
+    "description": "Serverless DuckDB cloud with hybrid local+cloud query execution and AI-powered SQL assistant.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "LM Studio",
+    "url": "https://lmstudio.ai",
+    "description": "Desktop app for running and chatting with open-source LLMs locally on Mac, Windows, and Linux.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Jan AI",
+    "url": "https://jan.ai",
+    "description": "Open-source ChatGPT alternative that runs 100% offline on your computer with local models.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "GPT4All",
+    "url": "https://gpt4all.io",
+    "description": "Nomic AI desktop client for running LLMs locally with RAG over local docs and no internet required.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "agent_infra"
+    }
+  },
+  {
+    "name": "Capacities",
+    "url": "https://capacities.io",
+    "description": "AI-powered note-taking studio with object types, structured backlinks, and contextual chat.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Goblin Tools",
+    "url": "https://goblin.tools",
+    "description": "Free AI tools for neurodivergent users with magic todo, tone judge, formalizer, and chef.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "workplace_ai"
+    }
+  },
+  {
+    "name": "Gamma App",
+    "url": "https://gamma.app",
+    "description": "AI presentation maker that generates editable decks, docs, and websites from a single prompt.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "MagicSlides",
+    "url": "https://magicslides.app",
+    "description": "AI Google Slides add-on that generates presentations from topic prompts or YouTube videos.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "SlideSpeak",
+    "url": "https://slidespeak.co",
+    "description": "AI presentation generator and PowerPoint chatbot to create, summarize, and edit decks via prompts.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "producthunt_recent"
+    }
+  },
+  {
+    "name": "Move AI",
+    "url": "https://move.ai",
+    "description": "Markerless AI motion capture from regular phone cameras with full-body mocap for games and film.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Cascadeur",
+    "url": "https://cascadeur.com",
+    "description": "AI-assisted 3D character animation software with physics-based motion and pose prediction.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Plask",
+    "url": "https://plask.ai",
+    "description": "AI motion capture from video that extracts 3D animation from footage for game and film production.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  },
+  {
+    "name": "Rokoko AI",
+    "url": "https://rokoko.com",
+    "description": "Mocap suit and AI video-to-motion platform for game devs and animators with cloud retargeting.",
+    "source": "discovery_2026_05_26_batch38",
+    "signals": {
+      "recentList": true,
+      "vertical": "indie_gamedev"
+    }
+  }
+]

@@ -950,13 +950,31 @@ async function main() {
     try {
       // Hydrate full row just-in-time (avoids upfront 2k-row jsonb fetch
       // that trips Postgres statement timeout when 4 shards start in parallel).
-      const { data: hydrated, error: hydErr } = await supabase
-        .from('tools')
-        .select(selectCols)
-        .eq('id', lightTool.id)
-        .single()
-      if (hydErr || !hydrated) throw new Error(`hydrate failed: ${hydErr?.message ?? 'no data'}`)
-      const tool = hydrated as unknown as ToolRow
+      // Retries on transient network failures so one TCP blip doesn't kill
+      // every remaining tool in the run.
+      let tool: ToolRow | null = null
+      let hydAttempt = 0
+      const MAX_HYDRATE_ATTEMPTS = 5
+      while (hydAttempt < MAX_HYDRATE_ATTEMPTS) {
+        hydAttempt++
+        try {
+          const { data: hydrated, error: hydErr } = await supabase
+            .from('tools')
+            .select(selectCols)
+            .eq('id', lightTool.id)
+            .single()
+          if (!hydErr && hydrated) {
+            tool = hydrated as unknown as ToolRow
+            break
+          }
+          if (hydAttempt >= MAX_HYDRATE_ATTEMPTS) throw new Error(`hydrate failed after ${hydAttempt} attempts: ${hydErr?.message ?? 'no data'}`)
+        } catch (e) {
+          if (hydAttempt >= MAX_HYDRATE_ATTEMPTS) throw e
+        }
+        const backoff = Math.min(30000, 2000 * Math.pow(2, hydAttempt - 1))
+        await new Promise((r) => setTimeout(r, backoff))
+      }
+      if (!tool) throw new Error('hydrate failed (unreachable)')
       // Step A — URL hygiene
       const cleanWebsite = cleanUrl(tool.website_url)
       if (isAffiliateRedirect(cleanWebsite)) {

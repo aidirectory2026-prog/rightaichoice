@@ -1,0 +1,3962 @@
+[
+  {
+    "name": "LongLive",
+    "url": "https://nvlabs.github.io/LongLive",
+    "description": "[ICLR 2026] LongLive: Real-time Interactive Long Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1158,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "lootbox",
+    "url": "https://github.com/jx-codes/lootbox",
+    "description": "Lootbox gives your coding assistant superpowers",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 137,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "lora-inspector",
+    "url": "https://github.com/rockerBOO/lora-inspector",
+    "description": "LoRA (Low-Rank Adaptation) inspector for Stable Diffusion",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 102,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "LSP-copilot",
+    "url": "https://github.com/sublimelsp/LSP-copilot",
+    "description": "GitHub Copilot support for Sublime Text LSP plugin provided through Copilot.vim.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 789,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "LTX-2",
+    "url": "https://ltx.io/model/ltx-2",
+    "description": "Official Python inference and LoRA trainer package for the LTX-2 audio–video generative model.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5973,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ltx-video-mac",
+    "url": "https://james-see.github.io/ltx-video-mac/",
+    "description": "Native macOS app for AI video generation using LTX-Video model, optimized for Apple Silicon",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 148,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "LucidFlux",
+    "url": "https://github.com/W2GenAI-Lab/LucidFlux",
+    "description": "LucidFlux: Caption-Free Photo-Realistic Image Restoration via a Large-Scale Diffusion Transformer, ICLR 2026",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1197,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ludwig",
+    "url": "http://ludwig.ai",
+    "description": "Low-code framework for building custom LLMs, neural networks, and other AI models",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 11674,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Lumi-AI",
+    "url": "https://github.com/iamlooper/Lumi-AI",
+    "description": "A friendly, human-like AI chatbot powered by Gemini.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 218,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Lumos-Custom",
+    "url": "https://github.com/alibaba-damo-academy/Lumos-Custom",
+    "description": "[ICLR-26, NeurIPS-25] Lumos-Custom Project: research for customized video generation in the Lumos Project.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 194,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "lunaroute",
+    "url": "https://github.com/erans/lunaroute",
+    "description": "LunaRoute is a high-performance local proxy for AI coding assistants like Claude Code, OpenAI Codex CLI, and OpenCode. Get complete visibility into every LLM interaction with zero-overhead passthrough, comprehensive session recording, and powerful debugging capabilities.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 159,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "LyCORIS",
+    "url": "https://github.com/KohakuBlueleaf/LyCORIS",
+    "description": "Lora beYond Conventional methods, Other Rank adaptation Implementations for Stable diffusion.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2491,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "lynx",
+    "url": "https://byteaigc.github.io/Lynx/",
+    "description": "Lynx: Towards High-Fidelity Personalized Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 320,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "lyra",
+    "url": "https://research.nvidia.com/labs/sil/projects/lyra2/",
+    "description": "Project Lyra: Open Generative 3D World Models",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1582,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "machine-learning-book",
+    "url": "https://sebastianraschka.com/books/#machine-learning-with-pytorch-and-scikit-learn",
+    "description": "Code Repository for Machine Learning with PyTorch and Scikit-Learn",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5127,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "machine-learning-notes",
+    "url": "https://github.com/roboticcam/machine-learning-notes",
+    "description": "My continuously updated Machine Learning, Probabilistic Models and Deep Learning notes and demos (2000+ slides)  我不间断更新的机器学习，概率模型和深度学习的讲义(2000+页)和视频链接",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 9644,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "machinelearning",
+    "url": "https://dot.net/ml",
+    "description": "ML.NET is an open source and cross-platform machine learning framework for .NET.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 9327,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MagicMotion",
+    "url": "https://quanhaol.github.io/magicmotion-site/",
+    "description": "[ICCV 2025] MagicMotion: Controllable Video Generation with Dense-to-Sparse Trajectory Guidance",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 180,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MagicTime",
+    "url": "https://pku-yuangroup.github.io/MagicTime/",
+    "description": "[TPAMI 2025🔥] MagicTime: Time-lapse Video Generation Models as Metamorphic Simulators",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1343,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MAGREF",
+    "url": "https://github.com/MAGREF-Video/MAGREF",
+    "description": "Official implementation of MAGREF: Masked Guidance for Any-Reference Video Generation  with Subject Disentanglement (ICLR2026)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 291,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MambaVision",
+    "url": "https://arxiv.org/abs/2407.08083",
+    "description": "[CVPR 2025] Official PyTorch Implementation of MambaVision: A Hybrid Mamba-Transformer Vision Backbone",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2120,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "manga-editor-desu",
+    "url": "https://new-sankaku.github.io/manga-editor-desu/",
+    "description": "It is an Extension feature used in the WebUI for Stable Diffusion. You can create simple comics with it.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 348,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Mantella",
+    "url": "https://art-from-the-machine.github.io/Mantella/",
+    "description": "Mantella is a Skyrim and Fallout 4 mod which allows you to naturally speak to NPCs using a Speech-to-Text → LLMs → Text-to-Speech pipeline",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 354,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "marimo",
+    "url": "https://marimo.io",
+    "description": "A reactive notebook for Python — run reproducible experiments, query with SQL, execute as a script, deploy as an app, and version with git. Stored as pure Python. All in a modern, AI-native editor.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 20503,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "marketingskills",
+    "url": "https://marketing-skills.com",
+    "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 22327,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MarS",
+    "url": "https://github.com/microsoft/MarS",
+    "description": "MarS: a Financial Market Simulation Engine Powered by Generative Foundation Model",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1692,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Mastering-GitHub-Copilot-for-Paired-Programming",
+    "url": "https://github.com/microsoft/Mastering-GitHub-Copilot-for-Paired-Programming",
+    "description": "A multi-module course teaching everything you need to know about using GitHub Copilot as an AI Peer Programming resource.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7790,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mastra",
+    "url": "https://mastra.ai",
+    "description": "From the team behind Gatsby, Mastra is a framework for building AI-powered applications and agents with a modern TypeScript stack.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 23163,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "matrixone",
+    "url": "https://docs.matrixorigin.cn/en",
+    "description": "AI-native HTAP database with Git-for-Data and built-in vector search, serving as the data and memory backbone for intelligent agents and applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1841,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mattergen",
+    "url": "https://www.nature.com/articles/s41586-025-08628-5",
+    "description": "Official implementation of MatterGen -- a generative model for inorganic materials design across the periodic table that can be fine-tuned to steer the generation towards a wide range of property constraints.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1686,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mcp",
+    "url": "https://github.com/microsoft/mcp",
+    "description": "Catalog of official Microsoft MCP (Model Context Protocol) server implementations for AI-powered data access and tool integration",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3000,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mcp-context-forge",
+    "url": "https://ibm.github.io/mcp-context-forge/",
+    "description": "An AI Gateway, registry, and proxy that sits in front of any MCP, A2A, or REST/gRPC APIs, exposing a unified endpoint with centralized discovery, guardrails and management. Optimizes Agent & Tool calling, and supports plugins.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3597,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mcp-gateway-registry",
+    "url": "https://agentic-community.github.io/mcp-gateway-registry/",
+    "description": "Enterprise-ready MCP Gateway & Registry that centralizes AI development tools with secure OAuth authentication, dynamic tool discovery, and unified access for both autonomous AI agents and AI coding assistants. Transform scattered MCP server chaos into governed, auditable tool access with Keycloak/Entra integration.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 596,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mcp-server",
+    "url": "https://strandsagents.com",
+    "description": "This MCP server provides documentation about Strands Agents to your GenAI tools, so you can use your favorite AI coding assistant to vibe-code Strands Agents.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 274,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mcpdoc",
+    "url": "https://github.com/langchain-ai/mcpdoc",
+    "description": "Expose llms-txt to IDEs for development",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 978,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MedgeClaw",
+    "url": "https://medgeai.cn/",
+    "description": "Open-source AI research assistant for biomedicine — chat to run RNA-seq, drug discovery, clinical analysis, and more. Built on Claude Code with 140 K-Dense scientific skills, real-time dashboard, and RStudio/JupyterLab integration. | 开源生物医学 AI 研究助手，对话即可驱动转录组、药物发现、临床分析等工作流，集成 140 个科学技能与实时研究看板。",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 769,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mediapipe",
+    "url": "https://ai.google.dev/edge/mediapipe",
+    "description": "Cross-platform, customizable ML solutions for live and streaming media.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 34824,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Megatron-LM",
+    "url": "https://docs.nvidia.com/megatron-core/developer-guide/latest/get-started/quickstart.html",
+    "description": "Ongoing research training transformer models at scale",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 16103,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "meilisearch",
+    "url": "https://www.meilisearch.com",
+    "description": "A lightning-fast search engine API bringing AI-powered hybrid search to your sites and applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 57231,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mem0",
+    "url": "https://mem0.ai",
+    "description": "Universal memory layer for AI Agents",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 53580,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "memobase",
+    "url": "https://memobase.io",
+    "description": "User Profile-Based Long-Term Memory for AI Chatbot Applications. ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2689,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Memori",
+    "url": "https://memorilabs.ai",
+    "description": "Memori is agent-native memory infrastructure. A LLM-agnostic layer that turns agent execution and conversation into structured, persistent state for production systems.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 13317,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "memorix",
+    "url": "https://github.com/AVIDS2/memorix",
+    "description": "Open-source cross-agent memory layer for coding agents via MCP. Compatible with Cursor, Claude Code, Codex, Windsurf, Gemini CLI, GitHub Copilot, Kiro, OpenCode, Antigravity, and Trae.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 385,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mempalace",
+    "url": "http://mempalaceofficial.com/",
+    "description": "The best-benchmarked open-source AI memory system. And it's free.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 48309,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "memvid",
+    "url": "https://www.memvid.com",
+    "description": "Memory layer for AI Agents. Replace complex RAG pipelines with a serverless, single-file memory layer. Give your agents instant retrieval and long-term memory.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 15051,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mergekit",
+    "url": "https://github.com/arcee-ai/mergekit",
+    "description": "Tools for merging pretrained large language models.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 6991,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Merlion",
+    "url": "https://github.com/salesforce/Merlion",
+    "description": "Merlion: A Machine Learning Framework for Time Series Intelligence",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4474,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MetaGPT",
+    "url": "https://atoms.dev/",
+    "description": "🌟 The Multi-Agent Framework: First AI Software Company, Towards Natural Language Programming",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 67267,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mflux",
+    "url": "https://github.com/filipstrand/mflux",
+    "description": "MLX native implementations of state-of-the-art generative image models",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2001,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mianshiya",
+    "url": "https://www.mianshiya.com",
+    "description": "持续维护的企业面试题库网站，帮你拿到满意 offer！⭐️ 2026年最新Java面试题、前端面试题、AI大模型面试题、AI Agent面试题、RAG面试题、C++面试题、Go面试题、Python面试题、测试面试题、运维面试题、后端面试题、操作系统面试题、计算机网络面试题、Redis面试题、MySQL数据库面试题、算法面试题、Spring面试题、JVM面试题、Java并发面试题、Linux面试题、LLM面试题、Prompt工程面试题、系统设计面试题等1万多道高频程序员求职必备八股文。面试刷题就选面试鸭 💎 React 前端 + Node 后端 + 云开发全栈项目 by 程序员鱼皮",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5330,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "milvus",
+    "url": "https://milvus.io",
+    "description": "Milvus is a high-performance, cloud-native vector database built for scalable vector ANN search",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 43871,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mindnlp",
+    "url": "http://mindnlp.readthedocs.io/",
+    "description": "MindSpore +  🤗Huggingface: Run any Transformers/Diffusers model on MindSpore with seamless compatibility and acceleration.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 918,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mindsdb",
+    "url": "https://mindsdb.com",
+    "description": "Query Engine for AI Analytics: Build self-reasoning agents across all your live data",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 39018,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MinerU",
+    "url": "https://opendatalab.github.io/MinerU/",
+    "description": "Transforms complex documents like PDFs and Office docs into LLM-ready markdown/JSON for your Agentic workflows.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 60591,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MiniCode",
+    "url": "https://liumengxuan04.github.io/MiniCode/",
+    "description": "A lightweight terminal coding assistant with Claude Code-like workflow, tool loop, and TUI architecture, built for learning and experimentation. Multi-language support: TypeScript and Rust implementations available now, Python coming soon.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 478,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "minima",
+    "url": "https://github.com/dmayboroda/minima",
+    "description": "On-premises conversational RAG with configurable containers",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1040,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MiniMax-MCP",
+    "url": "https://www.minimax.io/platform",
+    "description": "Official MiniMax Model Context Protocol (MCP) server that enables interaction with powerful Text to Speech, image generation and video generation APIs.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1435,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "minutes",
+    "url": "https://useminutes.app",
+    "description": "Every meeting, every idea, every voice note — searchable by your AI. Open-source, privacy-first conversation memory layer.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1096,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mistral",
+    "url": "https://github.com/stanford-crfm/mistral",
+    "description": "Mistral: A strong, northwesterly wind: Framework for transparent and accessible large-scale language model training, built with Hugging Face 🤗  Transformers.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 579,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ml-agents",
+    "url": "https://unity.com/products/machine-learning-agents",
+    "description": "The Unity Machine Learning Agents Toolkit (ML-Agents) is an open-source project that enables games and simulations to serve as environments for training intelligent agents using deep reinforcement learning and imitation learning.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 19329,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ml-engineering",
+    "url": "https://stasosphere.com/machine-learning/",
+    "description": "Machine Learning Engineering Open Book",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 17739,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ML-For-Beginners",
+    "url": "https://github.com/microsoft/ML-For-Beginners",
+    "description": "12 weeks, 26 lessons, 52 quizzes, classic Machine Learning for all",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 85316,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ML-NLP",
+    "url": "http://era.dx3906.info",
+    "description": "此项目是机器学习(Machine Learning)、深度学习(Deep Learning)、NLP面试中常考到的知识点和代码实现，也是作为一个算法工程师必会的理论基础知识。",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 17631,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlc-llm",
+    "url": "https://llm.mlc.ai/",
+    "description": "Universal LLM Deployment Engine with ML Compilation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 22492,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlflow",
+    "url": "https://mlflow.org",
+    "description": "The open source AI engineering platform for agents, LLMs, and ML models. MLflow enables teams of all sizes to debug, evaluate, monitor, and optimize production-quality AI applications while controlling costs and managing access to models and data.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 25451,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlpack",
+    "url": "https://www.mlpack.org/",
+    "description": "mlpack: a fast, header-only C++ machine learning library",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5628,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MLQuestions",
+    "url": "https://github.com/andrewekhalel/MLQuestions",
+    "description": "Machine Learning and Computer Vision Engineer - Technical Interview Questions",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4569,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlx-audio",
+    "url": "https://github.com/Blaizzy/mlx-audio",
+    "description": "A text-to-speech (TTS), speech-to-text (STT) and speech-to-speech (STS) library built on Apple's MLX framework, providing efficient speech analysis on Apple Silicon.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 6765,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlx-video",
+    "url": "https://github.com/Blaizzy/mlx-video",
+    "description": "MLX-Video is the best package for inference and finetuning of Image-Video-Audio generation models on your Mac using MLX.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 197,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mlxtend",
+    "url": "https://rasbt.github.io/mlxtend/",
+    "description": "A library of extension and helper modules for Python's data analysis and machine learning libraries.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5133,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mmaction2",
+    "url": "https://mmaction2.readthedocs.io",
+    "description": "OpenMMLab's Next Generation Video Understanding Toolbox and Benchmark",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4996,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mmdit",
+    "url": "https://github.com/lucidrains/mmdit",
+    "description": "Implementation of a single layer of the MMDiT, proposed in Stable Diffusion 3, in Pytorch",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 516,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "mmpy_bot",
+    "url": "https://github.com/attzonko/mmpy_bot",
+    "description": "A python-based chatbot for Mattermost (http://www.mattermost.org).",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 301,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MNN",
+    "url": "http://www.mnn.zone/",
+    "description": "MNN: A blazing-fast, lightweight inference engine battle-tested by Alibaba, powering high-performance on-device LLMs and Edge AI.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 14975,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MochiDiffusion",
+    "url": "https://github.com/MochiDiffusion/MochiDiffusion",
+    "description": "Run Stable Diffusion on Mac natively",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7886,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "model-keyword",
+    "url": "https://github.com/mix1009/model-keyword",
+    "description": "Automatic1111 WEBUI extension to autofill keyword for custom stable diffusion models and LORA models.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 269,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MoneyPrinterAICreate",
+    "url": "https://github.com/q1uki/MoneyPrinterAICreate",
+    "description": "基于MoneyPrinterTurbo，AI生成分镜大纲与视频（动态，不是念ppt），接入万相通义wan2.1 ai文生视频、图生视频功能，灵活把控视频生成。Based on MoneyPrinterTurbo, AI generates image outline and video (dynamic, not ppt), and integrates wan2.1 text-to-video and image-to-video functions to flexibly control video generation.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 284,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MoneyPrinterTurbo",
+    "url": "https://github.com/harry0703/MoneyPrinterTurbo",
+    "description": "利用AI大模型，一键生成高清短视频 Generate short videos with one click using AI LLM.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 56021,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "moonshine",
+    "url": "https://moonshine.ai/",
+    "description": "Very low latency speech to text, intent recognition, and text to speech, for building voice agents and interfaces",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7803,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "morphic",
+    "url": "https://morphic.sh",
+    "description": "An AI-powered search engine with a generative UI",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 8777,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MOSS-TTS",
+    "url": "https://mosi.cn/models/moss-tts",
+    "description": "MOSS‑TTS Family is an open‑source speech and sound generation model family from MOSI.AI and the OpenMOSS team. It is designed for high‑fidelity, high‑expressiveness, and complex real‑world scenarios, covering stable long‑form speech, multi‑speaker dialogue, voice/character design, environmental sound effects, and real‑time streaming TTS.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1588,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MotionStream",
+    "url": "https://github.com/alex4727/MotionStream",
+    "description": "MotionStream: Real-Time Video Generation with Interactive Motion Controls",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 540,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MOVA",
+    "url": "https://mosi.cn/models/mova",
+    "description": "MOVA: Towards Scalable and Synchronized Video–Audio Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 952,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "moyin-creator",
+    "url": "http://moyincreator.com/",
+    "description": "AI 影视生产级工具 | 支持 Seedance 2.0 | 剧本到成片全流程批量化 | AI-powered film production tool with Seedance 2.0 support",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3286,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ms-swift",
+    "url": "https://swift.readthedocs.io/zh-cn/latest/",
+    "description": "Use PEFT or Full-parameter to CPT/SFT/DPO/GRPO 600+ LLMs (Qwen3.6, DeepSeek-R1, GLM-5.1, InternLM3, Llama4, ...) and 300+ MLLMs (Qwen3-VL, Qwen3-Omni, InternVL3.5, Ovis2.5, GLM4.5v, Gemma4, Llava, Phi4, ...) (AAAI 2025).",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 13813,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MultiShotMaster",
+    "url": "https://qinghew.github.io/MultiShotMaster/",
+    "description": "CVPR 2026 | Official Implementation of \"MultiShotMaster: A Controllable Multi-Shot Video Generation Framework\" 🔥",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 150,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "muninndb",
+    "url": "https://github.com/scrypster/muninndb",
+    "description": "The cognitive database. A new class of data storage. Not a vector store, not a graph DB, not a RAG wrapper. Ebbinghaus decay, Hebbian   learning, and Bayesian confidence are engine-native primitives. Memories evolve on their own. MCP-native. Single binary.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 274,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "murmure",
+    "url": "https://www.murmure.app",
+    "description": "Fully local, private and cross platform Speech-to-Text with LLM Post-processing",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 710,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MuseBot",
+    "url": "https://github.com/yincongcyincong/MuseBot",
+    "description": "supports Telegram, Discord, Slack, Lark（飞书），钉钉, 企业微信, QQ, 微信, compatible with various LLMs including OpenAI, Gemini, DeepSeek, Doubao, and OpenRouter. It offers intelligent conversation, image generation, video creation, and more. Works seamlessly in both private chats and group settings.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1581,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "my-neuro",
+    "url": "https://github.com/morettt/my-neuro",
+    "description": "This project lets you create your own AI desktop companion with customizable characters and voice conversations that respond in just 1 second. Features include long-term memory, visual recognition, voice cloning and LLM training. Compatible with various Live2D customizations.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1182,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "MyScaleDB",
+    "url": "https://originhub.tech/#/docs",
+    "description": "AI Database for unified, scalable SQL + vector management, search and analytics",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 206,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "n8n",
+    "url": "https://n8n.io",
+    "description": "Fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 184801,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "n8n-nodes-comfyui",
+    "url": "https://github.com/mason276752/n8n-nodes-comfyui",
+    "description": "n8n node to integrate with ComfyUI stable diffusion workflows",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 150,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nacos",
+    "url": "https://nacos.io",
+    "description": "an easy-to-use dynamic service discovery, configuration and service management platform for building AI cloud native applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 32874,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "naive-ui",
+    "url": "https://www.naiveui.com",
+    "description": "A Vue 3 Component Library. Fairly Complete. Theme Customizable. Uses TypeScript. Fast.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 18251,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nano-banana-2-skill",
+    "url": "https://github.com/kingbootoshi/nano-banana-2-skill",
+    "description": "AI image generation CLI powered by Gemini 3 Pro. Green screen transparency, reference images, style transfer. Also a Claude Code plugin.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 349,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nanobanana-mcp-server",
+    "url": "https://github.com/zhongweili/nanobanana-mcp-server",
+    "description": "AI image generation MCP server powered by Google Gemini, with smart model selection and 4K output",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 319,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nanobot",
+    "url": "https://nanobot.wiki",
+    "description": "\"🐈 nanobot: The Ultra-Lightweight Personal AI Agent\"",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 40160,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nanoclaw",
+    "url": "https://nanoclaw.dev",
+    "description": "A lightweight alternative to OpenClaw that runs in containers for security. Connects to WhatsApp, Telegram, Slack, Discord, Gmail and other messaging apps,, has memory, scheduled jobs, and runs directly on Anthropic's Agents SDK",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 27560,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nanoid",
+    "url": "https://zelark.github.io/nano-id-cc/",
+    "description": "A tiny (118 bytes), secure, URL-friendly, unique string ID generator for JavaScript",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 26743,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "natively-cluely-ai-assistant",
+    "url": "https://natively.software",
+    "description": "Natively - Free open-source AI interview copilot & meeting assistant. The best Cluely alternative, Final Round AI alternative, and Interview Coder alternative. Real-time transcription, undetectable stealth mode, local RAG, BYOK. No subscriptions. No data breaches.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 998,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "NeMo",
+    "url": "https://docs.nvidia.com/nemo-framework/user-guide/latest/overview.html",
+    "description": "A scalable generative AI framework built for researchers and developers working on Large Language Models, Multimodal, and Speech AI (Automatic Speech Recognition and Text-to-Speech)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 17099,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "NeMo-Agent-Toolkit",
+    "url": "https://docs.nvidia.com/nemo/agent-toolkit/latest/",
+    "description": "The NVIDIA NeMo Agent toolkit is an open-source library for efficiently connecting and optimizing teams of AI agents.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2206,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "NeMo-Retriever",
+    "url": "https://docs.nvidia.com/nemo/retriever/latest/extraction/overview/",
+    "description": "NeMo Retriever Library is a scalable, performance-oriented document content and metadata extraction microservice. NeMo Retriever extraction uses specialized NVIDIA NIM microservices to find, contextualize, and extract text, tables, charts and images that you can use in downstream generative applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2905,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nestia",
+    "url": "https://nestia.io/",
+    "description": "NestJS Helper + AI Chatbot Development",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2145,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "netdata",
+    "url": "https://www.netdata.cloud",
+    "description": "The fastest path to AI-powered full stack observability, even for lean teams.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 78512,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "netron",
+    "url": "https://netron.app",
+    "description": "Visualizer for neural network, deep learning and machine learning models",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 32779,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "new-api",
+    "url": "https://www.newapi.ai",
+    "description": "A unified AI model hub for aggregation & distribution. It supports cross-converting various LLMs into OpenAI-compatible, Claude-compatible, or Gemini-compatible formats. A centralized gateway for personal and enterprise model management. 🍥",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 27804,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nexent",
+    "url": "https://nexent.tech",
+    "description": "Nexent is a zero-code platform for auto-generating production-grade AI agents using Harness Engineering principles — unified tools, skills, memory, and orchestration with built-in constraints, feedback loops, and control planes.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4369,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Nexior",
+    "url": "https://hub.acedata.cloud",
+    "description": "Consumer AI app for chat, image generation, video generation, and music creation powered by Ace Data Cloud APIs.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 358,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "next-ai-draw-io",
+    "url": "https://next-ai-drawio.jiang.jp/",
+    "description": "A next.js web application that integrates AI capabilities with draw.io diagrams. This app allows you to create, modify, and enhance diagrams through natural language commands and AI-assisted visualization.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 27537,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "next-plaid",
+    "url": "https://lightonai.github.io/next-plaid/",
+    "description": "NextPlaid, ColGREP: Multi-vector search, from database to coding agents.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 380,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "NextStep-1",
+    "url": "https://github.com/stepfun-ai/NextStep-1",
+    "description": "[🚀 ICLR 2026 Oral] NextStep-1: SOTA Autogressive Image Generation with Continuous Tokens. A research project developed by the StepFun’s Multimodal Intelligence team.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 668,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nixtla",
+    "url": "https://www.nixtla.io/docs",
+    "description": "TimeGPT-1: production ready pre-trained Time Series Foundation Model  for forecasting and anomaly detection. Generative pretrained transformer for time series trained on over 100B data points. It's capable of accurately predicting various domains such as retail, electricity, finance, and IoT with just a few lines of code 🚀.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3857,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "no-cost-ai",
+    "url": "https://nocostai.vercel.app",
+    "description": "80+ free AI services for chat, image, video, voice & APIs (may sometimes include access to lead gen ai models for free)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1093,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nocobase",
+    "url": "https://www.nocobase.com",
+    "description": "NocoBase is the most extensible AI-powered no-code/low-code platform for building business applications and enterprise solutions.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 22162,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "node-banana",
+    "url": "https://github.com/shrimbly/node-banana",
+    "description": "Free and open node based generative workflows. ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1408,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nodebox",
+    "url": "https://www.nodebox.net/",
+    "description": "Node-based data application for visualization and generative design",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 781,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nonebot2",
+    "url": "https://nonebot.dev",
+    "description": "跨平台 Python 异步聊天机器人框架 / Asynchronous multi-platform chatbot framework written in Python",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7478,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "notebook-intelligence",
+    "url": "https://github.com/notebook-intelligence/notebook-intelligence",
+    "description": "AI coding assistant for JupyterLab",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 284,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "NotelyVoice",
+    "url": "https://notelyvoice.com",
+    "description": "A 100% private AI voice transcription app that converts speech to text in 100+ languages. Built with Compose Multiplatform for Android & iOS using Whisper AI - no cloud uploads, all processing happens on-device for complete privacy.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 677,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "notion-avatar",
+    "url": "https://notion-avatar.app",
+    "description": "🪄 AI-powered online tool for making notion-style avatars.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3188,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "notion-chat-langchain",
+    "url": "https://www.youtube.com/watch?v=prbloUGlvLE",
+    "description": "A notion chatbot for your knowledge base built with langchain, typescript/javascript and pinecone.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 313,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nucleotide-transformer",
+    "url": "https://github.com/instadeepai/nucleotide-transformer",
+    "description": "Foundation Models for Genomics & Transcriptomics",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 856,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nuxt-skills",
+    "url": "https://github.com/nuxt/nuxt/discussions/34059",
+    "description": "Vue, Nuxt, and NuxtHub skills for AI coding assistants.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 634,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "nx",
+    "url": "https://nx.dev",
+    "description": "The Monorepo Platform that amplifies both developers and AI agents. Nx optimizes your builds, scales your CI, and fixes failed PRs automatically. Ship in half the time.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 28563,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "objectbox-java",
+    "url": "https://objectbox.io",
+    "description": "Database for Android and JVM - first and fast, lightweight on-device vector database",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4608,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "obsidian-github-copilot",
+    "url": "https://github.com/Pierrad/obsidian-github-copilot",
+    "description": "A bridge between Obsidian and Github Copilot",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 458,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "obsidian-skills",
+    "url": "https://github.com/kepano/obsidian-skills",
+    "description": "Agent skills for Obsidian. Teach your agent to use Markdown, Bases, JSON Canvas, and use the CLI.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 25442,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ocode",
+    "url": "https://github.com/haasonsaas/ocode",
+    "description": "OCode is a sophisticated terminal-native AI coding assistant that provides deep codebase intelligence and autonomous task execution",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 126,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OfficeAI",
+    "url": "https://office-ai.net",
+    "description": "Make Office/WPS more powerful and easier to use with AI, similar to Office Copilot and WordGPT.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 533,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oh-my-claudecode",
+    "url": "https://oh-my-claudecode.dev",
+    "description": "Teams-first Multi-agent orchestration for Claude Code",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 30160,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oh-my-codex",
+    "url": "https://oh-my-codex.dev",
+    "description": "OmX - Oh My codeX: Your codex is not alone. Add hooks, agent teams, HUDs, and so much more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 24434,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oh-my-openagent",
+    "url": "https://ohmyopenagent.com/",
+    "description": "omo; the best agent harness - previously oh-my-opencode",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 52936,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oh-my-pi",
+    "url": "https://github.com/can1357/oh-my-pi",
+    "description": "⌥  AI Coding agent for the terminal — hash-anchored edits, optimized tool harness, LSP, Python, browser, subagents, and more",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3222,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oli",
+    "url": "https://amrit110.github.io/oli/",
+    "description": "A simple, fast terminal based AI coding assistant",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 242,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ollama-copilot",
+    "url": "https://github.com/bernardo-bruning/ollama-copilot",
+    "description": "Proxy that allows you to use ollama as a copilot like Github copilot",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 865,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ollama-intel-arc",
+    "url": "https://github.com/eleiton/ollama-intel-arc",
+    "description": "Make use of Intel Arc Series GPU to Run Ollama, StableDiffusion, Whisper and Open WebUI, for image generation, speech recognition and interaction with Large Language Models (LLM).",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 323,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "olmocr",
+    "url": "https://github.com/allenai/olmocr",
+    "description": "Toolkit for linearizing PDFs for LLM datasets/training",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 17154,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "omlx",
+    "url": "https://omlx.ai",
+    "description": "LLM inference server with continuous batching & SSD caching for Apple Silicon — managed from the macOS menu bar",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 10814,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OmniCustom",
+    "url": "https://github.com/OmniCustom-project/OmniCustom",
+    "description": "Official Implementation of 'OmniCustom: Sync Audio-Video Customization Via Joint Audio-Video Generation Model' ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 421,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OmniParser",
+    "url": "https://github.com/microsoft/OmniParser",
+    "description": "A simple screen parsing tool towards pure vision based GUI agent",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 24663,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OmniShow",
+    "url": "https://correr-zhou.github.io/OmniShow/",
+    "description": "ByteDance's All-in-One Video Generation Model for Human-Object Interaction Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 261,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OmniWeaving",
+    "url": "https://omniweaving.github.io/",
+    "description": "Official Implementation of OmniWeaving: Towards Unified Video Generation with Free-form Composition and Reasoning",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 539,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "one-api",
+    "url": "https://oneapi.justsong.cn/",
+    "description": "LLM API 管理 & 分发系统，支持 OpenAI、Azure、Anthropic Claude、Google Gemini、DeepSeek、字节豆包、ChatGLM、文心一言、讯飞星火、通义千问、360 智脑、腾讯混元等主流模型，统一 API 适配，可用于 key 管理与二次分发。单可执行文件，提供 Docker 镜像，一键部署，开箱即用。LLM API management & key redistribution system, unifying multiple providers under a single API. Single binary, Docker-ready, with an English UI.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 32247,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oneclick-subtitles-generator",
+    "url": "https://osgv.vercel.app",
+    "description": "🎬 Auto-subtitle videos with AI transcription, translation, voice cloning, professional rendering, background image and music generator",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 213,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onju-voice",
+    "url": "https://github.com/justLV/onju-voice",
+    "description": "A hackable AI home assistant platform",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1655,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onlook",
+    "url": "https://onlook.com",
+    "description": "The Cursor for Designers • An Open-Source AI-First Design tool • Visually build, style, and edit your React App with AI",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 25505,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onnx",
+    "url": "https://onnx.ai/",
+    "description": "Open standard for machine learning interoperability",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 20686,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onnxruntime-genai",
+    "url": "https://github.com/microsoft/onnxruntime-genai",
+    "description": "Generative AI extensions for onnxruntime",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1012,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OnnxStream",
+    "url": "https://whisper.vitoplantamura.com/",
+    "description": "Lightweight inference library for ONNX files, written in C++. It can run Stable Diffusion XL 1.0 on a RPI Zero 2 (or in 298MB of RAM) but also Mistral 7B on desktops and servers. ARM, x86, WASM, RISC-V supported. Accelerated by XNNPACK. Python, C# and JS(WASM) bindings available.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2067,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onWatch",
+    "url": "https://onwatch.onllm.dev",
+    "description": "Track AI API quotas across Synthetic, Z.ai, Anthropic (Claude Code), Codex, GitHub Copilot & Antigravity in real time. Lightweight background daemon (<50MB RAM), SQLite storage, Material Design 3 dashboard. Zero telemetry.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 590,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "onyx",
+    "url": "https://onyx.app",
+    "description": "Open Source AI Platform - AI Chat with advanced features that works with every LLM",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 27720,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "open-agent-platform",
+    "url": "https://oap.langchain.com",
+    "description": "An open-source, no-code agent building platform.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1858,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Open-AutoGLM",
+    "url": "https://autoglm.z.ai/blog",
+    "description": "An Open Phone Agent Model & Framework. Unlocking the AI Phone for Everyone",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 24998,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "open-canvas",
+    "url": "https://opencanvas.langchain.com/",
+    "description": "📃 A better UX for chat, writing content, and coding with LLMs.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5429,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Open-DiffusionGS",
+    "url": "https://arxiv.org/abs/2411.14384",
+    "description": "Baking Gaussian Splatting into Diffusion Denoiser for Fast and Scalable Single-stage Image-to-3D Generation and Reconstruction (ICCV 2025)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 835,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Open-Generative-AI",
+    "url": "https://dev.muapi.ai/open-generative-ai",
+    "description": "Uncensored, open-source alternative to Higgsfield AI, Freepik, Krea, Openart AI — Free, unrestricted AI image & video generation studio with 200+ models (Flux, Midjourney, Kling, Sora, Veo). No content filters. Self-hosted, MIT licensed.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5348,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "open-ralph-wiggum",
+    "url": "https://github.com/Th0rgal/open-ralph-wiggum",
+    "description": "Type `ralph \"prompt\"` to start open code in a ralph loop. Also supports a prompt file & status check. Open Code, Claude Code, Codex, Copilot",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1512,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "open-swe",
+    "url": "https://github.com/langchain-ai/open-swe",
+    "description": "An Open-Source Asynchronous Coding Agent",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 9601,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "open-webui",
+    "url": "https://openwebui.com",
+    "description": "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 132760,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenAdapt",
+    "url": "https://www.OpenAdapt.AI",
+    "description": "Open Source Generative Process Automation (i.e. Generative RPA). AI-First Process Automation with Large ([Language (LLMs) / Action (LAMs) / Multimodal (LMMs)] / Visual Language (VLMs)) Models",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1556,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openagent",
+    "url": "https://openllm.cloud",
+    "description": "AI Agent Development Platform - Supports multiple models (OpenAI/DeepSeek/Wenxin/Tongyi), knowledge base management, workflow automation, and enterprise-grade security. Built with Flask + Vue3 + LangChain, featuring one-click Docker deployment.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 756,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openai-agents-python",
+    "url": "https://openai.github.io/openai-agents-python/",
+    "description": "A lightweight, powerful framework for multi-agent workflows",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 23608,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openai-chat-api-workflow",
+    "url": "https://github.com/yohasebe/openai-text-completion-workflow",
+    "description": "🎩 An Alfred 5 Workflow for using OpenAI Chat API to interact with GPT models 🤖💬 It also allows image generation/editing/understanding 🖼️, speech-to-text conversion 🎤, and text-to-speech synthesis 🔈",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 319,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenBB",
+    "url": "https://openbb.co",
+    "description": "Financial data platform for analysts, quants and AI agents.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 66133,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openchatbi",
+    "url": "https://zhongyu09.github.io/openchatbi/",
+    "description": "OpenChatBI is an intelligent chat-based BI tool powered by large language models, designed to help users query, analyze, and visualize data through natural language conversations. It uses LangGraph and LangChain to build chat agent and workflows that support natural language to SQL conversion and data analysis.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 547,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openclaw",
+    "url": "https://openclaw.ai",
+    "description": "Your own personal AI assistant. Any OS. Any Platform. The lobster way. 🦞 ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 360872,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openclaw-assistant-mvp",
+    "url": "https://github.com/andyhuo520/openclaw-assistant-mvp",
+    "description": "OpenClaw Desktop Assistant MVP - Electron-based AI voice assistant with Live2D character animations, real-time speech recognition, and text-to-speech",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 410,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenCLI",
+    "url": "https://opencli.info/",
+    "description": "Make Any Website & Tool Your CLI. A universal CLI Hub and AI-native runtime. Transform any website, Electron app, or local binary into a standardized command-line interface. Built for AI Agents to discover, learn, and execute tools seamlessly via a unified AGENT.md integration.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 16526,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "opencode-mem",
+    "url": "https://github.com/tickernelz/opencode-mem",
+    "description": "OpenCode plugin that gives coding agents persistent memory using local vector database",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 495,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenContext",
+    "url": "https://0xranx.github.io/OpenContext/",
+    "description": "A personal context store for AI agents and assistants—reuse your existing coding agent CLI (Codex/Claude/OpenCode) with built‑in Skills/tools and a desktop GUI to capture, search, and reuse project knowledge across agents and repos.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 484,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "opendataloader-pdf",
+    "url": "https://opendataloader.org",
+    "description": "PDF Parser for AI-ready data. Automate PDF accessibility. Open-source.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 18345,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openevals",
+    "url": "https://github.com/langchain-ai/openevals",
+    "description": "Readymade evaluators for your LLM apps",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1029,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenGenerativeUI",
+    "url": "https://opengenerativeui.copilotkit.ai/",
+    "description": "Open-Source Generative UI Framework",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1145,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenHands",
+    "url": "https://openhands.dev",
+    "description": "🙌 OpenHands: AI-Driven Development",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 71548,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenLLM",
+    "url": "https://bentoml.com",
+    "description": "Run any open-source LLMs, such as DeepSeek and Llama, as OpenAI compatible API endpoint in the cloud.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 12285,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenMemory",
+    "url": "https://openmemory.cavira.app",
+    "description": "Local persistent memory store for LLM applications including claude desktop, github copilot, codex, antigravity, etc.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3979,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openmlsys",
+    "url": "https://openmlsys.github.io/v1/cn/",
+    "description": "《Machine Learning Systems: Design and Implementation》 (V2 is launching soon）",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4799,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenMontage",
+    "url": "https://github.com/calesthio/OpenMontage",
+    "description": "World's first open-source, agentic video production system. 12 pipelines, 52 tools, 500+ agent skills. Turn your AI coding assistant into a full video production studio.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2767,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenOneRec",
+    "url": "https://github.com/Kuaishou-OneRec/OpenOneRec",
+    "description": "An Open Foundation Model and Benchmark to Accelerate Generative Recommendation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 745,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openpencil",
+    "url": "https://op.zseven.tech",
+    "description": "The world's first open-source AI-native vector design tool and the first to feature concurrent Agent Teams. Design-as-Code. Turn prompts into UI directly on the live canvas. A modern alternative to Pencil.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2337,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenS2V-Nexus",
+    "url": "https://pku-yuangroup.github.io/OpenS2V-Nexus/",
+    "description": "[NeurIPS 2025 D&B🔥] OpenS2V-Nexus: A Detailed Benchmark and Million-Scale Dataset for Subject-to-Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 207,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenSpec",
+    "url": "https://openspec.dev/",
+    "description": "Spec-driven development (SDD) for AI coding assistants.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 41396,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "openui",
+    "url": "https://www.openui.com",
+    "description": "The Open Standard for Generative UI",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3546,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "OpenViking",
+    "url": "https://openviking.ai",
+    "description": "OpenViking is an open-source context database designed specifically for AI Agents(such as openclaw). OpenViking unifies the management of context (memory, resources, and skills) that Agents need through a file system paradigm, enabling hierarchical context delivery and self-evolving.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 22620,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "opik",
+    "url": "https://www.comet.com/docs/opik/",
+    "description": "Debug, evaluate, and monitor your LLM applications, RAG systems, and agentic workflows with comprehensive tracing, automated evaluations, and production-ready dashboards.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 18937,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "optimum",
+    "url": "https://huggingface.co/docs/optimum/main/",
+    "description": "🚀 Accelerate inference and training of 🤗 Transformers, Diffusers, TIMM and Sentence Transformers with easy to use hardware optimization tools",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3359,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "opyrator",
+    "url": "https://opyrator-playground.mltooling.org",
+    "description": "🪄 Turns your machine learning code into microservices with web API, interactive GUI, and more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3137,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "orama",
+    "url": "https://docs.orama.com/docs/orama-js",
+    "description": "🌌  A complete search engine and RAG pipeline in your browser, server or edge network with support for full-text, vector, and hybrid search in less than 2kb.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 10300,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "oramacore",
+    "url": "https://docs.orama.com/docs/cloud",
+    "description": "OramaCore is the complete runtime you need for your projects, answer engines, copilots, and search. It includes a fully-fledged full-text search engine, vector database, LLM interface, and many more utilities.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 249,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "orbit",
+    "url": "https://schmitech.ai",
+    "description": "One API for 20+ LLM providers, your databases, and your files — self-hosted, open-source AI gateway with RAG, voice, and guardrails.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 250,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "org-ai",
+    "url": "https://github.com/rksm/org-ai",
+    "description": "Emacs as your personal AI assistant. Use LLMs such as ChatGPT or LLaMA for text generation or DALL-E and Stable Diffusion for image generation. Also supports speech input / output.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 815,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ospec",
+    "url": "https://ospec.ai",
+    "description": "Document-driven AI development for AI coding assistants.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 572,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ostt",
+    "url": "https://github.com/kristoferlund/ostt",
+    "description": "Open Speech-to-Text recording tool with real-time volume metering and transcription.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 205,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "owl",
+    "url": "https://github.com/camel-ai/owl",
+    "description": "🦉 OWL: Optimized Workforce Learning for General Multi-Agent Assistance in Real-World Task Automation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 19671,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Paddle",
+    "url": "http://www.paddlepaddle.org/",
+    "description": "PArallel Distributed Deep LEarning: Machine Learning Framework from Industrial Practice （『飞桨』核心框架，深度学习&机器学习高性能单机、分布式训练和跨平台部署）",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 23842,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PaddleOCR",
+    "url": "https://www.paddleocr.com",
+    "description": "Turn any PDF or image document into structured data for your AI. A powerful, lightweight OCR toolkit that bridges the gap between images/PDFs and LLMs. Supports 100+ languages.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 75980,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PaddleSpeech",
+    "url": "https://paddlespeech.readthedocs.io",
+    "description": "Easy-to-use Speech Toolkit including Self-Supervised Learning model, SOTA/Streaming ASR with punctuation, Streaming TTS with text frontend, Speaker Verification System, End-to-End Speech Translation and Keyword Spotting. Won NAACL2022 Best Demo Award.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 12592,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PageIndex",
+    "url": "https://pageindex.ai",
+    "description": "📑 PageIndex: Document Index for Vectorless, Reasoning-based RAG",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 25529,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Pallaidium",
+    "url": "https://tin2tin.github.io/Pallaidium/",
+    "description": "PALLAIDIUM — a generative AI movie studio, seamlessly integrated into the Blender Video Editor (VSE), enabling end-to-end production from script to screen and back.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1366,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pantalk",
+    "url": "https://pantalk.dev",
+    "description": "Give your AI agent a voice on every chat platform.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 184,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "paper-qa",
+    "url": "https://futurehouse.gitbook.io/futurehouse-cookbook",
+    "description": "High accuracy RAG for answering questions from scientific documents with citations",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 8390,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Paper2Code",
+    "url": "https://github.com/going-doer/Paper2Code",
+    "description": "Paper2Code: Automating Code Generation from Scientific Papers in Machine Learning",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4451,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Paper2Video",
+    "url": "https://showlab.github.io/Paper2Video/",
+    "description": "Automatic Video Generation from Scientific Papers",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2232,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "paperlists",
+    "url": "https://papercopilot.com/",
+    "description": "Processed / Cleaned Data for Paper Copilot",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 913,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "parakeet-rs",
+    "url": "https://huggingface.co/altunenes/parakeet-rs",
+    "description": "very fast speech-to-text, diarization, streaming (even in CPU) with NVIDIA Parakeet in Rust",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 259,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "parlant",
+    "url": "https://www.parlant.io",
+    "description": "The interaction control harness for customer-facing AI agents - optimized for building controlled, consistent, and predictable customer interactions with LLMs.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 17987,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "parlor",
+    "url": "https://github.com/fikrikarim/parlor",
+    "description": "On-device, real-time multimodal AI. Have natural voice and vision conversations with an AI that runs entirely on your machine. Powered by Gemma 4 E2B and Kokoro.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1589,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PartCrafter",
+    "url": "https://wgsxm.github.io/projects/partcrafter/",
+    "description": "[NeurIPS 2025] PartCrafter: Structured 3D Mesh Generation via Compositional Latent Diffusion Transformers",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2403,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pathway",
+    "url": "https://pathway.com",
+    "description": "Python ETL framework for stream processing, real-time analytics, LLM pipelines, and RAG.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 63461,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pdfGPT",
+    "url": "https://huggingface.co/spaces/bhaskartripathi/pdfChatter",
+    "description": "PDF GPT allows you to chat with the contents of your PDF file by using GPT capabilities. The most effective open source solution to turn your pdf files in a chatbot!",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7171,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PDFMathTranslate",
+    "url": "https://pdf2zh.com",
+    "description": "[EMNLP 2025 Demo] PDF scientific paper translation with preserved formats - 基于 AI 完整保留排版的 PDF 文档全文双语翻译，支持 Google/DeepL/Ollama/OpenAI 等服务，提供 CLI/GUI/MCP/Docker/Zotero",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 33207,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "peinture",
+    "url": "https://peinture.u14.app",
+    "description": "A general-purpose AI image generation framework that supports Hugging Face, Gitee, Model Scope, and more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 616,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pennylane",
+    "url": "https://pennylane.ai",
+    "description": "PennyLane is an open-source quantum software platform for quantum computing, quantum machine learning, and quantum chemistry. Create meaningful quantum algorithms, from inspiration to implementation.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3162,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pentest-ai-agents",
+    "url": "https://pentestai.xyz/",
+    "description": "Turn Claude Code into your offensive security research assistant. Specialized AI subagents for authorized penetration testing plan engagements, analyze recon, research exploits, build detections, audit STIGs, and write reports.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 226,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pentest-copilot",
+    "url": "https://pentest.bugbase.ai",
+    "description": "Pentest Copilot is an AI-powered browser based ethical hacking assistant tool designed to streamline pentesting workflows.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 588,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "peon-ping",
+    "url": "https://www.peonping.com",
+    "description": "Warcraft III Peon voice notifications (+ more!) for Claude Code, Codex, IDEs, and any AI agent. Stop babysitting your terminal. Employ a Peon today.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4538,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "personalized-podcast",
+    "url": "https://x.com/zarazhangrui",
+    "description": "Turn any content into a personalized AI podcast. NotebookLM-style, except you control the script, voices, and hosts. Listen in Apple Podcasts, Spotify, or any podcast app.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 310,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pgai",
+    "url": "https://github.com/timescale/pgai",
+    "description": "A suite of tools to develop RAG, semantic search, and other AI applications more easily with PostgreSQL",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5787,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "photoprism",
+    "url": "https://www.photoprism.app",
+    "description": "AI-Powered Photos App for the Decentralized Web 🌈💎✨",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 39557,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PHP-Vars-To-Js-Transformer",
+    "url": "https://packagist.org/packages/laracasts/utilities",
+    "description": "Transform PHP data to JavaScript.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2205,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PhysGaussian",
+    "url": "https://github.com/XPandora/PhysGaussian",
+    "description": "[CVPR 2024 Highlight] PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1360,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pi-generative-ui",
+    "url": "https://github.com/Michaelliv/pi-generative-ui",
+    "description": "Claude.ai's generative UI — reverse-engineered, rebuilt for pi. Interactive HTML/SVG widgets in native macOS windows.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 917,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pi-mono",
+    "url": "https://github.com/badlogic/pi-mono",
+    "description": "AI agent toolkit: coding agent CLI, unified LLM API, TUI & web UI libraries, Slack bot, vLLM pods",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 37653,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pico-cookbook",
+    "url": "https://picovoice.ai/",
+    "description": "Recipes for on-device voice AI and local LLM",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 109,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pictex",
+    "url": "https://pictex.readthedocs.io/",
+    "description": "A Python library for efficient image generation using CSS Flexbox",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 202,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pied",
+    "url": "https://pied.mikeasoft.com",
+    "description": "Pied makes it simple to install and manage text-to-speech Piper voices for use with Speech Dispatcher.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 264,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pindrop",
+    "url": "https://pindropstt.com",
+    "description": "A native macOS menu bar dictation app using local speech-to-text with WhisperKit",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 454,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pinecone-ts-client",
+    "url": "https://www.pinecone.io",
+    "description": "The official TypeScript/Node client for the Pinecone vector database",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 269,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pipcook",
+    "url": "https://alibaba.github.io/pipcook/",
+    "description": "Machine learning platform for Web developers",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2591,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pipecat",
+    "url": "https://pipecat.ai",
+    "description": "Open Source framework for voice and multimodal conversational AI",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 11443,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pipecat-client-web",
+    "url": "https://github.com/pipecat-ai/pipecat-client-web",
+    "description": "Real-Time Voice Inference Web SDK",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 309,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pipecat-examples",
+    "url": "https://github.com/pipecat-ai/pipecat-examples",
+    "description": "Pipecat example applications. Use and learn from these patterns to build your own voice AI applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 267,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pipelines",
+    "url": "https://www.kubeflow.org/docs/components/pipelines/",
+    "description": "Machine Learning Pipelines for Kubeflow",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4125,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "piper1-gpl",
+    "url": "https://github.com/OHF-Voice/piper1-gpl",
+    "description": "Fast and local neural text-to-speech engine",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3718,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "plex_generate_vid_previews",
+    "url": "https://hub.docker.com/r/stevezzau/plex_generate_vid_previews",
+    "description": "GPU-accelerated video preview thumbnail (BIF) generation for Plex Media Server. Docker-ready with NVIDIA/AMD/Intel support, web UI, scheduling, and Radarr/Sonarr webhooks.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 208,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "plexe",
+    "url": "https://plexe.ai",
+    "description": "✨ Build a machine learning model from a prompt",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2565,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PocketFlow",
+    "url": "https://the-pocket.github.io/PocketFlow/",
+    "description": "Pocket Flow: 100-line LLM framework. Let Agents build Agents!",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 10433,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "podcast-maker",
+    "url": "https://youtube.com/@CodeStackMe",
+    "description": "Fully automated video maker using motion graphics and text-to-speech synthesis to turn newsletters into daily YouTube videos.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 679,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "polyaxon",
+    "url": "https://polyaxon.com",
+    "description": "MLOps Tools For Managing & Orchestrating The Machine Learning LifeCycle",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3703,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "posthog",
+    "url": "https://posthog.com",
+    "description": "🦔 PostHog is an all-in-one developer platform for building successful products. We offer product analytics, web analytics, session replay, error tracking, feature flags, experimentation, surveys, data warehouse, a CDP, and an AI product assistant to help debug your code, ship features faster, and keep all your usage and customer data in one stack.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 32664,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "postiz-app",
+    "url": "https://postiz.com",
+    "description": "📨 The ultimate social media scheduling tool, with a bunch of AI  🤖",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 29052,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PraisonAI",
+    "url": "https://docs.praison.ai",
+    "description": "PraisonAI 🦞 — Hire a 24/7 AI Workforce. Stop writing boilerplate and start shipping autonomous agents that research, plan, code, and execute tasks. Deployed in 5 lines of code with built-in memory, RAG, and support for 100+ LLMs.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 6967,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "private-gpt",
+    "url": "https://privategpt.dev",
+    "description": "Interact with your documents using the power of GPT, 100% privately, no data leaks",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 57192,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "probe",
+    "url": "https://probelabs.com/probe",
+    "description": "AI-friendly semantic code search engine for large codebases. Combines ripgrep speed with tree-sitter AST parsing. Powers AI coding assistants with precise, context-aware code understanding.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 548,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "product-manager-prompts",
+    "url": "https://github.com/deanpeters/product-manager-prompts",
+    "description": "A repository of Generative AI prompts for product managers using agents such as ChatGPT, Claude, & Gemini",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 805,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "project-codeguard",
+    "url": "https://project-codeguard.org/",
+    "description": "Project CodeGuard is an open-source, model-agnostic security framework that embeds secure-by-default practices into AI coding agent workflows. It provides comprehensive security rules that guide AI assistants to generate more secure code automatically.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 135,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "project-nomad",
+    "url": "https://github.com/Crosstalk-Solutions/project-nomad",
+    "description": "Project N.O.M.A.D, is a self-contained, offline survival computer packed with critical tools, knowledge, and AI to keep you informed and empowered—anytime, anywhere.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 24541,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Prompt-Engineering-Guide",
+    "url": "https://www.promptingguide.ai/",
+    "description": "🐙 Guides, papers, lessons, notebooks and resources for prompt engineering, context engineering, RAG, and AI Agents.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 73556,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "prompt-master",
+    "url": "https://github.com/nidhinjs/prompt-master",
+    "description": "A Claude skill that writes the accurate prompts for any AI tool. Zero tokens or credits wasted. Full context and memory retention",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5397,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "prompt-optimizer",
+    "url": "https://prompt.always200.com",
+    "description": "An AI prompt optimizer for writing better prompts and getting better AI results.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 26562,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PromptEnhancer",
+    "url": "https://hunyuan-promptenhancer.github.io/",
+    "description": "[CVPR 2026] PromptEnhancer is a prompt-rewriting tool, refining prompts into clearer, structured versions for better image generation.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3669,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "promptflow",
+    "url": "https://microsoft.github.io/promptflow/",
+    "description": "Build high-quality LLM apps - from prototyping, testing to production deployment and monitoring.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 11105,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "promptfoo",
+    "url": "https://promptfoo.dev",
+    "description": "Test your prompts, agents, and RAGs. Red teaming/pentesting/vulnerability scanning for AI. Compare performance of GPT, Claude, Gemini, Llama, and more. Simple declarative configs with command line and CI/CD integration.  Used by OpenAI and Anthropic.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 20329,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "prompttools",
+    "url": "http://prompttools.readthedocs.io",
+    "description": "Open-source tools for prompt testing and experimentation, with support for both LLMs (e.g. OpenAI, LLaMA) and vector databases (e.g. Chroma, Weaviate, LanceDB).",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3035,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ProxyAI",
+    "url": "https://tryproxy.io",
+    "description": "The leading open-source AI copilot for JetBrains. Connect to any model in any environment, and customize your coding experience in any way you like.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1885,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "proxypal",
+    "url": "https://github.com/heyhuynhgiabuu/proxypal",
+    "description": "A desktop app that lets you use your AI subscriptions (Claude, ChatGPT, Gemini, GitHub Copilot) with any coding tool. Wraps CLIProxyAPI with a clean UI for managing connections and tracking usage.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1118,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "putout",
+    "url": "https://putout.cloudcmd.io/",
+    "description": "🐊  Pluggable and configurable JavaScript Linter, code transformer and formatter with superpowers 💪: built-in support of js, jsx, ts, markdown, yaml, toml, json and ignore. Write declarative codemods in a simplest possible way 😏",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 784,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pwa-asset-generator",
+    "url": "https://github.com/elegantapp/pwa-asset-generator",
+    "description": "Automates PWA asset generation and image declaration. Automatically generates icon and splash screen images, favicons and mstile images. Updates manifest.json and index.html files with the generated images according to Web App Manifest specs and Apple Human Interface guidelines.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3006,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "py-gpt",
+    "url": "https://pygpt.net",
+    "description": "Desktop AI Assistant powered by GPT-5, GPT-4, o1, o3, Gemini, Claude, Ollama, DeepSeek, Perplexity, Grok, Bielik, chat, vision, voice, RAG, image and video generation, agents, tools, MCP, plugins, speech synthesis and recognition, web search, memory, presets, assistants,and more. Linux, Windows, Mac",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1737,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pybroker",
+    "url": "https://www.pybroker.com",
+    "description": "Algorithmic Trading in Python with Machine Learning",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3268,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pyht",
+    "url": "https://play.ht/",
+    "description": "PlayHT Python SDK - AI Text-to-Speech Streaming & Voice Cloning API",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 220,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pymilvus",
+    "url": "https://github.com/milvus-io/pymilvus",
+    "description": "Python SDK for Milvus Vector Database",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1368,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pyprobml",
+    "url": "https://github.com/probml/pyprobml",
+    "description": "Python code for \"Probabilistic Machine learning\" book by Kevin Murphy",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7056,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "PyRIT",
+    "url": "https://microsoft.github.io/PyRIT/",
+    "description": "The Python Risk Identification Tool for generative AI (PyRIT) is an open source framework built to empower security professionals and engineers to proactively identify risks in generative AI systems.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3706,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "python-genai",
+    "url": "https://googleapis.github.io/python-genai/",
+    "description": "Google Gen AI Python SDK provides an interface for developers to integrate Google's generative models into their Python applications.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3622,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pytorch-grad-cam",
+    "url": "https://jacobgil.github.io/pytorch-gradcam-book",
+    "description": "Advanced AI Explainability for computer vision.  Support for CNNs, Vision Transformers, Classification, Object detection, Segmentation, Image similarity and more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 12751,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pytorch-image-models",
+    "url": "https://huggingface.co/docs/timm",
+    "description": "The largest collection of PyTorch image encoders / backbones. Including train, eval, inference, export scripts, and pretrained weights -- ResNet, ResNeXT, EfficientNet, NFNet, Vision Transformer (ViT), MobileNetV4, MobileNet-V3 & V2, RegNet, DPN, CSPNet, Swin Transformer, MaxViT, CoAtNet, ConvNeXt, and more",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 36672,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pytorch-lightning",
+    "url": "https://lightning.ai/pytorch-lightning/?utm_source=ptl_readme&utm_medium=referral&utm_campaign=ptl_readme",
+    "description": "Pretrain, finetune ANY AI model of ANY size on 1 or 10,000+ GPUs with zero code changes.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 31059,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "pyttsx3",
+    "url": "https://github.com/nateshmbhat/pyttsx3",
+    "description": "Offline Text To Speech synthesis for python",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2501,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qdrant",
+    "url": "https://qdrant.tech",
+    "description": "Qdrant - High-performance, massive-scale Vector Database and Vector Search Engine for the next generation of AI. Also available in the cloud https://cloud.qdrant.io/",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 30446,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qdrant-js",
+    "url": "https://qdrant.tech",
+    "description": "JavaScript/Typescript SDK for Qdrant Vector Database",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 440,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Qix",
+    "url": "http://ty4z2008.github.io/Qix",
+    "description": "Machine Learning、Deep Learning、PostgreSQL、Distributed System、Node.Js、Golang",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 15103,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qlib",
+    "url": "https://qlib.readthedocs.io/en/latest/",
+    "description": "Qlib is an AI-oriented Quant investment platform that aims to use AI tech to empower Quant Research, from exploring ideas to implementing productions. Qlib supports diverse ML modeling paradigms, including supervised learning, market dynamics modeling, and RL, and is now equipped with https://github.com/microsoft/RD-Agent to automate R&D process.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 41008,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qnabot-on-aws",
+    "url": "https://aws.amazon.com/solutions/implementations/aws-qnabot",
+    "description": "AWS QnABot is a multi-channel, multi-language conversational interface (chatbot) that responds to your customer's questions, answers, and feedback. The solution allows you to deploy a fully functional chatbot across multiple channels including chat, voice, SMS and Amazon Alexa.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 445,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "QodeAssist",
+    "url": "https://github.com/Palm1r/QodeAssist",
+    "description": "QodeAssist is an AI-powered coding assistant plugin for Qt Creator",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 365,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qodo-cover",
+    "url": "https://qodo.ai/",
+    "description": "Qodo-Cover: An AI-Powered Tool for Automated Test Generation and Code Coverage Enhancement! 💻🤖🧪🐞",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 5361,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qpdf",
+    "url": "https://qpdf.sourceforge.io/",
+    "description": "qpdf: A content-preserving PDF document transformer",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4945,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "quotio",
+    "url": "https://www.quotio.dev",
+    "description": "Stop juggling AI accounts. Quotio is a beautiful native macOS menu bar app that unifies your Claude, Gemini, OpenAI, Qwen, and Antigravity subscriptions – with real-time quota tracking and smart auto-failover for AI coding tools like Claude Code, OpenCode, and Droid.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 4288,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Qwen-Agent",
+    "url": "https://pypi.org/project/qwen-agent/",
+    "description": "Agent framework and applications built upon Qwen>=3.0, featuring Function Calling, MCP, Code Interpreter, RAG, Chrome extension, etc.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 16114,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qwen-code",
+    "url": "https://qwenlm.github.io/qwen-code-docs/en/users/overview",
+    "description": "An open-source AI agent that lives in your terminal.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 23585,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Qwen-Image",
+    "url": "https://github.com/QwenLM/Qwen-Image",
+    "description": "Qwen-Image is a powerful image generation foundation model capable of complex text rendering and precise image editing.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 7794,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Qwen3-Omni",
+    "url": "https://github.com/QwenLM/Qwen3-Omni",
+    "description": "Qwen3-omni is a natively end-to-end, omni-modal LLM developed by the Qwen team at Alibaba Cloud, capable of understanding text, audio, images, and video, as well as generating speech in real time.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3693,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qwen3-tts-apple-silicon",
+    "url": "https://github.com/kapi2800/qwen3-tts-apple-silicon",
+    "description": "Run Qwen3-TTS text-to-speech locally on Mac (M1/M2/M3/M4). Voice cloning, voice design, custom voices. 100% offline using MLX.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 459,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "qwen3_tts_rs",
+    "url": "https://github.com/second-state/qwen3_tts_rs",
+    "description": "A Rust implementation of the Qwen3 Text-to-Speech (TTS) model inference.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 204,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "radiant",
+    "url": "https://radiant-shaders.com",
+    "description": "A curated collection of generative shader art",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 714,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RAE",
+    "url": "https://github.com/bytetriper/RAE",
+    "description": "Official PyTorch Implementation of \"Diffusion Transformers with Representation Autoencoders\"",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1860,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RAG-Anything",
+    "url": "http://arxiv.org/abs/2510.12323",
+    "description": "\"RAG-Anything: All-in-One RAG Framework\"",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 16339,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rag-chatbot",
+    "url": "https://github.com/umbertogriffo/rag-chatbot",
+    "description": "RAG (Retrieval-augmented generation) ChatBot that provides answers based on contextual information extracted from a collection of Markdown files.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 407,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rag-from-scratch",
+    "url": "https://github.com/pguso/rag-from-scratch",
+    "description": "Demystify RAG by building it from scratch. Local LLMs, no black boxes - real understanding of embeddings, vector search, retrieval, and context-augmented generation.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1383,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rag-web-ui",
+    "url": "https://github.com/rag-web-ui/rag-web-ui",
+    "description": "RAG Web UI is an intelligent dialogue system based on RAG (Retrieval-Augmented Generation) technology.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2968,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rag_api",
+    "url": "https://librechat.ai/",
+    "description": "ID-based RAG FastAPI: Integration with Langchain and PostgreSQL/pgvector",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 790,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RagaAI-Catalyst",
+    "url": "https://catalyst.raga.ai/",
+    "description": "Python SDK for Agent AI Observability, Monitoring and Evaluation Framework. Includes features like agent, llm and tools tracing, debugging multi-agentic system, self-hosted dashboard and advanced analytics with timeline and execution graph view ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 16139,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ragas",
+    "url": "https://docs.ragas.io",
+    "description": "Supercharge Your LLM Application Evaluations 🚀",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 13489,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ragbits",
+    "url": "https://ragbits.deepsense.ai",
+    "description": "Building blocks for rapid development of GenAI applications ",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1640,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rage",
+    "url": "https://age-encryption.org/v1",
+    "description": "A simple, secure and modern file encryption tool (and Rust library) with small explicit keys, no config options, and UNIX-style composability.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3432,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RAGEN",
+    "url": "https://ragen-ai.github.io",
+    "description": "RAGEN leverages reinforcement learning to train LLM reasoning agents in interactive, stochastic environments.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2627,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ragent",
+    "url": "https://nageoffer.com/ragent",
+    "description": "企业级 Agentic RAG 智能体 - 全链路覆盖文档解析、多路检索、意图识别、问题重写、会话记忆、MCP 工具调用与深度思考。面向真实业务场景，从 0 到 1 完整工程实现。",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1637,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ragflow",
+    "url": "https://ragflow.io",
+    "description": "RAGFlow is a leading open-source Retrieval-Augmented Generation (RAG) engine that fuses cutting-edge RAG with Agent capabilities to create a superior context layer for LLMs",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 78555,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RAGHub",
+    "url": "https://github.com/Andrew-Jang/RAGHub",
+    "description": "A community-driven collection of RAG (Retrieval-Augmented Generation) frameworks, projects, and resources. Contribute and explore the evolving RAG ecosystem.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1724,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "raglite",
+    "url": "https://github.com/superlinear-ai/raglite",
+    "description": "🥤 RAGLite is a Python toolkit for Retrieval-Augmented Generation (RAG) with DuckDB or PostgreSQL",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1151,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rai",
+    "url": "https://github.com/RobotecAI/rai",
+    "description": "RAI is a vendor agnostic agentic framework for Physical AI robotics, utilizing ROS 2 tools to perform complex actions, defined scenarios, free interface execution, log summaries, voice interaction and more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 494,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ramalama",
+    "url": "https://ramalama.ai",
+    "description": "RamaLama is an open-source developer tool that simplifies the local serving of AI models from any source and facilitates their use for inference in production, all through the familiar language of containers.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2765,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Raphtory",
+    "url": "https://raphtory.com",
+    "description": "Scalable graph analytics database powered by a multithreaded, vectorized temporal engine, written in Rust",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 605,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "raptor",
+    "url": "https://github.com/gadievron/raptor",
+    "description": "Raptor turns Claude Code into a general-purpose AI offensive/defensive security agent. By using Claude.md and creating rules, sub-agents, and skills, and orchestrating security tool usage, we configure the agent for adversarial thinking, and perform research or attack/defense operations.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 2266,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rasa",
+    "url": "https://rasa.com/docs/rasa/",
+    "description": "💬   Open source machine learning framework to automate text- and voice-based conversations: NLU, dialogue management, connect to Slack, Facebook, and more - Create chatbots and voice assistants",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 21128,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rasa_chatbot_cn",
+    "url": "https://github.com/GaoQ1/rasa_chatbot_cn",
+    "description": "building a chinese dialogue system based on the newest version of rasa(基于最新版本rasa搭建的对话系统)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 981,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ray",
+    "url": "https://ray.io",
+    "description": "Ray is an AI compute engine. Ray consists of a core distributed runtime and a set of AI Libraries for accelerating ML workloads.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 42216,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RCLI",
+    "url": "https://github.com/RunanywhereAI/runanywhere-sdks",
+    "description": "Talk to your Mac, query your docs, no cloud required. On-device voice AI + RAG",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1462,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "rcm",
+    "url": "https://arxiv.org/abs/2510.08431",
+    "description": "[ICLR 2026] rCM: SOTA JVP-Based Diffusion Distillation & Few-Step Video Generation & Scaling Up sCM/MeanFlow",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 612,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "react-agent",
+    "url": "https://github.com/langchain-ai/react-agent",
+    "description": "LangGraph template for a simple ReAct agent",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 719,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "react-chatbotify",
+    "url": "https://react-chatbotify.com",
+    "description": "A modern React library for creating flexible and extensible chatbots.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 435,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "react-native-svg-transformer",
+    "url": "https://github.com/kristerkari/react-native-svg-transformer",
+    "description": "Import SVG files in your React Native project the same way that you would in a Web application.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1735,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "reader",
+    "url": "https://jina.ai/reader",
+    "description": "Convert any URL to an LLM-friendly input with a simple prefix https://r.jina.ai/",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 10608,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RealGen",
+    "url": "https://github.com/yejy53/RealGen",
+    "description": "RealGen: Photorealistic Text-to-Image Generation via Detector-Guided Rewards.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 313,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "realtime-phone-agents-course",
+    "url": "https://github.com/neural-maze/realtime-phone-agents-course",
+    "description": "Build realtime AI voice agents using FastRTC for low-latency streaming, Superlinked for vector search, Twilio for live phone calls, and Runpod for scalable GPU deployment.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 974,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RealtimeSTT",
+    "url": "https://github.com/KoljaB/RealtimeSTT",
+    "description": "A robust, efficient, low-latency speech-to-text library with advanced voice activity detection, wake word activation and instant transcription.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 9721,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RealtimeTTS",
+    "url": "https://github.com/KoljaB/RealtimeTTS",
+    "description": "Converts text to speech in realtime",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3872,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RealWonder",
+    "url": "https://liuwei283.github.io/RealWonder/",
+    "description": "Real-Time Physical Action-Conditioned Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 194,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "ReCo",
+    "url": "https://github.com/HiDream-ai/ReCo",
+    "description": "Official Implementation of ReCo: Region-Constraint In-Context Generation for Instructional Video Editing",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 147,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "refact",
+    "url": "https://refact.ai",
+    "description": "AI Agent that handles engineering tasks end-to-end: integrates with developers’ tools, plans, executes, and iterates until it achieves a successful result.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 3533,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RefAlign",
+    "url": "https://gudaochangsheng.github.io/RefAlign-Page/",
+    "description": "Official PyTorch implementation of RefAlign: Representation Alignment for Reference-to-Video Generation",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 148,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RemoveWindowsAI",
+    "url": "https://github.com/zoicware/RemoveWindowsAI",
+    "description": "Force Remove Copilot, Recall and More in Windows 11",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 11382,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "repaint123",
+    "url": "https://github.com/PKU-YuanGroup/repaint123",
+    "description": "Official implementation of Repaint123: Fast and High-quality One Image to 3D Generation with Progressive Controllable 2D Repainting (ECCV 2024)",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 277,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "RepLDM",
+    "url": "https://kmittle.github.io/project_pages/RepLDM/",
+    "description": "[NeurIPS2025 spotlight★] Official implementation for \"RepLDM: Reprogramming Pretrained Latent Diffusion Models for High-Quality, High-Efficiency, High-Resolution Image Generation\".",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 267,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "repomix",
+    "url": "https://repomix.com",
+    "description": "📦 Repomix is a powerful tool that packs your entire repository into a single, AI-friendly file. Perfect for when you need to feed your codebase to Large Language Models (LLMs) or other AI tools like Claude, ChatGPT, DeepSeek, Perplexity, Gemini, Gemma, Llama, Grok, and more.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 23691,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "resin",
+    "url": "https://github.com/kreeben/resin",
+    "description": "Language model search engine built on a vector database and an anything key/value store.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 575,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "restai",
+    "url": "https://restai.cloud",
+    "description": "RESTai is an AIaaS (AI as a Service) open-source platform. Supports many public and local LLM suported by Ollama/vLLM/etc. Precise embeddings usage, tuning, analytics etc. Built-in image/audio generation with dynamic loading generators. Live chat deployment. Built-in block based graphical language. Prompt versioning and much more...",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 484,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  },
+  {
+    "name": "Review-Gate",
+    "url": "https://www.youtube.com/watch?v=mZmNM-AIf4M",
+    "description": "Review-Gate V2 is a powerful rule for the Cursor IDE that helps you get up to 5x more value from your monthly requests. It creates an interactive loop where the AI waits for your follow-up commands—via text, voice, or image upload—allowing you to perform deep, iterative work all within a single request.",
+    "source": "github-trending",
+    "signals": {
+      "recentList": true,
+      "githubStars": 1542,
+      "fundingMentioned": false,
+      "trafficTrend": null
+    }
+  }
+]

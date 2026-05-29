@@ -1,0 +1,151 @@
+2026-05-13T03:20:14.634Z pinecone: db_update: TypeError: fetch failed
+2026-05-13T03:20:14.634Z redactable: synthesis_failed_after_retries
+2026-05-13T03:20:14.634Z murf-ai: synthesis_failed_after_retries
+2026-05-13T03:20:14.634Z tektonic-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z firecrawl: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z jace: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z proposal-genie: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z superagent: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z flowstep: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z hailuo-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z contentbot: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z regie-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z amira-learning: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z cabina-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z looq-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z db-gpt: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z applaime: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z teachable-machine: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z stagehq-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z corti: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z lexis-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z anima: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z copilot-for-microsoft-365: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z spiky-ai: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z runsybil: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z windsurf-editor: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z instapage: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z klaviyo: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z ai-text-humanizer: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z rowspeak: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z restb-ai: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z lexica: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z thoughtspot: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z clickup: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z fireworks-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z emergent: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z mixpanel: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z janitorai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z supabase: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z kensho: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z yi-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z wiz: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z rows: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z rewind-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z granola: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z augmedix: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z reply-io: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z manus: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z xano: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z nightfall-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z fathom: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z xpander-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z evalyze: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z userway: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z outreach: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z entera: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z budibase: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z final-touch: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z mistral: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z scalenut: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z lex-markets: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z photomath: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z thinkific: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z tradeos-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z rewardful: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z chat-prompt-genius: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z snov-io: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z finster-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z greptile: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z together-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z chatcomparison-ai: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z slashit-app: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z vidmage: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z zapier: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z grain: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z neptune-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z databricks-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z remini: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z voctiv: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z wistia: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z tines: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z udio: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z musicfy: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z falcon-llm: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z craft: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z cal-com: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z salescloser-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z riverside-fm: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z luma-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z landbot: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z observable: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z genspark-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z donely: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z captions: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z cody: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z opus-clip: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z brief-my-meeting: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z chattts: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z asana: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z monica: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z khan-academy: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z fullstory: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z floutwork: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z flowith: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z openai-codex: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z thumbnailai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z fliz: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z verdent: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z akkio: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z elai-io: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z boost-space: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z elephant: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z clari: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z hypotenuse: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z netus-ai: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z regard: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z connected-papers: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z velona: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z paradox: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z creative-reality-studio-d-id: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z pathai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z option-alpha: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z cognigy: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z casablanca: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z promptfoo: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z agentx: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z pi: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z glasp: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z domoai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z amazon-translate: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z langflow: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z postly: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z quickbooks: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z chefgpt: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z internal-io: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z bluedot: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z mutiny: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z magicphotos: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z alphasense: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z klevu: db_update: TypeError: fetch failed
+2026-05-13T12:39:00.690Z sweep: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z lutra-ai: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z agno: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z document360: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z squadcast: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z squarespace: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z helpscout: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z tango-us: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z tweet-hunter: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z superagent: synthesis_failed_after_retries
+2026-05-13T12:39:00.690Z inworld-ai: db_update: TypeError: fetch failed

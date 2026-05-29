@@ -4,6 +4,132 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+## Day 4 (Part 2) — 2026-05-29 — Weekly SEO loop automation: triage cron + email digest + admin review page
+
+**Trigger:** Day-4 Part 1 (above) shipped the entity-binding work and captured the GSC baseline. Day-4 Part 2 closes the measurement → triage → action loop so that every Monday, *without the laptop being on*, the system pulls fresh GSC data, prioritizes what to work on, emails a digest, and waits for the operator to accept actions from a web page.
+
+**Constraint that shaped the design:** "best quality outcome without my laptop running or being on." This rules out Claude Code skills (`/seo-pulse`, `/seo-plan-week`, etc.) that need a CLI session. Replacement is two Vercel crons + an admin dashboard. Vercel Pro gives 40 cron slots and 300s per invocation; Supabase Pro gives the storage headroom for the JSONB snapshots and diffs. Both are well within tier limits for this workload.
+
+**What was already in place going in:**
+- `snapshot-gsc` cron (Mon 06:30 UTC) — already writes both gsc_snapshots and gsc_diffs (it computes the diff inline, not a separate cron).
+- Migration `093_gsc_snapshots.sql` — `gsc_snapshots`, `gsc_diffs`, `weekly_loop_actions` tables with full lifecycle columns.
+- `lib/pipelines/with-logging.ts cronRoute()` — bearer-token auth + pipeline_runs logging wrapper used by every other cron.
+- `alert-failed-pipelines` cron — Resend email pattern (HTML body, `https://api.resend.com/emails`, `Authorization: Bearer ${apiKey}`).
+
+So the new build is three thin layers on top of existing infrastructure.
+
+### 1. `app/api/cron/triage-gsc/route.ts` — Mon 07:00 UTC
+
+Reads the latest `gsc_diffs` row for both `7d` and `28d` scopes, classifies every page+query signal against a rules-based decision matrix, dedups by page, picks the top-50 by priority, writes them to `weekly_loop_actions` as `status='proposed'`.
+
+**Why rules-based, not an LLM:** the decision matrix is deterministic — position band × impressions × CTR maps unambiguously to an action_type. Calling an LLM here would add cost, latency, and non-determinism for zero quality lift. LLM calls are reserved for the EXECUTION phase (title rewrites, content gen).
+
+**Decision matrix:**
+
+| Signal / position band | Threshold | Action | Priority |
+|---|---|---|---|
+| `lost` | prior.impressions ≥ 100 | refresh_page | **critical** |
+| `losing` | Δpos ≥ 10 AND current.pos ≤ 20 | refresh_page | **critical** |
+| pos 11–20 | impr ≥ 50 | title_rewrite | **high** |
+| pos 4–10 | CTR < 1%, impr ≥ 30 | title_rewrite (earn-the-click) | **high** |
+| `new` | pos 11–30, impr ≥ 30 | boost_discovery | **high** |
+| `winning` | Δpos ≤ −3 AND pos ≤ 30 | links_inject | **high** |
+| pos 21–30 | impr ≥ 30 | depth_expand | medium |
+| pos 1–3 | CTR < 3%, impr ≥ 50 | title_rewrite | medium |
+
+`noindex` candidates (0 impr for 4 weeks) are deferred — we don't have 4 weeks of history yet.
+
+**Dedup:** one action per page. If a page surfaces in multiple queries, the highest-priority candidate wins; tie → highest impressions wins. The dominant query is recorded in `metadata.dominant_query` for the operator to read.
+
+**Idempotency:** clears existing `proposed` rows for the snapshot_date before insert. Re-running Mondays produces the same final state. `accepted`/`executed`/`measured` rows are never touched.
+
+**Cap:** 50 actions/week. Tuned to surface enough work to be meaningful but not so much that the operator can't ship in a week. If queue is consistently empty or overflows, the thresholds (top of file) are the dial.
+
+### 2. `app/api/cron/email-weekly-digest/route.ts` — Mon 08:00 UTC
+
+Reads this week's `proposed` actions + the latest `gsc_diffs` totals + the latest 2 `gsc_snapshots` per scope. Sends an HTML email to `ALERT_EMAIL` (Resend) with:
+
+- **WoW summary table** — Last 7d and Last 28d clicks / impressions / CTR / avg position, each with the delta vs. the prior snapshot (colored: green=better, red=worse, with the position-direction inverted because lower-pos = better).
+- **Signal-mix strip** — winners / losers / new / lost counts per scope.
+- **Top-10 actions** — priority badge + action_type + canonical path + 1-line rationale + dominant query.
+- **CTA button** — deep-link to `/admin/seo-pulse` for review/accept/reject.
+
+Mobile-friendly markup (`max-width:680px`, inline styles, system-ui font stack). Subject line shows action counts so triage urgency is visible from the inbox preview.
+
+No-op if `RESEND_API_KEY` or `ALERT_EMAIL` aren't set (returns `{ skipped: 'env_not_configured' }`) — same pattern as `alert-failed-pipelines`.
+
+### 3. `app/admin/seo-pulse/page.tsx` + `actions.ts` — operator review page
+
+Server component, admin-gated via the existing `app/admin/layout.tsx` (`profile.is_admin` check, redirect to /dashboard otherwise). Layout:
+
+- **WoW summary card** at the top — mirrors the email summary table so the dashboard answers "what changed this week" without opening Gmail.
+- **Counts strip** — Proposed / Accepted / Executed / Critical / High.
+- **Three sections** — Proposed (sortable by priority + impressions), Accepted (awaiting execution), Executed (measuring, dimmed).
+- **Per-row buttons** —
+  - `proposed`: Accept (freezes baseline_* into the dedicated columns) / Reject.
+  - `accepted`: Mark executed / Revoke (back to rejected).
+  - `executed`: shows "measured in 4 weeks" placeholder until the future `/seo-impact` job fills `outcome_*`.
+
+**Baseline freezing:** triage writes `baseline_*` into the JSONB `metadata` column (because it doesn't know yet which signal will be accepted). Accept copies those into the dedicated columns and stamps `accepted_at`. The dedicated columns are what `/seo-impact` will compare against `outcome_*` 4 weeks later to compute lift. This matters because GSC windows roll forward daily — without freezing, "lift" would be measured against a moving baseline.
+
+Server actions return `Promise<void>` (Next.js 16 form-action signature). On error they `throw` — Next.js renders the framework error page and the operator can retry. Errors aren't expected to be common at this volume (≤50 rows/week, single-user admin).
+
+### 4. `vercel.json` — 2 new cron entries
+
+```json
+{ "path": "/api/cron/triage-gsc",          "schedule": "0 7 * * 1" },
+{ "path": "/api/cron/email-weekly-digest", "schedule": "0 8 * * 1" }
+```
+
+Sequence is intentional: snapshot-gsc 06:30 → triage 07:00 (30min buffer for the snapshot to finish) → email 08:00 (1h buffer for triage). All UTC.
+
+### 5. `app/admin/layout.tsx` — SEO Pulse nav link
+
+Inserted between "Insights" and "Tracking health" so it sits with the other measurement views.
+
+### What's NOT in this ship
+
+- `/seo-impact` job (4-week-old executions → outcome_* fill). Will build once we have executed rows aging out.
+- Auto-execution. Every action requires explicit Accept → human edits page → Mark executed. No auto-merge of title rewrites etc. Quality bar > velocity for SEO content.
+- Slack delivery. Email-only for now (matches alert-failed-pipelines current state). Easy to add by mirroring the `sendSlack` pattern.
+- `noindex` action_type. Needs 4 weeks of impr=0 history to fire reliably.
+
+### Files added / changed
+
+| File | Change |
+|---|---|
+| `app/api/cron/triage-gsc/route.ts` | NEW — decision matrix + dedup + write proposed |
+| `app/api/cron/email-weekly-digest/route.ts` | NEW — Resend HTML digest |
+| `app/admin/seo-pulse/page.tsx` | NEW — review dashboard |
+| `app/admin/seo-pulse/actions.ts` | NEW — accept/reject/markExecuted server actions |
+| `vercel.json` | EDIT — added 2 cron entries |
+| `app/admin/layout.tsx` | EDIT — added SEO Pulse nav link |
+
+### Required env vars (already set if alert-failed-pipelines works)
+
+- `RESEND_API_KEY` — Resend API key
+- `ALERT_EMAIL` — recipient (tanmayverma321@gmail.com)
+- `ALERT_FROM_EMAIL` — optional, default `alerts@rightaichoice.com`
+- `CRON_SECRET` — bearer token Vercel sends; checked by `validateCronSecret`
+- `GSC_OAUTH_*` + `GSC_SITE_URL` — already used by snapshot-gsc, no new ones
+
+### Operating timeline
+
+- **Mon 06:30 UTC** — `snapshot-gsc` writes new gsc_snapshots + gsc_diffs row.
+- **Mon 07:00 UTC** — `triage-gsc` reads diffs, writes ≤50 proposed actions.
+- **Mon 08:00 UTC** — `email-weekly-digest` lands in the inbox with WoW summary + top-10.
+- **Mon morning** — operator opens email on phone or laptop, clicks "Review & accept actions", lands on `/admin/seo-pulse`, accepts/rejects.
+- **During the week** — operator (or future automation) executes accepted actions, clicks "Mark executed".
+- **4 weeks later** — future `/seo-impact` job fills `outcome_*`, lift is computed.
+
+### Verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — clean for new files (pre-existing errors in scripts/ unchanged).
+- Manual smoke test deferred until first Monday firing (cron auth secret only valid via Vercel). To dry-run locally: hit the route with `Authorization: Bearer $CRON_SECRET`.
+
+---
+
 ## Day 4 — 2026-05-29 — Brand entity binding: Wikidata Q-item, rel=me verification, awesome-list inclusion, perf-cluster fixes
 
 **Trigger:** brand SERP is still weak (rank #2 for "rightaichoice", unknown competitor at #1 — Open Task #43). Google's Knowledge Graph and AI assistants need a verified entity to anchor the brand to; the existing Organization JSON-LD on its own isn't enough without a Wikidata Q-item or strong rel=me cross-verification. In parallel, ~150ms of unnecessary Supabase round-trips per page render on anonymous traffic were dragging TTFB on every non-cached page.

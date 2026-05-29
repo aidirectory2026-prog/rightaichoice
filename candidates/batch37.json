@@ -1,0 +1,1950 @@
+[
+  {
+    "name": "Sprinto",
+    "url": "https://sprinto.com",
+    "description": "Continuous compliance automation for SOC 2, ISO 27001, HIPAA, GDPR — AI-driven evidence and audit prep.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Hyperproof",
+    "url": "https://hyperproof.io",
+    "description": "GRC platform with AI control automation, evidence collection, and continuous compliance management.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "LogicGate Risk Cloud",
+    "url": "https://logicgate.com",
+    "description": "No-code GRC platform with AI risk quantification, third-party risk, and policy automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Apptega",
+    "url": "https://apptega.com",
+    "description": "Cybersecurity and compliance management platform with AI framework crosswalks and reporting.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Anecdotes",
+    "url": "https://anecdotes.ai",
+    "description": "Compliance OS connecting evidence across cloud, GRC, and security tools with AI mapping.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Cyberhaven",
+    "url": "https://cyberhaven.com",
+    "description": "Data lineage and AI-driven DLP that tracks data movement in real time for insider risk.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Cyera",
+    "url": "https://cyera.io",
+    "description": "Data security posture management (DSPM) with AI classification across cloud and SaaS.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Swimlane",
+    "url": "https://swimlane.com",
+    "description": "Low-code SOAR with AI security automation, Turbine engine, and Hero AI copilot.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "D3 Security",
+    "url": "https://d3security.com",
+    "description": "Smart SOAR with AI-driven incident response and MITRE ATT&CK-aligned playbooks.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Mews",
+    "url": "https://mews.com",
+    "description": "Cloud property management system for hotels with AI revenue, housekeeping, and concierge tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "IDeaS Revenue Solutions",
+    "url": "https://ideas.com",
+    "description": "SAS-owned AI revenue management used by 30,000+ hotels worldwide for dynamic pricing.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Atomize",
+    "url": "https://atomize.com",
+    "description": "AI hotel revenue management with real-time price recommendations for independent hotels.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Canary Technologies",
+    "url": "https://canarytechnologies.com",
+    "description": "Guest management suite with AI concierge, upsells, and digital tipping for hotels.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "RoomPriceGenie",
+    "url": "https://roompricegenie.com",
+    "description": "Automated AI pricing for small and independent hotels with simple setup.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Vouch",
+    "url": "https://vouch.sg",
+    "description": "Hotel guest experience platform with AI concierge and contactless service ordering.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Boulevard",
+    "url": "https://joinblvd.com",
+    "description": "Salon and spa business management with AI scheduling, marketing, and client lifecycle.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Vagaro",
+    "url": "https://vagaro.com",
+    "description": "Salon, spa, and fitness booking platform with AI marketing, no-show prediction, and inventory.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Mindbody",
+    "url": "https://mindbodyonline.com",
+    "description": "Wellness and fitness studio management with AI lead nurturing and class scheduling.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Tekmetric",
+    "url": "https://tekmetric.com",
+    "description": "Auto repair shop management with AI estimating, parts ordering, and customer comms.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Shopmonkey",
+    "url": "https://shopmonkey.io",
+    "description": "Auto repair shop platform with AI workflow automation and digital vehicle inspection.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "VinSolutions",
+    "url": "https://vinsolutions.com",
+    "description": "Cox Automotive dealership CRM with AI lead scoring, response automation, and inventory ops.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Impel",
+    "url": "https://impel.ai",
+    "description": "AI-powered customer lifecycle management for auto dealerships across sales and service.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Fullpath",
+    "url": "https://fullpath.com",
+    "description": "Dealer customer data platform with AI for personalized marketing and lead activation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Printful",
+    "url": "https://printful.com",
+    "description": "Print-on-demand with AI mockup generation, design tools, and Etsy/Shopify integrations.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "EverBee",
+    "url": "https://everbee.io",
+    "description": "AI Etsy seller analytics for keyword research, listing optimization, and competitor tracking.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Alura",
+    "url": "https://alura.io",
+    "description": "Etsy and POD seller toolkit with AI listing assistant, keyword research, and shop analyzer.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Brightwheel",
+    "url": "https://mybrightwheel.com",
+    "description": "Childcare and preschool management with AI parent comms, billing, and attendance.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Procare Solutions",
+    "url": "https://procaresoftware.com",
+    "description": "Childcare management with AI scheduling, billing, and family engagement tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "MatrixCare",
+    "url": "https://matrixcare.com",
+    "description": "ResMed-owned senior care EHR with AI clinical insights for home health and SNF.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "PointClickCare",
+    "url": "https://pointclickcare.com",
+    "description": "Senior care EHR cloud platform with AI clinical decision support and risk stratification.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Eldermark",
+    "url": "https://eldermark.com",
+    "description": "Senior living management software with AI for care planning and resident engagement.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Passare",
+    "url": "https://passare.com",
+    "description": "Funeral home management software with AI case collaboration and family arrangement tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Bestow Funeral",
+    "url": "https://bestow.com",
+    "description": "AI-driven funeral planning and pre-need insurance technology for funeral homes.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "PawnMaster",
+    "url": "https://pawnmaster.com",
+    "description": "Pawn shop and resale POS with AI item identification and dynamic loan pricing.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "ServiceTitan",
+    "url": "https://servicetitan.com",
+    "description": "Field service software for locksmiths, HVAC, plumbing with AI dispatch and pricebook.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Apollo Chat",
+    "url": "https://apollo.io/product/conversation-intelligence",
+    "description": "Apollo's AI SDR engine combining outreach, intent, and conversational sales agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Jason AI by Reply",
+    "url": "https://reply.io/jason-ai",
+    "description": "Reply.io's autonomous AI SDR for outbound prospecting, replies, and meeting booking.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Warmly",
+    "url": "https://warmly.ai",
+    "description": "Signal-based revenue orchestration with AI for website visitor intent and outreach.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Distrobird",
+    "url": "https://distrobird.com",
+    "description": "All-in-one AI sales engagement: email, dialer, sequences, and meeting scheduling.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Mailshake",
+    "url": "https://mailshake.com",
+    "description": "Cold email outreach with AI SHAKEspeare copywriter and sequence builder.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Quickmail",
+    "url": "https://quickmail.com",
+    "description": "Cold email automation with AI deliverability features and warm-up via MailFlow.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Folderly",
+    "url": "https://folderly.com",
+    "description": "AI email deliverability and inbox warmup with daily monitoring and spam-trigger fixes.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Warmup Inbox",
+    "url": "https://warmupinbox.com",
+    "description": "Email warmup service with AI engagement simulation to lift sender reputation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Mailivery",
+    "url": "https://mailivery.io",
+    "description": "Peer-to-peer email warmup with AI conversation simulation and deliverability monitoring.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Twain",
+    "url": "https://twain.ai",
+    "description": "AI sales communication coach giving real-time feedback on cold email copy.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AuthoredUp",
+    "url": "https://authoredup.com",
+    "description": "LinkedIn post formatter and AI writing assistant for creators and B2B founders.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Supergrow",
+    "url": "https://supergrow.ai",
+    "description": "AI LinkedIn content generator with carousel maker, viral hooks, and team scheduling.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Hypefury",
+    "url": "https://hypefury.com",
+    "description": "AI-powered X and LinkedIn scheduler with autoplugs, retweets, and content recycling.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Tagado",
+    "url": "https://tagado.com",
+    "description": "AI voice-of-customer platform unifying tickets, reviews, and feedback into product insights.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Customer.io",
+    "url": "https://customer.io",
+    "description": "Behavioral messaging platform with AI-powered journey orchestration and segmentation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Iterable",
+    "url": "https://iterable.com",
+    "description": "Cross-channel customer engagement with AI optimization (send time, channel, content).",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Bloomreach",
+    "url": "https://bloomreach.com",
+    "description": "Commerce CDP with Loomi AI for personalization, search, and email orchestration.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Emarsys",
+    "url": "https://emarsys.com",
+    "description": "SAP-owned omnichannel marketing platform with AI-driven personalization at scale.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "MoEngage",
+    "url": "https://moengage.com",
+    "description": "Cross-channel customer engagement with Sherpa AI for next-best-action and content.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Chord Commerce",
+    "url": "https://chord.co",
+    "description": "Composable CDP for DTC brands with AI customer intelligence and personalization.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Chameleon",
+    "url": "https://chameleon.io",
+    "description": "In-product user onboarding with AI personalization and segmentation triggers.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Appcues",
+    "url": "https://appcues.com",
+    "description": "User onboarding and product adoption tool with AI tour generator and analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Heap",
+    "url": "https://heap.io",
+    "description": "Product analytics with autocapture and AI session replay, journey discovery, anomaly alerts.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "June",
+    "url": "https://june.so",
+    "description": "AI product analytics for B2B SaaS — auto-generated reports and account intelligence.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Userlot",
+    "url": "https://userlot.com",
+    "description": "Customer success platform with AI health scoring, playbooks, and renewal predictions.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Vitally",
+    "url": "https://vitally.io",
+    "description": "Customer success platform with AI insights, automated playbooks, and revenue intelligence.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Genspark",
+    "url": "https://genspark.ai",
+    "description": "Agentic AI search engine generating custom Sparkpages with citations and tool use.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Felo",
+    "url": "https://felo.ai",
+    "description": "Multilingual AI search engine with mind maps, presentation generation, and agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Lepton AI Search",
+    "url": "https://search.lepton.run",
+    "description": "Open-source conversational AI search by Lepton AI with sub-second response.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AskYourPDF Research",
+    "url": "https://askyourpdf.com",
+    "description": "AI chat with academic PDFs — semantic search, citations, and reference management.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Globe Explorer",
+    "url": "https://explorer.globe.engineer",
+    "description": "AI search engine that builds visual category trees for deep topic exploration.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Liner AI",
+    "url": "https://getliner.com",
+    "description": "AI search with source previews and PDF/web highlight library for researchers.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Smithery",
+    "url": "https://smithery.ai",
+    "description": "MCP server registry and gateway for installing and managing Model Context Protocol tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "MCP Hub",
+    "url": "https://mcphub.io",
+    "description": "Directory and one-click installer for Model Context Protocol servers across Claude clients.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Glama MCP",
+    "url": "https://glama.ai/mcp",
+    "description": "MCP server marketplace with hosted gateway, security review, and metering.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Composio MCP",
+    "url": "https://mcp.composio.dev",
+    "description": "Composio's MCP marketplace with 250+ integrations exposed as MCP servers for agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "OpenRouter Agents",
+    "url": "https://openrouter.ai",
+    "description": "Unified API for 200+ LLMs with agent routing, fallback, and cost analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sigma OS",
+    "url": "https://sigmaos.com",
+    "description": "Workspace-style browser with AI Airis assistant for tab summarization and chat.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Edge Copilot",
+    "url": "https://www.microsoft.com/edge/features/copilot",
+    "description": "Microsoft Edge's built-in Copilot for browsing, summarizing, and shopping assistance.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Vivaldi Mail AI",
+    "url": "https://vivaldi.com",
+    "description": "Vivaldi browser with built-in AI mail filtering, calendar, and feed reader.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Bodyguard.ai",
+    "url": "https://bodyguard.ai",
+    "description": "Real-time AI content moderation for social, brand safety, and community management.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Sightengine",
+    "url": "https://sightengine.com",
+    "description": "AI image and video moderation APIs for nudity, violence, weapons, and brand safety.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "WebPurify",
+    "url": "https://webpurify.com",
+    "description": "AI text, image, and video moderation with human review for global platforms.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Sift",
+    "url": "https://sift.com",
+    "description": "AI digital trust and safety for fraud, account abuse, and content moderation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "ActiveFence",
+    "url": "https://activefence.com",
+    "description": "Trust and safety platform with AI for threat intelligence and content moderation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Unitary",
+    "url": "https://unitary.ai",
+    "description": "Multimodal AI content moderation for video, audio, image, and text in real time.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "MateCat",
+    "url": "https://matecat.com",
+    "description": "Open-source CAT tool with AI translation memory and adaptive MT.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Smartcat",
+    "url": "https://smartcat.com",
+    "description": "AI translation platform with marketplace, TMS, and 280+ languages.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Memsource Phrase",
+    "url": "https://phrase.com",
+    "description": "Phrase Localization Platform with AI translation, QA, and orchestration for enterprises.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Unbabel",
+    "url": "https://unbabel.com",
+    "description": "AI-plus-human translation platform for global customer support and CX.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Translated",
+    "url": "https://translated.com",
+    "description": "ModernMT-powered AI translation services for enterprises with adaptive MT.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Pairaphrase",
+    "url": "https://pairaphrase.com",
+    "description": "Enterprise AI translation with smart translation memory and document workflow.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Wordbee",
+    "url": "https://wordbee.com",
+    "description": "Cloud TMS with AI translation, project management, and quality automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "XTM International",
+    "url": "https://xtm.cloud",
+    "description": "Enterprise TMS with AI translation, machine learning quality estimation, and TMS workflow.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Bureau Works",
+    "url": "https://bureauworks.com",
+    "description": "Localization platform with AI context, biomatch, and translator productivity tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Streamlabs AI",
+    "url": "https://streamlabs.com/ai",
+    "description": "Logitech-owned Streamlabs adds AI highlights, chatbot, and stream editing for creators.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Vimeo AI",
+    "url": "https://vimeo.com/ai",
+    "description": "Vimeo's AI video editor, script-to-video, and live captions for marketers.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Mux",
+    "url": "https://mux.com",
+    "description": "Developer video infrastructure with AI captions, encoding, and analytics for apps.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Cloudflare Stream AI",
+    "url": "https://cloudflare.com/products/cloudflare-stream",
+    "description": "Cloudflare Stream with AI captions and Workers AI integration for video apps.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "OBS AI Plugins",
+    "url": "https://obsproject.com",
+    "description": "OBS Studio plugins for AI noise removal, background blur, and auto-captions.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "A2X",
+    "url": "https://a2xaccounting.com",
+    "description": "Ecommerce accounting automation with AI categorization for Amazon, Shopify, eBay sellers.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Link My Books",
+    "url": "https://linkmybooks.com",
+    "description": "Automated bookkeeping for Amazon, Etsy, eBay sellers with AI reconciliation in Xero/QBO.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Restaurant365",
+    "url": "https://restaurant365.com",
+    "description": "Restaurant accounting and operations platform with AI labor and inventory forecasts.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Marketman",
+    "url": "https://marketman.com",
+    "description": "Restaurant inventory and back-of-house with AI variance detection and ordering.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Knowify",
+    "url": "https://knowify.com",
+    "description": "Construction accounting and project management with AI cost tracking for contractors.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Buildertrend",
+    "url": "https://buildertrend.com",
+    "description": "Construction project management with AI document review, scheduling, and bidding.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Karbon",
+    "url": "https://karbonhq.com",
+    "description": "Accounting firm practice management with Karbon AI for triage and email automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Canopy",
+    "url": "https://getcanopy.com",
+    "description": "Accounting practice management with AI client portal, time tracking, and workflow.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Songtradr",
+    "url": "https://songtradr.com",
+    "description": "AI music platform for brands with rights, licensing, and creative AI for video sound.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Disco",
+    "url": "https://disco.ac",
+    "description": "AI music collaboration and rights management platform for labels and artists.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Songshare",
+    "url": "https://songshare.com",
+    "description": "Smart music links and AI analytics for artists across streaming platforms.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Amuse",
+    "url": "https://amuse.io",
+    "description": "AI music distribution platform with royalty advance algorithms for indie artists.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "TuneCore AI",
+    "url": "https://tunecore.com",
+    "description": "TuneCore distribution adds AI-powered insights, royalty splits, and fan analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Wisecut",
+    "url": "https://wisecut.video",
+    "description": "AI video editor that cuts silences, adds subtitles, and auto-edits long-form content.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AutoPod",
+    "url": "https://www.autopod.fm",
+    "description": "Premiere Pro extension that uses AI to multi-cam edit podcast and interview footage.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Recall.ai",
+    "url": "https://recall.ai",
+    "description": "Meeting bot API to capture audio, video, and transcripts from Zoom, Meet, Teams, Webex.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Gemoo",
+    "url": "https://gemoo.com",
+    "description": "AI screen recorder and video messaging with auto chapters, summaries, and clips.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Loopify",
+    "url": "https://loopify.com",
+    "description": "AI video loop and short-form generator for marketers and ecommerce brands.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Vmaker AI",
+    "url": "https://vmaker.com",
+    "description": "AI screen recorder and video editor with auto-summaries and trim by transcript.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Veed",
+    "url": "https://veed.io",
+    "description": "Online AI video editor with subtitles, eye contact, avatars, and brand kit.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Channable",
+    "url": "https://channable.com",
+    "description": "AI product feed management for 2500+ marketplaces and channels with optimization.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Productsup",
+    "url": "https://productsup.com",
+    "description": "Product-to-consumer platform with AI feed enrichment, syndication, and marketplace ops.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "DataFeedWatch",
+    "url": "https://datafeedwatch.com",
+    "description": "Feed marketing platform with AI rules for Shopping, Meta, Amazon optimization.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Feedonomics",
+    "url": "https://feedonomics.com",
+    "description": "BigCommerce-owned full-service feed and marketplace management with AI.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Loop Returns",
+    "url": "https://loopreturns.com",
+    "description": "Shopify returns platform with AI exchanges, fraud detection, and CX automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "AfterShip AI",
+    "url": "https://aftership.com",
+    "description": "Post-purchase platform with AI shipment tracking, returns, and email branding.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Narvar",
+    "url": "https://narvar.com",
+    "description": "Post-purchase experience and returns with AI personalization and fraud signals.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Yotpo AI",
+    "url": "https://yotpo.com",
+    "description": "Ecommerce retention platform with AI reviews, SMS, loyalty, and subscription tools.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Okendo AI",
+    "url": "https://okendo.io",
+    "description": "Shopify reviews and UGC platform with AI moderation and content generation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Junip",
+    "url": "https://junip.co",
+    "description": "Modern reviews app for Shopify with AI moderation and conversion-optimized widgets.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Bazaarvoice AI",
+    "url": "https://bazaarvoice.com",
+    "description": "UGC and reviews network with AI moderation, syndication, and content recommendations.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "AgentOps",
+    "url": "https://agentops.ai",
+    "description": "Observability, evals, and replay platform for LLM agents — build production-grade agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AutoGen Studio",
+    "url": "https://microsoft.github.io/autogen",
+    "description": "Microsoft's low-code interface for building multi-agent LLM workflows with AutoGen.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sema4.ai",
+    "url": "https://sema4.ai",
+    "description": "Open-source Python framework for building enterprise AI agents with actions and runbooks.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Lyzr",
+    "url": "https://lyzr.ai",
+    "description": "Agent infrastructure with managed runtimes, evals, and SDKs for enterprise teams.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "TaskWeaver",
+    "url": "https://microsoft.github.io/TaskWeaver",
+    "description": "Microsoft's code-first agent framework for stateful data analytics conversations.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "OpenAgents",
+    "url": "https://github.com/xlang-ai/OpenAgents",
+    "description": "Open framework for data, plugin, and web agents — LLM-powered task automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Vellum",
+    "url": "https://vellum.ai",
+    "description": "LLM development platform with prompt eval, retrieval, and agent orchestration tooling.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Fishbrain",
+    "url": "https://fishbrain.com",
+    "description": "World's largest fishing app with AI predictions, fish ID, and personalized hotspots.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Picture Fish",
+    "url": "https://www.picturethisai.com/picturefish",
+    "description": "AI fish identification app from photos with species data and conservation tips.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "HuntStand",
+    "url": "https://huntstand.com",
+    "description": "Hunting management with AI weather, wind, and pressure predictions for hunters.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "onX Hunt",
+    "url": "https://onxmaps.com/hunt",
+    "description": "Hunting maps with AI animal behavior insights, public land overlays, and offline maps.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Merlin Bird ID",
+    "url": "https://merlin.allaboutbirds.org",
+    "description": "Cornell Lab's AI bird identification by photo, sound, or description — free.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "PictureThis",
+    "url": "https://picturethisai.com",
+    "description": "AI plant identification with care reminders and disease diagnosis from photos.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "PlantNet",
+    "url": "https://plantnet.org",
+    "description": "Citizen-science plant ID app with AI trained on global biodiversity datasets.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "iNaturalist",
+    "url": "https://inaturalist.org",
+    "description": "Cal Academy and Nat Geo nature ID app with computer vision for any species.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Vivino",
+    "url": "https://vivino.com",
+    "description": "AI wine app that scans labels and recommends bottles using your taste profile.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Stargazer Lite",
+    "url": "https://stellarium-labs.com",
+    "description": "Stellarium Plus mobile astronomy app with AI sky recognition and night mode.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sky Tonight",
+    "url": "https://starwalk.space/en/sky-tonight",
+    "description": "AI stargazing app from Vito Tech with point-and-identify celestial recognition.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Ancestry AI",
+    "url": "https://ancestry.com",
+    "description": "Ancestry's AI photo enhancer, story generator, and DNA insights for genealogy.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "MyHeritage AI",
+    "url": "https://myheritage.com",
+    "description": "MyHeritage AI Time Machine, photo colorization, and Deep Nostalgia for family history.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "QuiltAI Pattern",
+    "url": "https://www.quiltai.com",
+    "description": "AI quilt and sewing pattern designer with fabric matching and tutorial generation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "KnitGPT",
+    "url": "https://knitgpt.com",
+    "description": "AI knitting pattern generator from photos with stitch instructions and yarn calculations.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Crossword Solver AI",
+    "url": "https://www.dictionary.com/e/crossword-solver",
+    "description": "AI crossword puzzle solver and clue assistant with definition-aware reasoning.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "GardenAI",
+    "url": "https://garden.ai",
+    "description": "AI garden planning app with plant compatibility, watering schedules, and pest ID.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Polytomic",
+    "url": "https://polytomic.com",
+    "description": "Reverse ETL and customer data sync with AI mapping for warehouses to SaaS apps.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Atlan",
+    "url": "https://atlan.com",
+    "description": "Modern data catalog with AI metadata generation, lineage, and governance for stack.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Collibra",
+    "url": "https://collibra.com",
+    "description": "Enterprise data intelligence platform with AI governance, catalog, and lineage.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Alation",
+    "url": "https://alation.com",
+    "description": "Enterprise data catalog and intelligence platform with AI search and stewardship.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Monte Carlo",
+    "url": "https://montecarlodata.com",
+    "description": "Data observability platform with AI anomaly detection and incident root cause.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Acceldata",
+    "url": "https://acceldata.io",
+    "description": "Enterprise data observability with AI for pipeline reliability and cost optimization.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Anomalo",
+    "url": "https://anomalo.com",
+    "description": "AI data quality monitoring that automatically detects issues in warehouses.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Sifflet",
+    "url": "https://siffletdata.com",
+    "description": "Data observability with AI anomaly detection, lineage, and stack-aware monitoring.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Reltio",
+    "url": "https://reltio.com",
+    "description": "AI-powered master data management cloud for customer, product, and supplier MDM.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Tamr",
+    "url": "https://tamr.com",
+    "description": "AI-driven master data management with patented Steve Madden machine learning.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Retool AI",
+    "url": "https://retool.com/products/ai",
+    "description": "Retool's AI suite for building internal tools with LLM workflows and agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Internal",
+    "url": "https://internal.io",
+    "description": "Internal-tools builder with AI-assisted UI generation from data sources.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "ToolJet",
+    "url": "https://tooljet.com",
+    "description": "Open-source low-code framework with AI workflow builder for internal apps.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Plasmic",
+    "url": "https://plasmic.app",
+    "description": "AI-assisted visual page builder and headless CMS for marketing and product teams.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Freshservice AI",
+    "url": "https://freshworks.com/freshservice",
+    "description": "Freshworks ITSM with Freddy AI for ticket triage, knowledge, and incident response.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "BMC Helix",
+    "url": "https://bmc.com/it-solutions/bmc-helix",
+    "description": "BMC's AIOps-driven ITSM platform with HelixGPT for incident and service management.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Ivanti Neurons",
+    "url": "https://ivanti.com/products/ivanti-neurons",
+    "description": "AI-powered hyperautomation for IT discovery, self-healing, and zero-trust security.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Atera",
+    "url": "https://atera.com",
+    "description": "RMM and PSA for MSPs with Action AI Copilot for ticket resolution and scripting.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "NinjaOne",
+    "url": "https://ninjaone.com",
+    "description": "RMM platform with AI ticket summarization, patching, and endpoint automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Snipe-IT",
+    "url": "https://snipeitapp.com",
+    "description": "Open-source IT asset management with AI-augmented inventory and audit workflow.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Lansweeper",
+    "url": "https://lansweeper.com",
+    "description": "Technology asset intelligence platform with AI inventory discovery and risk insights.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Device42",
+    "url": "https://device42.com",
+    "description": "Hybrid IT discovery and CMDB with AI dependency mapping and cloud migration planning.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Saviynt",
+    "url": "https://saviynt.com",
+    "description": "Identity governance and PAM with AI risk insights for enterprise IGA programs.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "SailPoint",
+    "url": "https://sailpoint.com",
+    "description": "Enterprise identity security platform with AI access modeling and certifications.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Delinea",
+    "url": "https://delinea.com",
+    "description": "Privileged access management with AI session intelligence and risk-based controls.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "BeyondTrust",
+    "url": "https://beyondtrust.com",
+    "description": "PAM and identity security with AI Insights for privileged session analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Aembit",
+    "url": "https://aembit.io",
+    "description": "Workload IAM with AI access intelligence for non-human identities across cloud.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Bird (MessageBird)",
+    "url": "https://bird.com",
+    "description": "Omnichannel CRM with AI lifecycle automation, SMS, WhatsApp, email and voice agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Sinch AI",
+    "url": "https://sinch.com",
+    "description": "Cloud comms platform with AI conversational messaging, SMS, voice agents.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Plivo CX",
+    "url": "https://plivo.com/cx",
+    "description": "AI customer experience platform with omnichannel agents and conversational analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Vonage AI Studio",
+    "url": "https://vonage.com/communications-apis/ai-studio",
+    "description": "Low-code AI virtual agent builder for voice and chat across Vonage channels.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Bandwidth AI",
+    "url": "https://bandwidth.com/ai",
+    "description": "CPaaS provider with AI Bridge for connecting voice agents to enterprise telephony.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Vespa AI",
+    "url": "https://vespa.ai",
+    "description": "Open-source AI search and recommendation engine for large-scale data and embeddings.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Trieve",
+    "url": "https://trieve.ai",
+    "description": "Hybrid AI search and discovery infrastructure for SaaS apps with relevance tuning.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Sales-i",
+    "url": "https://sales-i.com",
+    "description": "AI customer intelligence for B2B sellers with cross-sell recommendations.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Vidyard AI",
+    "url": "https://vidyard.com",
+    "description": "Video selling platform with AI Avatars and Prospector for personalized outreach.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Granica AI",
+    "url": "https://granica.ai",
+    "description": "Data privacy and AI safety platform with PII redaction and LLM data efficiency.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Privacera",
+    "url": "https://privacera.com",
+    "description": "Unified data security and AI governance for data lakes, lakehouses, and warehouses.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Eppo",
+    "url": "https://geteppo.com",
+    "description": "Feature experimentation platform with AI insights and warehouse-native A/B testing.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Statsig",
+    "url": "https://statsig.com",
+    "description": "Product experimentation and analytics platform with AI experiment summaries.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "GrowthBook",
+    "url": "https://growthbook.io",
+    "description": "Open-source feature flag and A/B testing platform with AI experiment analysis.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Level AI",
+    "url": "https://thelevel.ai",
+    "description": "Contact center AI for QA, agent assistance, and customer insights at scale.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Birdeye",
+    "url": "https://birdeye.com",
+    "description": "Reputation and customer experience platform with AI review responses and surveys.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Podium",
+    "url": "https://podium.com",
+    "description": "Local business CRM with AI website chat, SMS, and review management.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Reputation.com",
+    "url": "https://reputation.com",
+    "description": "Enterprise reputation experience platform with AI sentiment and location insights.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Vendict",
+    "url": "https://vendict.com",
+    "description": "AI for security questionnaires and vendor assessments — autofill RFPs and DDQs.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true,
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Operto",
+    "url": "https://operto.com",
+    "description": "Hotel and STR operations platform with AI guest comms, smart locks, and ops dashboards.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "HiJiffy",
+    "url": "https://hijiffy.com",
+    "description": "Conversational AI concierge for hotels with WhatsApp, web chat, and upsell automation.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "AutoLeap",
+    "url": "https://autoleap.com",
+    "description": "Modern auto-repair shop management with AI estimates, scheduling, and digital inspections.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Lillio",
+    "url": "https://lillio.com",
+    "description": "HiMama-rebranded childcare app with AI activity ideas and parent communication.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "AlayaCare",
+    "url": "https://alayacare.com",
+    "description": "Home and community care platform with AI risk prediction and visit optimization.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Kleo",
+    "url": "https://kleo.so",
+    "description": "AI LinkedIn ghostwriter Chrome extension with viral hook templates and post analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "OpenMCP",
+    "url": "https://openmcp.com",
+    "description": "Open-source MCP server registry and self-hostable gateway for enterprise agent stacks.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Pylon AI",
+    "url": "https://usepylon.com",
+    "description": "B2B customer support platform with AI ticket routing across Slack, email, and Teams.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Iask AI",
+    "url": "https://iask.ai",
+    "description": "Free AI search engine with academic, video, and image modes — sourced answers.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Modulate ToxMod",
+    "url": "https://modulate.ai",
+    "description": "Voice-native AI moderation detecting toxicity in real-time gaming voice chat.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "fundingMentioned": true
+    }
+  },
+  {
+    "name": "Sourcepoint AI Translate",
+    "url": "https://sourcepoint.com",
+    "description": "Pro AI translation suite with TMS, glossary, and reviewer workflow for global teams.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Beatport AI",
+    "url": "https://beatport.com",
+    "description": "Beatport electronic music marketplace with AI track tagging and similar-track discovery.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Eddie AI",
+    "url": "https://eddieai.com",
+    "description": "AI video editor that cuts long interviews and webinars into highlight reels by chapter.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "ReturnGO",
+    "url": "https://returngo.ai",
+    "description": "AI-powered returns and exchanges for Shopify with smart routing and analytics.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Knitca",
+    "url": "https://knitca.com",
+    "description": "AI knitting calculator and pattern adjuster for custom sizing across knit projects.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Woodworking AI",
+    "url": "https://woodworkingai.com",
+    "description": "AI assistant for woodworking — cutting lists, plans, and joinery suggestions.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "recentList": true
+    }
+  },
+  {
+    "name": "Stibo Systems",
+    "url": "https://stibosystems.com",
+    "description": "Master data management platform with AI for product, customer, and supplier MDM.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Profisee",
+    "url": "https://profisee.com",
+    "description": "Enterprise MDM with AI match-merge, data governance, and Snowflake-native deployment.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  },
+  {
+    "name": "Superblocks",
+    "url": "https://superblocks.com",
+    "description": "AI internal tool builder with code customization and enterprise governance.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "g2Reviews": true
+    }
+  },
+  {
+    "name": "Tenable AI Aware",
+    "url": "https://tenable.com",
+    "description": "Tenable Vulnerability Management with AI Aware for AI risk discovery across cloud assets.",
+    "source": "discovery_2026_05_26_batch37",
+    "signals": {
+      "analystCited": true
+    }
+  }
+]

@@ -1,18 +1,13 @@
 {
-  "generatedAt": "2026-05-27T09:36:46.003Z",
+  "generatedAt": "2026-05-27T22:29:18.856Z",
   "sourceFile": "candidates/tier1-candidates.json",
   "totals": {
-    "processed": 2,
+    "processed": 1,
     "newSucceeded": 1,
-    "newFailed": 1,
-    "totalInOutput": 99
+    "newFailed": 0,
+    "totalInOutput": 100
   },
-  "failures": [
-    {
-      "page": "/tools/multion",
-      "error": "DeepSeek output not valid JSON: Expected ':' after property name in JSON at position 122 (line 5 column 19)"
-    }
-  ],
+  "failures": [],
   "rewrites": [
     {
       "page": "/compare/duolingo-vs-loora",
@@ -2389,6 +2384,30 @@
         }
       ],
       "generatedAt": "2026-05-27T09:28:01.509Z"
+    },
+    {
+      "page": "/tools/multion",
+      "bucket": "1A",
+      "currentTitle": "MultiOn: Pricing, Features &amp; Alternatives in 2026 | RightAIChoice",
+      "weightedPosition": 3,
+      "totalImpressions": 1,
+      "totalClicks": 0,
+      "topQuery": "multion mobile app agentic features 2026",
+      "suggestions": [
+        {
+          "title": "MultiOn Mobile App: Agentic Features 2026 | RightAIChoice",
+          "rationale": "Front-loads the exact top query, promising mobile app agentic features."
+        },
+        {
+          "title": "MultiOn Pricing, Features & Agentic Mobile 2026 | RightAIChoice",
+          "rationale": "Maintains pricing/features promise while adding 'Agentic Mobile' to match query."
+        },
+        {
+          "title": "MultiOn Mobile Agent: Features, Pricing & 2026 | RightAIChoice",
+          "rationale": "Combines mobile agent focus with pricing info, aligning with searcher intent."
+        }
+      ],
+      "generatedAt": "2026-05-27T22:29:18.855Z"
     }
   ]
 }
