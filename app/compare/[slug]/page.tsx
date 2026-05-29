@@ -20,6 +20,7 @@ import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
 import { RelatedComparesRail } from '@/components/seo/related-compares'
 import { ViewTracker } from '@/components/analytics/view-tracker'
+import { CompareViewTracker } from '@/components/compare/compare-view-tracker'
 
 type TldrRow = { dimension: string; values: Record<string, string> }
 type UseCaseRow = { persona: string; recommendedSlug: string; reasoning: string }
@@ -181,6 +182,16 @@ export default async function ComparisonSlugPage({ params }: Props) {
           tool_comparisons.view_count via /api/views/compare/[id] on
           mount. Same dedup + bot filter as /tools/[slug]. */}
       <ViewTracker entityType="compare" entityId={comparison.id as string} />
+      {/* Mixpanel/Supabase comparison_viewed — mount-once client tracker so
+          the /admin compare dashboards stop reading a never-fired event.
+          categoriesRepresented is empty: the comparison query doesn't join
+          tool categories, so we keep it minimal rather than add a fetch. */}
+      <CompareViewTracker
+        toolSlugs={toolSlugs}
+        isEditorialCompare={editorial.is_editorial === true}
+        compareSlug={slug}
+        categoriesRepresented={[]}
+      />
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">

@@ -22,6 +22,10 @@ jobs:
           node-version: '20'
       - name: Install
         run: npm ci
+      - name: Verify event registry (9.A.2 — static, no secrets)
+        # Fails the run if a dashboard depends on a never-firing event, or a
+        # defined event is neither wired nor acknowledged in lib/analytics-registry.ts.
+        run: npx tsx scripts/audit/verify-event-registry.ts
       - name: Run watchdog
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

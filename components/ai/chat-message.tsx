@@ -2,6 +2,7 @@
 
 import { Bot, User } from 'lucide-react'
 import { ToolCardInline } from './tool-card-inline'
+import { analytics } from '@/lib/analytics'
 
 type ToolMention = {
   slug: string
@@ -52,6 +53,7 @@ export function ChatMessage({ role, content, toolMentions }: Props) {
                 pricing={tool.pricing}
                 rating={tool.rating}
                 reviewCount={tool.reviewCount}
+                onClick={() => analytics.aiChatToolClicked(tool.slug)}
               />
             ))}
           </div>

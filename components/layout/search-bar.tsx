@@ -172,12 +172,25 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
               <div className="px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                 Tools
               </div>
-              {results.tools.map((tool) => {
+              {results.tools.map((tool, toolPos) => {
                 const idx = itemIndex++
                 return (
                   <button
                     key={tool.id}
-                    onClick={() => navigateTo('tool', tool.slug)}
+                    onClick={() => {
+                      // search_result_clicked — fires on autocomplete tool
+                      // selection so the /admin search dashboards stop reading
+                      // a never-fired event. Rich variant carries the tool_id
+                      // + total_results context already available here.
+                      analytics.searchResultClickedRich({
+                        query,
+                        tool_slug: tool.slug,
+                        tool_id: tool.id,
+                        position: toolPos,
+                        total_results: results.tools.length,
+                      })
+                      navigateTo('tool', tool.slug)
+                    }}
                     className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                       idx === activeIndex
                         ? 'bg-zinc-800 text-white'

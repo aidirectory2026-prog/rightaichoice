@@ -9,12 +9,14 @@ type Props = {
   pricing: string
   rating: number
   reviewCount: number
+  onClick?: () => void
 }
 
-export function ToolCardInline({ slug, name, tagline, pricing, rating, reviewCount }: Props) {
+export function ToolCardInline({ slug, name, tagline, pricing, rating, reviewCount, onClick }: Props) {
   return (
     <Link
       href={`/tools/${slug}`}
+      onClick={onClick}
       className="group flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 hover:border-zinc-700 hover:bg-zinc-900 transition-all duration-200"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-800">
