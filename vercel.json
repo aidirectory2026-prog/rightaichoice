@@ -48,6 +48,10 @@
     {
       "path": "/api/cron/calculate-viability",
       "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/cron/onboard-tools",
+      "schedule": "7,37 * * * *"
     }
   ]
 }

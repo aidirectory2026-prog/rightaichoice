@@ -283,8 +283,12 @@ INSERT INTO tools (
       `'${pgArray(e.use_cases ?? [])}'`,
       sqlNullableText(e.our_views),
       `'${sqlEscape(JSON.stringify(e.latest_updates ?? []))}'::jsonb`,
-      Array.isArray(e.latest_updates) && e.latest_updates.length > 0 ? 'now()' : 'NULL',
-      'now()',
+      // Anti-starvation: leave latest_updates_at + last_verified_at NULL so
+      // the stalest-first pipelines (ORDER BY ... ASC NULLS FIRST) pick these
+      // bulk-inserted tools up FIRST. onboarded_at also defaults NULL → the
+      // fast onboard orchestrator reaches them within ~30 min.
+      'NULL',
+      'NULL',
     ].join(', ')})`
   })
 

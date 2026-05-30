@@ -165,7 +165,14 @@ export async function runIngestion(
         community_links: enriched.community_links,
         use_cases: enriched.use_cases,
         our_views: enriched.our_views,
-        last_verified_at: new Date().toISOString(),
+        // Anti-starvation (Phase 9 onboarding): leave the three freshness
+        // columns NULL on insert so the stalest-first pipelines (refresh →
+        // last_verified_at, viability → viability_updated_at, latest-updates →
+        // latest_updates_at — all ORDER BY ... ASC NULLS FIRST) grab a
+        // brand-new tool FIRST instead of pushing it to the back of the queue.
+        // onboarded_at also defaults to NULL so the fast onboard orchestrator
+        // (lib/cron/onboard.ts) picks it up within ~30 min.
+        last_verified_at: null,
         is_published: true,
       })
 
