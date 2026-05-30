@@ -106,7 +106,14 @@ async function submitChunk(apiKey: string, urls: string[]) {
 
 const handler = cronRoute({ pipelineKey: 'submit-urls-bing' }, async (ctx) => {
   const apiKey = process.env.BING_WEBMASTER_API_KEY
-  if (!apiKey) throw new Error('BING_WEBMASTER_API_KEY missing in Vercel env')
+  if (!apiKey) {
+    // Not configured in this environment. Skip cleanly instead of failing
+    // daily — IndexNow (indexnow-recent / indexnow-unindexed) already notifies
+    // Bing of new/changed URLs, so Bing isn't blind without this. Set
+    // BING_WEBMASTER_API_KEY in Vercel to re-enable direct quota-aware submission.
+    ctx.recordMetadata({ skipped: 'env_not_configured', missing: 'BING_WEBMASTER_API_KEY' })
+    return { ok: true, skipped: 'env_not_configured' }
+  }
 
   const supabase = getAdminClient()
 
