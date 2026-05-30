@@ -46,7 +46,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = stack.pillar?.metaDescription ?? stack.description
 
   return {
-    title,
+    // pillar metaTitles already include "| RightAIChoice"; use absolute so the
+    // root layout's "%s | RightAIChoice" template doesn't double it. Non-pillar
+    // stacks fall through to the template as before.
+    title: stack.pillar ? { absolute: stack.pillar.metaTitle } : stack.title,
     description,
     openGraph: {
       title,

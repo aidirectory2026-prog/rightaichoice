@@ -7,6 +7,7 @@
 import type { ReactNode } from 'react'
 import { aiStackForEarlyStageSaas } from './stack-pillars/ai-stack-for-early-stage-saas'
 import { aiStackForContentCreators } from './stack-pillars/ai-stack-for-content-creators'
+import { aiStackForMarketingTeams } from './stack-pillars/ai-stack-for-marketing-teams'
 
 export type StackTool = {
   name: string
@@ -1944,6 +1945,7 @@ export const STACKS: StackConfig[] = [
   // a separate .tsx so the editorial intro can contain JSX.
   aiStackForEarlyStageSaas,
   aiStackForContentCreators,
+  aiStackForMarketingTeams,
 ]
 
 export function getStackBySlug(slug: string): StackConfig | undefined {
