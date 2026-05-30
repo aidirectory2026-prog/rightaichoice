@@ -42,6 +42,48 @@ async function signalRecrawl(path: string, event: string): Promise<void> {
   }
 }
 
+/**
+ * Freeze the page's current GSC metrics (latest 28d snapshot) onto the active
+ * title_overrides row, so /seo-impact can compute lift 28 days later. Captured
+ * at approval = pre-recrawl, i.e. the title's old performance. Best-effort.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function captureBaseline(admin: any, path: string): Promise<void> {
+  try {
+    const { data: snap } = await admin
+      .from('gsc_snapshots')
+      .select('snapshot_date')
+      .eq('scope', '28d')
+      .order('snapshot_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const sd = (snap as { snapshot_date?: string } | null)?.snapshot_date
+    if (!sd) return
+    const { data: m } = await admin.rpc('gsc_page_metrics', {
+      p_path: path,
+      p_snapshot_date: sd,
+    })
+    const row = (Array.isArray(m) ? m[0] : m) as
+      | { wpos: number | null; impressions: number; clicks: number; ctr: number }
+      | null
+    if (!row) return
+    await admin
+      .from('title_overrides')
+      .update({
+        baseline_captured_at: new Date().toISOString(),
+        baseline_snapshot_date: sd,
+        baseline_position: row.wpos,
+        baseline_impressions: row.impressions,
+        baseline_clicks: row.clicks,
+        baseline_ctr: row.ctr,
+      })
+      .eq('page_path', path)
+      .is('reverted_at', null)
+  } catch (e) {
+    console.warn(`[tier1] captureBaseline(${path}) failed:`, (e as Error).message)
+  }
+}
+
 async function requireAdmin() {
   const supabase = await createClient()
   const {
@@ -100,6 +142,10 @@ export async function approveTitleOverride(
     })
 
     if (error) return { error: error.message }
+
+    // Freeze the pre-recrawl GSC baseline so /seo-impact can measure lift in
+    // 28 days. Best-effort — never block the approval.
+    await captureBaseline(admin, args.pagePath)
 
     revalidatePath(args.pagePath)
     revalidatePath('/admin/tier1-review')
