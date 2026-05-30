@@ -65,7 +65,10 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   if (cornerstone && page === 1) {
     return {
       ...base,
-      title: cornerstone.metaTitle,
+      // absolute bypasses the root layout's "%s | RightAIChoice" template —
+      // cornerstone metaTitles already include the brand suffix, so without
+      // this the title doubles ("… | RightAIChoice | RightAIChoice").
+      title: { absolute: cornerstone.metaTitle },
       description: cornerstone.metaDescription,
       keywords: [
         `best ${category.name} AI tools`,
