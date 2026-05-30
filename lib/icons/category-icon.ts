@@ -34,6 +34,8 @@ import {
   Blocks,
   Wallet,
   Building,
+  Server,
+  PieChart,
   LayoutGrid,
   type LucideIcon,
 } from 'lucide-react'
@@ -65,6 +67,8 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   presentations: Presentation,
   'chatbots-assistants': MessageSquare,
   'project-management': ClipboardList,
+  'developer-infrastructure': Server,
+  'business-intelligence': PieChart,
   ecommerce: ShoppingCart,
   'real-estate': Home,
   'spreadsheets-data': Table,

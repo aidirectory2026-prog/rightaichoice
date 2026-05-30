@@ -33,6 +33,14 @@ export default async function CategoriesPage() {
     countMap[row.category_id] = Number(row.n)
   })
 
+  // Phase 9 (Automations & Catalog) D1 — hide categories with 0 published tools
+  // (category_published_counts only returns categories that HAVE tools, so any
+  // category missing from countMap is empty). Keeps newly-added categories
+  // (e.g. developer-infrastructure) off the public listing until the P0 tools
+  // populate them — no empty thin pages.
+  const visibleCategories = (categories as Array<{ id: string; slug: string; name: string; icon: string | null; description: string | null }>)
+    .filter((c) => (countMap[c.id] ?? 0) > 0)
+
   return (
     <>
       <Navbar />
@@ -43,13 +51,13 @@ export default async function CategoriesPage() {
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-white">AI Tool Categories</h1>
             <p className="mt-2 text-zinc-400">
-              Browse {categories.length} categories of AI tools — find the right one for your use case.
+              Browse {visibleCategories.length} categories of AI tools — find the right one for your use case.
             </p>
           </div>
 
           {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {categories.map((cat: { id: string; slug: string; name: string; icon: string | null; description: string | null }) => (
+            {visibleCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/categories/${cat.slug}`}
