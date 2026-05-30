@@ -74,6 +74,12 @@ All wrapped by `cronRoute()` in `lib/pipelines/with-logging.ts`, logging to
   `triage-gsc` should detect "no fresh snapshot" and the digest should say so,
   not send a stale/empty digest that reads as "nothing to do."
 
+## Status (2026-05-30)
+
+- ✅ **#4 `/admin/health` dashboard** — shipped. Reads `pipeline_health()` (mig 130); per job: last status, last-success age, failures 24h/7d, avg duration, 7d cost, last error; sorted worst-first; flags failing + stale (no success in 8d). **Immediately surfaced a real outage: `submit-urls-bing` has failed 6/6 runs this week and never succeeded** — investigate next.
+- ✅ **#6 GSC OAuth auto-refresh** — already handled in code: `lib/seo/gsc-client.ts` uses `google-auth-library` to exchange the refresh_token for a fresh access_token on every call. Remaining risk is *refresh-token* expiry if the Google OAuth app is in "testing" mode (7-day expiry) — **operator action: ensure the OAuth consent screen is "In production"**, not testing. No code needed.
+- ⏳ Remaining: advisory locks on cursor jobs (#1), quota preflight (#2), retry/backoff (#3), GH-Actions→Fluid migration (#5), runbooks. Lower urgency; do after the active growth work.
+
 ## Verify
 
 Force a failure (revoke a token, kill mid-run) → exactly **one** alert fires (no
