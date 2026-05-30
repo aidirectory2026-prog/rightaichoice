@@ -1,12 +1,18 @@
 /**
  * Phase 7H follow-up (2026-05-13): pagination control for the /compare
- * hub's "all editorial comparisons" listing. Mirrors ToolPagination's
- * behavior + style but with the right noun ("comparison" not "tool")
- * and uses the current pathname so the same URL pattern works.
+ * hub's "all editorial comparisons" listing.
+ *
+ * Phase 9 Smart SEO (2026-05-30): converted from <button onClick=router.push>
+ * to crawlable <Link href>. The button version meant Googlebot could only see
+ * page 1 (24 compares) and never followed pagination — which is why a GSC
+ * URL-Inspection sample found 64% of editorial compares "URL is unknown to
+ * Google". Real <a href> links let the crawler reach every page → discover
+ * every compare. Still a client component only to read current query params.
  */
 'use client'
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function ComparePagination({
@@ -18,27 +24,29 @@ export function ComparePagination({
   totalPages: number
   total: number
 }) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
   if (totalPages <= 1) return null
 
-  function goToPage(p: number) {
+  function hrefFor(p: number): string {
     const params = new URLSearchParams(searchParams.toString())
-    if (p <= 1) {
-      params.delete('page')
-    } else {
-      params.set('page', String(p))
-    }
+    if (p <= 1) params.delete('page')
+    else params.set('page', String(p))
     const qs = params.toString()
-    router.push(qs ? `${pathname}?${qs}` : pathname)
+    return qs ? `${pathname}?${qs}` : pathname
   }
 
   const pages: number[] = []
   const start = Math.max(1, page - 2)
   const end = Math.min(totalPages, page + 2)
   for (let i = start; i <= end; i++) pages.push(i)
+
+  const numCls =
+    'rounded-md border border-zinc-800 bg-zinc-900/40 px-3 py-1 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white'
+  const arrowCls =
+    'inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/40 px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white'
+  const disabledCls = 'cursor-not-allowed opacity-40'
 
   return (
     <div className="mt-8 flex items-center justify-between border-t border-zinc-800/50 pt-6">
@@ -47,55 +55,54 @@ export function ComparePagination({
       </p>
 
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => goToPage(page - 1)}
-          disabled={page <= 1}
-          className="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/40 px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+        {page > 1 ? (
+          <Link href={hrefFor(page - 1)} rel="prev" className={arrowCls} aria-label="Previous page">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+        ) : (
+          <span className={`${arrowCls} ${disabledCls}`} aria-disabled="true">
+            <ChevronLeft className="h-4 w-4" />
+          </span>
+        )}
 
         {start > 1 && (
           <>
-            <button onClick={() => goToPage(1)} className="rounded-md border border-zinc-800 bg-zinc-900/40 px-3 py-1 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white">
-              1
-            </button>
+            <Link href={hrefFor(1)} className={numCls}>1</Link>
             {start > 2 && <span className="px-1 text-zinc-600">…</span>}
           </>
         )}
 
         {pages.map((p) => (
-          <button
+          <Link
             key={p}
-            onClick={() => goToPage(p)}
-            className={`rounded-md border px-3 py-1 text-sm transition-colors ${
+            href={hrefFor(p)}
+            aria-current={p === page ? 'page' : undefined}
+            className={
               p === page
-                ? 'border-emerald-700 bg-emerald-900/30 text-emerald-300'
-                : 'border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-            }`}
+                ? 'rounded-md border px-3 py-1 text-sm transition-colors border-emerald-700 bg-emerald-900/30 text-emerald-300'
+                : numCls
+            }
           >
             {p}
-          </button>
+          </Link>
         ))}
 
         {end < totalPages && (
           <>
             {end < totalPages - 1 && <span className="px-1 text-zinc-600">…</span>}
-            <button onClick={() => goToPage(totalPages)} className="rounded-md border border-zinc-800 bg-zinc-900/40 px-3 py-1 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white">
-              {totalPages}
-            </button>
+            <Link href={hrefFor(totalPages)} className={numCls}>{totalPages}</Link>
           </>
         )}
 
-        <button
-          onClick={() => goToPage(page + 1)}
-          disabled={page >= totalPages}
-          className="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/40 px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Next page"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        {page < totalPages ? (
+          <Link href={hrefFor(page + 1)} rel="next" className={arrowCls} aria-label="Next page">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <span className={`${arrowCls} ${disabledCls}`} aria-disabled="true">
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        )}
       </div>
     </div>
   )

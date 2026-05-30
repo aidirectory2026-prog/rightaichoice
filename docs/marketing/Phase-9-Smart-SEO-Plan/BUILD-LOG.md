@@ -1300,6 +1300,20 @@ Rejected a fake recrawl-wave (would contradict the freshness-honesty we just shi
 
 ---
 
+## Day 5 (cont.) — 2026-05-30 — /seo-impact + the real cause of the 34% compare gap
+
+### #1 /seo-impact — lift measurement closes the loop (`298adcb`, migs 128–129)
+`gsc_page_metrics(path,date)` + baseline/outcome columns on `title_overrides` + `run_seo_impact()` (fills outcomes for changes ≥28d old: title overrides + executed `weekly_loop_actions`). Cron `/api/cron/seo-impact` (Mon 08:30) + `/admin/seo-impact` dashboard (before/after pos+CTR, pending queue) + nav. Approve action now freezes the pre-recrawl GSC baseline. Backfilled baseline for **103 active overrides** (avg pos 18.9, CTR 0.126% — the number to beat). Verified: simulated a 29-day-old baseline → measures cleanly.
+
+### #2 Tier-2 "content depth" → the data killed the premise, twice
+- **Buried pos-31–50 tool pages are already content-complete** — all 162 have full descriptions, features, tutorials, models, pricing, and **avg 9.1 FAQs**; avg only **13.8 impressions**. Adding content there is wasted effort; their lever was internal links (shipped: buried-tool boost). Skipped.
+- **Editorial compares are already fully editorial** — 530/530 indexable compares have tldr+verdict+faqs. The 34%-indexed gap is **NOT content**. The GSC URL-Inspection sample shows **64/100 compares are "URL is unknown to Google"** (never discovered) — only 2 are quality/5xx.
+- **Root cause found:** `ComparePagination` (and `ToolPagination`) were `'use client'` components using `<button onClick={router.push}>` for every page link — **zero `<a href>`**. Googlebot saw page 1's 24 compares and could not follow pagination → the other ~500 compares were undiscoverable. (Exactly Opus 9.D's "crawlable pagination — `<Link>` not `<button>`.")
+- **Fix:** converted both paginations to crawlable `<Link href>` (+ `rel=next/prev`, `aria-current`). Verified in rendered HTML: `/compare` now serves `<a href="/compare?page=2…23">`. `/search` is `noindex,follow` so its now-crawlable pagination only aids discovery. This is the structural fix for the compare-indexation gap — far higher ROI than the "unique content" it doesn't need.
+- **Operator follow-up:** GSC → Request Indexing on `/compare` to accelerate re-discovery; re-run the indexation audit next Monday to watch "unknown" → "indexed".
+
+---
+
 ## Open tasks blocking next ship
 
 1. **#43 Brand SERP audit** — open incognito, search "rightaichoice", paste top-5 URLs back. 5 minutes. Tells us what to do for brand defense.
