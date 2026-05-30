@@ -8,13 +8,22 @@ name: Sync page_tool_mentions
 #   2. Code-config + blog scripts — code_config and blog_frontmatter rows
 #      (best/role/stack pages + blog posts).
 #
-# Manual trigger only for now. Will move to a schedule once the 1.1
-# rollout is verified live.
+# Nightly schedule (01:15 UTC) keeps the mention->page linkage current so
+# newly-ingested / mid-catalog tools surface in their page rollups instead
+# of starving. Both code/blog scripts and the db_join RPC are rebuild-style
+# (upsert on (page_path,tool_slug) + delete-stale), so re-running is safe
+# and idempotent. workflow_dispatch is retained for manual force-fires.
+#
+# 01:15 UTC sits clear of the 02:00-05:00 freshness stack, the 00:30 viability
+# Vercel cron, and the 01:00/01:30 IndexNow GH jobs.
 #
 # Required secrets:
 #   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 on:
+  schedule:
+    # Rebuild page_tool_mentions nightly at 01:15 UTC
+    - cron: '15 1 * * *'
   workflow_dispatch:
     inputs:
       include_db_join:
@@ -70,7 +79,9 @@ jobs:
           fi
 
       - name: Sync db_join mentions (via SQL RPC)
-        if: ${{ github.event.inputs.include_db_join == 'true' && github.event.inputs.dry_run != 'true' }}
+        # On a scheduled run inputs are empty -> include db_join (the default)
+        # and never dry-run. On manual dispatch, honor the chosen inputs.
+        if: ${{ github.event_name == 'schedule' || (github.event.inputs.include_db_join == 'true' && github.event.inputs.dry_run != 'true') }}
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

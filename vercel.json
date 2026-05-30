@@ -44,6 +44,10 @@
     {
       "path": "/api/cron/indexnow-unindexed",
       "schedule": "0 10 * * 2"
+    },
+    {
+      "path": "/api/cron/calculate-viability",
+      "schedule": "30 0 * * *"
     }
   ]
 }

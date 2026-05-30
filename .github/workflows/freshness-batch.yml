@@ -30,6 +30,13 @@ on:
     - cron: '0 4 * * *'
     # Regenerate stale compare editorials — daily 05:00 UTC
     - cron: '0 5 * * *'
+    # Backfill real logos for tools missing logo_url — daily 05:40 UTC.
+    # Staggered AFTER the 02:00-05:00 freshness/ingest stack so freshly
+    # ingested tools (04:00) get a logo the same night. Idempotent: the
+    # script only ever fetches+verifies+rehosts for rows with null/empty
+    # logo_url (runtime favicon fallback covers the rest), so re-running
+    # never overwrites or churns existing logos.
+    - cron: '40 5 * * *'
   workflow_dispatch:
     inputs:
       pipeline:
@@ -41,6 +48,7 @@ on:
           - refresh-latest-updates
           - ingest-tools-batch
           - cascade-batch
+          - backfill-logos
           - all
       batch_size:
         description: 'Override default batch size (optional, blank = pipeline default)'
@@ -168,4 +176,37 @@ jobs:
             npx tsx scripts/refresh-compare-editorials-batch.ts --batch="$BATCH_SIZE"
           else
             npx tsx scripts/refresh-compare-editorials-batch.ts
+          fi
+
+  # ── Backfill real logos for tools missing logo_url — nightly 05:40 UTC ──
+  # Heavy script (downloads+verifies+rehosts homepage icons via sharp), so it
+  # lives in GH Actions rather than a Vercel route. Idempotent + "missing-only"
+  # by construction: --apply selects ONLY published tools with null/empty
+  # logo_url and a website_url, and the DB write is itself guarded on
+  # logo_url.is.null,logo_url.eq.'' — existing logos are never touched.
+  backfill-logos:
+    if: >-
+      github.event.schedule == '40 5 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'backfill-logos' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Backfill missing logos (download + verify + rehost)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
+        run: |
+          if [ -n "$BATCH_SIZE" ]; then
+            npx tsx scripts/backfill-logos.ts --apply --limit="$BATCH_SIZE"
+          else
+            npx tsx scripts/backfill-logos.ts --apply
           fi

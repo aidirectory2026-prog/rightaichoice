@@ -15,8 +15,12 @@ on:
     - cron: '0 5 * * 1'
     # Discover tutorials — Tuesdays and Fridays at 7:00 AM UTC
     - cron: '0 7 * * 2,5'
-    # Calculate viability scores — Wednesdays at 3:00 AM UTC
-    - cron: '0 3 * * 3'
+    # Calculate viability scores — moved to a nightly Vercel cron
+    # (/api/cron/calculate-viability @ 00:30 UTC, see vercel.json). The old
+    # weekly Wed-03:00 GH curl is removed: it fired the same secret-gated,
+    # stalest-first, idempotent route but only once/week (50/run ~40-day
+    # full-catalog cycle) AND landed inside the 02:00-05:00 freshness window.
+    # Manual workflow_dispatch is retained below for force-fires.
     # Submit all URLs to IndexNow — Sundays at 1:00 AM UTC
     - cron: '0 1 * * 0'
     # Submit recently-seeded URLs to IndexNow — daily at 1:30 AM UTC
@@ -147,10 +151,11 @@ jobs:
           echo "Response body: $body"
           if [ "$code" != "200" ]; then exit 1; fi
 
+  # Scheduling moved to a nightly Vercel cron (see vercel.json). This job is
+  # now manual-only (workflow_dispatch) for operator force-fires.
   calculate-viability:
     if: >-
-      github.event.schedule == '0 3 * * 3' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'calculate-viability' || github.event.inputs.pipeline == 'all'))
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.pipeline == 'calculate-viability' || github.event.inputs.pipeline == 'all')
     runs-on: ubuntu-latest
     steps:
       - name: Calculate viability scores
