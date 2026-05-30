@@ -1289,8 +1289,10 @@ Approve/revert now **bump `pages_freshness` (→ sitemap `lastmod`) + ping Index
 ### Ranking lever for "other pages" (`7bf6212`, mig 125)
 Rejected a fake recrawl-wave (would contradict the freshness-honesty we just shipped). Built the legitimate lever: `gsc_tool_positions` (per-tool weighted position from the snapshot; **709 tools, 168 buried pos 20–50**) + `getBuriedToolSlugs()` unioned into the existing sibling-rail bias so internal PageRank flows to indexed-but-buried pages too. Refreshed weekly inside the `snapshot-gsc` cron.
 
-### Verification
-`tsc --noEmit` clean at every step. Migration 125 applied to prod via MCP (`SET search_path=''`, SECURITY DEFINER, anon/authenticated revoked — clean per 9.C rules). 39 overrides confirmed live in `title_overrides`.
+### Verification (pre-deploy) — caught + fixed a freshness-inflation bug (`mig 126`)
+`tsc --noEmit` clean at every step. Migration 125 applied to prod via MCP (`SET search_path=''`, SECURITY DEFINER, anon/authenticated revoked — clean per 9.C rules). 39 overrides confirmed live in `title_overrides`. Ran a full **production build** (`next build`) — green; booted `next start`, sitemaps serve valid XML.
+
+**But the build-time sitemap showed `lastmod ≈ now` for ~all tools.** Root cause: `trg_tools_freshness_cascade` fired on *every* tools UPDATE where slug was unchanged — so a routine refresh-cron pass (last_full_refresh_at / view_count / search_vector) stamped `pages_freshness = now()` for **1,888 tools**, re-collapsing `<lastmod>` to "everything changed today" — the exact signal S1 removed, just relocated into the trigger. **Fixed in `migration 126`:** trigger now fires only when a user-visible content column changes (name/tagline/description/pricing/features/links/etc.). Verified in rolled-back txns: routine update → freshness unchanged (`06:35`); content edit → bumps. Already-inflated rows re-baseline naturally as content changes; nightly refreshes no longer re-inflate. **Net: deploy is safe AND S1 now genuinely delivers honest lastmod.**
 
 ### Next
 - **Operator:** review the 39 approvals at `/admin/tier1-review`; optionally GSC "Request Indexing" the top ~10 compares; measure Day-7/28 lift.
