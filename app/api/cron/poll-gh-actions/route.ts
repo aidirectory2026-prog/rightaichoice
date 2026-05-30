@@ -11,6 +11,14 @@
 // scope only, on aidirectory2026-prog/rightaichoice. Set in Vercel env
 // (Production + Preview). Without it the cron exits cleanly with a
 // no-op status (visible in pipeline_runs as items_processed=0).
+//
+// Idempotency: this body is safe under concurrent execution WITHOUT an
+// advisory lock. Every write is an UPSERT keyed by the unique index
+// pipeline_runs_external_id_uniq (source, external_id) with
+// onConflict: 'source,external_id'. If two poller fires overlap (the
+// 10-min Vercel cron vs a manual trigger), both converge to the same
+// row per GH run_id — last-write-wins on identical data, never a
+// double-insert. No pg_try_advisory_lock needed. (Verified 2026-05-31.)
 
 import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'

@@ -21,7 +21,7 @@ import {
 
 type Source = 'vercel_cron' | 'gh_actions'
 type Status = 'running' | 'success' | 'failure' | 'timeout' | 'partial'
-type ErrorClass = 'timeout' | 'api_error' | 'db_error' | 'validation' | 'unknown'
+type ErrorClass = 'timeout' | 'api_error' | 'db_error' | 'validation' | 'rate_limited' | 'unknown'
 
 export type PipelineCtx = {
   recordItems: (counts: { processed?: number; succeeded?: number; failed?: number }) => void
@@ -227,6 +227,18 @@ function classifyError(err: unknown): ErrorClass {
   const message = err instanceof Error ? err.message : String(err)
   const name = err instanceof Error ? err.name : ''
   const lower = message.toLowerCase()
+  // Rate limits (DeepSeek/Apify/Anthropic 429, "rate limit", "too many requests")
+  // are checked first because some of these also match the api_error HTTP-4xx
+  // heuristic below, and we want the more specific, retry-friendly class to win.
+  if (
+    lower.includes('429') ||
+    lower.includes('rate limit') ||
+    lower.includes('rate-limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('quota') ||
+    lower.includes('overloaded')
+  )
+    return 'rate_limited'
   if (
     name === 'AbortError' ||
     lower.includes('timeout') ||
@@ -254,4 +266,66 @@ function classifyError(err: unknown): ErrorClass {
   )
     return 'api_error'
   return 'unknown'
+}
+
+// ── Retry / backoff for transient failures ─────────────────────────
+//
+// Catalog pipelines hammer flaky third parties (Apify actors, DeepSeek
+// synthesis, vendor sites). A single network blip or a provider 429
+// shouldn't fail a whole per-tool refresh that we have to wait a full
+// cadence to retry. withRetry() wraps ONE unit of work (e.g. one tool's
+// processOne) and retries only on classes we know are safe to re-attempt.
+//
+// Conservative by design:
+//   - Permanent classes (validation, db_error, unknown) are re-thrown
+//     immediately — we never silently swallow a genuine bug.
+//   - Default 3 attempts (2 retries) with exponential backoff + jitter.
+//   - The thrown error is preserved, so the wrapper's error_class /
+//     error_message recording is unchanged on final failure.
+
+const TRANSIENT_CLASSES: ReadonlySet<ErrorClass> = new Set<ErrorClass>([
+  'timeout',
+  'api_error',
+  'rate_limited',
+])
+
+export function isTransientError(err: unknown): boolean {
+  return TRANSIENT_CLASSES.has(classifyError(err))
+}
+
+export type RetryOptions = {
+  /** Total attempts including the first. Default 3 (= 2 retries). */
+  attempts?: number
+  /** Base backoff in ms; doubles each attempt. Default 500. */
+  baseDelayMs?: number
+  /** Cap on a single backoff wait. Default 8000. */
+  maxDelayMs?: number
+  /** Override which errors are retryable. Default: transient classes. */
+  isRetryable?: (err: unknown) => boolean
+  /** Optional hook for observability (e.g. ctx.recordMetadata counters). */
+  onRetry?: (info: { attempt: number; delayMs: number; error: unknown }) => void
+}
+
+export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
+  const attempts = Math.max(1, opts.attempts ?? 3)
+  const baseDelayMs = opts.baseDelayMs ?? 500
+  const maxDelayMs = opts.maxDelayMs ?? 8000
+  const isRetryable = opts.isRetryable ?? isTransientError
+
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastErr = err
+      // Don't retry permanent errors, and don't sleep after the last attempt.
+      if (attempt >= attempts || !isRetryable(err)) break
+      const expo = baseDelayMs * 2 ** (attempt - 1)
+      const jitter = Math.random() * baseDelayMs
+      const delayMs = Math.min(maxDelayMs, expo + jitter)
+      opts.onRetry?.({ attempt, delayMs, error: err })
+      await new Promise((r) => setTimeout(r, delayMs))
+    }
+  }
+  throw lastErr
 }

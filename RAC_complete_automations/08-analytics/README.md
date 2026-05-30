@@ -30,3 +30,14 @@ Cross-cutting. Reads from every other department, surfaces the manager's daily/w
 - Weekly report Friday → manager kills bottom-2 automations, doubles top-2 (Day 30 decision)
 - Page view spike on a slug → SEO surface (early ranking detection) + Content (newsletter spotlight candidate)
 - Cost spike → cron throttling decision (e.g., refresh-tools batch size)
+
+---
+
+## Implementation log — Phase 9 (Automations & Catalog)
+
+### 2026-05-31 — Reliability hardening + /admin/health (A5)
+- **What:** A single operations dashboard for all ~40 automations, plus automatic retry on transient failures.
+- **Why:** "Best automations" needs observability + self-healing. Failures and staleness were only visible by digging through logs.
+- **How (non-technical):** `/admin/health` shows, per automation, when it last ran, whether it succeeded, how many items it processed, its cost, and whether it's overdue for its schedule — worst first. It also shows the catalog freshness SLA and any failures in the last 24h. Separately, when a job hits a temporary network/rate-limit blip it now retries a few times automatically instead of failing the whole run.
+- **How (technical):** `app/admin/health/page.tsx` reads `pipeline_runs` (via `pipeline_health()` RPC + a bounded `DISTINCT ON (pipeline_key)` last-run query + `_admin_audit_exec` for the `fresh-7day-sla` SQL); a hand-derived `CADENCE_HOURS` map flags daily jobs with no success in >36h. `lib/pipelines/with-logging.ts` gains a `rate_limited` error class, `isTransientError()`, and an opt-in `withRetry()` (3 attempts, exp backoff + jitter, retries only timeout/api_error/rate_limited; permanents re-throw). Wired into `lib/cron/refresh.ts` (`callDeepSeek`) and `app/api/cron/refresh-latest-updates` (source fetches + synthesis). `poll-gh-actions` confirmed already idempotent (UPSERT on `(source, external_id)` unique index) — no lock added.
+- **Maintenance:** keep `CADENCE_HOURS` in sync when cron schedules change.

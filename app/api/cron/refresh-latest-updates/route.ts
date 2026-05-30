@@ -14,7 +14,7 @@
  *
  * Schedule (vercel.json): "0 2 * * *" — daily at 02:00 UTC.
  */
-import { cronRoute } from '@/lib/pipelines/with-logging'
+import { cronRoute, withRetry } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { discoverChangelog, discoverBlog } from '@/lib/cron/scrape-changelog'
 import { fetchNewsMentions } from '@/lib/cron/scrape-news'
@@ -57,10 +57,13 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
     discoverChangelog(tool.website_url, tool.changelog_url).catch(() => null),
     discoverBlog(tool.website_url, tool.blog_url).catch(() => null),
   ])
+  // Each source is independently retried on transient failures (Apify/news
+  // 5xx/429, network blips) before falling back to an empty list, so one
+  // flaky vendor call doesn't silently drop a whole signal channel.
   const [news, hn, reddit] = await Promise.all([
-    fetchNewsMentions(tool.name, 8).catch(() => []),
-    searchHN(tool.name, 30).catch(() => []),
-    searchReddit(tool.name, 5, 30).catch(() => []),
+    withRetry(() => fetchNewsMentions(tool.name, 8)).catch(() => []),
+    withRetry(() => searchHN(tool.name, 30)).catch(() => []),
+    withRetry(() => searchReddit(tool.name, 5, 30)).catch(() => []),
   ])
   const signal: SignalInput = {
     changelog_text: changelog?.text,
@@ -77,7 +80,10 @@ async function processOne(tool: ToolRow): Promise<{ ok: boolean; error?: string 
       created_utc: r.created_utc,
     })),
   }
-  const result = await synthesizeLatestUpdates(tool.name, signal)
+  // Retry the DeepSeek synthesis on transient (5xx/429/timeout) failures.
+  // A null return is a clean "no signal" outcome, not an error, so it isn't
+  // retried — it falls through to the synthesis_failed permanent path.
+  const result = await withRetry(() => synthesizeLatestUpdates(tool.name, signal))
   if (!result) return { ok: false, error: 'synthesis_failed' }
 
   const updates: Record<string, unknown> = {

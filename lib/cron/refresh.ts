@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchPageText } from './scrape'
+import { withRetry } from '@/lib/pipelines/with-logging'
 import { z } from 'zod'
 
 // Phase 8 freshness contract (2026-05-16):
@@ -76,27 +77,35 @@ Synthesize per the schema. Use ONLY information present in the page content abov
 }
 
 async function callDeepSeek(toolName: string, websiteUrl: string, pageText: string): Promise<string> {
-  const res = await fetch(DEEPSEEK_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      max_tokens: 4096,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText) },
-      ],
-    }),
+  // Retry only the network round-trip: DeepSeek 5xx / 429 (rate_limited) and
+  // transient fetch failures are classified transient by withRetry and re-tried
+  // with backoff. A 4xx-other or malformed body still fails through to the
+  // per-tool catch in processTools, which records it in refresh_logs.
+  const json = await withRetry(async () => {
+    const res = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText) },
+        ],
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      // Phrase so classifyError maps 429→rate_limited (retry) and 5xx→api_error (retry).
+      const tag = res.status === 429 ? 'rate limit' : `HTTP ${res.status}`
+      throw new Error(`DeepSeek ${tag} (${res.status}): ${body.slice(0, 300)}`)
+    }
+    return (await res.json()) as { choices: Array<{ message: { content: string } }> }
   })
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`DeepSeek ${res.status}: ${body.slice(0, 300)}`)
-  }
-  const json = (await res.json()) as { choices: Array<{ message: { content: string } }> }
   return json.choices[0]?.message?.content ?? ''
 }
 
