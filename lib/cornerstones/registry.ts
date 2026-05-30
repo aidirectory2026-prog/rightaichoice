@@ -2,6 +2,8 @@ import type { Cornerstone } from './types'
 import { codeDevelopmentCornerstone } from './code-development'
 import { imageGenerationCornerstone } from './image-generation'
 import { writingContentCornerstone } from './writing-content'
+import { researchEducationCornerstone } from './research-education'
+import { marketingSeoCornerstone } from './marketing-seo'
 
 /**
  * Cornerstone registry — keyed by category slug.
@@ -16,6 +18,8 @@ const CORNERSTONES: Record<string, Cornerstone> = {
   'code-development': codeDevelopmentCornerstone,
   'image-generation': imageGenerationCornerstone,
   'writing-content': writingContentCornerstone,
+  'research-education': researchEducationCornerstone,
+  'marketing-seo': marketingSeoCornerstone,
 }
 
 export function getCornerstone(slug: string): Cornerstone | null {
