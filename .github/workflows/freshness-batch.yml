@@ -22,7 +22,9 @@ on:
     # Refresh 360 stalest tools — daily 02:00 UTC (7-day freshness SLA:
     # 2500/360 ≈ 6.9d full-catalog cycle at the 2,500 cap, <7d with margin)
     - cron: '0 2 * * *'
-    # Refresh "Latest from" data for top 50 tools — daily 03:00 UTC
+    # Refresh "Latest from" data — 360 stalest tools daily 03:00 UTC.
+    # Whole catalog (~2,000, cap 2,500) checked within 7 days; cheap
+    # change-detector means only changed tools pay the DeepSeek cost.
     - cron: '0 3 * * *'
     # Ingest 50 trending new tools — daily 04:00 UTC
     - cron: '0 4 * * *'
@@ -79,14 +81,19 @@ jobs:
             npx tsx scripts/refresh-tools-batch.ts
           fi
 
-  # ── Refresh top-50 tools' "Latest from" data nightly ───────────────
+  # ── Refresh "Latest from" data — 360 stalest tools nightly ─────────
+  # Whole catalog checked within 7 days; change-detector skips DeepSeek
+  # for unchanged tools (cheap signal fetch only). Override cohort size
+  # with the batch_size dispatch input (mapped to DAILY_LIMIT).
   refresh-latest-updates:
     if: >-
       github.event.schedule == '0 3 * * *' ||
       (github.event_name == 'workflow_dispatch' &&
        (github.event.inputs.pipeline == 'refresh-latest-updates' || github.event.inputs.pipeline == 'all'))
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # 360 tools × cheap signal fetch (5-way concurrency) ≈ 20-50 min;
+    # only changed tools add DeepSeek latency. 180-min budget is ample.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,6 +108,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          DAILY_LIMIT: ${{ github.event.inputs.batch_size }}
         run: npx tsx scripts/refresh-latest-updates.ts --apply
 
   # ── Ingest 50 trending new tools nightly ───────────────────────────

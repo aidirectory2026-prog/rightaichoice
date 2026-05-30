@@ -1,0 +1,12 @@
+-- Phase 9 (2026-05-31): change-detector fingerprint for the "Latest from {Tool}"
+-- pipeline. Stores a hash of the top change-signal items (changelog/blog RSS
+-- first item + most-recent HN/Reddit) so refresh-latest-updates.ts can SKIP the
+-- expensive DeepSeek synthesis when nothing changed since the last check.
+--
+-- This lets the pipeline CHECK every published tool within the 7-day SLA (~360/day)
+-- while only paying the LLM cost for tools whose signals actually moved.
+--
+-- Additive ADD COLUMN — safe, idempotent. Applied via Supabase MCP apply_migration
+-- (project adtznghodbgkvknilfln) on 2026-05-31. Filename numbered 131 because 128/130
+-- were already taken in-repo (migration history caveat: dup numbers exist).
+alter table tools add column if not exists latest_updates_fingerprint text;
