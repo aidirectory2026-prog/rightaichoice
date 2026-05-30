@@ -133,6 +133,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | [`12-execution-timeline.md`](./12-execution-timeline.md)      | Today / week / month / 90-day Gantt                         |
 | [`13-homepage-positioning-and-brand-defense.md`](./13-homepage-positioning-and-brand-defense.md) | Positioning shift, homepage rewrite, brand SERP defense, CTA fix, stack pillar pages |
 | [`14-noindex-sweep-and-audit-findings.md`](./14-noindex-sweep-and-audit-findings.md) | Day-3 noindex sweep (22 pages) + first GSC URL-Inspection audit (356 URLs); reframes Tier 3 around compare-indexation gap |
+| [`15-automation-reliability-and-observability.md`](./15-automation-reliability-and-observability.md) | Reliability + observability of the SEO cron fleet (relocated from Opus 9.F): advisory locks, quota preflight, retry/backoff, `/admin/health`, GSC OAuth auto-refresh, runbooks |
 
 ## How to read this folder
 
