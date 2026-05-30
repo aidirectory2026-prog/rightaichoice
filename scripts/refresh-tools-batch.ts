@@ -5,7 +5,7 @@
  * function timeout).
  *
  * USAGE
- *   npm run refresh:batch                                # default batch=200, stalest-first
+ *   npm run refresh:batch                                # default batch=360, stalest-first
  *   npm run refresh:batch -- --batch=100                 # custom batch size
  *   npm run refresh:batch -- --slugs-from=data/foo.txt   # retry a specific slug list
  *
@@ -14,9 +14,10 @@
  *   SUPABASE_SERVICE_ROLE_KEY
  *   DEEPSEEK_API_KEY
  *
- * Per-run cost: ~$0.002 per tool × 200 = ~$0.40.
- * Wall-clock: ~25s per tool × 200 = ~83 min. Fits easily within GH
- * Actions' 6-hour job budget.
+ * Per-run cost: ~$0.002 per tool × 360 = ~$0.72.
+ * Wall-clock: ~25s per tool × 360 ≈ 150 min — fits the refresh-tools job's
+ * 180-min timeout (and well within GH Actions' 6-hour budget). Default raised
+ * 200 → 360 to enforce the 7-day freshness SLA (see batchSize note in main()).
  */
 export {}
 
@@ -63,7 +64,17 @@ async function main() {
     return
   }
 
-  const batchSize = batchArg ? Number(batchArg.split('=')[1]) : 200
+  // 7-day freshness SLA (2026-05-31): stalest-first ordering means the max age
+  // of any published tool is bounded by the cycle time = catalog /
+  // daily-throughput. To GUARANTEE no published tool exceeds 7 days across the
+  // whole catalog band (2,000–2,500, enforced by the catalog-published-count
+  // audit), we need ≥ ceil(2500/7) ≈ 358/day. We set 360/day:
+  //   • current ~1,974 catalog  → cycle 1974/360 ≈ 5.5 days
+  //   • upper-cap  2,500 catalog → cycle 2500/360 ≈ 6.9 days  (<7d, with margin)
+  // Timeout fit: ~25s/tool × 360 ≈ 150 min < the workflow's 180-min budget
+  // (≈30 min headroom for retries/slow vendor scrapes). Single run — no split
+  // needed. Override per-run with --batch=N (workflow_dispatch batch_size).
+  const batchSize = batchArg ? Number(batchArg.split('=')[1]) : 360
   if (!Number.isFinite(batchSize) || batchSize <= 0 || batchSize > 1000) {
     console.error(`Invalid --batch=${batchArg} — must be 1..1000`)
     process.exit(1)

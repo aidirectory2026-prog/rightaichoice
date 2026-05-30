@@ -256,3 +256,15 @@ Estimated dev: 1–2 days.
 
 - Whether to also scrape changelogs from third-party trackers (Sitejabber, G2 News, etc.) — defer; multi-page vendor crawl should cover most cases.
 - Whether to cache homepage HTML for diffing ("did anything change since last refresh?") — defer; nice-to-have for cost optimization later.
+
+---
+
+## Implementation log — Phase 9 (Automations & Catalog)
+
+### 2026-05-31 — 7-day freshness SLA (A1)
+- **What:** Guaranteed no published tool's data is ever >7 days old. Raised the nightly refresh throughput **200 → 360 tools/day**.
+- **Why:** At 200/day vs ~1,974 tools the catalog cycled in ~10 days — tools could sit 10+ days stale. The owner SLA is "no tool data older than 7 days."
+- **How (non-technical):** The refresh robot does the oldest tools first. If it gets through the whole catalog faster than 7 days, nothing can ever be older than 7 days. We made it do more tools per night so a full lap takes ~5.5 days (≤6.9 days even if the catalog grows to 2,500), leaving comfortable margin.
+- **How (technical):** `scripts/refresh-tools-batch.ts` default `batchSize` 200→360 (stalest-first ordering by `tools.last_verified_at` unchanged — that ordering is what bounds max age to the cycle time). 360 × ~25s ≈ 150 min, fits the GH Actions `timeout-minutes: 180` (`.github/workflows/freshness-batch.yml`, `0 2 * * *`) as a single run — no split needed. `--batch=`/`--slugs-from=` overrides unchanged.
+- **Monitor:** new `fresh-7day-sla` check in `lib/admin/data-audit.ts` — FAILs if any published tool is >7 days old or never verified; reports breach count + worst age. Surfaces on `/admin/data-audit` now, `/admin/health` after A5.
+- **Live at ship:** worst age 5.2 days, 0 breaching, 0 never-verified → PASS.

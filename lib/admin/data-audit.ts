@@ -368,6 +368,35 @@ export const AUDIT_CHECKS: AuditCheck[] = [
     },
   },
 
+  {
+    id: 'fresh-7day-sla',
+    category: 'freshness',
+    label: 'No published tool has last_verified_at older than 7 days (freshness SLA)',
+    rationale: 'Hard SLA: the stalest-first nightly refresh (refresh-tools-batch, 360/day) must cycle the full catalog in <7 days so no published tool ever shows data older than a week. A breach means throughput dropped below the cycle requirement (failed runs, vendor-scrape stalls, or catalog grew past the sizing) — surfaces here and on /admin/health (A5).',
+    sql: `SELECT
+            count(*) FILTER (WHERE now() - last_verified_at > interval '7 days')::int AS breaching,
+            count(*) FILTER (WHERE last_verified_at IS NULL)::int AS never_verified,
+            count(*)::int AS total,
+            coalesce(max(extract(epoch FROM now() - last_verified_at) / 86400), 0) AS worst_age_days
+          FROM tools WHERE is_published = true`,
+    interpret: (r) => {
+      const breaching = Number(r.breaching)
+      const neverVerified = Number(r.never_verified)
+      const worst = Number(r.worst_age_days)
+      const overdue = breaching + neverVerified
+      return {
+        pass: overdue === 0,
+        actual: neverVerified > 0
+          ? `${breaching} over 7d + ${neverVerified} never-verified (worst = ${worst.toFixed(1)}d of ${r.total})`
+          : `${breaching} over 7d (worst = ${worst.toFixed(1)}d of ${r.total})`,
+        expected: '0 over 7d, worst < 7d',
+        note: overdue > 0
+          ? `${overdue} published tool(s) breach the 7-day SLA — check the freshness-batch refresh-tools job ran and isn't failing/timing out`
+          : undefined,
+      }
+    },
+  },
+
   // ── MIRROR HEALTH (Mixpanel → Supabase mirror via /api/track-mirror) ────
   {
     id: 'mirror-client-events-recent',

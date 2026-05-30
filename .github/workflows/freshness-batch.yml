@@ -19,7 +19,8 @@ name: Freshness Batch Pipelines
 
 on:
   schedule:
-    # Refresh 200 stalest tools — daily 02:00 UTC
+    # Refresh 360 stalest tools — daily 02:00 UTC (7-day freshness SLA:
+    # 2500/360 ≈ 6.9d full-catalog cycle at the 2,500 cap, <7d with margin)
     - cron: '0 2 * * *'
     # Refresh "Latest from" data for top 50 tools — daily 03:00 UTC
     - cron: '0 3 * * *'
@@ -49,7 +50,7 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ── Refresh 200 stalest tools nightly ──────────────────────────────
+  # ── Refresh 360 stalest tools nightly (7-day freshness SLA) ────────
   refresh-tools:
     if: >-
       github.event.schedule == '0 2 * * *' ||
