@@ -39,29 +39,16 @@ export async function resolveAlternatives(
   toolId: string,
   limit = 6,
 ): Promise<AltTool[]> {
-  const { data: cats } = await supabase
-    .from('tool_categories')
-    .select('category_id')
-    .eq('tool_id', toolId)
-  const categoryIds = ((cats ?? []) as { category_id: string }[]).map((c) => c.category_id)
-  if (categoryIds.length === 0) return []
-
-  const { data: relatedIds } = await supabase
-    .from('tool_categories')
-    .select('tool_id')
-    .in('category_id', categoryIds)
-    .neq('tool_id', toolId)
-  const uniqueIds = [...new Set(((relatedIds ?? []) as { tool_id: string }[]).map((r) => r.tool_id))]
-  if (uniqueIds.length === 0) return []
-
-  const { data } = await supabase
-    .from('tools')
-    .select('id, slug, name, view_count')
-    .eq('is_published', true)
-    .in('id', uniqueIds)
-    .order('view_count', { ascending: false })
-    .limit(Math.max(limit, 6))
-
+  // Phase 9 D2 fix — resolve DB-side via onboard_alternatives() RPC (migration
+  // 135). The previous approach fetched all sibling tool_ids then did
+  // `.in('id', [hundreds])`, which built an over-long PostgREST URL that failed
+  // silently → 0 alternatives even for tools with 800+ siblings.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('onboard_alternatives', {
+    p_tool_id: toolId,
+    p_limit: limit,
+  })
+  if (error) throw new Error(`onboard_alternatives: ${error.message}`)
   return ((data ?? []) as AltTool[]).slice(0, limit)
 }
 
