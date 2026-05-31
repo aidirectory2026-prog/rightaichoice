@@ -24,25 +24,30 @@
  *                       same body as the /api/cron/refresh-latest-updates
  *                       route's processOne)
  *
- * SKIPPED HERE — LOGO: the resolve+verify+upload logic lives entirely inside
- * scripts/backfill-logos.ts (a CLI script: `export {}`, ~15 sharp/image
- * helpers, not importable). Extracting it cleanly is too invasive for this PR,
- * so logo is intentionally LEFT to the nightly backfill-logos job, which
- * already targets every `logo_url IS NULL` tool. The runtime favicon fallback
- * (lib/tool-logo.ts) covers a new tool in the meantime, so there is no broken
- * state. This is flagged rather than forced.
+ * PHASE 9 D2 — GATED PREMIUM SOP (this file now extends A4's fast onboard):
+ * the premium steps A4 deferred are implemented here and run on DRAFT tools so
+ * a new tool reaches the standard of our best pages BEFORE it publishes:
+ *   5. logo            → resolveAndStoreLogo()   (lib/cron/logo.ts, shared with
+ *                        scripts/backfill-logos.ts). SOFT gate (favicon ok).
+ *   6. alternatives    → resolveAlternatives()   (live category-sibling rank,
+ *                        same signal getAlternativeTools uses). HARD gate ≥3.
+ *   7. editorial cmprs → createEditorialCompares() (2-4 is_editorial rows vs
+ *                        top alts + inline prose). HARD gate ≥2.
+ *   8. FAQs            → generateLongTailFaqs()   (≥9 faqs_long_tail). HARD.
+ *   9. sentiment       → scrapeAllSources+synthesizeReport→tool_sentiment_cache.
+ *                        SOFT gate (heavy/async — warn, never block).
+ *  10. QA gate + publish→ evaluate every gate, write tool_onboarding_qa, and
+ *                        flip is_published=true ONLY when all HARD gates pass,
+ *                        then submitToIndexNow() (invoke only).
  *
  * Each step is independently try/caught: one failing step never aborts the
- * others, and we record which succeeded. `onboarded_at = now()` is set only
- * after the CORE fields are populated (refresh is the gate — without it the
- * tool has no editorial body). Re-running on an already-onboarded tool is a
- * no-op (the `onboarded_at IS NULL` filter excludes it), so the cron is
- * idempotent.
- *
- * Workstream C (full premium SOP — editorial compares, FAQ≥9 gate,
- * JSON-LD/indexing, QA checklist) will EXTEND this file: add more steps to
- * `onboardOne` and gates before the `onboarded_at` write. Structure is kept
- * step-wise + result-recording so C can slot in without a rewrite.
+ * others, and we record which succeeded. Two entry points:
+ *   - onboardPendingTools()  → A4's original fast lane for PUBLISHED tools
+ *     (onboarded_at IS NULL). Unchanged behaviour: it does NOT unpublish, and
+ *     publish-on-green is a no-op for an already-published row.
+ *   - runOnboardSop(slug)    → the D2 draft lane: full gated SOP on a single
+ *     DRAFT (is_published=false) tool; publishes on all-green.
+ * Both share onboardOne() so the quality bar is identical.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAdminClient } from './supabase-admin'
@@ -54,6 +59,17 @@ import { searchHN } from './scrape-hn'
 import { searchReddit } from './scrape-reddit'
 import { synthesizeLatestUpdates, type SignalInput } from './latest-updates'
 import type { EnrichedToolData } from './enrich'
+// Phase 9 D2 — gated SOP premium steps (reuse over rebuild).
+import { resolveAndStoreLogo } from './logo'
+import { generateLongTailFaqs } from './onboard-faqs'
+import {
+  resolveAlternatives,
+  createEditorialCompares,
+  countEditorialCompares,
+} from './onboard-compares'
+import { scrapeAllSources } from '@/lib/scrapers'
+import { synthesizeReport } from '@/lib/ai/synthesize-report'
+import { submitToIndexNow } from '@/lib/indexnow'
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 const DEEPSEEK_CATEGORY_MODEL = 'deepseek-chat'
@@ -65,6 +81,7 @@ type PendingTool = {
   website_url: string | null
   changelog_url: string | null
   blog_url: string | null
+  logo_url: string | null
   // viability inputs
   is_wrapper: boolean
   github_url: string | null
@@ -78,12 +95,30 @@ type PendingTool = {
   best_for: string[] | null
 }
 
+// Columns the SELECT pulls for every onboard candidate (used by both lanes).
+const ONBOARD_SELECT =
+  'id, slug, name, website_url, changelog_url, blog_url, logo_url, is_wrapper, github_url, github_stars, pricing_type, created_at, tagline, description, features, best_for'
+
+// ── Gate model (Phase 9 D2) ────────────────────────────────────────────────
+export type GateStatus = 'pass' | 'warn' | 'fail'
+export type GateCheck = { status: GateStatus; detail: string }
+// Each entry is keyed by step name; `kind` marks hard (blocks publish) vs soft.
+export type QaChecks = Record<string, GateCheck>
+
 export type OnboardStepResult = {
   slug: string
   refreshed: boolean
   categorized: number // count of categories assigned
   viability: boolean
   latestUpdates: boolean
+  logo: GateStatus
+  alternatives: number
+  editorialCompares: number
+  faqs: number
+  sentiment: GateStatus
+  checks: QaChecks
+  allGreen: boolean
+  published: boolean
   errors: string[]
   onboarded: boolean
 }
@@ -92,7 +127,53 @@ export type OnboardResult = {
   runId: string
   processed: number
   onboarded: number
+  published: number
   results: OnboardStepResult[]
+}
+
+// HARD gates block publish; SOFT gates only warn. Used both to evaluate and to
+// surface the classification at /admin/onboarding.
+const HARD_GATES = new Set([
+  'description',
+  'features',
+  'pricing_type',
+  'categories',
+  'alternatives',
+  'editorial_compares',
+  'faqs',
+  'editorial_fields', // best_for + not_for + editorial_verdict present
+])
+const SOFT_GATES = new Set(['logo', 'sentiment', 'tutorials', 'models', 'latest_updates'])
+
+const VALID_PRICING = new Set(['free', 'freemium', 'paid', 'contact'])
+
+/** Upsert the per-tool QA record. */
+async function writeQaRecord(
+  supabase: SupabaseClient,
+  toolId: string,
+  checks: QaChecks,
+  allGreen: boolean,
+  published: boolean,
+): Promise<void> {
+  const { error } = await supabase.from('tool_onboarding_qa').upsert(
+    {
+      tool_id: toolId,
+      checks,
+      all_green: allGreen,
+      published,
+      updated_at: new Date().toISOString(),
+    } as never,
+    { onConflict: 'tool_id' },
+  )
+  if (error) console.error(`[onboard] QA upsert failed for ${toolId}: ${error.message}`)
+}
+
+/** True only when every HARD gate is 'pass'. SOFT 'warn' does not block. */
+function isAllGreen(checks: QaChecks): boolean {
+  for (const [step, check] of Object.entries(checks)) {
+    if (HARD_GATES.has(step) && check.status !== 'pass') return false
+  }
+  return true
 }
 
 // ── Step 2 helper: category prediction (same DeepSeek call shape as
@@ -254,10 +335,104 @@ async function refreshLatestUpdates(supabase: SupabaseClient, tool: PendingTool)
   return true
 }
 
+// ── Step 9 helper: best-effort sentiment (heavy/async). SOFT gate — a failure
+// here never blocks publish. Mirrors the /api/cron/scrape-sentiment writer.
+async function refreshSentiment(supabase: SupabaseClient, tool: PendingTool): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+  await sb
+    .from('tool_sentiment_cache')
+    .upsert(
+      { tool_id: tool.id, status: 'generating', scraped_at: new Date().toISOString() },
+      { onConflict: 'tool_id' },
+    )
+  const scrape = await scrapeAllSources(tool.name)
+  const report = await synthesizeReport(
+    {
+      name: tool.name,
+      tagline: tool.tagline ?? '',
+      description: tool.description ?? '',
+      pricing_type: tool.pricing_type,
+      pricing_details: null,
+      skill_level: 'beginner',
+      features: tool.features ?? undefined,
+    },
+    scrape,
+  )
+  const now = new Date().toISOString()
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  await sb.from('tool_sentiment_cache').upsert(
+    {
+      tool_id: tool.id,
+      ai_verdict: report.ai_verdict,
+      pros: report.pros,
+      cons: report.cons,
+      sentiment_score: report.sentiment_score,
+      sentiment_breakdown: report.sentiment_breakdown,
+      themes: report.themes,
+      best_for: report.best_for,
+      not_for: report.not_for,
+      pricing_analysis: report.pricing_analysis,
+      community_buzz: report.community_buzz,
+      learning_curve: report.learning_curve,
+      integration_insights: report.integration_insights,
+      raw_reddit: scrape.reddit.posts,
+      raw_twitter: scrape.twitter.posts,
+      raw_quora: scrape.quora.posts,
+      raw_g2: scrape.g2.posts,
+      mention_count: scrape.totalPosts,
+      sources_scraped: scrape.sourcesSucceeded,
+      status: 'ready',
+      scraped_at: now,
+      synthesized_at: now,
+      expires_at: expiresAt,
+    },
+    { onConflict: 'tool_id' },
+  )
+  return true
+}
+
+/**
+ * Re-fetch the post-refresh state of the tool's gate-relevant columns. Refresh
+ * (step 1) overwrites description/features/best_for/not_for/editorial_verdict,
+ * so the gate must read the FRESH row, not the pre-refresh PendingTool.
+ */
+async function fetchGateRow(supabase: SupabaseClient, toolId: string) {
+  const { data } = await supabase
+    .from('tools')
+    .select(
+      'id, description, features, pricing_type, best_for, not_for, editorial_verdict, logo_url, tutorial_urls, models, latest_updates, faqs_long_tail',
+    )
+    .eq('id', toolId)
+    .single()
+  return data as
+    | {
+        id: string
+        description: string | null
+        features: string[] | null
+        pricing_type: string | null
+        best_for: string[] | null
+        not_for: string[] | null
+        editorial_verdict: string | null
+        logo_url: string | null
+        tutorial_urls: string[] | null
+        models: string[] | null
+        latest_updates: unknown[] | null
+        faqs_long_tail: unknown[] | null
+      }
+    | null
+}
+
+/**
+ * The shared per-tool SOP body. `isDraft=true` runs the premium gated lane on a
+ * is_published=false tool and publishes on all-green; `isDraft=false` is A4's
+ * fast lane on already-published tools (publish-on-green is then a no-op).
+ */
 async function onboardOne(
   supabase: SupabaseClient,
   tool: PendingTool,
   validSlugs: string[],
+  isDraft: boolean,
 ): Promise<OnboardStepResult> {
   const res: OnboardStepResult = {
     slug: tool.slug,
@@ -265,15 +440,23 @@ async function onboardOne(
     categorized: 0,
     viability: false,
     latestUpdates: false,
+    logo: 'fail',
+    alternatives: 0,
+    editorialCompares: 0,
+    faqs: 0,
+    sentiment: 'warn',
+    checks: {},
+    allGreen: false,
+    published: false,
     errors: [],
     onboarded: false,
   }
 
   // Step 1 — REFRESH (the core gate): re-scrapes the vendor site and writes the
-  // 9 SEO editorial fields + github_stars + last_verified_at. Reuses the exact
-  // single-slug path the nightly refresh uses.
+  // SEO editorial fields + github_stars + last_verified_at. Reuses the exact
+  // single-slug path the nightly refresh uses. For drafts, allow unpublished.
   try {
-    const r = await runRefreshForSlugs(supabase, [tool.slug])
+    const r = await runRefreshForSlugs(supabase, [tool.slug], { includeUnpublished: isDraft })
     res.refreshed = r.refreshed > 0
     if (r.refreshed === 0) res.errors.push('refresh: tool produced no update')
   } catch (e) {
@@ -302,42 +485,207 @@ async function onboardOne(
     res.errors.push(`latest_updates: ${e instanceof Error ? e.message : 'unknown'}`)
   }
 
-  // (Step 5 — LOGO: intentionally skipped; nightly backfill-logos job owns it.
-  //  See file header for the rationale.)
+  // Step 5 — LOGO (shared with backfill-logos). SOFT gate: a real bucket logo
+  // is a pass; favicon fallback (skip) is a soft-pass warn.
+  try {
+    const logo = await resolveAndStoreLogo(supabase, {
+      id: tool.id,
+      slug: tool.slug,
+      website_url: tool.website_url,
+      logo_url: tool.logo_url,
+    })
+    res.logo = logo.status === 'set' || logo.status === 'already' ? 'pass' : 'warn'
+  } catch (e) {
+    res.logo = 'warn'
+    res.errors.push(`logo: ${e instanceof Error ? e.message : 'unknown'}`)
+  }
 
-  // Mark onboarded only if the CORE fields landed — refresh is the gate. The
-  // other steps are enrichment; if refresh failed the tool has no editorial
-  // body, so leave onboarded_at NULL and retry on the next cron fire.
+  // Step 6 — ALTERNATIVES (computed live; HARD gate ≥3). Resolve once and reuse
+  // the top picks for the editorial compares in step 7.
+  let alts: Awaited<ReturnType<typeof resolveAlternatives>> = []
+  try {
+    alts = await resolveAlternatives(supabase, tool.id, 6)
+    res.alternatives = alts.length
+  } catch (e) {
+    res.errors.push(`alternatives: ${e instanceof Error ? e.message : 'unknown'}`)
+  }
+
+  // Step 7 — EDITORIAL COMPARES (HARD gate ≥2). Create up to 3 is_editorial
+  // rows vs the top alts and generate prose inline; then count what exists.
+  try {
+    if (alts.length > 0) {
+      await createEditorialCompares(supabase, { id: tool.id, slug: tool.slug }, alts, 3)
+    }
+    res.editorialCompares = await countEditorialCompares(supabase, tool.id)
+  } catch (e) {
+    res.errors.push(`editorial_compares: ${e instanceof Error ? e.message : 'unknown'}`)
+    try {
+      res.editorialCompares = await countEditorialCompares(supabase, tool.id)
+    } catch {}
+  }
+
+  // Step 8 — FAQs (HARD gate ≥9). Re-fetch current count; only (re)generate if
+  // below threshold so this is idempotent + cost-bounded.
+  try {
+    const gateRow = await fetchGateRow(supabase, tool.id)
+    const have = Array.isArray(gateRow?.faqs_long_tail) ? gateRow!.faqs_long_tail!.length : 0
+    if (have < 9) {
+      const written = await generateLongTailFaqs(supabase, {
+        id: tool.id,
+        name: tool.name,
+        tagline: tool.tagline,
+        description: gateRow?.description ?? tool.description,
+        pricing_type: gateRow?.pricing_type ?? tool.pricing_type,
+        features: gateRow?.features ?? tool.features,
+        best_for: gateRow?.best_for ?? tool.best_for,
+        not_for: gateRow?.not_for ?? null,
+        integrations: null,
+      })
+      res.faqs = written || have
+    } else {
+      res.faqs = have
+    }
+  } catch (e) {
+    res.errors.push(`faqs: ${e instanceof Error ? e.message : 'unknown'}`)
+  }
+
+  // Step 9 — SENTIMENT (SOFT — heavy/async; warn, never block).
+  try {
+    const ok = await refreshSentiment(supabase, tool)
+    res.sentiment = ok ? 'pass' : 'warn'
+  } catch (e) {
+    res.sentiment = 'warn'
+    res.errors.push(`sentiment: ${e instanceof Error ? e.message : 'unknown'}`)
+  }
+
+  // Step 10 — GATE EVALUATION + QA record + publish-on-green.
+  const gate = await fetchGateRow(supabase, tool.id)
+  const checks: QaChecks = {}
+  const mk = (s: GateStatus, detail: string): GateCheck => ({ status: s, detail })
+
+  // HARD gates.
+  const descLen = (gate?.description ?? '').length
+  checks.description = mk(descLen >= 300 ? 'pass' : 'fail', `${descLen} chars (need ≥300)`)
+  const featCount = Array.isArray(gate?.features) ? gate!.features!.length : 0
+  checks.features = mk(featCount >= 3 ? 'pass' : 'fail', `${featCount} features (need ≥3)`)
+  const pricingOk = VALID_PRICING.has(gate?.pricing_type ?? '')
+  checks.pricing_type = mk(pricingOk ? 'pass' : 'fail', `pricing_type=${gate?.pricing_type ?? 'null'}`)
+  checks.categories = mk(res.categorized >= 1 ? 'pass' : 'fail', `${res.categorized} categories (need ≥1)`)
+  checks.alternatives = mk(res.alternatives >= 3 ? 'pass' : 'fail', `${res.alternatives} alternatives (need ≥3)`)
+  checks.editorial_compares = mk(
+    res.editorialCompares >= 2 ? 'pass' : 'fail',
+    `${res.editorialCompares} editorial compares (need ≥2)`,
+  )
+  checks.faqs = mk(res.faqs >= 9 ? 'pass' : 'fail', `${res.faqs} faqs_long_tail (need ≥9)`)
+  const hasBestFor = Array.isArray(gate?.best_for) && gate!.best_for!.length > 0
+  const hasNotFor = Array.isArray(gate?.not_for) && gate!.not_for!.length > 0
+  const hasVerdict = !!(gate?.editorial_verdict && gate.editorial_verdict.trim())
+  checks.editorial_fields = mk(
+    hasBestFor && hasNotFor && hasVerdict ? 'pass' : 'fail',
+    `best_for=${hasBestFor} not_for=${hasNotFor} verdict=${hasVerdict}`,
+  )
+
+  // SOFT gates (warn only).
+  checks.logo = mk(res.logo === 'pass' ? 'pass' : 'warn', res.logo === 'pass' ? 'real bucket logo' : 'favicon fallback')
+  checks.sentiment = mk(res.sentiment, res.sentiment === 'pass' ? 'sentiment cached' : 'sentiment incomplete')
+  const tutCount = Array.isArray(gate?.tutorial_urls) ? gate!.tutorial_urls!.length : 0
+  checks.tutorials = mk(tutCount > 0 ? 'pass' : 'warn', `${tutCount} tutorials`)
+  const modelCount = Array.isArray(gate?.models) ? gate!.models!.length : 0
+  checks.models = mk(modelCount > 0 ? 'pass' : 'warn', `${modelCount} models`)
+  const luCount = Array.isArray(gate?.latest_updates) ? gate!.latest_updates!.length : 0
+  checks.latest_updates = mk(luCount > 0 ? 'pass' : 'warn', `${luCount} latest_updates`)
+
+  res.checks = checks
+  res.allGreen = isAllGreen(checks)
+
+  // Publish only when all HARD gates pass. For a DRAFT, this flips is_published.
+  // For A4's already-published lane, the guarded update is a harmless no-op.
+  let published = false
+  if (res.allGreen) {
+    const { data: pubRow, error: pubErr } = await supabase
+      .from('tools')
+      .update({ is_published: true } as never)
+      .eq('id', tool.id)
+      .eq('is_published', false)
+      .select('id')
+    if (pubErr) {
+      res.errors.push(`publish: ${pubErr.message}`)
+    } else if (pubRow && (pubRow as unknown[]).length > 0) {
+      published = true
+    }
+    // Whether we flipped it now or it was already live, an all-green tool is
+    // considered published for the QA record + indexing.
+    res.published = isDraft ? published : true
+
+    // Indexing (invoke-only; never edits SEO-lane files).
+    try {
+      await submitToIndexNow(`/tools/${tool.slug}`)
+    } catch (e) {
+      res.errors.push(`indexnow: ${e instanceof Error ? e.message : 'unknown'}`)
+    }
+  }
+
+  await writeQaRecord(supabase, tool.id, checks, res.allGreen, res.published)
+
+  // Mark onboarded only if the CORE refresh landed — refresh is the gate.
   if (res.refreshed) {
     const { error } = await supabase
       .from('tools')
       .update({ onboarded_at: new Date().toISOString() } as never)
       .eq('id', tool.id)
       .is('onboarded_at', null)
-    if (error) {
-      res.errors.push(`mark_onboarded: ${error.message}`)
-    } else {
-      res.onboarded = true
-    }
+    if (error) res.errors.push(`mark_onboarded: ${error.message}`)
+    else res.onboarded = true
   }
 
   return res
 }
 
+function fatalResult(slug: string, e: unknown): OnboardStepResult {
+  return {
+    slug,
+    refreshed: false,
+    categorized: 0,
+    viability: false,
+    latestUpdates: false,
+    logo: 'fail',
+    alternatives: 0,
+    editorialCompares: 0,
+    faqs: 0,
+    sentiment: 'warn',
+    checks: {},
+    allGreen: false,
+    published: false,
+    errors: [`fatal: ${e instanceof Error ? e.message : 'unknown'}`],
+    onboarded: false,
+  }
+}
+
+async function loadValidSlugs(supabase: SupabaseClient): Promise<string[]> {
+  const { data } = await supabase.from('categories').select('slug').order('slug')
+  return ((data ?? []) as { slug: string }[]).map((c) => c.slug).filter(Boolean)
+}
+
+function logStep(runId: string, r: OnboardStepResult) {
+  console.log(
+    `[onboard:${runId}] ${r.slug} — refreshed=${r.refreshed} cats=${r.categorized} viability=${r.viability} latest=${r.latestUpdates} logo=${r.logo} alts=${r.alternatives} cmp=${r.editorialCompares} faqs=${r.faqs} sentiment=${r.sentiment} allGreen=${r.allGreen} published=${r.published} onboarded=${r.onboarded}${r.errors.length ? ` errors=[${r.errors.join('; ')}]` : ''}`,
+  )
+}
+
 /**
- * Onboard up to `limit` pending tools (onboarded_at IS NULL), oldest
- * created_at first. Idempotent — already-onboarded tools are filtered out.
+ * A4 fast lane (unchanged behaviour): onboard up to `limit` PUBLISHED tools
+ * with onboarded_at IS NULL, oldest created_at first. Now also runs the premium
+ * steps + writes a QA record, but since these rows are already published the
+ * publish-on-green step is a no-op (it never unpublishes). Idempotent.
  */
 export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
   const runId = crypto.randomUUID()
   const supabase = getAdminClient()
-  const result: OnboardResult = { runId, processed: 0, onboarded: 0, results: [] }
+  const result: OnboardResult = { runId, processed: 0, onboarded: 0, published: 0, results: [] }
 
   const { data: pending, error } = await supabase
     .from('tools')
-    .select(
-      'id, slug, name, website_url, changelog_url, blog_url, is_wrapper, github_url, github_stars, pricing_type, created_at, tagline, description, features, best_for',
-    )
+    .select(ONBOARD_SELECT)
     .eq('is_published', true)
     .is('onboarded_at', null)
     .order('created_at', { ascending: true })
@@ -347,32 +695,64 @@ export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
     throw new Error(`onboard: fetch pending failed: ${error.message}`)
   }
   const tools = (pending ?? []) as unknown as PendingTool[]
-  if (tools.length === 0) {
-    return result
-  }
+  if (tools.length === 0) return result
 
-  // Valid category slugs — fetched once for the whole batch.
-  const { data: catData } = await supabase.from('categories').select('slug').order('slug')
-  const validSlugs = ((catData ?? []) as { slug: string }[]).map((c) => c.slug).filter(Boolean)
+  const validSlugs = await loadValidSlugs(supabase)
 
   for (const tool of tools) {
     result.processed++
-    const stepRes = await onboardOne(supabase, tool, validSlugs).catch((e) => ({
-      slug: tool.slug,
-      refreshed: false,
-      categorized: 0,
-      viability: false,
-      latestUpdates: false,
-      errors: [`fatal: ${e instanceof Error ? e.message : 'unknown'}`],
-      onboarded: false,
-    } as OnboardStepResult))
-    if (stepRes.onboarded) result.onboarded++
-    result.results.push(stepRes)
-    console.log(
-      `[onboard:${runId}] ${tool.slug} — refreshed=${stepRes.refreshed} cats=${stepRes.categorized} viability=${stepRes.viability} latest=${stepRes.latestUpdates} onboarded=${stepRes.onboarded}${stepRes.errors.length ? ` errors=[${stepRes.errors.join('; ')}]` : ''}`,
+    const stepRes = await onboardOne(supabase, tool, validSlugs, false).catch((e) =>
+      fatalResult(tool.slug, e),
     )
+    if (stepRes.onboarded) result.onboarded++
+    if (stepRes.published) result.published++
+    result.results.push(stepRes)
+    logStep(runId, stepRes)
   }
 
   console.log(`[onboard:${runId}] Done: ${result.onboarded}/${result.processed} onboarded`)
+  return result
+}
+
+/**
+ * D2 gated draft lane: run the full premium SOP on up to `limit` DRAFT tools
+ * (is_published=false), oldest first, and publish each one ONLY when all HARD
+ * gates pass. This is the lane the 29 P0 tools flow through — D2 inserts them
+ * as drafts, this drives them to the quality bar, and publishes the green ones.
+ *
+ * Pass `slugs` to target specific drafts (e.g. the smoke test).
+ */
+export async function runOnboardSop(
+  opts: { limit?: number; slugs?: string[] } = {},
+): Promise<OnboardResult> {
+  const runId = crypto.randomUUID()
+  const supabase = getAdminClient()
+  const result: OnboardResult = { runId, processed: 0, onboarded: 0, published: 0, results: [] }
+
+  let q = supabase.from('tools').select(ONBOARD_SELECT).eq('is_published', false)
+  if (opts.slugs && opts.slugs.length > 0) q = q.in('slug', opts.slugs)
+  q = q.order('created_at', { ascending: true }).limit(opts.limit ?? 5)
+
+  const { data: drafts, error } = await q
+  if (error) throw new Error(`onboard-sop: fetch drafts failed: ${error.message}`)
+  const tools = (drafts ?? []) as unknown as PendingTool[]
+  if (tools.length === 0) return result
+
+  const validSlugs = await loadValidSlugs(supabase)
+
+  for (const tool of tools) {
+    result.processed++
+    const stepRes = await onboardOne(supabase, tool, validSlugs, true).catch((e) =>
+      fatalResult(tool.slug, e),
+    )
+    if (stepRes.onboarded) result.onboarded++
+    if (stepRes.published) result.published++
+    result.results.push(stepRes)
+    logStep(runId, stepRes)
+  }
+
+  console.log(
+    `[onboard:${runId}] SOP done: ${result.published}/${result.processed} published, ${result.onboarded} onboarded`,
+  )
   return result
 }

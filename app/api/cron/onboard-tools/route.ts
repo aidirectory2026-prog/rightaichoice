@@ -1,5 +1,5 @@
 import { cronRoute } from '@/lib/pipelines/with-logging'
-import { onboardPendingTools } from '@/lib/cron/onboard'
+import { onboardPendingTools, runOnboardSop } from '@/lib/cron/onboard'
 
 export const maxDuration = 300
 
@@ -24,7 +24,17 @@ const handler = cronRoute({ pipelineKey: 'onboard-tools' }, async (ctx, request)
   const limit =
     Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 15 ? batchParam : 5
 
-  const result = await onboardPendingTools(limit)
+  // ?mode=sop runs the gated DRAFT lane (Phase 9 D2): full premium SOP on
+  // is_published=false tools, publishing only the all-green ones. ?slug=a,b
+  // targets specific drafts. Default mode is A4's published fast lane.
+  const mode = url.searchParams.get('mode')
+  const slugsParam = url.searchParams.get('slug')
+  const slugs = slugsParam ? slugsParam.split(',').map((s) => s.trim()).filter(Boolean) : undefined
+
+  const result =
+    mode === 'sop' || slugs
+      ? await runOnboardSop({ limit, slugs })
+      : await onboardPendingTools(limit)
 
   ctx.recordItems({
     processed: result.processed,
@@ -33,7 +43,9 @@ const handler = cronRoute({ pipelineKey: 'onboard-tools' }, async (ctx, request)
   })
   ctx.recordMetadata({
     limit,
+    mode: mode === 'sop' || slugs ? 'sop-draft' : 'fast-published',
     onboarded: result.onboarded,
+    published: result.published,
     slugs: result.results.map((r) => r.slug).slice(0, 20),
     steps: result.results.slice(0, 20).map((r) => ({
       slug: r.slug,
@@ -41,6 +53,13 @@ const handler = cronRoute({ pipelineKey: 'onboard-tools' }, async (ctx, request)
       categorized: r.categorized,
       viability: r.viability,
       latestUpdates: r.latestUpdates,
+      logo: r.logo,
+      alternatives: r.alternatives,
+      editorialCompares: r.editorialCompares,
+      faqs: r.faqs,
+      sentiment: r.sentiment,
+      allGreen: r.allGreen,
+      published: r.published,
       onboarded: r.onboarded,
       errors: r.errors.slice(0, 3),
     })),

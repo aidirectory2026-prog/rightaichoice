@@ -128,6 +128,20 @@ async function callDeepSeek(
   return json.choices[0]?.message?.content ?? ''
 }
 
+/**
+ * Generate (or regenerate) the editorial prose for ONE comparison row via
+ * DeepSeek and write it back. Exported (Phase 9 D2) so the onboard SOP can
+ * fill freshly-created editorial compares inline instead of waiting for the
+ * weekly cascade cron. Same single-corrective-retry validation as the cascade.
+ */
+export async function generateCompareEditorial(
+  comparisonId: string,
+  toolIds: string[],
+  supabase: SupabaseClient,
+): Promise<{ ok: boolean; error?: string }> {
+  return regenOne(comparisonId, toolIds, supabase)
+}
+
 async function regenOne(
   comparisonId: string,
   toolIds: string[],

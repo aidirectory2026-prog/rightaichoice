@@ -249,6 +249,10 @@ export async function runRefresh(
 export async function runRefreshForSlugs(
   supabase: SupabaseClient,
   slugs: string[],
+  // Phase 9 D2: the gated onboard SOP runs the full editorial refresh on DRAFT
+  // (is_published=false) tools before deciding whether to publish. Default
+  // stays is_published=true so the existing hourly retry path is unchanged.
+  opts?: { includeUnpublished?: boolean },
 ): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
   const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
@@ -262,11 +266,12 @@ export async function runRefreshForSlugs(
   const CHUNK = 200
   for (let i = 0; i < slugs.length; i += CHUNK) {
     const chunk = slugs.slice(i, i + CHUNK)
-    const { data: tools, error } = await supabase
+    let q = supabase
       .from('tools')
       .select('id, slug, name, website_url, github_url')
-      .eq('is_published', true)
       .in('slug', chunk)
+    if (!opts?.includeUnpublished) q = q.eq('is_published', true)
+    const { data: tools, error } = await q
 
     if (error || !tools) {
       console.error(`[refresh:${runId}] fetch failed for chunk ${i}:`, error)
