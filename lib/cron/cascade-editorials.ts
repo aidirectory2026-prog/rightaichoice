@@ -195,9 +195,17 @@ type CascadeResult = {
   failures: Array<{ comparison_slug: string; error: string }>
 }
 
+// Migration 133 (2026-05-31): a tool content-change now nulls last_reviewed_at
+// on EVERY editorial comparison referencing that tool, so all of them surface
+// at the top of v_stale_comparisons. The old default (20) capped how many drain
+// per run, starving older compares behind a churning queue (prod observed 488
+// stale, ~17.7d max lag). Default raised to 120 so the referencing set clears
+// in a run or two. The GH Actions job (60-min budget) and ~$0.005/cascade keep
+// this comfortably affordable; the per-run cap exists only to bound a single
+// run, not to permanently strand compares.
 export async function runCompareEditorialCascade(
   supabase: SupabaseClient,
-  batchSize = 20,
+  batchSize = 120,
 ): Promise<CascadeResult> {
   const runId = crypto.randomUUID()
   const result: CascadeResult = {

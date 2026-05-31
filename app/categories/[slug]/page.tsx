@@ -26,6 +26,8 @@ import { RelatedComparesRail } from '@/components/seo/related-compares'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 import { CornerstoneSection } from '@/components/seo/cornerstone-section'
 import { getCornerstone } from '@/lib/cornerstones/registry'
+import { UpdatedBadge } from '@/components/shared/updated-badge'
+import { getLastChangedAt } from '@/lib/seo/freshness'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -114,6 +116,13 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
+  // Real "Updated <date>" from pages_freshness for this category hub path —
+  // reflects the latest user-visible change among the tools in this category
+  // (fanned out by the freshness cascade). Non-fatal; falls back internally.
+  const freshnessDate = await getLastChangedAt(`/categories/${slug}`).catch(
+    () => null,
+  )
+
   const breadcrumbs = breadcrumbJsonLd([
     { name: 'Home', url: 'https://rightaichoice.com' },
     { name: 'Categories', url: 'https://rightaichoice.com/categories' },
@@ -183,6 +192,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                   {category.description}
                 </p>
               )}
+              <div className="mt-3">
+                <UpdatedBadge date={freshnessDate} />
+              </div>
 
               {/* Phase 9 — inline CTA after category intro paragraph. Highest
                   conversion intent on a category page is right after the user

@@ -12,6 +12,8 @@ import { getTools } from '@/lib/data/tools'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { itemListJsonLd, faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
+import { UpdatedBadge } from '@/components/shared/updated-badge'
+import { getLastChangedAt } from '@/lib/seo/freshness'
 
 export const revalidate = 3600 // 1 hour
 
@@ -66,6 +68,11 @@ export default async function BestPage({ params }: PageProps) {
   // Limit to top 18
   const topTools = tools.slice(0, 18)
 
+  // Real "Updated <date>" from pages_freshness for this hub path — reflects
+  // the latest user-visible change among the tools featured here (fanned out
+  // by the freshness cascade). Non-fatal; falls back internally.
+  const freshnessDate = await getLastChangedAt(`/best/${slug}`).catch(() => null)
+
   // Structured data
   const itemList = itemListJsonLd(
     config.title,
@@ -116,10 +123,10 @@ export default async function BestPage({ params }: PageProps) {
               <div className="max-w-2xl">
                 <h1 className="text-3xl font-bold text-white">{config.h1}</h1>
                 <p className="mt-3 text-zinc-400 leading-relaxed">{config.description}</p>
-                <p className="mt-2 text-xs text-zinc-600">
-                  Updated {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  {' · '}{topTools.length} tools ranked
-                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-zinc-600">
+                  <UpdatedBadge date={freshnessDate} />
+                  <span>{' · '}{topTools.length} tools ranked</span>
+                </div>
               </div>
 
               <ShareButton

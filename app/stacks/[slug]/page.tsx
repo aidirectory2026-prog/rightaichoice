@@ -24,6 +24,8 @@ import {
   StackPillarFaqs,
   StackPillarSection,
 } from '@/components/stacks/stack-pillar-section'
+import { UpdatedBadge } from '@/components/shared/updated-badge'
+import { getLastChangedAt } from '@/lib/seo/freshness'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -75,6 +77,11 @@ export default async function StackPage({ params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Real "Updated <date>" from pages_freshness for this stack hub path.
+  const freshnessDate = await getLastChangedAt(`/stacks/${slug}`).catch(
+    () => null,
+  )
 
   // JSON-LD structured data
   const howTo = howToJsonLd(
@@ -150,9 +157,9 @@ export default async function StackPage({ params }: Props) {
             <p className="mt-3 text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               {stack.description}
             </p>
-            <p className="mt-3 text-xs text-zinc-600">
-              Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </p>
+            <div className="mt-3 flex justify-center">
+              <UpdatedBadge date={freshnessDate} prefix="Last updated" />
+            </div>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               <SaveStackButton
                 title={stack.title}

@@ -379,3 +379,14 @@ After deploy, run in order:
 10. Switch IndexNow source
 
 Day 1 in the 30-day roadmap.
+
+---
+
+## Implementation log — Phase 9 (Automations & Catalog)
+
+### 2026-05-31 — Universal propagation: tool change updates EVERY page + "Updated <date>" badge (Workstream B)
+- **What:** When any tool's user-visible data changes, every page featuring it — even a 20-day-old compare — regenerates and shows an "Updated <date>" stamp.
+- **Why (gap found):** The compare-editorial cascade only regenerated the *stalest* 20–30/night, stalest-first, while the nightly refresh churns the queue — so 488/559 editorial compares were stale (median ~11.7d, max ~17.7d); an older compare could never reach the top of a batch.
+- **How (non-technical):** The moment a tool's info changes, all of its comparison pages are flagged "needs rewrite" so they jump to the front and refresh within a day. Every such page now shows a real "Updated <date>".
+- **How (technical):** Migration **133** extends `propagate_freshness()` — besides the `pages_freshness` upsert (via `page_tool_mentions`), it sets `last_reviewed_at = NULL` on every `is_editorial` `tool_comparisons` row whose `tool_ids` contains the changed tool → `v_stale_comparisons` ranks them top. Exception-guarded. Cascade caps raised (lib 20→120, batch 30→120/cap 500, route 20→60/cap 200). New shared `components/shared/updated-badge.tsx` (machine-readable `<time>`) on compare(all)/best/for/stacks/categories from real `pages_freshness` dates (replaced fake `new Date()`). No JSON-LD/sitemap touched (SEO lane).
+- **Cost:** the 488-stale backlog drains over a few nightly cascades (~$0.60 elevated DeepSeek), then incremental. Fan-out also fires on the admin "Bump freshness" action (intended).

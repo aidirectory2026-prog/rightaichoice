@@ -13,8 +13,9 @@ import {
   getToolsForComparisonByIds,
 } from '@/lib/data/comparisons'
 import { faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps, articleJsonLd, comparisonJsonLd } from '@/lib/seo/json-ld'
-import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
+import { UpdatedBadge } from '@/components/shared/updated-badge'
+import { getLastChangedAt } from '@/lib/seo/freshness'
 import { buildComparePageMeta } from '@/lib/seo/metadata'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { getRelatedComparesForPair } from '@/lib/seo/internal-links'
@@ -109,6 +110,15 @@ export default async function ComparisonSlugPage({ params }: Props) {
   const toolNames = tools.map((t) => (t as { name: string }).name)
   const toolSlugs = tools.map((t) => (t as { slug: string }).slug)
   const editorial = comparison as EditorialComparison
+
+  // Universal-propagation badge (B2): real "Updated <date>" sourced from
+  // pages_freshness.last_changed_at for this compare path — so when a
+  // referenced tool changes and the cascade fans out, this badge reflects the
+  // actual change date. Falls back to last_reviewed_at/published_at when no
+  // pages_freshness row exists yet. Non-fatal.
+  const freshnessDate = await getLastChangedAt(`/compare/${slug}`).catch(
+    () => null,
+  )
 
   // Phase 7H — fetch sibling editorial compares featuring either tool
   // for the bottom internal-linking rail. Limited to 6 cards; helper
@@ -220,16 +230,22 @@ export default async function ComparisonSlugPage({ params }: Props) {
                 <p className="mt-1 text-sm text-zinc-500">
                   Side-by-side comparison of features, pricing, and ratings
                 </p>
-                {editorial.is_editorial && (editorial.last_reviewed_at || editorial.published_at) && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <LastUpdated
-                      date={new Date((editorial.last_reviewed_at ?? editorial.published_at) as string)}
-                    />
-                    <ReviewedByOurTeam
-                      date={new Date((editorial.last_reviewed_at ?? editorial.published_at) as string)}
-                    />
-                  </div>
-                )}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {/* Universal "Updated <date>" — every compare, sourced from
+                      pages_freshness so a referenced-tool change reflects here. */}
+                  <UpdatedBadge date={freshnessDate} />
+                  {editorial.is_editorial &&
+                    (editorial.last_reviewed_at || editorial.published_at) && (
+                      <ReviewedByOurTeam
+                        date={
+                          new Date(
+                            (editorial.last_reviewed_at ??
+                              editorial.published_at) as string,
+                          )
+                        }
+                      />
+                    )}
+                </div>
               </div>
               <ComparePageActions
                 toolSlugs={toolSlugs}

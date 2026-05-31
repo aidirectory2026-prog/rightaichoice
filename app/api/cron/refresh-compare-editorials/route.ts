@@ -19,8 +19,12 @@ export const maxDuration = 300
 const handler = cronRoute({ pipelineKey: 'refresh-compare-editorials' }, async (ctx, request) => {
   const url = new URL(request.url)
   const batchParam = Number(url.searchParams.get('batch'))
+  // Migration 133 fan-out can flag every referencing compare on one tool
+  // change, so the queue is larger; allow a higher override ceiling. The
+  // Vercel-route default stays conservative (60) for the 300s function budget —
+  // the GH Actions batch script (lib default 120) does the bulk draining.
   const batchSize =
-    Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 50 ? batchParam : 20
+    Number.isFinite(batchParam) && batchParam > 0 && batchParam <= 200 ? batchParam : 60
 
   const supabase = getAdminClient()
   const result = await runCompareEditorialCascade(supabase, batchSize)

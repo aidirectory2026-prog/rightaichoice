@@ -23,9 +23,13 @@ import { runCompareEditorialCascade } from '../lib/cron/cascade-editorials'
 async function main() {
   const args = process.argv.slice(2)
   const batchArg = args.find((a) => a.startsWith('--batch='))
-  const batchSize = batchArg ? Number(batchArg.split('=')[1]) : 30
+  // Migration 133 raised the fan-out so a single tool change can flag every
+  // referencing compare at once. Default lifted 30 → 120 so the GH Actions job
+  // (60-min budget) drains the now-larger stalest-first queue instead of
+  // chipping 30/day behind constant refresh churn. Cap stays 500 for headroom.
+  const batchSize = batchArg ? Number(batchArg.split('=')[1]) : 120
 
-  if (!Number.isFinite(batchSize) || batchSize <= 0 || batchSize > 200) {
+  if (!Number.isFinite(batchSize) || batchSize <= 0 || batchSize > 500) {
     console.error(`Invalid --batch=${batchArg} — must be 1..200`)
     process.exit(1)
   }
