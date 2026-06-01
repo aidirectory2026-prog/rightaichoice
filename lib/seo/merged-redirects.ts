@@ -21,6 +21,10 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "ada"
   ],
   [
+    "airtable-ai",
+    "airtable"
+  ],
+  [
     "bardeen-ai",
     "bardeen"
   ],
@@ -71,6 +75,14 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   [
     "evenup-law",
     "evenup"
+  ],
+  [
+    "figma-ai",
+    "figma"
+  ],
+  [
+    "figma-make",
+    "figma"
   ],
   [
     "fireflies-ai",
@@ -169,6 +181,10 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "lindy"
   ],
   [
+    "llamaindex",
+    "llama-index"
+  ],
+  [
     "lovo-ai",
     "lovo"
   ],
@@ -197,8 +213,12 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "nightcafe"
   ],
   [
+    "notion-ai",
+    "notion"
+  ],
+  [
     "notion-ai-workspace",
-    "notion-ai"
+    "notion"
   ],
   [
     "originality-ai",
@@ -253,6 +273,10 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "sweep"
   ],
   [
+    "tableau-pulse",
+    "tableau"
+  ],
+  [
     "taskade-ai",
     "taskade"
   ],
@@ -282,4 +306,4 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   ]
 ])
 
-export const MERGED_LAST_GENERATED_AT = '2026-05-28T20:46:11.530Z'
+export const MERGED_LAST_GENERATED_AT = '2026-06-01T06:05:16.839Z'
