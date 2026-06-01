@@ -41,7 +41,7 @@ import { getCategories } from '@/lib/data/categories'
 import { getFeaturedEditorialComparisons } from '@/lib/data/comparisons'
 import { categoryIconFor } from '@/lib/icons/category-icon'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
-import { decisionEngineServiceJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { decisionEngineServiceJsonLd, datasetJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 const EXAMPLE_STACKS = [
   {
@@ -87,7 +87,7 @@ export default async function HomePage() {
           decision-engine positioning machine-readable for Google + AI
           crawlers. Organization + WebSite already emitted globally in the
           root layout. */}
-      <script {...jsonLdScriptProps(decisionEngineServiceJsonLd())} />
+      <script {...jsonLdScriptProps([decisionEngineServiceJsonLd(), datasetJsonLd()])} />
       <Navbar />
 
       <main className="flex-1">
