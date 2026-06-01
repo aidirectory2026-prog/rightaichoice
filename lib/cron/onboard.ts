@@ -67,6 +67,7 @@ import {
   createEditorialCompares,
   countEditorialCompares,
 } from './onboard-compares'
+import { assignTags, loadValidTagSlugs } from './onboard-tags'
 import { scrapeAllSources } from '@/lib/scrapers'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { submitToIndexNow } from '@/lib/indexnow'
@@ -109,6 +110,7 @@ export type OnboardStepResult = {
   slug: string
   refreshed: boolean
   categorized: number // count of categories assigned
+  tags: number // count of tags assigned
   viability: boolean
   latestUpdates: boolean
   logo: GateStatus
@@ -143,7 +145,7 @@ const HARD_GATES = new Set([
   'faqs',
   'editorial_fields', // best_for + not_for + editorial_verdict present
 ])
-const SOFT_GATES = new Set(['logo', 'sentiment', 'tutorials', 'models', 'latest_updates'])
+const SOFT_GATES = new Set(['logo', 'sentiment', 'tutorials', 'models', 'latest_updates', 'tags'])
 
 const VALID_PRICING = new Set(['free', 'freemium', 'paid', 'contact'])
 
@@ -432,12 +434,14 @@ async function onboardOne(
   supabase: SupabaseClient,
   tool: PendingTool,
   validSlugs: string[],
+  validTagSlugs: string[],
   isDraft: boolean,
 ): Promise<OnboardStepResult> {
   const res: OnboardStepResult = {
     slug: tool.slug,
     refreshed: false,
     categorized: 0,
+    tags: 0,
     viability: false,
     latestUpdates: false,
     logo: 'fail',
@@ -468,6 +472,26 @@ async function onboardOne(
     res.categorized = await categorizeTool(supabase, tool, validSlugs)
   } catch (e) {
     res.errors.push(`categorize: ${e instanceof Error ? e.message : 'unknown'}`)
+  }
+
+  // Step 2b — TAGS (controlled 31-slug vocab). Powers the alternatives ranker,
+  // Topics sidebar, and search relevance. SOFT — improves quality, never blocks
+  // publish. Reads the post-refresh description/features.
+  try {
+    const gr = await fetchGateRow(supabase, tool.id)
+    res.tags = await assignTags(
+      supabase,
+      {
+        id: tool.id,
+        name: tool.name,
+        tagline: tool.tagline,
+        description: gr?.description ?? tool.description,
+        features: gr?.features ?? tool.features,
+      },
+      validTagSlugs,
+    )
+  } catch (e) {
+    res.errors.push(`tags: ${e instanceof Error ? e.message : 'unknown'}`)
   }
 
   // Step 3 — VIABILITY.
@@ -594,6 +618,7 @@ async function onboardOne(
   checks.models = mk(modelCount > 0 ? 'pass' : 'warn', `${modelCount} models`)
   const luCount = Array.isArray(gate?.latest_updates) ? gate!.latest_updates!.length : 0
   checks.latest_updates = mk(luCount > 0 ? 'pass' : 'warn', `${luCount} latest_updates`)
+  checks.tags = mk(res.tags >= 3 ? 'pass' : 'warn', `${res.tags} tags`)
 
   res.checks = checks
   res.allGreen = isAllGreen(checks)
@@ -646,6 +671,7 @@ function fatalResult(slug: string, e: unknown): OnboardStepResult {
     slug,
     refreshed: false,
     categorized: 0,
+    tags: 0,
     viability: false,
     latestUpdates: false,
     logo: 'fail',
@@ -668,7 +694,7 @@ async function loadValidSlugs(supabase: SupabaseClient): Promise<string[]> {
 
 function logStep(runId: string, r: OnboardStepResult) {
   console.log(
-    `[onboard:${runId}] ${r.slug} — refreshed=${r.refreshed} cats=${r.categorized} viability=${r.viability} latest=${r.latestUpdates} logo=${r.logo} alts=${r.alternatives} cmp=${r.editorialCompares} faqs=${r.faqs} sentiment=${r.sentiment} allGreen=${r.allGreen} published=${r.published} onboarded=${r.onboarded}${r.errors.length ? ` errors=[${r.errors.join('; ')}]` : ''}`,
+    `[onboard:${runId}] ${r.slug} — refreshed=${r.refreshed} cats=${r.categorized} tags=${r.tags} viability=${r.viability} latest=${r.latestUpdates} logo=${r.logo} alts=${r.alternatives} cmp=${r.editorialCompares} faqs=${r.faqs} sentiment=${r.sentiment} allGreen=${r.allGreen} published=${r.published} onboarded=${r.onboarded}${r.errors.length ? ` errors=[${r.errors.join('; ')}]` : ''}`,
   )
 }
 
@@ -698,10 +724,11 @@ export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
   if (tools.length === 0) return result
 
   const validSlugs = await loadValidSlugs(supabase)
+  const validTagSlugs = await loadValidTagSlugs(supabase)
 
   for (const tool of tools) {
     result.processed++
-    const stepRes = await onboardOne(supabase, tool, validSlugs, false).catch((e) =>
+    const stepRes = await onboardOne(supabase, tool, validSlugs, validTagSlugs, false).catch((e) =>
       fatalResult(tool.slug, e),
     )
     if (stepRes.onboarded) result.onboarded++
@@ -739,10 +766,11 @@ export async function runOnboardSop(
   if (tools.length === 0) return result
 
   const validSlugs = await loadValidSlugs(supabase)
+  const validTagSlugs = await loadValidTagSlugs(supabase)
 
   for (const tool of tools) {
     result.processed++
-    const stepRes = await onboardOne(supabase, tool, validSlugs, true).catch((e) =>
+    const stepRes = await onboardOne(supabase, tool, validSlugs, validTagSlugs, true).catch((e) =>
       fatalResult(tool.slug, e),
     )
     if (stepRes.onboarded) result.onboarded++
