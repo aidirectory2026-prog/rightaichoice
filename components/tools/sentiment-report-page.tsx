@@ -246,6 +246,8 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
         {error && phase === 'idle' && <p className="relative mt-3 text-xs text-red-400">{error}</p>}
       </div>
 
+      {phase === 'idle' && <IdleLanding toolName={toolName} onScan={runScan} authed={!!user} freeLeft={freeLeft} price={price} />}
+
       {phase === 'signin' && (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
           <h2 className="text-lg font-semibold text-white">Create a free account to unlock your 3 scans</h2>
@@ -390,6 +392,68 @@ function ReportBody({ report, toolName, meta, onDownload }: {
       <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
         <button onClick={onDownload} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-bold text-emerald-950 hover:bg-emerald-400"><Download className="h-4 w-4" /> Download full report</button>
         <p className="text-xs text-zinc-500">Save this {toolName} sentiment report as a shareable file.</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Idle landing (shown before a scan; sells the value, fills the page) ─────
+function IdleLanding({ toolName, onScan, authed, freeLeft, price }: {
+  toolName: string; onScan: () => void; authed: boolean; freeLeft: number | null; price: string
+}) {
+  const features = [
+    { icon: <MessageSquareText className="h-5 w-5" />, title: 'Live mentions', desc: `The actual posts, reviews & complaints about ${toolName} — with links and dates.` },
+    { icon: <Flame className="h-5 w-5" />, title: 'Honest verdict', desc: 'A straight answer on whether it lives up to the hype — and who it’s really for.' },
+    { icon: <ThumbsUp className="h-5 w-5" />, title: 'Praise & gripes', desc: 'What users genuinely love and the frustrations that keep coming up.' },
+    { icon: <Quote className="h-5 w-5" />, title: 'Real quotes', desc: 'Representative voices from real users, not marketing copy.' },
+    { icon: <Radar className="h-5 w-5" />, title: 'Recurring themes', desc: 'The patterns across hundreds of opinions, surfaced at a glance.' },
+    { icon: <AlertTriangle className="h-5 w-5" />, title: 'Red flags', desc: 'Hidden costs and dealbreakers people only discover after signing up.' },
+  ]
+  const steps = [
+    { n: '1', title: 'Sign up free', desc: 'Create an account in seconds — get 3 free scans, no card.' },
+    { n: '2', title: 'We sweep the web', desc: 'Live social media, forums, reviews & video opinions — in ~30–60s.' },
+    { n: '3', title: 'Get your report', desc: 'An honest, downloadable verdict with the real mentions behind it.' },
+  ]
+  return (
+    <div className="space-y-8">
+      {/* What's inside */}
+      <div>
+        <h2 className="text-lg font-semibold text-white">What&apos;s inside your {toolName} report</h2>
+        <p className="mt-1 text-sm text-zinc-500">Everything you need to decide — distilled from real, current user opinion.</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f) => (
+            <div key={f.title} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 transition hover:border-emerald-500/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30">{f.icon}</div>
+              <h3 className="mt-3 text-sm font-semibold text-white">{f.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-400">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* How it works */}
+      <div>
+        <h2 className="text-lg font-semibold text-white">How it works</h2>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {steps.map((s) => (
+            <div key={s.n} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-emerald-950">{s.n}</div>
+              <h3 className="mt-3 text-sm font-semibold text-white">{s.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-400">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-600/40 bg-gradient-to-br from-emerald-950/40 to-zinc-950 p-7 text-center">
+        <h2 className="text-xl font-bold text-white">Ready to see the real verdict on {toolName}?</h2>
+        <p className="max-w-md text-sm text-zinc-400">{freeLeft !== null && freeLeft > 0 ? `You have ${freeLeft} free ${freeLeft === 1 ? 'scan' : 'scans'} — no card needed.` : `Your scan is ready in under a minute · ${price}.`}</p>
+        <button onClick={onScan} className="group inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
+          {authed ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+          {authed ? 'Run my free sentiment scan' : 'Sign up free — unlock 3 scans'}
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+        </button>
       </div>
     </div>
   )
