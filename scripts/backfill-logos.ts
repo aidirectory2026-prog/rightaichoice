@@ -109,6 +109,7 @@ async function runProbe(sb: ReturnType<typeof getAdminClient>) {
     'og:image': 0,
     icon: 0,
     'well-known': 0,
+    'logo-api': 0,
   }
   let wins = 0
   let total = 0
@@ -161,6 +162,7 @@ async function runApply(sb: ReturnType<typeof getAdminClient>) {
     'og:image': 0,
     icon: 0,
     'well-known': 0,
+    'logo-api': 0,
   }
 
   await pool(tools, CONCURRENCY, async (t) => {
