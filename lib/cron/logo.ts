@@ -334,6 +334,10 @@ export async function findLogo(domain: string): Promise<VerifiedImage | null> {
     if (v) return v
   }
 
+  // NOTE: large platforms that bot-protect their pages or serve inline-SVG
+  // headers (Cloudflare, Datadog, Airtable, Tableau…) resolve to none of the
+  // above and fall back to the runtime favicon. A keyed brand-logo API
+  // (Logo.dev — needs a token) is the proper fix; Clearbit's free API is dead.
   return null
 }
 

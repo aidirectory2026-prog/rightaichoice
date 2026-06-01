@@ -29,9 +29,13 @@ const isApply = args.includes('--apply')
 const sampleArg = args.find((a) => a.startsWith('--sample='))
 const limitArg = args.find((a) => a.startsWith('--limit='))
 const concArg = args.find((a) => a.startsWith('--concurrency='))
+const slugsArg = args.find((a) => a.startsWith('--slugs='))
 const SAMPLE = sampleArg ? parseInt(sampleArg.split('=')[1], 10) : 25
 const LIMIT = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity
 const CONCURRENCY = concArg ? Math.max(1, parseInt(concArg.split('=')[1], 10)) : 8
+// --slugs=a,b,c → re-resolve logos for exactly these slugs (ignores the
+// "missing only" filter so it also re-does favicon-fallback placeholders).
+const SLUGS = slugsArg ? slugsArg.split('=')[1].split(',').map((s) => s.trim()).filter(Boolean) : null
 
 interface ToolRow {
   id: string
@@ -45,14 +49,17 @@ async function fetchMissingTools(sb: ReturnType<typeof getAdminClient>): Promise
   let from = 0
   const all: ToolRow[] = []
   for (;;) {
-    const { data, error } = await sb
+    let q = sb
       .from('tools')
       .select('id, slug, website_url, logo_url')
       .eq('is_published', true)
-      .or('logo_url.is.null,logo_url.eq.')
       .not('website_url', 'is', null)
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1)
+    // Scoped mode: exact slugs regardless of current logo (re-does favicons too).
+    // Default mode: only tools with a null/empty logo.
+    q = SLUGS ? q.in('slug', SLUGS) : q.or('logo_url.is.null,logo_url.eq.')
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     const rows = (data || []) as unknown as ToolRow[]
     all.push(...rows)
