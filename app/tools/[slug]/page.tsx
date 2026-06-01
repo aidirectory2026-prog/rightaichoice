@@ -24,6 +24,7 @@ import {
   ListChecks,
   ExternalLink,
   BarChart3,
+  Sparkles,
 } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -36,7 +37,6 @@ import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
-import { SentimentChecker } from '@/components/tools/sentiment-checker'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
@@ -373,6 +373,15 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 title={`${tool.name} — ${tool.tagline}`}
                 text={`Check out ${tool.name} — ${tool.tagline} | Found on RightAIChoice`}
               />
+              {/* Phase 9 S6: prominent entry to the live Market Sentiment page */}
+              <Link
+                href={`/tools/${tool.slug}/sentiment`}
+                className="group inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 py-2 text-sm font-semibold text-emerald-950 shadow-sm shadow-emerald-500/20 transition hover:bg-emerald-400"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">What people really think</span>
+                <span className="sm:hidden">Sentiment</span>
+              </Link>
               <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page" />
             </div>
           </div>
@@ -566,11 +575,8 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <SectionErrorBoundary fallbackTitle="Sentiment synthesis couldn't load right now.">
                 <SentimentSynthesis toolId={tool.id} toolName={tool.name} />
               </SectionErrorBoundary>
-
-              {/* Phase 9 S6 — on-demand real-time Market Sentiment Checker (paid) */}
-              <SectionErrorBoundary fallbackTitle="Sentiment checker couldn't load right now.">
-                <SentimentChecker toolSlug={tool.slug} toolName={tool.name} />
-              </SectionErrorBoundary>
+              {/* Phase 9 S6: the paid live Market Sentiment Checker now lives on its
+                  own page (/tools/[slug]/sentiment), reached via the header button. */}
 
               {/* Viability Score — Phase 4.5 audit fix (2026-05-09): renders
                   even when viability_score is null. Was hidden on 540 of

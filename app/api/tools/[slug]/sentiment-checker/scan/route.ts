@@ -21,6 +21,30 @@ function getIp(req: Request): string | undefined {
   return h.get('cf-connecting-ip') ?? h.get('x-real-ip') ?? h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  reddit: 'Reddit', hn: 'Hacker News', youtube: 'YouTube', producthunt: 'Product Hunt',
+  appstore: 'App Store', trustpilot: 'Trustpilot', google: 'Google', twitter: 'X', quora: 'Quora',
+}
+
+export type LiveMention = { source: string; title: string; snippet: string; date: string | null; url: string | null; score: number | null }
+
+/** Top real posts across all sources — the "live mentions" feed (recency-first). */
+function buildMentions(scrape: Awaited<ReturnType<typeof scrapeAllSources>>): LiveMention[] {
+  return scrape.all
+    .flatMap((r) => r.posts.map((p) => ({ ...p, label: SOURCE_LABELS[p.source] ?? p.source })))
+    .filter((p) => (p.body && p.body.length > 20) || p.title)
+    .sort((a, b) => (Date.parse(b.date ?? '') || 0) - (Date.parse(a.date ?? '') || 0) || (b.score ?? 0) - (a.score ?? 0))
+    .slice(0, 18)
+    .map((p) => ({
+      source: p.label,
+      title: (p.title ?? '').slice(0, 140),
+      snippet: (p.body ?? '').slice(0, 280),
+      date: p.date ?? null,
+      url: p.url ?? null,
+      score: p.score ?? null,
+    }))
+}
+
 /**
  * POST /api/tools/[slug]/sentiment-checker/scan
  * Auth-gated, quota-metered real-time sentiment scan. Returns the synthesized
@@ -102,12 +126,17 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const durationMs = Date.now() - startedAt
     const status = scrape.sourcesSucceeded.length === 0 ? 'partial' : 'ready'
 
+    // Attach the real "live mentions" feed so the report shows actual posts,
+    // not just the synthesis — stored inside result jsonb (no schema change).
+    const mentions = buildMentions(scrape)
+    const fullReport = { ...report, mentions }
+
     if (searchId) {
       await admin
         .from('sentiment_searches')
         .update({
           status,
-          result: report,
+          result: fullReport,
           sources: scrape.sourcesSucceeded,
           mention_count: scrape.totalPosts,
           duration_ms: durationMs,
@@ -146,7 +175,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       sources: scrape.sourcesSucceeded, mention_count: scrape.totalPosts, sentiment_score: report.sentiment_score,
     }, getIp(req))
 
-    return NextResponse.json({ ok: true, charge_type: chargeType, report, sources: scrape.sourcesSucceeded, mention_count: scrape.totalPosts, duration_ms: durationMs })
+    return NextResponse.json({ ok: true, charge_type: chargeType, report: fullReport, sources: scrape.sourcesSucceeded, mention_count: scrape.totalPosts, duration_ms: durationMs })
   } catch (err) {
     // Refund the claimed credit — never charge for a failed scan.
     await admin.rpc('refund_sentiment_scan', { p_user: user.id, p_charge_type: chargeType })

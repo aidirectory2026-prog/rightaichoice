@@ -12,6 +12,9 @@ import type { AllScrapeResults } from '@/lib/scrapers'
 
 export type SynthesizedReport = {
   ai_verdict: string
+  /** Premium report extras (Phase 9 S6 redesign) — optional for back-compat. */
+  bottom_line?: string
+  standout_quotes?: Array<{ text: string; source: string }>
   pros: string[]
   cons: string[]
   sentiment_score: 'positive' | 'mixed' | 'negative'
@@ -118,12 +121,14 @@ ${scrapeResults.sourcesFailed.length > 0 ? `(Failed sources: ${scrapeResults.sou
 ${scrapeContext}
 
 ## TASK
-Synthesize ALL the above into a structured report. Return ONLY valid JSON matching this exact schema:
+Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be specific, data-rich, and genuinely useful — this report is sold to users, so depth and honesty matter. Return ONLY valid JSON matching this exact schema:
 
 {
-  "ai_verdict": "One honest paragraph (3-4 sentences) summarizing who should use this tool and why, based on community feedback",
-  "pros": ["5 specific pros based on user feedback, max 15 words each"],
-  "cons": ["5 specific cons based on user feedback, max 15 words each"],
+  "ai_verdict": "A thorough, honest executive summary (5-7 sentences) of what the community really thinks: overall reception, who it's great for, the main strengths, the recurring complaints, and whether it's worth it. Specific, not generic.",
+  "bottom_line": "One punchy sentence — the single most important takeaway a buyer needs.",
+  "standout_quotes": [{"text": "A representative, paraphrased real user opinion (positive or critical), 1-2 sentences", "source": "the kind of source, e.g. 'a developer in a community thread' or 'a reviewer'"}],
+  "pros": ["6-8 specific strengths grounded in real user feedback, max 18 words each"],
+  "cons": ["6-8 specific weaknesses/complaints grounded in real user feedback, max 18 words each"],
   "sentiment_score": "positive" | "mixed" | "negative",
   "sentiment_breakdown": {"reddit": 0.0-1.0, "twitter": 0.0-1.0, "quora": 0.0-1.0, "g2": 0.0-1.0},
   "themes": [{"theme": "Key community narrative", "sources": ["reddit", "twitter"]}],
@@ -154,7 +159,7 @@ Return ONLY the JSON — no markdown fences, no explanation.`
   const text = await callDeepSeek({
     system: SYSTEM_PROMPT,
     user: prompt,
-    max_tokens: 3000,
+    max_tokens: 4096,
     json: true,
   })
 
@@ -167,7 +172,7 @@ Return ONLY the JSON — no markdown fences, no explanation.`
     const retryText = await callDeepSeek({
       system: SYSTEM_PROMPT,
       user: `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the JSON object — no markdown fences, no other text.`,
-      max_tokens: 3000,
+      max_tokens: 4096,
       json: true,
     })
     report = JSON.parse(stripJsonFences(retryText)) as SynthesizedReport
@@ -176,8 +181,8 @@ Return ONLY the JSON — no markdown fences, no explanation.`
   // Normalize: guard against a missing/short array from the model, then cap.
   if (!Array.isArray(report.pros)) report.pros = []
   if (!Array.isArray(report.cons)) report.cons = []
-  if (report.pros.length > 5) report.pros = report.pros.slice(0, 5)
-  if (report.cons.length > 5) report.cons = report.cons.slice(0, 5)
+  if (report.pros.length > 8) report.pros = report.pros.slice(0, 8)
+  if (report.cons.length > 8) report.cons = report.cons.slice(0, 8)
 
   return report
 }

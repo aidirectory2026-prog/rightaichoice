@@ -202,6 +202,62 @@ export function websiteJsonLd() {
   }
 }
 
+// ── Dataset (AEO / GEO) ────────────────────────────────────────────
+//
+// Phase 9 AEO (doc 08): position the catalog as a citable, structured
+// dataset of AI tools. Generative engines (and Google Dataset Search)
+// preferentially cite recognized data sources — this declares RAC as
+// one, links the machine-readable distribution (llms-full.txt), and
+// references the Wikidata entity for cross-verification. No hardcoded
+// counts (avoids staleness); freshness is conveyed per-page elsewhere.
+
+export function datasetJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': `${BASE_URL}/#dataset`,
+    name: 'RightAIChoice — AI Tools Directory & Comparison Dataset',
+    description:
+      'A curated, continuously-updated dataset of AI tools across every major category — each entry with pricing, user-sentiment ratings, key features, underlying models, alternatives, a viability score, and side-by-side editorial comparisons. Maintained by RightAIChoice, the decision engine for picking the right AI stack.',
+    url: BASE_URL,
+    sameAs: 'https://www.wikidata.org/wiki/Q139970688',
+    keywords: [
+      'AI tools',
+      'AI software directory',
+      'AI tool comparison',
+      'best AI tools',
+      'AI tool pricing',
+      'AI tool alternatives',
+      'AI stack',
+      'generative AI tools',
+    ],
+    creator: PUBLISHER,
+    publisher: PUBLISHER,
+    isAccessibleForFree: true,
+    license: `${BASE_URL}/terms`,
+    temporalCoverage: '2026/..',
+    variableMeasured: [
+      'pricing',
+      'user rating',
+      'category',
+      'key features',
+      'underlying AI models',
+      'alternatives',
+      'viability score',
+    ],
+    includedInDataCatalog: {
+      '@type': 'DataCatalog',
+      name: 'RightAIChoice',
+      url: BASE_URL,
+    },
+    distribution: {
+      '@type': 'DataDownload',
+      encodingFormat: 'text/plain',
+      contentUrl: `${BASE_URL}/llms-full.txt`,
+    },
+  }
+}
+
 // ── BreadcrumbList ─────────────────────────────────────────────────
 
 type Crumb = { name: string; url: string }
