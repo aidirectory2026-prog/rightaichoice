@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   // Look up tool with full data
   const { data: tool } = await supabase
     .from('tools')
-    .select('id, name, slug, tagline, description, pricing_type, pricing_details, skill_level, features, integrations, platforms')
+    .select('id, name, slug, tagline, description, pricing_type, pricing_details, skill_level, features, integrations, platforms, website_url')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     // Step 1: Scrape all sources in parallel
     console.log(`[report] Scraping sources for "${tool.name}"...`)
-    const scrapeResults = await scrapeAllSources(tool.name)
+    const scrapeResults = await scrapeAllSources(tool.name, { website: (tool as { website_url?: string | null }).website_url })
     console.log(`[report] Scraped ${scrapeResults.totalPosts} posts from ${scrapeResults.sourcesSucceeded.join(', ')}`)
 
     if (scrapeResults.totalPosts === 0) {

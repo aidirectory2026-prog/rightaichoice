@@ -30,7 +30,7 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
   // Get top 100 tools by view count
   const { data: tools, error: toolsError } = (await admin
     .from('tools')
-    .select('id, name, slug, tagline, description, pricing_type, pricing_details, skill_level, features, integrations, platforms, view_count')
+    .select('id, name, slug, tagline, description, pricing_type, pricing_details, skill_level, features, integrations, platforms, view_count, website_url')
     .eq('is_published', true)
     .order('view_count', { ascending: false })
     .limit(MAX_TOOLS)) as { data: CronTool[] | null; error: { message: string } | null }
@@ -80,7 +80,7 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
               { onConflict: 'tool_id' }
             )
 
-          const scrapeResults = await scrapeAllSources(tool.name)
+          const scrapeResults = await scrapeAllSources(tool.name, { website: (tool as { website_url?: string | null }).website_url })
           const report = await synthesizeReport(
             {
               name: tool.name,

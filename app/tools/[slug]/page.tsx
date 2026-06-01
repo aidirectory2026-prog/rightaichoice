@@ -36,6 +36,7 @@ import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
+import { SentimentChecker } from '@/components/tools/sentiment-checker'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
@@ -564,6 +565,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
               {/* Sentiment synthesis — independent-user research pass (Phase 3 rewrite) */}
               <SectionErrorBoundary fallbackTitle="Sentiment synthesis couldn't load right now.">
                 <SentimentSynthesis toolId={tool.id} toolName={tool.name} />
+              </SectionErrorBoundary>
+
+              {/* Phase 9 S6 — on-demand real-time Market Sentiment Checker (paid) */}
+              <SectionErrorBoundary fallbackTitle="Sentiment checker couldn't load right now.">
+                <SentimentChecker toolSlug={tool.slug} toolName={tool.name} />
               </SectionErrorBoundary>
 
               {/* Viability Score — Phase 4.5 audit fix (2026-05-09): renders

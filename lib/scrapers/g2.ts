@@ -1,6 +1,9 @@
 import type { ScrapeResult, ScrapedPost } from './types'
 
-const APIFY_TOKEN = process.env.APIFY_API_TOKEN
+// Canonical env var is APIFY_TOKEN (matches lib/seo/apify-client.ts + all
+// cron/scripts). This file previously read APIFY_API_TOKEN — a name set
+// nowhere — so every Apify sentiment scrape silently returned 0 posts.
+const APIFY_TOKEN = process.env.APIFY_TOKEN
 
 const ACTOR_ID = 'focused_vanguard/g2-reviews-scraper'
 

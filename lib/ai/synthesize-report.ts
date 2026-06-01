@@ -1,10 +1,14 @@
-import { getAnthropicClient } from './anthropic'
+import { callDeepSeek, stripJsonFences } from '@/lib/plan/deepseek'
 import type { AllScrapeResults } from '@/lib/scrapers'
 
-// Haiku 4.5 — ~3x faster than Sonnet for structured JSON extraction from
-// provided context. This is the single biggest latency win on report
-// generation. Task is synthesis from given data, not creative reasoning.
-const MODEL = 'claude-haiku-4-5-20251001'
+// DeepSeek (deepseek-chat, JSON mode) — Phase 9 Workstream S1 (2026-06-01).
+// Switched off Anthropic Haiku: (1) "use DeepSeek everywhere" — the data
+// layer's economics (~8× cheaper at parity on structured synthesis) now
+// cover sentiment too; (2) it unblocks the live Market Sentiment Checker +
+// the 26 new tools whose sentiment was soft-warning on Anthropic's 402.
+// `response_format: json_object` forces valid JSON (replaces the manual
+// fence-cleaning the Anthropic path needed). Same output contract — the
+// display component (sentiment-synthesis.tsx) is untouched.
 
 export type SynthesizedReport = {
   ai_verdict: string
@@ -52,15 +56,13 @@ type ToolContext = {
 function buildScrapeContext(results: AllScrapeResults): string {
   const sections: string[] = []
 
-  for (const source of ['reddit', 'twitter', 'quora', 'g2'] as const) {
-    const result = results[source]
-    if (result.posts.length === 0) {
-      sections.push(`## ${source.toUpperCase()} — No data available`)
-      continue
-    }
+  // Iterate every source that returned data (Reddit, HN, YouTube, Product Hunt,
+  // App Store, Trustpilot). Empty/credential-less sources are simply omitted.
+  for (const result of results.all) {
+    if (result.posts.length === 0) continue
 
     const postTexts = result.posts
-      .slice(0, 10)
+      .slice(0, 12)
       .map((p, i) => {
         const parts = [
           `[${i + 1}]`,
@@ -71,10 +73,10 @@ function buildScrapeContext(results: AllScrapeResults): string {
       })
       .join('\n')
 
-    sections.push(`## ${source.toUpperCase()} (${result.posts.length} posts)\n${postTexts}`)
+    sections.push(`## ${result.source.toUpperCase()} (${result.posts.length} posts)\n${postTexts}`)
   }
 
-  return sections.join('\n\n')
+  return sections.length > 0 ? sections.join('\n\n') : '(No community data was found for this tool across the scraped sources.)'
 }
 
 const SYSTEM_PROMPT = `You are an expert AI tool analyst for RightAIChoice. You synthesize community feedback from Reddit, X/Twitter, Quora, and G2 into honest, actionable tool reports.
@@ -96,7 +98,6 @@ export async function synthesizeReport(
   tool: ToolContext,
   scrapeResults: AllScrapeResults
 ): Promise<SynthesizedReport> {
-  const anthropic = getAnthropicClient()
   const scrapeContext = buildScrapeContext(scrapeResults)
 
   const prompt = `Analyze this AI tool and synthesize a comprehensive report from community feedback.
@@ -150,46 +151,31 @@ For sentiment_breakdown, use 0.0-1.0 where 1.0 is fully positive. Set to 0 for s
 If you don't have enough data for a section, provide your best assessment based on available info and the tool's characteristics.
 Return ONLY the JSON — no markdown fences, no explanation.`
 
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 3000,
+  const text = await callDeepSeek({
     system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    user: prompt,
+    max_tokens: 3000,
+    json: true,
   })
-
-  const text = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: 'text'; text: string }).text)
-    .join('')
-
-  const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
 
   let report: SynthesizedReport
   try {
-    report = JSON.parse(cleaned) as SynthesizedReport
+    report = JSON.parse(stripJsonFences(text)) as SynthesizedReport
   } catch {
-    // Retry once on parse failure
-    const retry = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 3000,
+    // Retry once on parse failure (json_object mode makes this rare, but a
+    // truncated/odd response can still slip through). Re-ask plainly.
+    const retryText = await callDeepSeek({
       system: SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: prompt },
-        { role: 'assistant', content: text },
-        { role: 'user', content: 'Your response was not valid JSON. Please return ONLY the JSON object, no markdown fences or other text.' },
-      ],
+      user: `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the JSON object — no markdown fences, no other text.`,
+      max_tokens: 3000,
+      json: true,
     })
-
-    const retryText = retry.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { type: 'text'; text: string }).text)
-      .join('')
-
-    const retryCleaned = retryText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-    report = JSON.parse(retryCleaned) as SynthesizedReport
+    report = JSON.parse(stripJsonFences(retryText)) as SynthesizedReport
   }
 
-  // Ensure arrays have correct length
+  // Normalize: guard against a missing/short array from the model, then cap.
+  if (!Array.isArray(report.pros)) report.pros = []
+  if (!Array.isArray(report.cons)) report.cons = []
   if (report.pros.length > 5) report.pros = report.pros.slice(0, 5)
   if (report.cons.length > 5) report.cons = report.cons.slice(0, 5)
 
