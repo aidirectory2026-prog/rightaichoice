@@ -39,7 +39,7 @@ const BAD_LOGO_HOSTS = new Set<string>(['cdn.futurepedia.io'])
 const MIN_BYTES = 512 // anything smaller is almost certainly a 1x1 / placeholder
 const FETCH_TIMEOUT_MS = 8000 // short per-request timeout so we never hang
 
-export type LogoSource = 'apple-touch-icon' | 'og:image' | 'icon' | 'well-known'
+export type LogoSource = 'apple-touch-icon' | 'og:image' | 'icon' | 'well-known' | 'logo-api'
 
 export interface VerifiedImage {
   source: LogoSource
@@ -334,10 +334,19 @@ export async function findLogo(domain: string): Promise<VerifiedImage | null> {
     if (v) return v
   }
 
-  // NOTE: large platforms that bot-protect their pages or serve inline-SVG
-  // headers (Cloudflare, Datadog, Airtable, Tableau…) resolve to none of the
-  // above and fall back to the runtime favicon. A keyed brand-logo API
-  // (Logo.dev — needs a token) is the proper fix; Clearbit's free API is dead.
+  // Final fallback: Logo.dev (keyed brand-logo API) for large platforms that
+  // bot-protect their pages or serve inline-SVG headers (Cloudflare, Datadog,
+  // Airtable, Tableau…) — none of the above resolves for them, but a brand
+  // API has them. No-ops when LOGODEV_TOKEN is unset, so it's safe everywhere.
+  const logoDevToken = process.env.LOGODEV_TOKEN
+  if (logoDevToken) {
+    const v = await fetchAndVerify(
+      `https://img.logo.dev/${domain}?token=${logoDevToken}&size=256&format=png&retina=true`,
+      'logo-api',
+    )
+    if (v) return v
+  }
+
   return null
 }
 
