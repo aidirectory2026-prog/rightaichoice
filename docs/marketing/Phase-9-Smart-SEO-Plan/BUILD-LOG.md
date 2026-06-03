@@ -13,6 +13,62 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont. 2) — 2026-06-03 — Bing fix: why we got ZERO from Bing (sitemap never ingested)
+
+**Trigger:** operator — "we're getting absolutely nothing from Bing — no traffic,
+no citations, nothing." (Bing matters beyond Bing.com: **ChatGPT Search and
+Copilot read Bing's index**, so being absent from Bing also starves AI citations.)
+
+### Diagnosis (via the Bing Webmaster API directly, key from .env.local)
+- **Site IS verified** (`IsVerified: true`); robots allows bingbot; bingbot gets
+  clean SSR content (tool page 200, 402KB, real `<title>`, `index,follow`). So
+  crawling/verification/rendering were **not** the problem.
+- **Bing traffic: 0 clicks / 0 impressions, every day.** **Only ~10–14 pages
+  `InIndex`** out of ~2,500. `InLinks: 0`.
+- **Root cause — Bing never ingested `/tools/sitemap.xml`.** `GetFeeds` showed it
+  **"Pending", 0 URLs** (vs 1,994 live). `/best`, `/blog`, `/sitemap-index.xml`
+  also Pending. Only `/compare` (611), `/categories`, `/stacks`, `/for` had
+  ingested. So Bing knew ~705 URLs (mostly compares) and the **1,994 tool pages
+  were invisible to it** → near-empty index → zero traffic.
+- **Why Pending = a fetch-timeout, traced to caching:** `/tools/sitemap.xml`
+  took **3.4s uncached on every fetch** (`x-vercel-cache: MISS`,
+  `max-age=0`); `/sitemap-index.xml` **cold-started to 10.3s**. `/compare`
+  (1.6s) was fast enough to succeed — the slow ones timed out. Next 16's docs:
+  *a sitemap is a Route Handler cached by default UNLESS it uses a request-time
+  API.* `app/tools/sitemap.ts` called `getAllToolSlugs()` → cookie-reading
+  `createClient()` (a request-time API) → opted the route OUT of caching →
+  slow uncached render every time.
+
+### Fixes shipped (`c3df3c0`, branch `phase9-seo-bing` → main, deployed)
+- **`app/tools/sitemap.ts`** — read slugs via the cookie-free admin client (as
+  `getLastChangedAtBatch` already does). No request-time API → Next caches it.
+  **Verified post-deploy: `x-vercel-cache: HIT`, 0.3–0.6s (was 3.4s), 1,994 URLs.**
+- **`app/sitemap-index.xml/route.ts`** — dropped `force-dynamic` (it's 8 static
+  URLs) + long `s-maxage` + `stale-while-revalidate`; dropped the per-request
+  `now()` lastmod. **Verified: `x-vercel-cache: HIT`, 0.19s (was 10.3s cold).**
+- **`app/api/cron/submit-urls-bing`** — `fetchDailyQuota() ?? 100` let a transient
+  `DailyQuota=0` zero the slice → silent success + **frozen cursor** (stuck on
+  compares since 2026-06-01; live quota is actually 100/2800). `|| 100` falls back
+  on 0 too; a genuine 0 now fails loudly on `/admin/health` instead of silently.
+- **Resubmitted** `/tools`, `/best`, `/blog`, `/sitemap-index`, `/compare` to Bing
+  via `SubmitFeed` (all HTTP 200) — forces a re-fetch now that they're fast.
+
+### What this does and doesn't fix
+- **Fixes the hard blocker:** Bing can finally ingest the tools sitemap (re-fetch
+  is now 0.3s, well under its tolerance). Expect `/tools/sitemap.xml` to flip
+  Pending → Success (~1,994 URLs) within hours, then `InIndex` to climb from ~14.
+- **Doesn't fix authority:** `InLinks: 0` → Bing's crawl budget is tiny (~49–82
+  pages/day), so full indexing + traffic ramps over weeks and is accelerated by
+  **doc 10 distribution (backlinks)**. Discovery was the blocker; authority is the
+  throttle.
+
+### Follow-ups
+- Re-check `GetFeeds` in ~24h: confirm `/tools/sitemap.xml` → Success w/ ~1,994.
+- (Optional) Bing has a stray `www.rightaichoice.com/sitemap.xml` feed (16 URLs) —
+  wrong host (canonical is non-www). Harmless; remove via `RemoveFeed` if tidying.
+
+---
+
 ## Day 8 (cont.) — 2026-06-03 — Snippets (doc 09) + Tier-2 (doc 04) assessed → both rank-gated, deferred
 
 **Trigger:** working the remaining Phase 9 threads in order after AEO citation
