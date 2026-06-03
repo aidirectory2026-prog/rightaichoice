@@ -44,18 +44,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://rightaichoice.com"),
   title: {
-    default: "RightAIChoice — Find the Right AI Stack for Your Workflow",
+    // Phase 9 (2026-06-03) homepage SEO rebalance: lead with the demand
+    // vocabulary ("best AI tools" / "find") — GSC shows ~zero demand for the
+    // "ai stack" head term, which stays as the differentiating mechanism in the
+    // description. See docs/marketing/Phase-9-Smart-SEO-Plan/16-homepage-seo-strategy.md.
+    default: "Best AI Tools, Matched to Your Goal — RightAIChoice",
     template: "%s | RightAIChoice",
   },
   description:
-    "Stop guessing which AI tools to use. Get a personalized AI stack in 60 seconds — compare 2,000+ tools by feature, price, and real user sentiment.",
+    "Find and compare the best AI tools for your workflow. Describe your goal — get a personalized AI stack with costs, alternatives, and real user-sentiment scores across 2,000+ tools.",
   keywords: [
+    "best AI tools",
     "AI tools",
+    "AI tool finder",
+    "compare AI tools",
     "AI stack",
-    "best AI tools for",
     "AI tool recommendations",
-    "build with AI",
-    "AI project planner",
   ],
   openGraph: {
     type: "website",

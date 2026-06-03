@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useAuthHref } from '@/lib/hooks/use-auth-href'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen, Bookmark } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen, Bookmark, Layers } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 
 export function Navbar() {
@@ -37,6 +37,13 @@ export function Navbar() {
               className="text-sm text-zinc-400 hover:text-white transition-colors"
             >
               Browse Tools
+            </Link>
+            <Link
+              href="/stacks"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <Layers className="h-3.5 w-3.5" />
+              Stacks
             </Link>
             <Link
               href="/compare"
@@ -150,6 +157,14 @@ export function Navbar() {
             className="block text-sm text-zinc-400 hover:text-white py-2"
           >
             Browse Tools
+          </Link>
+          <Link
+            href="/stacks"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white py-2"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Stacks
           </Link>
           <Link
             href="/compare"

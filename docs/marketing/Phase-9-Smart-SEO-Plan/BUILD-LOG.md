@@ -13,6 +13,52 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont. 4) — 2026-06-03 — Homepage SEO: rebalance toward demand + hub rewire + structural rebuild
+
+**Trigger:** operator — "I want our homepage to rank for the important queries around
+our product (define/search/choose/research a stack)." Full keyword research + a new
+strategy doc (**16-homepage-seo-strategy.md**) + implementation.
+
+### The finding that shaped it
+GSC (latest 28d): the **homepage ranks for ~nothing** (1 query, 1 impression), and
+**"AI stack" has ~zero captured search demand** site-wide. Real demand = "best ai tools
+for [X]", tool-name/pricing, and "X vs Y" — owned by /best, cornerstones, tool pages,
+compares. Two homepage **link leaks**: it linked to 4 stale example stacks (not the 5
+real pillars) and routed category links to `/tools?category=` instead of the editorial
+`/categories/{slug}` cornerstones.
+
+### Decision (with operator): rebalance toward demand
+Lead with "best AI tools / find the right AI tools"; keep "AI stack" as the
+differentiating *mechanism*; make the homepage the broad **hub** that routes equity to
+the qualified money pages (anti-cannibalization: qualified phrases only as link anchors/
+FAQ, never as the homepage's own title/H1/H2).
+
+### Shipped (`app/page.tsx`, `app/layout.tsx`, `components/layout/navbar.tsx`)
+- **Copy:** title → "Best AI Tools, Matched to Your Goal — RightAIChoice"; H1 → "Find the
+  best AI tools for what you're building"; demand-led meta + keywords.
+- **Internal-link rewire (highest leverage):** 5 real pillars replace the 4 stale example
+  stacks ("AI stacks built for your role"); a cornerstone "Editor's guides" row + a
+  category-grid fix route the 5 cornerstones to `/categories/{slug}`; **`Stacks` added to
+  the navbar** (desktop + mobile); FAQ answers link out to pillars/cornerstones.
+- **New sections:** an AEO "How to choose the right AI tools" answer block (crawlable
+  definitional prose); a server-rendered FAQ `<details>` accordion (6 Tier-3 Q&As); the
+  editorial-compare section retitled "Popular AI tool comparisons"; an E-E-A-T trust strip.
+- **Schema:** added `faqPageJsonLd` (6 Q&As, page-level single source) + `itemListJsonLd`
+  ("AI Stacks by Role", 5 pillars) alongside the existing Service + Dataset (+ global
+  Org/WebSite/Person). No HowTo/Article, no duplicate FAQPage.
+
+### Honest ceiling
+Authority (`InLinks: 0`, doc 10) is the binding constraint — these are necessary,
+high-leverage on-page + internal-link moves, not a guarantee of head-term page-1. Expect
+pillar/cornerstone internal-link lift before homepage head-term movement; re-evaluate in
+4–8 weeks. Full rationale, keyword tiers, and delegation map in doc 16.
+
+### Deferred (per doc 13): Tool Finder Quiz (a build, not an SEO lever), press kit `/press`.
+
+### Verification: `tsc` + `eslint` clean; live-deploy link/schema/render check post-push.
+
+---
+
 ## Day 8 (cont. 3) — 2026-06-03 — Automated-pipeline audit around Bing: 5 dead crons + 2 latent sitemap-cache bugs
 
 **Trigger:** operator — "make sure everything is fixed in the automated pipelines
