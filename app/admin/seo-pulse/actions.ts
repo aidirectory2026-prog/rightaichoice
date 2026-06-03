@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 // Phase 9 Day-4 Part 2 (2026-05-29) — Server actions for the SEO Pulse
 // weekly-loop review page.
@@ -14,6 +15,13 @@ import { createClient } from '@/lib/supabase/server'
 // after execution by a future job (/seo-impact). Lift = outcome - baseline,
 // so the baseline must be locked at the moment we commit to the action, not
 // re-read from a moving GSC window.
+//
+// 2026-06-03 fix: writes go through getAdminClient() (service role). The page
+// renders for any admin (authenticated_read SELECT policy), but weekly_loop_actions
+// only grants writes to service_role (service_role_full_access ALL policy). The
+// old cookie-client UPDATEs matched 0 rows under RLS with NO error — so Accept/
+// Reject/Mark-executed silently no-op'd and the buttons looked dead. requireAdmin()
+// (cookie client) still gates authorization; the mutation uses the admin client.
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -25,7 +33,6 @@ async function requireAdmin() {
     .eq('id', user.id)
     .single()
   if (!profile?.is_admin) throw new Error('Admin only')
-  return supabase
 }
 
 type ActionMetadata = {
@@ -36,13 +43,16 @@ type ActionMetadata = {
 }
 
 export async function acceptAction(formData: FormData): Promise<void> {
-  const supabase = await requireAdmin()
+  await requireAdmin()
   const id = String(formData.get('id') ?? '')
   if (!id) throw new Error('id required')
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any
+
   // Read the metadata baseline values written by triage-gsc so we can
   // freeze them into the dedicated columns.
-  const { data: row, error: readErr } = await supabase
+  const { data: row, error: readErr } = await admin
     .from('weekly_loop_actions')
     .select('metadata, status')
     .eq('id', id)
@@ -52,7 +62,7 @@ export async function acceptAction(formData: FormData): Promise<void> {
   if (r.status !== 'proposed') throw new Error(`Cannot accept from status='${r.status}'`)
 
   const m = r.metadata ?? {}
-  const { error } = await supabase
+  const { error } = await admin
     .from('weekly_loop_actions')
     .update({
       status: 'accepted',
@@ -69,11 +79,13 @@ export async function acceptAction(formData: FormData): Promise<void> {
 }
 
 export async function rejectAction(formData: FormData): Promise<void> {
-  const supabase = await requireAdmin()
+  await requireAdmin()
   const id = String(formData.get('id') ?? '')
   if (!id) throw new Error('id required')
 
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any
+  const { error } = await admin
     .from('weekly_loop_actions')
     .update({ status: 'rejected' } as never)
     .eq('id', id)
@@ -84,11 +96,13 @@ export async function rejectAction(formData: FormData): Promise<void> {
 }
 
 export async function markExecuted(formData: FormData): Promise<void> {
-  const supabase = await requireAdmin()
+  await requireAdmin()
   const id = String(formData.get('id') ?? '')
   if (!id) throw new Error('id required')
 
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any
+  const { error } = await admin
     .from('weekly_loop_actions')
     .update({
       status: 'executed',

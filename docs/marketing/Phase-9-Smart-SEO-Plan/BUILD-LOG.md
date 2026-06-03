@@ -13,6 +13,33 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont. 6) — 2026-06-03 — Fix: `/admin/seo-pulse` Accept/Reject buttons were silent no-ops (RLS)
+
+**Trigger:** operator — the approve/decline buttons on the weekly title-change queue
+"don't do anything."
+
+**Root cause:** `weekly_loop_actions` has RLS with `authenticated_read` (SELECT) +
+`service_role_full_access` (ALL). The seo-pulse server actions ran their UPDATEs
+through the **cookie client** (`createClient()`, role `authenticated`). The page
+rendered fine (SELECT allowed), but the UPDATE matched **0 rows under RLS with no
+error** — so Accept / Reject / Mark-executed completed "successfully", revalidated,
+and changed nothing → dead buttons. (The working `/admin/tier1-review` +
+`/admin/ai-citations` actions already write via `getAdminClient()`.)
+
+**Fix (`app/admin/seo-pulse/actions.ts`):** route the read + writes through
+`getAdminClient()` (service role); keep `requireAdmin()` (cookie client) as the
+authorization gate. Matches the proven pattern.
+
+**Audited siblings:** `/admin/authority` (`addReferringDomain`) writes via the cookie
+client too, but `referring_domains` has an admin-gated `ALL` write policy (and the
+action surfaces errors), so it works — left unchanged. `title_overrides` (tier1) is
+service-role-write-only and already uses the admin client. No other admin write-action
+hit the bug.
+
+`tsc` + `eslint` clean.
+
+---
+
 ## Day 8 (cont. 5) — 2026-06-03 — `/plan` (AI Stack Builder) advanced SEO
 
 **Trigger:** operator — "do extreme advanced level SEO for /plan." Full audit +
