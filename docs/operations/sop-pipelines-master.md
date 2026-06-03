@@ -15,6 +15,48 @@ This doc is read on Mondays during the weekly review. If a pipeline is failing r
 
 ---
 
+## ⚠️ Critical gotchas (read before touching ANY pipeline)
+
+Two production-silent failure modes that have each taken down pipelines. Both are
+invisible on the surface (jobs look "fine") — caught only by checking `pipeline_runs`
+and the Bing/Google sitemap dashboards. Both were found + fixed 2026-06-03.
+
+### 1. Vercel Cron invokes via **GET** — every Vercel-cron route MUST export `GET`
+A route that only exports `POST` will **silently 405 on every scheduled fire and
+never run** (no `pipeline_runs` row at all — it looks like the cron "doesn't exist").
+The Phase 8.d.3 wrapper refactor (`01c68ca`) made several routes POST-only and
+**silently killed 5 crons** (`indexnow-unindexed`, `refresh-freshness-view`,
+`cleanup-user-events`, `scrape-sentiment`, `calculate-viability` — 0 runs for weeks).
+Fixed by aliasing `export const GET = POST` on each.
+
+- **Vercel-cron routes** (`vercel.json` → `crons`): must export `GET` (or both).
+- **GitHub-Actions routes** (`.github/workflows/cron-pipelines.yml`, which `curl -X POST`):
+  POST is fine. Several jobs live there because **Vercel Hobby only runs daily crons** —
+  sub-daily / some weekly jobs are driven from GH Actions instead.
+- **Rule of thumb:** export BOTH `GET` and `POST` from every cron route. Costs nothing,
+  immune to which trigger calls it.
+- **Detection:** `select pipeline_key, max(started_at) from pipeline_runs group by 1` —
+  cross-check against `vercel.json`; any cron listed there but absent/stale here is dead.
+
+### 2. Sitemaps must stay **CDN-cached** — or Bing drops them
+A `sitemap.ts` is a Route Handler that Next 16 **caches by default UNLESS it uses a
+request-time API**. Calling the cookie-reading `createClient()` (or setting
+`export const dynamic = 'force-dynamic'`) opts it out → every crawler fetch is an
+uncached DB render. When that render exceeds Bing's sitemap-fetch tolerance (~2–3s),
+Bing marks the feed **"Pending" and never ingests it**. This is exactly why
+`/tools/sitemap.xml` (1,994 URLs, ~3.4s uncached) sat Pending for weeks while Bing
+indexed only ~14 pages and sent **zero** traffic — and zero ChatGPT/Copilot citations,
+since those read Bing's index.
+
+- **Sitemap data MUST come from the cookie-free `getAdminClient()`**, never
+  `createClient()`. Never set `force-dynamic` on a sitemap.
+- **Verify cached:** `curl -sI https://rightaichoice.com/tools/sitemap.xml | grep x-vercel-cache`
+  → must be `HIT`, total time < ~1s.
+- **Verify Bing ingested:** Bing Webmaster `GetFeeds` → each feed `Status: Success`
+  with non-zero `UrlCount`. A "Pending" feed with 0 URLs = Bing can't fetch it.
+
+---
+
 ## Pipeline inventory (12 active, all server-side)
 
 | # | Path | Schedule (UTC) | Lid-state | Purpose |
@@ -37,6 +79,20 @@ This doc is read on Mondays during the weekly review. If a pipeline is failing r
 - `scripts/refresh-latest-updates.ts --all` — manual monthly full-catalog latest-updates refresh
 
 **All Vercel crons require `CRON_SECRET` env var in Vercel project.** No other auth.
+
+> **⚠️ This inventory table is partially stale (2026-06-03).** The authoritative
+> trigger lists are **`vercel.json` → `crons`** (Vercel, GET) and
+> **`.github/workflows/cron-pipelines.yml`** (GitHub Actions, POST); live status is
+> in **`/admin/health`** + `pipeline_runs`. Not yet itemized below but live in
+> `vercel.json`: `snapshot-gsc`, `triage-gsc`, `email-weekly-digest`, `seo-impact`
+> (the weekly GSC loop), `snapshot-daily-updates`, `refresh-freshness-view`,
+> `cleanup-user-events`, `indexnow-unindexed`, `onboard-tools`.
+>
+> **Dead-cron fix (2026-06-03):** five routes were POST-only and never fired as
+> Vercel crons (see Critical Gotcha #1) — `indexnow-unindexed`,
+> `refresh-freshness-view`, `cleanup-user-events`, `scrape-sentiment`,
+> `calculate-viability`. All now export `GET`. Confirm each logs a run in
+> `pipeline_runs` after its next scheduled fire.
 
 ---
 
@@ -288,8 +344,9 @@ Whenever a new cron/automation gets added, copy this checklist into the PR:
 
 - [ ] Created the route at `app/api/cron/<name>/route.ts`
 - [ ] Used `validateCronSecret(request)` for auth (matches existing pattern)
+- [ ] **Exported `GET` (Vercel Cron invokes via GET) — export BOTH `GET` and `POST`** so it works whether triggered by Vercel cron (GET) or GitHub Actions/manual curl (POST). A POST-only route silently never fires as a Vercel cron. See Critical Gotcha #1.
 - [ ] Added `export const maxDuration = 60` (or 300 if Pro tier + slow job)
-- [ ] Added schedule line to `vercel.json` under `crons`
+- [ ] Added schedule line to `vercel.json` under `crons` (or a job in `cron-pipelines.yml` if sub-daily / weekly — Vercel Hobby only runs daily crons)
 - [ ] Added a section to THIS doc (`sop-pipelines-master.md`) with all 7 SOP fields
 - [ ] Updated the Health-check matrix above
 - [ ] Verified locally with `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/<name>`

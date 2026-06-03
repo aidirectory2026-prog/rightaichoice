@@ -13,6 +13,55 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont. 3) — 2026-06-03 — Automated-pipeline audit around Bing: 5 dead crons + 2 latent sitemap-cache bugs
+
+**Trigger:** operator — "make sure everything is fixed in the automated pipelines
+around it." Audited the cron fleet + remaining sitemaps. Found two more real bugs.
+
+### A. Five Vercel crons were silently DEAD (0 runs in 30 days)
+`pipeline_runs` showed these never ran: `indexnow-unindexed`,
+`refresh-freshness-view`, `cleanup-user-events`, `scrape-sentiment`,
+`calculate-viability`. **Root cause:** Vercel Cron invokes routes via **GET**, but
+the Phase 8.d.3 wrapper refactor (`01c68ca`) made these routes **POST-only** → every
+scheduled GET 405ed and never executed cronRoute (so not even a failure was logged —
+they looked nonexistent). Proof: `calculate-viability` ran once via `vercel_cron` on
+2026-05-20 (when it was still GET) then died exactly after the POST refactor. The
+crons that kept working either export GET (`snapshot-gsc`, `triage-gsc`, …) or are
+POST-triggered by GitHub Actions (`cron-pipelines.yml`, e.g. `indexnow-recent`).
+**Fix (`ea94300`):** aliased `export const GET = POST` on all five (the pattern
+`submit-urls-bing` already used). Two are directly in the Bing/sitemap path:
+`indexnow-unindexed` (re-pings discovered-not-indexed tool URLs to Bing/Yandex) and
+`refresh-freshness-view` (refreshes the view feeding sitemap `<lastmod>`).
+
+### B. Two more sitemaps had the same uncached pattern that broke /tools
+- **`/compare/sitemap.xml`** — had `export const dynamic = 'force-dynamic'` → uncached
+  (MISS, ~1.6s). Its data source was already cookie-free, so just dropped
+  force-dynamic → now cached. It worked in Bing only because it was still under the
+  fetch-timeout, but it grows weekly (633 URLs and climbing) and would have followed
+  /tools into "Pending."
+- **`/categories/sitemap.xml`** — `getCategories()` used the cookie-reading client →
+  forced dynamic. Switched to the admin client → cached; also stopped emitting a fake
+  `new Date()` lastmod.
+
+### C. Playbook updated
+`docs/operations/sop-pipelines-master.md` gained a **"⚠️ Critical gotchas"** section
+(Vercel-cron-is-GET; sitemaps-must-stay-cached), a checklist item ("export BOTH GET
+and POST"), and an inventory-staleness note listing the not-yet-itemized crons + the
+5 dead-cron fix. This is the operational knowledge that prevents a re-occurrence.
+
+### Not changed (flagged, out of scope)
+- `freshness-batch` (GH Actions) has ~13/75 failures in content-gen sub-steps
+  ("Regenerate compare editorials", "Refresh tools DeepSeek") — transient DeepSeek
+  failures on the parallel automations track, not the Bing/sitemap path (the freshness
+  *write* succeeds; last success today). Left for the automations-track owner.
+- The `www.rightaichoice.com/sitemap.xml` stray feed in Bing (wrong host) — harmless.
+
+### Follow-up (operator, after next scheduled fires)
+- Confirm on `/admin/health` that the 5 resurrected crons now log runs.
+- Confirm Bing `GetFeeds` shows `/tools/sitemap.xml` → Success (~1,994 URLs).
+
+---
+
 ## Day 8 (cont. 2) — 2026-06-03 — Bing fix: why we got ZERO from Bing (sitemap never ingested)
 
 **Trigger:** operator — "we're getting absolutely nothing from Bing — no traffic,
