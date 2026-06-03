@@ -351,9 +351,6 @@ export const analytics = {
   sentimentCardViewed(toolSlug: string) {
     capture('sentiment_card_viewed', { tool_slug: toolSlug })
   },
-  sentimentModalOpened(toolSlug: string, trigger: 'auto' | 'manual') {
-    capture('sentiment_modal_opened', { tool_slug: toolSlug, trigger })
-  },
   sentimentScanStarted(toolSlug: string, chargeType: string) {
     capture('sentiment_scan_started', { tool_slug: toolSlug, charge_type: chargeType })
   },

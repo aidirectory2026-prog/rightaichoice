@@ -34,8 +34,16 @@ function safeNextPath(next: string | null | undefined): string {
  */
 export async function signInWithOAuthClient(provider: OAuthProvider, next?: string | null): Promise<void> {
   const supabase = createClient()
+  const safe = safeNextPath(next)
+  // Stash the return path so the auth provider can recover it client-side even
+  // if Supabase redirects to the Site URL (homepage) instead of /auth/callback.
+  // That happens when the current origin (localhost / a preview deploy) isn't in
+  // Supabase's redirect-URL allowlist → it falls back to the Site URL and the
+  // user is stranded on the homepage. Harmless no-op once the callback redirect
+  // already lands the user on `safe` (the auth provider sees it's the same path).
+  try { sessionStorage.setItem('oauth_return_to', safe) } catch { /* private mode */ }
   const callback = new URL('/auth/callback', window.location.origin)
-  callback.searchParams.set('next', safeNextPath(next))
+  callback.searchParams.set('next', safe)
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider,

@@ -11,8 +11,7 @@ export const revalidate = 0
 export const metadata = { title: 'Sentiment Checker — Admin' }
 
 const FUNNEL: { event: string; label: string }[] = [
-  { event: 'sentiment_card_viewed', label: 'Card viewed' },
-  { event: 'sentiment_modal_opened', label: 'Modal opened' },
+  { event: 'sentiment_card_viewed', label: 'Page viewed' },
   { event: 'sentiment_scan_requested', label: 'Scan requested' },
   { event: 'sentiment_scan_completed', label: 'Scan completed' },
   { event: 'sentiment_paywall_shown', label: 'Paywall shown' },
