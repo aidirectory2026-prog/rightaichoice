@@ -19,6 +19,12 @@ const INTL = (country: string): Pricing => ({ country, currency: 'USD', gateway:
 
 /** Two-letter country from Vercel's geo header (fallbacks for local/dev). */
 export function getCountryFromRequest(request: Request): string {
+  // Local/dev override: set DEV_FORCE_COUNTRY=IN in .env.local to simulate a
+  // region (localhost has no geo header, so it would otherwise default to US →
+  // PayPal). Ignored in production.
+  if (process.env.NODE_ENV !== 'production' && process.env.DEV_FORCE_COUNTRY) {
+    return process.env.DEV_FORCE_COUNTRY.toUpperCase()
+  }
   const h = request.headers
   return (
     h.get('x-vercel-ip-country') ||

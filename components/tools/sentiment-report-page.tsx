@@ -125,6 +125,12 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
 
   const runScan = useCallback(async () => {
     if (!user) { setPhase('signin'); return }
+    // Don't tease a scan we already know the server will refuse for payment.
+    // If the user has no free scans left and no paid balance, go straight to
+    // the paywall instead of playing the scanning animation for a couple of
+    // seconds and then yanking it away (which reads as a bug).
+    const q = status?.quota
+    if (q && !q.canScanFree && q.paidBalance <= 0) { setError(null); setPhase('paywall'); return }
     setError(null); setStageIdx(0); setPhase('scanning')
     analytics.sentimentScanStarted(toolSlug, status?.quota?.canScanFree ? 'free' : 'paid')
     try {

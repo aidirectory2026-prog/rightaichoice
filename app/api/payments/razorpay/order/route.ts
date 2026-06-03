@@ -37,7 +37,9 @@ export async function POST(req: NextRequest) {
   if (rowErr || !row) return NextResponse.json({ error: 'ledger_error' }, { status: 500 })
 
   try {
-    const order = await createRazorpayOrder(pricing.amountMinor, pricing.currency, `scan_${row.id}`)
+    // Razorpay caps `receipt` at 40 chars; `scan_` + a 36-char UUID = 41 and
+    // gets rejected (400 → 502). A 2-char prefix + UUID = 38 stays under.
+    const order = await createRazorpayOrder(pricing.amountMinor, pricing.currency, `s_${row.id}`)
     if (!order) return NextResponse.json({ error: 'order_failed' }, { status: 502 })
     await admin.from('sentiment_payments').update({ gateway_order_id: order.id }).eq('id', row.id)
 

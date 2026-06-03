@@ -54,3 +54,6 @@ supabase/.temp/
 candidates/.tmp/
 scripts/.tmp-*.ts
 scripts/.gsc-indexation-report.json
+
+# Brainstorming visual companion mockups
+.superpowers/
