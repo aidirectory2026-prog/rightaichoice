@@ -57,17 +57,24 @@ export function AuthProvider({
   // Tight guard: only ever acts when an OAuth was just initiated (key present),
   // and consumes the key on the first auth event so it can't cause stray nav.
   useEffect(() => {
+    let done = false
     const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) return
+    const recover = (hasSession: boolean) => {
+      if (done || !hasSession) return
       let returnTo: string | null = null
       try { returnTo = sessionStorage.getItem('oauth_return_to') } catch { /* private mode */ }
       if (!returnTo) return
+      done = true
       try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
       if (returnTo.startsWith('/') && !returnTo.startsWith('//') && returnTo !== window.location.pathname) {
         router.replace(returnTo)
       }
-    })
+    }
+    // Two paths cover every timing: the session may already be established by
+    // the time we mount (getSession), or it may land just after via a
+    // client-side code exchange (onAuthStateChange). `done` dedupes.
+    void supabase.auth.getSession().then(({ data }) => recover(!!data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => recover(!!session))
     return () => subscription.unsubscribe()
   }, [router])
 
