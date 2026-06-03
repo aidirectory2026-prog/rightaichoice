@@ -13,6 +13,47 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 — 2026-06-03 — AEO/GEO citation tracking (`/admin/ai-citations`)
+
+**Trigger:** doc 08 ("being cited is the new being ranked") + doc 11 KPI ("10
+AI-Overview citations by day 30"). We optimize for answer engines (Dataset JSON-LD,
+llms.txt, TL;DR compares) but had **no way to measure whether it's working** —
+doc 08's own rule is "you can't optimize what you can't measure." This is the
+**manual-first** citation log; programmatic capture (Perplexity API / SerpAPI
+AI-Overview detect) is doc-08 "Week 4+" and can write to the same table later.
+
+### What shipped (`mig 137`)
+- **`ai_citations` table** (mig 137): `checked_on`, `engine`
+  (chatgpt/claude/perplexity/google_aio/gemini/copilot/other), `query`, `cited`,
+  `cited_url`, `position_in_answer`, `brand_mention`, `notes`, `created_by`. RLS
+  on, **no policies → service-role-only** (admin pages use `getAdminClient`).
+  Applied to prod via Supabase MCP; `_admin_audit_exec` presence verified.
+- **`/admin/ai-citations`** page + nav link. KPIs: **Citations (30d) vs the 10
+  target**, distinct engines (30d), citation rate (cited/checked), total logged;
+  a per-engine cited-count strip; a log-entry form; a recent-entries table with
+  delete. 30-day windows computed in SQL (`current_date - 30`) — true rolling
+  window + keeps the server component pure (the new `react-hooks/purity` lint
+  rule forbids `Date.now()` in render).
+- **`actions.ts`** — `addCitation` / `deleteCitation` server actions
+  (`requireAdmin`, `Promise<void>` form-action signature). Accepts a bare path or
+  a full `rightaichoice.com` URL and normalizes to a path.
+
+### Why DB-backed (not the doc-08 `seo/ai-citations.csv`)
+Doc 08 sketched a CSV, but a DB table + admin page matches every other SEO
+measurement surface (`/seo-impact`, `/admin/health`), is queryable for KPI
+rollups, and lets the future programmatic tracker append to the same store.
+
+### Operator workflow
+Weekly: run ~20–30 representative queries through ChatGPT / Claude / Perplexity /
+Google AI Overview; log each hit (and notable misses, `cited` unchecked) at
+`/admin/ai-citations`. The KPI tile turns green at 10 citations/30d.
+
+### Verification
+`tsc --noEmit` clean; `eslint` clean (incl. the purity rule); migration applied +
+table/helper confirmed live. No synthetic rows left in the table.
+
+---
+
 ## Day 7 — 2026-06-02 — Dataset JSON-LD on the homepage (AEO/GEO citability)
 
 **Trigger:** doc 08 (AEO/GEO) — generative engines and Google Dataset Search cite
