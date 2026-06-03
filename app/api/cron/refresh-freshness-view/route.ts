@@ -21,3 +21,9 @@ export const POST = cronRoute({ pipelineKey: 'refresh-freshness-view' }, async (
   ctx.recordItems({ processed: 1, succeeded: 1 })
   return { ok: true, refreshed_at: new Date().toISOString() }
 })
+
+// Vercel Cron invokes via GET. The Phase 8.d.3 refactor made this route
+// POST-only, so the scheduled Vercel GET silently 405ed and the job never ran
+// (0 runs). Alias GET → the same handler (as submit-urls-bing/snapshot-gsc do);
+// POST stays for GitHub-Actions / manual curl triggers.
+export const GET = POST

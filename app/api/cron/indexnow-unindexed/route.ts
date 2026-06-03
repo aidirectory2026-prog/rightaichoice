@@ -94,3 +94,9 @@ export const POST = cronRoute({ pipelineKey: 'indexnow-unindexed' }, async (ctx)
     message: `Re-pinged ${urls.length} un-indexed tool URLs to IndexNow`,
   }
 })
+
+// Vercel Cron invokes via GET. The Phase 8.d.3 refactor made this route
+// POST-only, so the scheduled Vercel GET silently 405ed and the job never ran
+// (0 runs). Alias GET → the same handler (as submit-urls-bing/snapshot-gsc do);
+// POST stays for GitHub-Actions / manual curl triggers.
+export const GET = POST

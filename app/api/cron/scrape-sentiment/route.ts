@@ -168,3 +168,9 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
     errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
   }
 })
+
+// Vercel Cron invokes via GET. The Phase 8.d.3 refactor made this route
+// POST-only, so the scheduled Vercel GET silently 405ed and the job never ran
+// (0 runs). Alias GET → the same handler (as submit-urls-bing/snapshot-gsc do);
+// POST stays for GitHub-Actions / manual curl triggers.
+export const GET = POST

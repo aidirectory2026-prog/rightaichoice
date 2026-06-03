@@ -4,10 +4,15 @@ import { getLastChangedAtBatch } from '@/lib/seo/freshness'
 
 const BASE_URL = 'https://rightaichoice.com'
 
-// Phase 9 Day-4 (2026-05-29): force on-demand generation so a slow build-time
-// Supabase round-trip can't kill the deploy (saw 60s+ hangs after the non-AI
-// purge). First request after deploy generates + caches via the 1h revalidate.
-export const dynamic = 'force-dynamic'
+// 2026-06-03: removed `export const dynamic = 'force-dynamic'`. It had been
+// added to dodge build-time hangs, but force-dynamic opts the route OUT of
+// Next 16's default sitemap caching → every crawler fetch was an uncached
+// ~1.6s render (x-vercel-cache: MISS). That's the same failure mode that left
+// /tools/sitemap.xml stuck "Pending" in Bing; compare only survived because it
+// was still under Bing's fetch tolerance — but it grows every week. The data
+// source (getAllComparisonSlugs) already uses the cookie-free admin client, so
+// dropping force-dynamic lets Next cache it. revalidate keeps it ≤1h fresh; the
+// 180s staticPageGenerationTimeout covers the build-time query (633 rows).
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
