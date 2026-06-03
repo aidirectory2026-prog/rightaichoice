@@ -11,27 +11,29 @@ export async function getTools(filters: ToolFilters = {}) {
   const from = (page - 1) * TOOLS_PER_PAGE
   const to = from + TOOLS_PER_PAGE - 1
 
-  // If category filter is set, first get matching tool IDs via junction table
-  let categoryToolIds: string[] | null = null
-  if (filters.category) {
-    const { data: catData } = await supabase
-      .from('tool_categories')
-      .select('tool_id, categories!inner(slug)')
-      .eq('categories.slug', filters.category)
-    categoryToolIds = catData?.map((row) => row.tool_id) ?? []
-  }
+  // Category filter is applied via an inner-join embed on the junction table
+  // (`cat_filter`) instead of fetching every matching tool_id and feeding them
+  // back as `.in('id', [hundreds])`. For large categories (e.g. data-analytics
+  // has ~480 published tools) the ID-array approach built a >16KB PostgREST URL
+  // that overflowed undici's header limit (HeadersOverflowError) and crashed the
+  // listing. The separate aliased `!inner` embed constrains the parent rows
+  // while the unaliased `tool_categories` embed still returns every category per
+  // tool for display consumers (e.g. /best/[slug]).
+  const selectCols = filters.category
+    ? '*, tool_categories(category_id, categories(*)), cat_filter:tool_categories!inner(categories!inner(slug))'
+    : '*, tool_categories(category_id, categories(*))'
 
+  // Cast the (runtime-valid) select to the base literal: supabase-js parses the
+  // select string at the type level and rejects the nested `categories!inner`
+  // embed, but the cat_filter embed is stripped from the result below, so the
+  // base literal accurately describes the returned shape consumers depend on.
   let query = supabase
     .from('tools')
-    .select('*, tool_categories(category_id, categories(*))', { count: 'exact' })
+    .select(selectCols as '*, tool_categories(category_id, categories(*))', { count: 'exact' })
     .eq('is_published', true)
 
-  // Category filter: restrict to matching tool IDs
-  if (categoryToolIds !== null) {
-    if (categoryToolIds.length === 0) {
-      return { tools: [], total: 0, page, totalPages: 0 }
-    }
-    query = query.in('id', categoryToolIds)
+  if (filters.category) {
+    query = query.eq('cat_filter.categories.slug', filters.category)
   }
 
   // Text search: ilike for short queries (≤2 chars where tsvector lexemes
@@ -76,8 +78,19 @@ export async function getTools(filters: ToolFilters = {}) {
   const { data, count, error } = await query
   if (error) throw error
 
+  // Drop the filter-only `cat_filter` embed so the returned shape matches the
+  // unfiltered query exactly (consumers only read `tool_categories`).
+  const tools = (data ?? []).map((row) => {
+    if (row && typeof row === 'object' && 'cat_filter' in row) {
+      const clone = { ...(row as Record<string, unknown>) }
+      delete clone.cat_filter
+      return clone
+    }
+    return row
+  })
+
   return {
-    tools: data ?? [],
+    tools,
     total: count ?? 0,
     page,
     totalPages: Math.ceil((count ?? 0) / TOOLS_PER_PAGE),
@@ -475,26 +488,34 @@ export async function getTopInCategory(
 
   // Path 1: tool has categories — fetch popular siblings.
   if (categoryIds.length > 0) {
-    const { data: relatedIds } = await supabase
-      .from('tool_categories')
-      .select('tool_id')
-      .in('category_id', categoryIds)
-      .neq('tool_id', excludeToolId)
-    if (relatedIds && relatedIds.length > 0) {
-      const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
+    {
       // Phase 9 B4 (2026-05-28): fetch a wider pool (up to 60) so we can
       // re-rank by indexation state before slicing to `limit`. Otherwise
       // top-by-view_count always wins and un-indexed siblings never get
       // surfaced for crawl-priority transfer.
-      const { data } = await supabase
+      //
+      // Filtering is done via an inner-join embed on the junction table
+      // (`cat_filter`) keyed on the source tool's own category_ids — NOT by
+      // fetching every sibling tool_id and feeding them back as
+      // `.in('id', [hundreds])`, which for large categories (data-analytics
+      // ~480 tools) built a >16KB PostgREST URL that overflowed undici's header
+      // limit → caught upstream → this fallback also silently returned nothing.
+      const { data: rawPool } = await supabase
         .from('tools')
         .select(
-          `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count`
+          `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, cat_filter:tool_categories!inner(category_id)`
         )
         .eq('is_published', true)
-        .in('id', uniqueIds)
+        .neq('id', excludeToolId)
+        .in('cat_filter.category_id', categoryIds)
         .order('view_count', { ascending: false })
         .limit(Math.max(limit * 5, 40))
+      // Drop the filter-only embed so returned rows match the prior shape.
+      const data = (rawPool ?? []).map((row) => {
+        const clone = { ...(row as Record<string, unknown>) }
+        delete clone.cat_filter
+        return clone
+      }) as NonNullable<typeof rawPool>
       if (data && data.length > 0) {
         const unindexed = await getLinkBoostToolSlugs()
         // Promote un-indexed siblings into the first slots while keeping
@@ -550,23 +571,24 @@ export async function getAlternativeTools(
 
   if (categoryIds.length === 0) return []
 
-  const { data: relatedIds } = await supabase
-    .from('tool_categories')
-    .select('tool_id')
-    .in('category_id', categoryIds)
-    .neq('tool_id', toolId)
-
-  if (!relatedIds || relatedIds.length === 0) return []
-
-  const uniqueIds = [...new Set(relatedIds.map((r) => r.tool_id))]
-
+  // Resolve candidate siblings via an inner-join embed on the junction table
+  // (filtering by the source tool's own category_ids) instead of fetching every
+  // sibling tool_id and feeding them back as `.in('id', [hundreds])`. For a tool
+  // in a large category (e.g. data-analytics, ~480 published tools) the ID-array
+  // approach built a >16KB PostgREST URL that overflowed undici's header limit
+  // (HeadersOverflowError) → caught upstream → zero alternatives. `categoryIds`
+  // is small (the source tool's own categories), so this URL stays tiny. The
+  // inner-join returns each candidate once; ordering by view_count makes the
+  // 80-candidate cap deterministic (top siblings) rather than arbitrary.
   const { data } = await supabase
     .from('tools')
     .select(
-      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, tool_tags(tags(slug))`
+      `id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, tool_tags(tags(slug)), cat_filter:tool_categories!inner(category_id)`
     )
     .eq('is_published', true)
-    .in('id', uniqueIds)
+    .neq('id', toolId)
+    .in('cat_filter.category_id', categoryIds)
+    .order('view_count', { ascending: false })
     .limit(80)
 
   if (!data || data.length === 0) return []

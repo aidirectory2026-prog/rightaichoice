@@ -139,15 +139,36 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     }
   }
 
-  let query = supabase
-    .from('tools')
-    .select(`
+  // When a category filter applies, constrain rows via an inner-join embed
+  // (`cat_filter`) on the junction table rather than feeding every category
+  // tool_id back as `.in('id', [hundreds])` — that built a >16KB PostgREST URL
+  // that overflowed undici's header limit for large categories. The unaliased
+  // tool_categories embed still returns category names for display/scoring.
+  // categoryToolIds is kept above purely for the "empty category → skip filter"
+  // and keyword-fallback decisions (it never enters a URL as a big array).
+  const applyCategoryFilter = categoryToolIds !== null && !!params.category
+  // Two explicit (no-interpolation) select literals so supabase-js's type-level
+  // parser still infers a concrete row shape — an interpolated string widens to
+  // `string` and degrades the result type. The filtered variant adds an
+  // inner-join `cat_filter` embed that constrains rows to the category, and is
+  // cast to the base literal (the cat_filter embed isn't read downstream).
+  const SELECT_BASE = `
       id, name, slug, tagline, description, pricing_type, skill_level,
       has_api, platforms, avg_rating, review_count, website_url,
       integrations, best_for, last_verified_at, setup_time_text,
       tool_categories(categories(name)),
       tool_tags(tags(name))
-    `)
+    `
+  const SELECT_WITH_CAT = `
+      id, name, slug, tagline, description, pricing_type, skill_level,
+      has_api, platforms, avg_rating, review_count, website_url,
+      integrations, best_for, last_verified_at, setup_time_text,
+      tool_categories(categories(name)),
+      tool_tags(tags(name)), cat_filter:tool_categories!inner(categories!inner(slug))
+    `
+  let query = supabase
+    .from('tools')
+    .select((applyCategoryFilter ? SELECT_WITH_CAT : SELECT_BASE) as typeof SELECT_BASE)
     .eq('is_published', true)
 
   // Build keyword list, dropping stop-words that destroy ranking signal.
@@ -185,8 +206,8 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
     query = query.or(conditions.join(','))
   }
 
-  if (categoryToolIds) {
-    query = query.in('id', categoryToolIds)
+  if (applyCategoryFilter) {
+    query = query.eq('cat_filter.categories.slug', params.category)
   }
   if (params.pricing_type) {
     query = query.eq('pricing_type', params.pricing_type)
