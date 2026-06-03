@@ -13,6 +13,34 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont. 5) — 2026-06-03 — `/plan` (AI Stack Builder) advanced SEO
+
+**Trigger:** operator — "do extreme advanced level SEO for /plan." Full audit +
+strategy doc (**17-plan-page-seo.md**) + implementation.
+
+### Findings
+`/plan` ranked for **nothing**; the "plan/builder/generator" demand is tool
+pricing-plans + "[output] generator" queries (no "ai stack planner" demand). Two
+defects: **no canonical** despite `?q/?source/?from` CTA params (duplicate-URL risk),
+and **no schema** beyond the BreadcrumbList.
+
+### Shipped (`app/plan/page.tsx`)
+- **Canonical `/plan`** (collapses the param variants) + OpenGraph.
+- **Demand-led title/meta:** "AI Stack Builder — Plan Your AI Tool Stack"; H1 "Build
+  your AI stack from a single goal."
+- **Schema:** inline **WebApplication** (free tool, offers price:0, featureList) +
+  **HowTo** (3-step process) + **FAQPage** (6 Q&As) — page-level single source;
+  BreadcrumbList unchanged.
+- **Hub + depth:** "Or start from a ready-made AI stack" section → 5 role pillars +
+  /stacks; "How to plan your AI stack" H2 (mirrors HowTo); server-rendered FAQ
+  accordion; keyword-rich "Explore more" links incl. a cornerstone.
+- Anti-cannibalization: qualified persona/category phrases only as link anchors/FAQ.
+
+### Ceiling: authority (doc 10) still gates rank; this is on-page + schema + internal
+links + AEO. `tsc` + `eslint` clean; live link/schema/canonical check post-deploy.
+
+---
+
 ## Day 8 (cont. 4) — 2026-06-03 — Homepage SEO: rebalance toward demand + hub rewire + structural rebuild
 
 **Trigger:** operator — "I want our homepage to rank for the important queries around
