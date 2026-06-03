@@ -5,6 +5,19 @@
 > alone won't do it — these pages are losing on content quality and
 > authority signals.
 
+> **2026-05-30 / 2026-06-03 reframe — read this first.** The "content depth"
+> premise was **killed by the data, twice.** (1) The buried pos-31–50 **tool**
+> pages are already content-complete — all ~162 have full descriptions, features,
+> tutorials, models, pricing, and avg **9.1 FAQs**, at avg only **13.8
+> impressions**; their lever is internal links (shipped: buried-tool boost), not
+> more content. (2) The **editorial compares** are already fully editorial
+> (tldr+verdict+FAQs). So pos-31–50 is **rank-gated, not content-gated** — the
+> same finding that defers doc 09's snippet hunt. Don't run a generic
+> content-expansion pass here. Remaining Tier-2 value is narrow (a handful of
+> genuinely thin hub pages); scope case-by-case. The real lever is the shipped
+> rank work (titles, crawlable pagination, internal linking) + recrawl, measured
+> by `/seo-impact` from ~2026-06-24.
+
 ## Why title rewrites aren't enough
 
 A page at pos 40 isn't being held back by a weak SERP snippet — Google

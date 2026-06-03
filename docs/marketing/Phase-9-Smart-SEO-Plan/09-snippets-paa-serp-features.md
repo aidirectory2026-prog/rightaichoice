@@ -4,6 +4,21 @@
 > Featured snippets, People Also Ask blocks, sitelinks, and image packs
 > can lift CTR 2–3× even without ranking #1.
 
+> **2026-06-03 reframe — read this first.** The **featured-snippet hunt is
+> rank-gated and currently near-empty.** Of 529 question queries in the latest
+> 28d snapshot, only **5 sit in pos 2–10 (7 impressions total)**; 17 in pos 2–20.
+> Snippets require the pos-2–10 band, so reformatting pages to "win the box" has
+> almost nothing to act on yet. The **PAA / FAQ half is already shipped** (530/530
+> indexable compares carry tldr+verdict+FAQs; tool pages avg ~9 FAQs) and the
+> **rich-results schema is complete** (`SoftwareApplication`+`AggregateRating`,
+> `FAQPage`, `ItemList`, `BreadcrumbList`, `Article`, `HowTo` all emit;
+> `VideoObject` is intentionally absent — no demo videos embedded, so emitting it
+> would be schema-spam). **Net: this doc is deferred until rankings climb into the
+> snippet-eligible band** (driven by the shipped Tier-1 titles + crawlable
+> pagination + internal-link work; measured by `/seo-impact` from ~2026-06-24).
+> When the pos-2–10 question cohort grows, build `find-snippet-opportunities.ts`
+> (the Step-1 SQL below) and reformat the winners.
+
 ## The four SERP feature types we target
 
 | Feature              | Trigger                                                           | CTR uplift |

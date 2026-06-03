@@ -12,11 +12,14 @@
 ---
 
 ## 1. One-line state
-The doc-07 spine is **complete**: 5 cornerstones + 5 stack pillars are live, the
-old catalog-gap blocker is **resolved**, and the measurement loop (`/seo-impact`,
-`/admin/health`) + the structural compare-indexation fix (crawlable pagination) +
-Dataset JSON-LD are all **shipped to `main`**. No active blocker. The next move is
-a free pick from §5 — the highest-ceiling being **AEO/GEO citation tracking**.
+Every **non-rank-gated** Phase 9 lever is now shipped: the doc-07 spine (5
+cornerstones + 5 pillars), the measurement loop (`/seo-impact`, `/admin/health`),
+the structural compare-indexation fix (crawlable pagination), Dataset JSON-LD,
+and (2026-06-03) **AEO/GEO citation tracking** (`/admin/ai-citations`, mig 137).
+The remaining named threads (snippets, Tier-2) turned out **rank-gated** — they
+pay off only once Google recrawls/re-ranks the shipped changes. **Phase 9 is now
+in a measure-and-wait phase**; the next dated action is the Tier-1 lift readout
+~2026-06-24. See §5.
 
 ## 2. Shipped since the last checkpoint (all on `main`)
 - **Stack pillars complete (5):** added `solo-developers` + `product-teams`
@@ -58,23 +61,34 @@ PM/BI platforms. The operator's ops-AI gap-fill landed them; `solo-developers` +
 `product-teams` shipped as true end-to-end stacks (`3aacaf7`). No catalog blocker
 remains for the doc-07 spine.
 
-## 5. ▶️ OPEN THREADS — pick the next one (no blocker)
-Recommended order (highest leverage first):
+## 5. ▶️ OPEN THREADS — status after the 2026-06-03 session
+The four threads from the prior checkpoint have all been actioned or assessed:
 
-1. **AEO/GEO citation tracking** (doc 08, doc 11) — **missing entirely.**
-   No `/admin/ai-citations` exists. Doc 08: "you can't optimize what you can't
-   measure"; the 30-day KPI target is 10 logged AI-Overview citations. Build the
-   tracking schema + admin log (manual entry first, programmatic later). Clean,
-   self-contained, unblocks a KPI. **Top pick.**
-2. **Tier-1 lift measurement** (doc 03) — the 39 title overrides (approved
-   ~2026-05-29) reach the 28-day window around **late June**. Check `/seo-impact`,
-   revert losers, double down on winners. Mostly analysis.
-3. **Snippets / PAA** (doc 09) — direct-question H2s + featured-snippet targeting
-   on pos 2–10 question queries. Overlaps AEO.
-4. **Tier-2 content depth** (doc 04) — *premise was mostly killed by the data:*
-   buried pos-31–50 tool pages are already content-complete (avg 9.1 FAQs); their
-   lever was internal links (shipped: buried-tool boost). Remaining Tier-2 value is
-   narrow — scope carefully before investing.
+1. ✅ **AEO/GEO citation tracking** (doc 08/11) — **DONE 2026-06-03.** `ai_citations`
+   (mig 137, applied to prod) + `/admin/ai-citations` (KPIs vs the 10-citation
+   target, log form, recent table). Manual-first; programmatic capture can append
+   later. *Operator: run ~20–30 representative queries weekly and log hits.*
+2. ⏳ **Tier-1 lift measurement** (doc 03) — **time-gated.** 103 overrides
+   baselined, approved 2026-05-27→29 (only ~7d in). `run_seo_impact()` fills
+   outcomes at ≥28d, so the first pages become eligible **~2026-06-24**; the cron
+   (Mon 08:30) auto-fills. *Action: after June 24, read `/admin/seo-impact`, revert
+   losers, double down on winners.*
+3. ⛔ **Snippets / PAA** (doc 09) — **rank-gated, deferred.** Only 5 question
+   queries sit in pos 2–10 (7 impr); the FAQ/table/schema half is already shipped.
+   Nothing to win until rankings climb into the snippet band. See doc-09 reframe.
+4. ⛔ **Tier-2 content depth** (doc 04) — **rank-gated, deferred.** Buried pages are
+   already content-complete; the lever is internal links (shipped) + recrawl, not
+   more content. See doc-04 reframe.
+
+**What's actually next (no buildable rank-independent lever remains):**
+- **Wait + measure** — the Tier-1 lift readout (~June 24) + the weekly GSC loop
+  (`/admin/seo-pulse`) tell us whether the shipped rank work is moving pages. Act
+  on what they surface (revert losers, re-rank by binding constraint).
+- **Operator distribution levers** (doc 10) — backlinks/HARO, Reddit cadence,
+  press kit. These earn authority (which lifts rankings) and aren't rank-gated, but
+  they're human-driven, not code. Highest-leverage *non-waiting* option.
+- When rankings climb, **doc 09 snippet reformatting** + **doc 04 thin-hub edits**
+  reopen — re-run the cohort SQL in each doc's reframe to confirm opportunity first.
 
 ## 6. Operator (human) to-dos outstanding
 - Confirm `BING_WEBMASTER_API_KEY` on Vercel **Production** (cron flips green on

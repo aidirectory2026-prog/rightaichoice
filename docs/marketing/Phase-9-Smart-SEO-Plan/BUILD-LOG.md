@@ -13,6 +13,42 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 8 (cont.) — 2026-06-03 — Snippets (doc 09) + Tier-2 (doc 04) assessed → both rank-gated, deferred
+
+**Trigger:** working the remaining Phase 9 threads in order after AEO citation
+tracking shipped. Rather than build on assumption, checked the live GSC data
+first — and it redirected both threads.
+
+### doc 09 (snippets/PAA) — featured-snippet hunt is rank-gated + near-empty
+Latest 28d snapshot, question queries (what/how/why/which/is/are/can/does/…):
+**529 total, but only 5 in pos 2–10 (7 impressions), 17 in pos 2–20.** Featured
+snippets require the pos-2–10 band, so there's almost nothing to reformat-to-win
+yet. The other halves of doc 09 are **already shipped**: 530/530 indexable compares
+carry tldr+verdict+FAQs (PAA/FAQ), and the rich-results **schema is complete** —
+`SoftwareApplication`+`AggregateRating` (tools), `FAQPage`, `ItemList`,
+`BreadcrumbList`, `Article`, `HowTo` all emit from `lib/seo/json-ld.ts`.
+`VideoObject` is intentionally **absent** (no demo videos embedded — emitting it
+would be the schema-spam doc 09 explicitly warns against). → Added a dated reframe
+to the top of doc 09; deferred the snippet hunt until rankings climb.
+
+### doc 04 (Tier-2) — confirmed rank-gated (consistent with the Day-5 finding)
+Buried pos-31–50 tool pages are already content-complete (avg ~9 FAQs, ~14 impr);
+editorial compares are already fully editorial. pos-31–50 is rank-gated, not
+content-gated. → Added a dated reframe to the top of doc 04; no generic
+content-expansion pass.
+
+### Net conclusion
+**Every non-rank-gated Phase 9 lever is now shipped.** The remaining named threads
+(snippets, Tier-2) pay off only after Google recrawls/re-ranks the shipped changes
+(Tier-1 titles, crawlable pagination, internal linking, IndexNow). Phase 9 enters a
+**measure-and-wait phase**: Tier-1 lift readout ~2026-06-24 (`/seo-impact`) + the
+weekly GSC loop. The only high-leverage *non-waiting* work left is operator-driven
+distribution (doc 10: backlinks/HARO/Reddit) — human, not code. RESUME-CHECKPOINT
+§5 updated accordingly. *No code shipped in this sub-entry — it records the
+data-driven deferral so the next session doesn't re-chase rank-gated work.*
+
+---
+
 ## Day 8 — 2026-06-03 — AEO/GEO citation tracking (`/admin/ai-citations`)
 
 **Trigger:** doc 08 ("being cited is the new being ranked") + doc 11 KPI ("10
