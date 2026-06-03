@@ -143,7 +143,15 @@ const handler = cronRoute({ pipelineKey: 'submit-urls-bing' }, async (ctx) => {
     }
   }
 
-  const quota = (await fetchDailyQuota(apiKey)) ?? 100
+  // `||` not `??`: Bing's GetUrlSubmissionQuota intermittently returns
+  // DailyQuota=0 at cron time (e.g. right after the daily reset boundary) even
+  // when the real allowance is 100. With `?? 100`, a 0 fell THROUGH (?? only
+  // catches null/undefined) → cap=0 → empty slice → silent "success" with the
+  // cursor frozen (it sat stuck on compares from 2026-06-01). `|| 100` treats a
+  // 0/missing quota as "use the default and attempt": if Bing genuinely has no
+  // quota the submit call fails loudly (visible in /admin/health) instead of
+  // silently doing nothing forever.
+  const quota = (await fetchDailyQuota(apiKey)) || 100
   const cap = quota
 
   // Walk forward through rotation types if current pool is exhausted.
