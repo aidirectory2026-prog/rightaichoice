@@ -108,11 +108,20 @@ The full priority order from the README, expanded:
 - Weekly review ritual (per [11-kpis](./11-kpis-and-feedback-loops.md))
 - Plan Week 2
 
+> **Reality reconciliation (2026-06-03).** Days 5–7 executed differently from the
+> plan above. *Shipped instead:* `/seo-impact` (4-week lift loop), the
+> crawlable-pagination fix + 553-URL IndexNow blast (the real cause of the 34%
+> compare gap), `/admin/health` cron dashboard + doc-15, cornerstones 3–5,
+> pillars 3–5 (catalog gap resolved), and Dataset JSON-LD. *Still not done from the
+> Day-5 plan:* HARO/backlink log, Press kit (`/press`), and the AI Tool Finder Quiz
+> — deferred (the Quiz is a build, not an SEO move). See BUILD-LOG + checkpoint §5.
+
 ## Week 2 (Days 8–14)
 
-- Tier-2 batch 1 (first 25 pages structurally upgraded)
-- Cornerstones 3–4 shipped
-- **Stack pillar pages 3–4 shipped** (dev, product teams)
+- Tier-2 batch 1 (first 25 pages structurally upgraded) — *premise mostly killed:
+  buried pages are already content-complete; lever is internal links (shipped)*
+- ✅ Cornerstones 3–5 shipped (writing-content, research-education, marketing-seo)
+- ✅ **Stack pillar pages 3–5 shipped** (marketing-teams, solo-developers, product-teams)
 - **Tool Finder Quiz embedded above the fold on homepage** + new homepage architecture (all 10 sections per doc 13)
 - **Brand-anchor link injection across 20+ high-traffic pages** (doc 13 Part 6)
 - AI Tool Finder Quiz launched on PH/HN as embeddable

@@ -4,6 +4,138 @@
 > plan. Update this every time something deploys, so we can correlate
 > changes to GSC/Bing movement later. New entries go at the top.
 
+> **Catch-up note (2026-06-03):** entries below were backfilled in one pass to
+> close the gap between the Day-5 `/seo-impact` entry (bottom of file) and
+> 2026-06-02. They are dated by their commit date and ordered newest-first. The
+> parallel "Phase 9.A–E / Automations & Catalog" track (Opus 4.8 Review session,
+> per the ownership boundary) is intentionally **not** logged here, and neither is
+> the **Market Sentiment Checker** (a separate, operator-owned paid-feature track
+> living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
+> log only.
+
+## Day 7 — 2026-06-02 — Dataset JSON-LD on the homepage (AEO/GEO citability)
+
+**Trigger:** doc 08 (AEO/GEO) — generative engines and Google Dataset Search cite
+*authoritative data sources*. The catalog of ~1,974 reviewed AI tools is exactly
+that, but nothing on the site declared it as a queryable dataset entity. The
+Wikidata Q-item + `Organization` schema bind the *brand*; this binds the *dataset*.
+
+### What shipped
+- **`lib/seo/json-ld.ts` — new `datasetJsonLd()` builder** (`0161e05`). Emits a
+  `schema.org/Dataset` with `name`, `description`, `keywords`, `variableMeasured`
+  (the structured fields we track per tool), `creator` → the Organization,
+  `sameAs` → Wikidata Q139970688, and a `DataDownload` distribution pointing at
+  `llms-full.txt`. **No hardcoded counts** (so it never drifts from the live DB).
+- **`app/page.tsx`** emits it in the homepage JSON-LD graph (`071cd3f`).
+- **Split-commit footnote:** the emission (`071cd3f`) landed before the builder
+  because the builder edit had been swept into one of the ops AI's branch commits
+  and never reached `main`; `0161e05` re-added the builder so `main` builds and
+  stays identical to the feature branch (clean future merge).
+
+### Why it matters
+Dataset schema is the cheapest path to Google Dataset Search inclusion and a
+strong "cite this source" signal for Perplexity/ChatGPT/Claude retrieval. Pairs
+with the existing `llms.txt` + `llms-full.txt` distribution. Measurement is soft
+(citation surfacing), tracked manually until the AEO citation log exists.
+
+---
+
+## Day 6 — 2026-06-01 — Stack pillars complete: solo-developers + product-teams (catalog gap resolved)
+
+**Trigger:** these two pillars were the **blocker** in the 2026-05-31 checkpoint —
+the catalog lacked the infra/design/PM/BI platforms needed to express a *true*
+end-to-end dev or product-team stack. The operator's ops-AI gap-fill landed
+(Vercel, Supabase, Figma, Sentry, Linear, Notion, Amplitude, Airtable, Maze,
+Gamma, etc.), so both pillars became buildable as honest stacks rather than
+forced AI-only framings.
+
+### What shipped (`3aacaf7`)
+- **`/stacks/ai-stack-for-solo-developers`** — 8 stages: plan → IDE → agent →
+  prototype → backend → deploy → design → monitor (Cursor, Claude Code, v0,
+  Supabase, Vercel, Figma, Sentry…). ~1,000-word intro, 7 FAQs, Article+FAQPage
+  JSON-LD, all picks verified in-catalog.
+- **`/stacks/ai-stack-for-product-teams`** — 8 stages: discovery → specs →
+  roadmap → design → testing → analytics → ops → comms (Perplexity, Notion,
+  Linear, Figma, Maze, Amplitude, Airtable, Gamma).
+- **Stack pillars now 5** (early-stage-saas, content-creators, marketing-teams,
+  solo-developers, product-teams). The doc-07 pillar queue is **complete**.
+
+### Catalog hygiene alongside (`5307055`)
+- **LlamaIndex dedup** — onboarding had created a 2nd "LlamaIndex" (`llamaindex`)
+  without deduping against the canonical `llama-index` (older, has an editorial
+  compare). Unpublished the dupe, set `merged_into` so the edge proxy 308s it to
+  the canonical, regenerated the static merged-redirects map (**73 entries**),
+  cleaned its `page_tool_mentions`.
+
+---
+
+## Day 5 (cont. 2) — 2026-05-30 — Cornerstones 3–5 + marketing-teams pillar + doubled-title bug fix
+
+**Trigger:** doc-07 cornerstone + pillar queues. Concentrate authority on
+high-intent editorial hubs and finish the topical-cluster spine.
+
+### Cornerstones (now 5 total)
+- **`/categories/writing-content`** (`8c50d80`) — 6 curated picks, 6 verified
+  compares, ~1,000-word body, 7 FAQs, Article+FAQPage JSON-LD.
+- **`/categories/research-education`** (`aaaad0d`) — framed "AI for Research &
+  Learning" (dual lanes: research/search + study/learning, given the merged
+  category slug).
+- **`/categories/marketing-seo`** (`aaaad0d`) — spans 4 sub-lanes (SEO content,
+  copy, ad creative, prospecting).
+- Cornerstone set is now **code-development, image-generation, writing-content,
+  research-education, marketing-seo** (5).
+
+### Pillar #3 (`3b17f55`)
+- **`/stacks/ai-stack-for-marketing-teams`** — 8 funnel stages (research, SEO,
+  copy, ad creative, video, social, prospecting, outreach), 24 verified in-catalog
+  picks, ~1,000-word intro, 7 FAQs, Article+FAQPage JSON-LD.
+
+### Doubled-`<title>` bug fix (rolled into both commits)
+Cornerstone + pillar pages set `title: metaTitle`, but `metaTitle` already ends in
+"| RightAIChoice" *and* the root layout applies a `%s | RightAIChoice` template —
+so every cornerstone/pillar rendered "… | RightAIChoice | RightAIChoice". Fixed by
+switching to `title.absolute` in `app/categories/[slug]/page.tsx` and
+`app/stacks/[slug]/page.tsx`. Fixes all 5 cornerstones + all existing pillars.
+
+---
+
+## Day 5 (cont. 3) — 2026-05-30 — /admin/health + doc-15 adoption + Bing graceful-skip + compare IndexNow blast
+
+**Trigger:** with the cron fleet now large (snapshot/triage/digest/seo-impact/
+indexnow/bing), we needed one pane of glass for "is the automation actually
+running?" — and the crawlable-pagination fix needed an immediate discovery nudge.
+
+### #1 `/admin/health` pipeline dashboard (`99fde4d`, mig 130 — doc 15 #4)
+- **`pipeline_health()`** rolls up `pipeline_runs` per job: last status, last-success
+  age, 24h/7d failure counts, avg duration, 7d cost, last error. Worst-first;
+  flags **failing** + **stale** (>8d no success). New `/admin/health` page + nav.
+- **Immediately surfaced a real outage:** `submit-urls-bing` had failed **6/6**
+  runs that week. GSC OAuth auto-refresh confirmed already handled by
+  `google-auth-library`.
+
+### #2 `submit-urls-bing` graceful skip (`b019a60`)
+Root cause of the outage: `BING_WEBMASTER_API_KEY` was in `.env.local` but missing
+on Vercel prod, so the cron hard-failed daily and spammed failure alerts. Now
+returns `skipped: env_not_configured` (matching `email-weekly-digest`'s pattern).
+IndexNow keeps notifying Bing in the meantime; set the key on Vercel to re-enable
+direct quota-aware submission. *(Operator to-do: confirm key on Vercel prod.)*
+
+### #3 On-demand compare IndexNow blast (`b1bf490`)
+After the crawlable-pagination fix, submitted **553 URLs (530 compares + 23
+crawlable hub pages)** to IndexNow so Bing/Yandex discover the previously
+undiscoverable compares immediately rather than waiting for organic re-crawl.
+Wired as `npm run indexnow:compares`.
+
+### #4 doc 15 adopted into the plan (`bf93685`)
+Adopted "Automation Reliability & Observability" (relocated from the Opus 4.8
+review's 9.F, which collided with the SEO crons we own) as **doc 15**; updated the
+README folder map. Also resolved a migration-number collision: renumbered
+`125_gsc_tool_positions → 127` (Opus 9.C took 125 `security_perf_sweep`
+concurrently). Supabase tracks by timestamp version, so prod was never in conflict
+— filename-prefix fix only.
+
+---
+
 ## Day 4 (Part 2) — 2026-05-29 — Weekly SEO loop automation: triage cron + email digest + admin review page
 
 **Trigger:** Day-4 Part 1 (above) shipped the entity-binding work and captured the GSC baseline. Day-4 Part 2 closes the measurement → triage → action loop so that every Monday, *without the laptop being on*, the system pulls fresh GSC data, prioritizes what to work on, emails a digest, and waits for the operator to accept actions from a web page.

@@ -36,6 +36,33 @@ For comparison, a healthy directory at this stage should be ~3–5%
 CTR and avg pos <20. We are roughly **100× under-performing** what is
 achievable. See [`01-diagnosis-and-baseline.md`](./01-diagnosis-and-baseline.md).
 
+## Progress snapshot (2026-06-03)
+
+Where the plan stands ~Day 7 in (baseline frozen 2026-05-26). Detail in
+[`BUILD-LOG.md`](./BUILD-LOG.md); next steps in [`RESUME-CHECKPOINT.md`](./RESUME-CHECKPOINT.md).
+
+- ✅ **Foundation (doc 02)** — `llms.txt` + `llms-full.txt`, AI-crawler robots
+  allowlist, E-E-A-T components, schema baseline.
+- ✅ **Topical spine (doc 07)** — **5 cornerstones** (code-development,
+  image-generation, writing-content, research-education, marketing-seo) + **5 stack
+  pillars** (early-stage-saas, content-creators, marketing-teams, solo-developers,
+  product-teams). The old catalog-gap blocker is resolved.
+- ✅ **Tier-1 (doc 03)** — ROI-ranked title engine + 39 live overrides + recrawl
+  loop; lift measured by `/seo-impact` (28-day window matures ~late June).
+- ✅ **Indexation (doc 05/14)** — crawlable-pagination fix (the real cause of the
+  34% compare-indexation gap) + 553-URL IndexNow blast; buried-tool internal-link
+  boost.
+- ✅ **Tier-4 (doc 06)** — 51 pages noindex'd; 64 non-AI tools purged (410).
+- ✅ **AEO/GEO (doc 08), partial** — Dataset JSON-LD; compares already carry
+  TL;DR + verdict + FAQ. **Gap: no AI-citation tracking yet** — the top open thread.
+- ✅ **Reliability (doc 15)** — `/admin/health` cron dashboard + `/seo-impact` close
+  the measure→triage→act→measure loop.
+- ▶️ **Next** — AEO/GEO citation tracking → Tier-1 lift review → snippets/PAA
+  (doc 09). See checkpoint §5.
+
+> The **Market Sentiment Checker** (paid feature, `phase9-sentiment-checker` branch)
+> is a separate operator-owned track — not part of this Smart SEO plan.
+
 ## The strategy in six lines
 
 1. **Reposition + fix the homepage** — switch all surfaces from
