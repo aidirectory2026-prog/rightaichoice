@@ -91,9 +91,15 @@ export default async function RootLayout({
   // page render for a getUser() that returns null is wasted Tokyo round-trip.
   // Only resolve the user when an sb-*-auth-token cookie is actually present.
   const cookieStore = await cookies();
+  // The Supabase session cookie is `sb-<ref>-auth-token`, but @supabase/ssr
+  // CHUNKS large sessions into `…-auth-token.0`, `…-auth-token.1`, etc. OAuth
+  // sessions carry provider tokens (+ offline refresh token) and routinely
+  // exceed the 3180-byte chunk threshold, so a plain `endsWith("-auth-token")`
+  // misses them → the user looks logged-out right after signing in. Match the
+  // base name and any numeric chunk suffix (but not `-auth-token-code-verifier`).
   const hasSessionCookie = cookieStore
     .getAll()
-    .some((c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"));
+    .some((c) => c.name.startsWith("sb-") && /-auth-token(\.\d+)?$/.test(c.name));
 
   let user: { id: string; email: string | null } | null = null;
   let profile: {

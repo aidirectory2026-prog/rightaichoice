@@ -25,9 +25,12 @@ export async function updateSession(request: NextRequest) {
   if (!pathNeedsAuth(path)) {
     return NextResponse.next({ request })
   }
+  // @supabase/ssr chunks large (OAuth) sessions into `…-auth-token.0/.1`, which
+  // a plain `endsWith('-auth-token')` misses → signed-in users get treated as
+  // anonymous. Match the base name and any numeric chunk suffix.
   const hasSessionCookie = request.cookies
     .getAll()
-    .some((c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))
+    .some((c) => c.name.startsWith('sb-') && /-auth-token(\.\d+)?$/.test(c.name))
   // /login + /signup still need a getUser() to bounce already-authed users —
   // but only if a session cookie exists. No cookie → definitely anonymous.
   if (!hasSessionCookie && (path === '/login' || path === '/signup')) {
