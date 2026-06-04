@@ -1,36 +1,50 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { useAuth } from '@/components/providers/auth-provider'
 
-// Guaranteed fallback for the OAuth return-path. signInWithOAuthClient stashes
-// `oauth_return_to` before the provider round-trip; the auth provider tries to
-// auto-redirect there once the session lands. But if Supabase bounces the user
-// to its Site URL (the homepage) — which happens when the current origin isn't
-// in Supabase's redirect allowlist (localhost / preview deploys) — the
-// auto-redirect can fail to fire. This banner renders a plain, click-able link
-// back to the scan with NO session/timing dependency, so the user is never
-// stranded. It waits briefly first so the seamless auto-redirect (when it does
-// work) wins and this never flashes.
+// OAuth return-path handler. `signInWithOAuthClient` stashes `oauth_return_to`
+// (the page the user clicked the CTA on) before the provider round-trip. When
+// Supabase bounces the user to its Site URL (the homepage) instead of back to
+// the CTA — which happens when the current origin isn't in Supabase's redirect
+// allowlist (localhost / preview deploys) — we recover it here.
+//
+// Crucially this reads auth state from the AuthProvider context (`useAuth`),
+// which the layout resolves SERVER-side from the session cookie. It never
+// creates a Supabase client or calls getSession()/detectSessionInUrl, so it
+// CANNOT race or consume the single-use OAuth code (the bug that previously
+// broke sign-in). If signed in → redirect straight to the CTA; if the session
+// isn't resolved yet → show a guaranteed manual link.
 export function OAuthContinueBanner() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [to, setTo] = useState<string | null>(null)
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      let raw: string | null = null
-      try { raw = sessionStorage.getItem('oauth_return_to') } catch { /* private mode */ }
-      if (raw && raw.startsWith('/') && !raw.startsWith('//') && raw !== window.location.pathname) {
-        setTo(raw)
-      }
-    }, 1500)
-    return () => clearTimeout(t)
-  }, [])
+    let raw: string | null = null
+    try { raw = sessionStorage.getItem('oauth_return_to') } catch { /* private mode */ }
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw === window.location.pathname) return
 
-  if (!to) return null
+    if (user) {
+      // Signed in with a pending return path → go straight to the CTA.
+      // router.replace is a side effect (not setState), so it's fine here.
+      try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
+      router.replace(raw)
+      return
+    }
+    // Session not resolved server-side on this render → offer a manual link
+    // (guaranteed, no timing dependency). Deferred so we don't call setState
+    // synchronously in the effect body. Becomes a no-op once `user` flips.
+    const id = setTimeout(() => setTo(raw), 0)
+    return () => clearTimeout(id)
+  }, [user, router])
+
+  if (!to || user) return null
 
   const label = to.includes('/sentiment') ? 'Continue to your scan' : 'Continue where you left off'
-
   const clear = () => {
     try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
     setTo(null)
