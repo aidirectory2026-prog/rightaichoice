@@ -344,6 +344,24 @@ export const analytics = {
   },
 
   // ──────────────────────────────────────────────────────────────
+  // Phase 9 — Market Sentiment Checker (client half; server half in
+  // lib/mixpanel-server.ts serverAnalytics.sentimentEvent). capture()
+  // dual-writes to Mixpanel + the user_events mirror → /admin/sentiment.
+  // ──────────────────────────────────────────────────────────────
+  sentimentCardViewed(toolSlug: string) {
+    capture('sentiment_card_viewed', { tool_slug: toolSlug })
+  },
+  sentimentScanStarted(toolSlug: string, chargeType: string) {
+    capture('sentiment_scan_started', { tool_slug: toolSlug, charge_type: chargeType })
+  },
+  sentimentResultViewed(toolSlug: string, sentimentScore: string, source: 'fresh' | 'cached') {
+    capture('sentiment_result_viewed', { tool_slug: toolSlug, sentiment_score: sentimentScore, result_source: source })
+  },
+  sentimentPayClicked(toolSlug: string, gateway: string) {
+    capture('sentiment_pay_clicked', { tool_slug: toolSlug, gateway })
+  },
+
+  // ──────────────────────────────────────────────────────────────
   // Compare flow
   // ──────────────────────────────────────────────────────────────
   comparisonViewed(toolSlugs: string[]) {

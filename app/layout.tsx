@@ -11,6 +11,7 @@ import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
 import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
+import { OAuthContinueBanner } from "@/components/cta/oauth-continue-banner";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -164,6 +165,7 @@ export default async function RootLayout({
             profile={profile}
           >
             <CompareProvider>
+              <OAuthContinueBanner />
               {children}
               <CompareTray />
             </CompareProvider>

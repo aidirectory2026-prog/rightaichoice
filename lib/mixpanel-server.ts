@@ -264,6 +264,26 @@ export const serverAnalytics = {
       },
     })
   },
+
+  // ── Phase 9 S7: Market Sentiment Checker server events ──────────────────
+  // Each fires to BOTH Mixpanel (trackServer) and the admin mirror
+  // (user_events) so /admin/sentiment + Mixpanel agree. distinctId = user id.
+  sentimentEvent(
+    event:
+      | 'sentiment_scan_requested'
+      | 'sentiment_scan_completed'
+      | 'sentiment_scan_failed'
+      | 'sentiment_paywall_shown'
+      | 'sentiment_payment_initiated'
+      | 'sentiment_payment_succeeded'
+      | 'sentiment_payment_failed',
+    distinctId: string,
+    properties: ServerEventProperties,
+    ip?: string,
+  ) {
+    void mirrorServerEvent({ event, distinctId, userId: distinctId, properties, ip })
+    return trackServer({ event, distinctId, ip, properties: { ...properties, source_kind: 'server' } })
+  },
 }
 
 // ── Internal: deterministic insert_id for client/server de-dup ────

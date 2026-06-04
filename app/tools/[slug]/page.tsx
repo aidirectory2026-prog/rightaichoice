@@ -36,6 +36,7 @@ import { AiPanel } from '@/components/tools/ai-panel'
 import { TutorialVideos } from '@/components/tools/tutorial-videos'
 import { FaqSection } from '@/components/tools/faq-section'
 import { SentimentSynthesis } from '@/components/tools/sentiment-synthesis'
+import { SentimentCTA } from '@/components/cta/sentiment-cta'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
@@ -447,6 +448,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </p>
           </div>
 
+          {/* Phase 9 S6: prominent CTA → live Market Sentiment page */}
+          <SentimentCTA toolSlug={tool.slug} toolName={tool.name} />
+
           {/* ── Main Content Grid ────────────────────────────────── */}
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left column (2/3) — Description, Features, etc. */}
@@ -590,6 +594,8 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <SectionErrorBoundary fallbackTitle="Sentiment synthesis couldn't load right now.">
                 <SentimentSynthesis toolId={tool.id} toolName={tool.name} />
               </SectionErrorBoundary>
+              {/* Phase 9 S6: the paid live Market Sentiment Checker now lives on its
+                  own page (/tools/[slug]/sentiment), reached via the header button. */}
 
               {/* Viability Score — Phase 4.5 audit fix (2026-05-09): renders
                   even when viability_score is null. Was hidden on 540 of

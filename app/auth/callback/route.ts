@@ -55,7 +55,15 @@ export async function GET(request: Request) {
       }
       return NextResponse.redirect(`${origin}${next}`)
     }
-    console.error('OAuth code exchange failed:', error.message)
+    // Phase 9 S2 diag: log enough to tell a missing-verifier (PKCE) failure
+    // from a provider/redirect-config failure in production logs.
+    const hasVerifier = request.headers.get('cookie')?.includes('-auth-token-code-verifier') ?? false
+    console.error('OAuth code exchange failed:', {
+      message: error.message,
+      status: (error as { status?: number }).status,
+      code: (error as { code?: string }).code,
+      hasVerifierCookie: hasVerifier,
+    })
   }
 
   // ── Email link verification (signup confirm / password reset) ────────────

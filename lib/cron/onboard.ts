@@ -348,7 +348,7 @@ async function refreshSentiment(supabase: SupabaseClient, tool: PendingTool): Pr
       { tool_id: tool.id, status: 'generating', scraped_at: new Date().toISOString() },
       { onConflict: 'tool_id' },
     )
-  const scrape = await scrapeAllSources(tool.name)
+  const scrape = await scrapeAllSources(tool.name, { website: tool.website_url })
   const report = await synthesizeReport(
     {
       name: tool.name,

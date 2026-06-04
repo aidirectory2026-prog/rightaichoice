@@ -1,6 +1,25 @@
+/**
+ * All sentiment sources. Phase 9 S1b rebuilt the mix on free + cheap sources:
+ * reddit (OAuth), hn (free), youtube (free key), producthunt (free token),
+ * appstore (free iTunes RSS), and g2/trustpilot/google-reviews via DataForSEO
+ * (cheap pay-as-you-go). The legacy Apify sources (twitter/quora) are retained
+ * in the union for back-compat but no longer scraped.
+ */
+export type SentimentSource =
+  | 'reddit'
+  | 'hn'
+  | 'youtube'
+  | 'producthunt'
+  | 'appstore'
+  | 'g2'
+  | 'trustpilot'
+  | 'google'
+  | 'twitter'
+  | 'quora'
+
 /** Standardized scraped post/review from any source */
 export type ScrapedPost = {
-  source: 'reddit' | 'twitter' | 'quora' | 'g2'
+  source: SentimentSource
   title?: string
   body: string
   author?: string
@@ -12,7 +31,7 @@ export type ScrapedPost = {
 
 /** Result from a single scraper */
 export type ScrapeResult = {
-  source: 'reddit' | 'twitter' | 'quora' | 'g2'
+  source: SentimentSource
   posts: ScrapedPost[]
   error?: string
   scrapedAt: string

@@ -3,7 +3,8 @@
 import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { signUp, signInWithGoogle } from '@/actions/auth'
+import { signUp } from '@/actions/auth'
+import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { Logo } from '@/components/shared/logo'
 
@@ -42,16 +43,11 @@ export default function SignupPage() {
           let keyboard Tab from the heading land on the OAuth submit BEFORE
           the username field, and any "submit the first form on the page"
           script triggered OAuth instead of the email/password form.
-          Phase 7 redirect-back: pass `next` to signInWithGoogle via a
-          one-shot FormData so OAuth signups respect the same redirect
-          contract as email signups. */}
+          Phase 9 S2: client-side OAuth init (reliable PKCE — see
+          lib/auth/oauth-client.ts). */}
       <button
         type="button"
-        onClick={() => {
-          const fd = new FormData()
-          if (nextParam) fd.set('next', nextParam)
-          signInWithGoogle(fd)
-        }}
+        onClick={() => signInWithOAuthClient('google', nextParam || null)}
         className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
       >
         <GoogleIcon />

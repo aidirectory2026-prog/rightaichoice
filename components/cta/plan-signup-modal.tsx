@@ -20,7 +20,7 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Sparkles, ArrowRight } from 'lucide-react'
-import { signInWithGoogle, signInWithLinkedIn } from '@/actions/auth'
+import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { analytics } from '@/lib/analytics'
 import { persistPlanIntent, stashPendingIntent } from '@/lib/cta/persist-intent'
@@ -110,10 +110,8 @@ export function PlanSignupModal({
     if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
     sessionStorage.setItem('plan_signup_provider', provider)
 
-    const fd = new FormData()
-    fd.set('next', nextUrl())
-    if (provider === 'google') signInWithGoogle(fd)
-    else signInWithLinkedIn(fd)
+    // Phase 9 S2: client-side OAuth init (reliable PKCE — see lib/auth/oauth-client.ts).
+    void signInWithOAuthClient(provider === 'google' ? 'google' : 'linkedin_oidc', nextUrl())
   }
 
   function handleSkip() {
@@ -163,7 +161,7 @@ export function PlanSignupModal({
             Save your custom AI stack
           </h2>
           <p className="mt-2 text-sm text-zinc-400 leading-relaxed max-w-sm">
-            It's <span className="text-emerald-300 font-medium">free</span> and takes 5 seconds. We'll save your stack to your dashboard so you can revisit, compare, and share it anytime.
+            It&apos;s <span className="text-emerald-300 font-medium">free</span> and takes 5 seconds. We&apos;ll save your stack to your dashboard so you can revisit, compare, and share it anytime.
           </p>
         </div>
 
@@ -200,7 +198,7 @@ export function PlanSignupModal({
         </div>
 
         <p className="mt-4 text-center text-[10px] text-zinc-600">
-          We'll never post on your behalf or email you without permission.
+          We&apos;ll never post on your behalf or email you without permission.
         </p>
       </div>
     </div>

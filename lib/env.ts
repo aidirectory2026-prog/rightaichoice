@@ -42,6 +42,32 @@ const envSchema = z.object({
   // property (recommended) or `https://rightaichoice.com/` for a
   // URL-prefix property. Default is the domain form.
   GSC_SITE_URL: z.string().optional(),
+  // Phase 9 S1b — Market Sentiment Checker free/cheap data sources. All
+  // optional: each scraper returns an empty result (never throws) when its
+  // credential is absent, so the pipeline degrades gracefully source-by-source.
+  // APIFY_TOKEN — canonical Apify token (also used by lib/seo + crons).
+  APIFY_TOKEN: z.string().optional(),
+  // Reddit "script" app (reddit.com/prefs/apps) — app-only OAuth so the
+  // sentiment scraper isn't 403'd on datacenter IPs.
+  REDDIT_CLIENT_ID: z.string().optional(),
+  REDDIT_CLIENT_SECRET: z.string().optional(),
+  // YouTube Data API v3 key (Google Cloud) — review videos + comments.
+  YOUTUBE_API_KEY: z.string().optional(),
+  // Product Hunt developer token (api.producthunt.com) — launch reviews/votes.
+  PRODUCTHUNT_TOKEN: z.string().optional(),
+  // DataForSEO (pay-as-you-go) — Trustpilot/Google review-site data.
+  DATAFORSEO_LOGIN: z.string().optional(),
+  DATAFORSEO_PASSWORD: z.string().optional(),
+  // Phase 9 S5 — Sentiment Checker payments. All optional; the order routes
+  // return 503 'unconfigured' until set. Razorpay = India (₹20), PayPal = intl ($1).
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_CLIENT_SECRET: z.string().optional(),
+  NEXT_PUBLIC_PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_ENV: z.enum(['live', 'sandbox']).optional(),
 })
 
 function validateEnv() {
