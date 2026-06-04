@@ -29,6 +29,8 @@ export function OAuthContinueBanner() {
 
   if (!to) return null
 
+  const label = to.includes('/sentiment') ? 'Continue to your scan' : 'Continue where you left off'
+
   const clear = () => {
     try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
     setTo(null)
@@ -43,7 +45,7 @@ export function OAuthContinueBanner() {
           onClick={clear}
           className="group inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 py-1.5 text-sm font-bold text-emerald-950 transition hover:bg-emerald-400"
         >
-          Continue to your scan
+          {label}
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
         </Link>
         <button onClick={clear} aria-label="Dismiss" className="px-1 text-lg leading-none text-emerald-300/70 hover:text-emerald-200">

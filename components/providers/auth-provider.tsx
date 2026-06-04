@@ -1,9 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
-import { createClient } from '@/lib/supabase/client'
 import { registerAnonSuperProps } from './mixpanel-provider'
 import { linkPlanIntentsToUser, readPendingIntent, clearPendingIntent, persistPlanIntent } from '@/lib/cta/persist-intent'
 
@@ -46,37 +44,6 @@ export function AuthProvider({
   //      app_version). Re-registering only auth_state leaves the rest gone.
   // Fix: only call reset() on a known→anon transition (real logout).
   const prevUserIdRef = useRef<string | null>(null)
-  const router = useRouter()
-
-  // OAuth return-path recovery. signInWithOAuthClient stashes `oauth_return_to`
-  // before the provider round-trip. If Supabase honors our /auth/callback
-  // (origin is in its redirect allowlist), the user already lands on that path
-  // and this is a no-op. If Supabase instead falls back to the Site URL
-  // (homepage) — the case on localhost / preview origins that aren't
-  // allowlisted — we recover the path here once the session lands client-side.
-  // Tight guard: only ever acts when an OAuth was just initiated (key present),
-  // and consumes the key on the first auth event so it can't cause stray nav.
-  useEffect(() => {
-    let done = false
-    const supabase = createClient()
-    const recover = (hasSession: boolean) => {
-      if (done || !hasSession) return
-      let returnTo: string | null = null
-      try { returnTo = sessionStorage.getItem('oauth_return_to') } catch { /* private mode */ }
-      if (!returnTo) return
-      done = true
-      try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
-      if (returnTo.startsWith('/') && !returnTo.startsWith('//') && returnTo !== window.location.pathname) {
-        router.replace(returnTo)
-      }
-    }
-    // Two paths cover every timing: the session may already be established by
-    // the time we mount (getSession), or it may land just after via a
-    // client-side code exchange (onAuthStateChange). `done` dedupes.
-    void supabase.auth.getSession().then(({ data }) => recover(!!data.session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => recover(!!session))
-    return () => subscription.unsubscribe()
-  }, [router])
 
   useEffect(() => {
     const prevUserId = prevUserIdRef.current
