@@ -212,6 +212,36 @@ export default async function ToolDetailPage({ params }: PageProps) {
     cli: 'CLI',
   }
 
+  // Phase 9 (2026-06-04) — multi-tier pricing schema. The May-2026 AI-search
+  // shift rewards machine-readable pricing ("X pricing" is our biggest tool-page
+  // query intent). Build an AggregateOffer (starting-price → "from $X") from the
+  // real pricing tiers instead of a single price:0 Offer. See doc 21.
+  const pricingTiers = (Array.isArray(tool.pricing_details) ? tool.pricing_details : []) as Array<{ plan?: string; price?: string | number }>
+  const tierPrices = pricingTiers
+    .map((t) => parseFloat(String(t?.price ?? '').replace(/[^0-9.]/g, '')))
+    .filter((n) => Number.isFinite(n))
+  const hasFreeTier =
+    tool.pricing_type === 'free' ||
+    tool.pricing_type === 'freemium' ||
+    tierPrices.includes(0) ||
+    pricingTiers.some((t) => /free/i.test(String(t?.price ?? '')))
+  const lowPrice = hasFreeTier ? 0 : tierPrices.length ? Math.min(...tierPrices) : undefined
+  const offers =
+    pricingTiers.length > 0
+      ? {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'USD',
+          offerCount: pricingTiers.length,
+          ...(lowPrice !== undefined ? { lowPrice } : {}),
+          ...(tierPrices.length ? { highPrice: Math.max(...tierPrices) } : {}),
+        }
+      : {
+          '@type': 'Offer',
+          price: tool.pricing_type === 'free' ? '0' : undefined,
+          priceCurrency: 'USD',
+          description: pricingLabel(tool.pricing_type),
+        }
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -220,12 +250,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
     url: tool.website_url,
     applicationCategory: categories[0]?.name ?? 'AIApplication',
     operatingSystem: (tool.platforms ?? []).join(', ') || 'Web',
-    offers: {
-      '@type': 'Offer',
-      price: tool.pricing_type === 'free' ? '0' : undefined,
-      priceCurrency: 'USD',
-      description: pricingLabel(tool.pricing_type),
-    },
+    offers,
     ...(tool.avg_rating > 0 && {
       aggregateRating: {
         '@type': 'AggregateRating',
