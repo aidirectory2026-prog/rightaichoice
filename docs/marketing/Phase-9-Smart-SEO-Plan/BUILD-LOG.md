@@ -18,13 +18,18 @@
 Built the two operator-requested authority assets.
 
 - **Data-PR study (link magnet):** new blog post `/blog/state-of-ai-tools-2026` —
-  "The State of AI Tools 2026: We Analyzed 1,994 of Them". Every figure pulled live
-  from the catalog: 38.7% hide pricing ("contact sales"), 46% free/freemium, 54%
-  API-first, 49% beginner-level, the GPT/Claude/Gemini model concentration, and the
-  busiest categories (Productivity, Automation & Agents, Data & Analytics). Honest
-  methodology note; FAQ frontmatter (→ FAQPage schema). MDX tables converted to lists
-  (the blog pipeline has no remark-gfm). The "39% won't tell you the price" stat is the
-  pitch hook. Original data = best link magnet.
+  "AI Tools in 2026: Key Statistics, Pricing & Trends". Rewritten in-depth + SEO-first
+  to target the high-traffic stat cluster ("how many AI tools are there", "AI tools
+  statistics 2026", "how much do AI tools cost") with **question H2s for PAA/featured
+  snippets**, a key-stats block, and FAQ frontmatter (→ FAQPage schema). Framing:
+  **"10,000+ AI tools on the market; we track + hand-review the ones worth your time"**
+  — true market scale, no fabricated sample size, the exact catalog count and the
+  methodology section deliberately omitted per operator. Findings (from live catalog,
+  attributed to "tools we track"): ~39% hide pricing, ~46% free/freemium, ~54% API-first
+  (coding 74% vs image 33%), ~49% beginner, GPT/Claude/Gemini model concentration,
+  Automation & Agents nearly the biggest category. **Heavily interlinked** — /plan,
+  /tools, /best, /compare, /stacks + 2 pillars, all 5 cornerstones, 2 specific compares,
+  /methodology, /press. MDX uses lists not tables (no remark-gfm in the blog pipeline).
 - **Directory-submission checklist:** doc 20 Appendix A — 10 prioritized targets
   (Product Hunt, There's An AI For That, Futurepedia, Future Tools, Toolify,
   AlternativeTo, SaaSHub, G2, Crunchbase…) with submit URLs + paste-ready name/one-liner/
