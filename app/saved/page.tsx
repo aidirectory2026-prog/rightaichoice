@@ -25,10 +25,11 @@ export default async function SavedPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Phase 6.2 — gated route. Push unauthenticated visitors to /login with
-  // a returnTo so they land back here post-signin.
+  // Gated route. Push unauthenticated visitors to /login with `next` (the param
+  // /login actually reads — `returnTo` was silently ignored → dumped users on
+  // /dashboard) so they land back here post-signin.
   if (!user) {
-    redirect('/login?returnTo=/saved')
+    redirect('/login?next=/saved')
   }
 
   const tools = await getSavedTools(user.id)
