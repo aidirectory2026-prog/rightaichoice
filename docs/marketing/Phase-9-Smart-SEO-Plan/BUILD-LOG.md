@@ -13,6 +13,23 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 — 2026-06-04 — `/stacks` index advanced SEO (completes the stack hub)
+
+Continued the page-SEO sweep (homepage → /plan → /stacks). `/stacks` was the least
+optimized hub: no canonical, no JSON-LD, no FAQ — despite being a list of stacks and
+the parent of the 5 role pillars. Shipped (`app/stacks/page.tsx`): canonical `/stacks`
++ OG; `itemListJsonLd` (all stacks) + `faqPageJsonLd` (5 Q&As) + BreadcrumbList; an AEO
+intro defining "an AI stack"; an "AI stacks by role" row surfacing the 5 pillars first
+with keyword anchors (`STACKS.filter(s => s.pillar)`); a server-rendered FAQ accordion.
+Anti-cannibalization: `/stacks` owns the index/collection intent; per-persona "ai stack
+for X" stays with the pillar pages. Authority (doc 10) still gates rank. Doc
+**18-stacks-index-seo.md**. `tsc` + `eslint` clean.
+
+Remaining page-SEO queue: `/tools`, `/categories`, `/best` (the `/compare` hub already
+has canonical + schema from the crawlable-pagination phase).
+
+---
+
 ## Day 8 (cont. 6) — 2026-06-03 — Fix: `/admin/seo-pulse` Accept/Reject buttons were silent no-ops (RLS)
 
 **Trigger:** operator — the approve/decline buttons on the weekly title-change queue

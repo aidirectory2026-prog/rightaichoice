@@ -163,6 +163,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | [`15-automation-reliability-and-observability.md`](./15-automation-reliability-and-observability.md) | Reliability + observability of the SEO cron fleet (relocated from Opus 9.F): advisory locks, quota preflight, retry/backoff, `/admin/health`, GSC OAuth auto-refresh, runbooks |
 | [`16-homepage-seo-strategy.md`](./16-homepage-seo-strategy.md) | Demand-led homepage rebalance + hub rewire (shipped Day 8): keyword tiers, anti-cannibalization delegation map, copy/schema/internal-link changes, authority ceiling |
 | [`17-plan-page-seo.md`](./17-plan-page-seo.md) | `/plan` AI Stack Builder advanced SEO (shipped Day 8): canonical for param variants, WebApplication + HowTo + FAQPage schema, pillar hub links |
+| [`18-stacks-index-seo.md`](./18-stacks-index-seo.md) | `/stacks` index advanced SEO (shipped Day 9): canonical, ItemList + FAQPage + Breadcrumb schema, "by role" pillar row, AEO intro + FAQ |
 
 ## How to read this folder
 
