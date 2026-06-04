@@ -35,6 +35,7 @@ type Report = {
 type Status = {
   authed: boolean
   pricing: Pricing
+  paymentsLive?: boolean
   quota?: { freeRemaining: number; freeLimit: number; paidBalance: number; canScanFree: boolean }
   lastResult?: { report: Report; sources: string[]; mention_count: number; created_at: string } | null
 }
@@ -180,7 +181,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
   }, [toolSlug, toolName, refreshStatus, runScan])
 
   useEffect(() => {
-    if (phase !== 'paywall' || status?.pricing.gateway !== 'paypal') return
+    if (phase !== 'paywall' || status?.pricing.gateway !== 'paypal' || !status?.paymentsLive) return
     const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
     if (!clientId || !paypalRef.current) return
     let cancelled = false
@@ -206,7 +207,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
       }).render(paypalRef.current)
     })()
     return () => { cancelled = true }
-  }, [phase, status?.pricing.gateway, toolSlug, refreshStatus, runScan])
+  }, [phase, status?.pricing.gateway, status?.paymentsLive, toolSlug, refreshStatus, runScan])
 
   const freeLeft = status?.quota?.freeRemaining ?? null
   const price = status?.pricing.amountDisplay ?? '₹20 / $1'
@@ -282,17 +283,28 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
       {phase === 'report' && report && <ReportBody report={report} toolName={toolName} meta={resultMeta} onDownload={download} />}
 
       {(phase === 'paywall' || phase === 'paying') && status && (
-        <div className="rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-6">
-          <h2 className="text-lg font-semibold text-white">You&apos;ve used your 3 free scans 🎉</h2>
-          <p className="mt-1 text-sm text-zinc-400">Unlock another full, downloadable report of {toolName} for <span className="font-semibold text-white">{price}</span> — one-time, no subscription.</p>
-          <div className="mt-4">
-            {status.pricing.gateway === 'razorpay'
-              ? <button onClick={payRazorpay} disabled={phase === 'paying'} className="rounded-lg bg-emerald-500 px-5 py-3 text-sm font-bold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60">{phase === 'paying' ? 'Opening payment…' : `Pay ${price} & scan`}</button>
-              : <div ref={paypalRef} className="min-h-[44px] max-w-xs" />}
+        status.paymentsLive ? (
+          <div className="rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-6">
+            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? 3} free scans 🎉</h2>
+            <p className="mt-1 text-sm text-zinc-400">Unlock another full, downloadable report of {toolName} for <span className="font-semibold text-white">{price}</span> — one-time, no subscription.</p>
+            <div className="mt-4">
+              {status.pricing.gateway === 'razorpay'
+                ? <button onClick={payRazorpay} disabled={phase === 'paying'} className="rounded-lg bg-emerald-500 px-5 py-3 text-sm font-bold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60">{phase === 'paying' ? 'Opening payment…' : `Pay ${price} & scan`}</button>
+                : <div ref={paypalRef} className="min-h-[44px] max-w-xs" />}
+            </div>
+            {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+            <p className="mt-3 text-[11px] text-zinc-600">Secure checkout · {status.pricing.gateway === 'razorpay' ? 'UPI, cards & netbanking' : 'PayPal & cards'}</p>
           </div>
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-          <p className="mt-3 text-[11px] text-zinc-600">Secure checkout · {status.pricing.gateway === 'razorpay' ? 'UPI, cards & netbanking' : 'PayPal & cards'}</p>
-        </div>
+        ) : (
+          // Payments not live yet for this region (e.g. Razorpay pre-KYC) — show a
+          // friendly "coming soon" instead of a dead payment box. Auto-replaced by
+          // the real paywall the moment live keys are configured (status.paymentsLive).
+          <div className="rounded-2xl border border-emerald-600/40 bg-gradient-to-br from-emerald-950/40 to-zinc-950 p-7 text-center">
+            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? 25} free scans 🎉</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-400">Paid scans are <span className="font-medium text-emerald-300">coming soon</span> — we&apos;re just finishing checkout. Every report you ran is saved, and you&apos;ll be first to know the moment more scans unlock.</p>
+            <p className="mt-3 text-xs text-zinc-600">Thanks for trying the live sentiment on {toolName}.</p>
+          </div>
+        )
       )}
     </div>
   )

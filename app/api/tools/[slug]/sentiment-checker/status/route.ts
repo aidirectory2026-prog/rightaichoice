@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { pricingForRequest } from '@/lib/geo/currency'
+import { razorpayConfigured } from '@/lib/payments/razorpay'
+import { paypalConfigured } from '@/lib/payments/paypal'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +19,16 @@ type RouteContext = { params: Promise<{ slug: string }> }
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
   const pricing = pricingForRequest(req)
+  // Whether the gateway for THIS user's region actually has live keys. When
+  // false (e.g. Razorpay pre-KYC, or PayPal before live creds are set) the
+  // client shows a "paid scans coming soon" message instead of a dead payment
+  // box once the free allowance is used. Flips on automatically when keys land.
+  const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user?.id) {
-    return NextResponse.json({ authed: false, pricing })
+    return NextResponse.json({ authed: false, pricing, paymentsLive })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +53,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   return NextResponse.json({
     authed: true,
     pricing,
+    paymentsLive,
     quota: {
       freeRemaining: Math.max(freeLimit - freeUsed, 0),
       freeLimit,
