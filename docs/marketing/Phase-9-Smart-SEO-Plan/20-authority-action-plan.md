@@ -57,8 +57,42 @@ stay low (deep positions). This plan moves the position needle.
 - Re-check the winnable cohort (`/compare/*` at pos 2–15): links + the new CTR
   descriptions should convert impressions → clicks (the CTR >0.5% target lives here).
 
+## Appendix A — Tier-A directory submission checklist (operator, ~half a day)
+
+Work top-down; each is a real referring domain + referral traffic. Use the
+paste-ready copy + assets below. Log each live link in `/admin/authority`.
+
+| # | Directory | Submit at | Notes |
+| -: | :-- | :-- | :-- |
+| 1 | **Product Hunt** | producthunt.com → "Submit" | Schedule a launch (Tue–Thu). Biggest single referral + DR hit. Use the wordmark + a short demo GIF of `/plan`. |
+| 2 | **There's An AI For That** | theresanaiforthat.com/submit | Largest AI-tool index; high referral. |
+| 3 | **Futurepedia** | futurepedia.io/submit-tool | Free + paid tiers; free is fine to start. |
+| 4 | **Future Tools** | futuretools.io (Submit a Tool) | Curated; Matt Wolfe audience. |
+| 5 | **Toolify** | toolify.ai/submit | High-traffic AI aggregator. |
+| 6 | **AlternativeTo** | alternativeto.net → "Add software" | Add RightAIChoice + list it as an alternative to other AI directories. |
+| 7 | **SaaSHub** | saashub.com/submit | DR + a do-follow profile. |
+| 8 | **G2 / Capterra** | g2.com (claim/add product) | Slow but high-authority B2B citation. |
+| 9 | **Crunchbase** | crunchbase.com (add company) | Foundational entity citation; cross-links Wikidata. |
+| 10 | **AI Scout / Insidr / aitoolsdirectory** | their submit forms | Long-tail AI directories; batch them. |
+
+**Category to pick everywhere:** "AI Tools / AI Directory / Productivity."
+**Assets:** logos at `/press` (svg + png). **Demo:** a 10–15s screen-grab of `/plan`
+turning a goal into a stack.
+
+### Paste-ready copy
+- **Name:** RightAIChoice
+- **One-liner (≤60 chars):** The decision engine for picking the right AI stack
+- **Short (≤160 chars):** Describe your goal and get the exact AI tools to use — a complete stack with costs, alternatives, and real user sentiment across 2,000+ tools.
+- **Tags:** ai tools, ai directory, ai stack, tool comparison, productivity
+- **URL:** https://rightaichoice.com · **Press kit:** https://rightaichoice.com/press
+
+### Pitch hook (for Tier B / newsletters)
+Lead with the data-PR study — **/blog/state-of-ai-tools-2026** ("39% of AI tools won't
+tell you the price"). It's the linkable asset; pitch the stat, link the study.
+
 ## What Claude can do next (just ask)
-- Draft the **data-PR study** from the live catalog (pull the stats, write the post).
-- Generate a **directory-submission checklist** with URLs + the exact blurb/assets.
-- Draft **HARO response templates** + the founder expert bio.
+- ✅ **Data-PR study** — shipped: `/blog/state-of-ai-tools-2026` (real catalog stats).
+- ✅ **Directory checklist** — Appendix A above.
+- Draft **HARO/Connectively response templates** + the founder expert bio.
+- Draft the **Product Hunt launch copy** (tagline, description, first comment).
 The actual submissions/outreach are operator actions (accounts, identity, relationships).

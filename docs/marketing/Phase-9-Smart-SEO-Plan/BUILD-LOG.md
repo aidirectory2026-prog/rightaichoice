@@ -13,6 +13,26 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont. 4) — 2026-06-04 — Data-PR link magnet + directory checklist (doc 10 Tier-A/B)
+
+Built the two operator-requested authority assets.
+
+- **Data-PR study (link magnet):** new blog post `/blog/state-of-ai-tools-2026` —
+  "The State of AI Tools 2026: We Analyzed 1,994 of Them". Every figure pulled live
+  from the catalog: 38.7% hide pricing ("contact sales"), 46% free/freemium, 54%
+  API-first, 49% beginner-level, the GPT/Claude/Gemini model concentration, and the
+  busiest categories (Productivity, Automation & Agents, Data & Analytics). Honest
+  methodology note; FAQ frontmatter (→ FAQPage schema). MDX tables converted to lists
+  (the blog pipeline has no remark-gfm). The "39% won't tell you the price" stat is the
+  pitch hook. Original data = best link magnet.
+- **Directory-submission checklist:** doc 20 Appendix A — 10 prioritized targets
+  (Product Hunt, There's An AI For That, Futurepedia, Future Tools, Toolify,
+  AlternativeTo, SaaSHub, G2, Crunchbase…) with submit URLs + paste-ready name/one-liner/
+  short/tags + which assets (from `/press`) + the demo to record.
+- Offered next: HARO templates + Product Hunt launch copy on request.
+
+---
+
 ## Day 9 (cont. 3) — 2026-06-04 — Lever 3: authority enablers — `/press` kit + action plan
 
 The real ceiling-breaker (Bing `InLinks: 0`; rank gated by referring domains). Code can
