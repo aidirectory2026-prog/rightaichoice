@@ -166,6 +166,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | [`18-stacks-index-seo.md`](./18-stacks-index-seo.md) | `/stacks` index advanced SEO (shipped Day 9): canonical, ItemList + FAQPage + Breadcrumb schema, "by role" pillar row, AEO intro + FAQ |
 | [`19-hub-pages-seo.md`](./19-hub-pages-seo.md) | `/tools` + `/categories` + `/best` advanced SEO (shipped Day 9): /tools canonical (param-bloat fix), ItemList/FAQPage/Breadcrumb schema, AEO intros + FAQs |
 | [`20-authority-action-plan.md`](./20-authority-action-plan.md) | The ceiling-breaker: prioritized, operator-executable backlink plan (directories, awesome-lists, HARO, data-PR, Reddit) + the `/press` enabler. Authority is the binding rank constraint |
+| [`21-google-2026-update-and-50-money-pages.md`](./21-google-2026-update-and-50-money-pages.md) | Google's May-2026 AI-search shift (context-to-citation) + what to improve, and the plan to turn the 50 highest-ROI money pages into citation-ready, converting pages via template upgrades + CTR titles + recrawl |
 
 ## How to read this folder
 

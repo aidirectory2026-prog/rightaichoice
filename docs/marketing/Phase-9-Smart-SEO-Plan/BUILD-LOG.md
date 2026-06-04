@@ -13,6 +13,28 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont. 5) — 2026-06-04 — Google May-2026 update analysis + 50-money-page plan (doc 21)
+
+Researched Google's big 2026 shift and planned the 50 highest-ROI pages. **doc
+21-google-2026-update-and-50-money-pages.md.**
+
+- **The drift:** I/O 2026 rebuilt Search around AI (Gemini 3.5 Flash, "biggest change in
+  25 years"); AI Mode ~1B / AI Overviews ~2.5B MAU; May core update; position-1 CTR on
+  AI-feature queries ~27%→~11%; zero-click ~58.5%. Consensus: **AEO/GEO *is* SEO now —
+  keyword-to-click → context-to-citation.**
+- **For us:** validates the AEO investment (Dataset/llms.txt/FAQPage/SoftwareApplication/
+  comparison data). Improve: above-fold **direct-answer blocks**, **multi-tier pricing
+  schema**, **richer rendered FAQs** (esp. best-of), internal links. Reframe KPI from raw
+  CTR → **citations + converting the surviving click.**
+- **The 50:** scored `impressions × intent_weight × position_factor` — ~22 pricing/
+  commercial tool pages (pos 4–30), ~20 pos-2–20 compares, ~6 commercial /best pages.
+  Approach: **template upgrades** (tool/compare/best are templated → lifts all pages) +
+  CTR titles + recrawl, not 50 bespoke builds.
+
+Execution (template upgrades A–C/F, the 50 titles + recrawl) follows in the next entries.
+
+---
+
 ## Day 9 (cont. 4) — 2026-06-04 — Data-PR link magnet + directory checklist (doc 10 Tier-A/B)
 
 Built the two operator-requested authority assets.
