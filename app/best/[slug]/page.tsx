@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, ExternalLink, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Star, ExternalLink, ShieldCheck, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
@@ -85,16 +85,35 @@ export default async function BestPage({ params }: PageProps) {
     })),
   )
 
-  const faq = faqPageJsonLd([
+  // Single source of truth for the FAQ — fed to both FAQPage schema and the
+  // rendered accordion. Phase 9 (2026-06-04): richer than the old 2 generics,
+  // and a direct-answer "Quick answer" block is rendered above the list (the #1
+  // AEO lever for "best X" queries — see doc 21).
+  const subject = config.title.toLowerCase()
+  const top3 = topTools.slice(0, 3).map((t) => t.name)
+  const topPick = topTools[0]
+  const faqs = [
     {
-      question: `What are the ${config.title.toLowerCase()} in 2026?`,
-      answer: `The top-rated options include ${topTools.slice(0, 3).map((t) => t.name).join(', ')}. Rankings are based on real user reviews, features, and pricing on RightAIChoice.`,
+      question: `What are the ${subject} in 2026?`,
+      answer: `${top3.join(', ')} lead our 2026 ranking${topPick ? `, with ${topPick.name} as the top pick` : ''}. The full list is ranked on features, pricing, integrations, and aggregated real user sentiment — not pay-for-placement.`,
     },
     {
-      question: `Are there free options for ${config.title.toLowerCase().replace('best ai tools for ', '').replace('best free ai tools', 'AI tools')}?`,
-      answer: `Yes — many tools on this list offer free tiers or trials. Check each tool's pricing badge for details. Filter by "Free" on our tools page for a complete list.`,
+      question: `How much do these tools cost?`,
+      answer: `Most options on this list offer a free tier or trial; paid plans vary by tool. Each tool's current pricing is shown on its badge and detail page, so you can filter to what fits your budget.`,
     },
-  ])
+    {
+      question: `Are there free ${subject}?`,
+      answer: `Yes — several tools here have a free tier or free trial. Look for the "Free" or "Freemium" pricing badge, or filter the tools directory to free options.`,
+    },
+    {
+      question: `How did RightAIChoice rank these?`,
+      answer: `Independently — on features, pricing, integrations, and aggregated real user sentiment, never pay-for-placement. See our methodology for the full process.`,
+    },
+  ]
+  const faq = faqPageJsonLd(faqs)
+
+  // Sibling best-of guides for internal linking (exclude self + noindex).
+  const relatedGuides = BEST_PAGES.filter((p) => p.slug !== slug && !p.noindex).slice(0, 6)
 
   const breadcrumbs = breadcrumbJsonLd([
     { name: 'Home', url: '/' },
@@ -167,6 +186,25 @@ export default async function BestPage({ params }: PageProps) {
                   .
                 </p>
               </div>
+
+              {/* Quick answer (TL;DR) — direct, extractable answer for "best X"
+                  queries (AI Overview / featured snippet bait). */}
+              {topPick && (
+                <div className="mb-8 rounded-xl border border-emerald-900/40 bg-emerald-950/15 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-2">Quick answer</p>
+                  <p className="text-sm text-zinc-200 leading-relaxed">
+                    For most people, <Link href={`/tools/${topPick.slug}`} className="font-semibold text-emerald-300 hover:text-emerald-200">{topPick.name}</Link> is
+                    the best pick among {subject} in 2026{topPick.tagline ? ` — ${topPick.tagline.replace(/\.$/, '')}` : ''}.
+                    {top3.length > 1 && (
+                      <> Top alternatives: {topTools.slice(1, 3).map((t, i) => (
+                        <span key={t.id}>
+                          <Link href={`/tools/${t.slug}`} className="text-zinc-300 hover:text-emerald-300">{t.name}</Link>{i === 0 && topTools.length > 2 ? ' and ' : ''}
+                        </span>
+                      ))}.</>
+                    )} Ranked on features, pricing, and real user sentiment — full list below.
+                  </p>
+                </div>
+              )}
 
               {/* Ranked list */}
               <div className="space-y-4 mb-12">
@@ -262,6 +300,40 @@ export default async function BestPage({ params }: PageProps) {
                     ))}
                   </div>
                 </>
+              )}
+
+              {/* FAQ — rendered (crawlable); FAQPage schema emitted once above */}
+              <section className="mt-14 max-w-3xl">
+                <h2 className="text-lg font-semibold text-white mb-5">Frequently asked questions</h2>
+                <div className="divide-y divide-zinc-800/70 rounded-xl border border-zinc-800 bg-zinc-900/20">
+                  {faqs.map((f) => (
+                    <details key={f.question} className="group px-5">
+                      <summary className="flex cursor-pointer items-center justify-between gap-4 py-4 text-sm font-medium text-zinc-200 marker:content-['']">
+                        {f.question}
+                        <ChevronDown className="h-4 w-4 flex-shrink-0 text-zinc-500 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <p className="pb-5 text-sm text-zinc-400 leading-relaxed">{f.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              </section>
+
+              {/* Related guides — sibling best-of internal links */}
+              {relatedGuides.length > 0 && (
+                <section className="mt-12">
+                  <h2 className="text-lg font-semibold text-white mb-4">More best-of guides</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {relatedGuides.map((g) => (
+                      <Link
+                        key={g.slug}
+                        href={`/best/${g.slug}`}
+                        className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/50 px-4 py-1.5 text-sm text-zinc-400 hover:border-emerald-800/50 hover:text-emerald-300 transition-colors"
+                      >
+                        {g.title}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
               )}
 
               {/* CTA */}
