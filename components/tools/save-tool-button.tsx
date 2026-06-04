@@ -23,7 +23,10 @@ export function SaveToolButton({
 
   function handleClick() {
     if (!user) {
-      router.push('/login')
+      // Journey-aware: return to this tool page after sign-in so the user can
+      // finish the save they intended (not the generic /dashboard).
+      const next = typeof window !== 'undefined' ? window.location.pathname : '/'
+      router.push(`/login?next=${encodeURIComponent(next)}`)
       return
     }
 
