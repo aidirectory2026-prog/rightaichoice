@@ -13,6 +13,38 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont. 6) — 2026-06-04 — Executed the 50-money-page plan (template upgrades + recrawl)
+
+Executed doc 21's batches 2–3 — AI-era template upgrades (lift all pages of each type) +
+recrawl of the 50.
+
+- **Batch B — best-of template** (`app/best/[slug]/page.tsx`, the biggest gap): added a
+  **"Quick answer" direct-answer block** above the ranked list (AEO/featured-snippet bait,
+  links the #1 pick), a **rendered FAQ accordion** with 4 richer single-source FAQs (was 2
+  generic + unrendered; FAQPage schema now matches), and a **"More best-of guides"**
+  sibling-internal-link row.
+- **Batch C — tool pricing schema** (`app/tools/[slug]/page.tsx`): replaced the single
+  `price:0` Offer with an **`AggregateOffer`** (offerCount + lowPrice "from $X" + highPrice)
+  built from real `pricing_details` tiers → machine-readable pricing for "X pricing" AI
+  Overviews / rich results. Robust parse; fallback Offer when no tiers. Lifts all ~1,994
+  tool pages.
+- **Title decision:** skipped bespoke title overrides — the default templates already
+  produce intent-matched titles ("{Tool}: Pricing, Features & Alternatives 2026"; "Best X
+  (2026)") and compares got CTR overrides on Day 9. Overriding good defaults = risk for no
+  gain.
+- **Batch 3 — recrawl the 50:** finalized via `impressions × pos≤30` scoring (2 best,
+  5 compares, 43 commercial/pricing tool pages); **bumped `pages_freshness`** (Google
+  sitemap-lastmod recrawl signal) + **IndexNow HTTP 200** (Bing/Yandex) for all 50, so the
+  new schema/best-of/CTR upgrades recrawl fast.
+- **Deferred (low value / higher risk):** tool/compare *visible* direct-answer blocks
+  (tagline + verdict already answer; pricing schema is the real lever) and compare
+  category internal links — note for a later pass.
+
+Aligned with the May-2026 context-to-citation shift (doc 21): extractable answers + pricing
++ FAQ. `tsc`/`eslint` clean; per-type live verification. Ceiling still authority (doc 20).
+
+---
+
 ## Day 9 (cont. 5) — 2026-06-04 — Google May-2026 update analysis + 50-money-page plan (doc 21)
 
 Researched Google's big 2026 shift and planned the 50 highest-ROI pages. **doc
