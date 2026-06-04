@@ -13,6 +13,45 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont.) — 2026-06-04 — Performance diagnosis + compare CTR rewrite (targets: +30% impr/wk, CTR >0.5%)
+
+**Trigger:** operator saw a 24h GSC view (140 impr, 0 clicks, pos 38) and feared a
+daily decline; set targets — weekly impressions +30%, CTR >0.5%.
+
+**Diagnosis (28d snapshots — NOT falling, the opposite):**
+| date | impr | clicks | CTR | pos |
+|---|---|---|---|---|
+| 05-26 | 25,542 | 44 | 0.172% | 39.5 |
+| 05-29 | 31,670 | 50 | 0.158% | 44.7 |
+| 06-01 | **41,202** | 58 | 0.141% | 46.7 |
+
+Impressions **+61% in a week** (indexation/sitemap/IndexNow flywheel working) — **Target 1
+already exceeded**. The 24h "0 clicks" is noise: at avg pos 38 (~page 4) ~0 clicks is the
+steady state. CTR *fell* (0.17→0.14%) only because the new impressions land deep (pos 47).
+
+**Why CTR is hard (structural):** one page — `/tools/se-ranking` — emits **~5,000 impr at
+pos 58–80 with 0 clicks** ("se ranking pricing/price/tool/…" = competitor-brand queries we
+can't and shouldn't click-win); Replit/Mangools same. These inflate impressions (good for
+Target 1) but cap sitewide CTR. To hit 0.5% on 41k impr = ~206 clicks (vs 58) — not reachable
+by titles alone while most impressions are deep competitor-brand queries.
+
+**The real lever (shipped): the winnable cohort.** Editorial compares rank page-1 but got
+**0 clicks**: `duolingo vs loora` (pos 8.3, 297 impr), `duolingo vs talkpal` (pos 7, 165
+impr), + ~15 pos-2–12 pages. Titles were already good; the **meta descriptions were robotic
+jargon** ("feature deltas, integration coverage"). Rewrote `buildComparePageMeta`
+(`lib/seo/metadata.ts`) for all 530 compares: default title → "{A} vs {B}: Which Should You
+Pick in 2026?"; description → answer-first/benefit-driven ("compared on pricing, key
+features, and real user sentiment — with a clear, independent verdict…"). Per-page
+title_overrides still win where present. `tsc` + `eslint` clean.
+
+**Honest expectation:** this lifts CTR on the strategic/clickable cohort (the compares are
+the best-ranking content). Sitewide CTR >0.5% additionally needs rankings to climb so
+impressions move out of the deep competitor-brand band — i.e. authority (doc 10). Next
+levers: push the top winnable compares up (freshness recrawl + internal links) and continue
+the page-SEO sweep.
+
+---
+
 ## Day 9 — 2026-06-04 — `/stacks` index advanced SEO (completes the stack hub)
 
 Continued the page-SEO sweep (homepage → /plan → /stacks). `/stacks` was the least

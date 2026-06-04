@@ -96,10 +96,13 @@ export function buildComparePageMeta(
   timestamps: CompareMetaTimestamps = {},
 ) {
   const titlePrefix = toolNames.join(' vs ')
-  const title = `${titlePrefix} — Side-by-Side Comparison (2026)`
-  const desc = `In-depth 2026 comparison: ${toolNames.join(
-    ' vs '
-  )}. Pricing tiers, feature deltas, integration coverage, ratings, and a buyer-first verdict from ${SITE}.`
+  // Phase 9 (2026-06-04) CTR rewrite: editorial compares rank well (pos 7-8) but
+  // earned ~0 clicks — the old title ("Side-by-Side Comparison") and the jargon
+  // description ("feature deltas, integration coverage") didn't win the click.
+  // Lead with the question searchers ask + an answer-first, benefit-driven
+  // snippet. (Per-page title_overrides still win where present.)
+  const title = `${titlePrefix}: Which Should You Pick in 2026?`
+  const desc = `${titlePrefix} compared on pricing, key features, and real user sentiment — with a clear, independent verdict to help you decide which to pick in 2026.`
   const modified = toIso(timestamps.lastReviewedAt) ?? toIso(timestamps.publishedAt)
   const published = toIso(timestamps.publishedAt)
   return {
