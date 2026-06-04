@@ -164,6 +164,7 @@ Full KPI definitions + alert thresholds in [11-kpis](./11-kpis-and-feedback-loop
 | [`16-homepage-seo-strategy.md`](./16-homepage-seo-strategy.md) | Demand-led homepage rebalance + hub rewire (shipped Day 8): keyword tiers, anti-cannibalization delegation map, copy/schema/internal-link changes, authority ceiling |
 | [`17-plan-page-seo.md`](./17-plan-page-seo.md) | `/plan` AI Stack Builder advanced SEO (shipped Day 8): canonical for param variants, WebApplication + HowTo + FAQPage schema, pillar hub links |
 | [`18-stacks-index-seo.md`](./18-stacks-index-seo.md) | `/stacks` index advanced SEO (shipped Day 9): canonical, ItemList + FAQPage + Breadcrumb schema, "by role" pillar row, AEO intro + FAQ |
+| [`19-hub-pages-seo.md`](./19-hub-pages-seo.md) | `/tools` + `/categories` + `/best` advanced SEO (shipped Day 9): /tools canonical (param-bloat fix), ItemList/FAQPage/Breadcrumb schema, AEO intros + FAQs |
 
 ## How to read this folder
 

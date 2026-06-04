@@ -1,30 +1,75 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { BEST_PAGES } from '@/lib/data/best-pages'
+import { itemListJsonLd, faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 export const revalidate = 3600
 
+// Phase 9 (2026-06-04) advanced SEO — added canonical, ItemList + FAQPage +
+// Breadcrumb schema, and an FAQ. See doc 19-hub-pages-seo.md.
 export const metadata: Metadata = {
-  title: 'Best AI Tools Guides',
+  title: 'Best AI Tools by Use Case (2026) — Curated Guides',
   description:
-    'Curated lists of the best AI tools by category and use case. Find the top tools for writing, coding, design, productivity, SEO, and more.',
+    'Curated, regularly-updated rankings of the best AI tools for every use case — writing, coding, design, SEO, productivity, and more. Independent picks, no pay-for-placement.',
+  alternates: { canonical: '/best' },
   openGraph: {
-    title: 'Best AI Tools Guides 2026',
-    description: 'Curated rankings of the best AI tools by use case.',
+    title: 'Best AI Tools by Use Case (2026)',
+    description: 'Curated rankings of the best AI tools by use case — independent, no pay-for-placement.',
+    url: 'https://rightaichoice.com/best',
+    type: 'website',
   },
 }
+
+const BEST_FAQS: { question: string; answer: string; links?: { label: string; href: string }[] }[] = [
+  {
+    question: 'What are the best AI tools?',
+    answer:
+      'It depends on the job. We publish a ranked, hand-tested guide for each use case below — coding, writing, image generation, SEO, and more — so you can see the current top picks and exactly why each one wins.',
+  },
+  {
+    question: 'How are these rankings chosen?',
+    answer:
+      'Each guide ranks tools on independent criteria — features, pricing, integrations, and aggregated real user sentiment — never pay-for-placement. Picks are re-checked as tools and pricing change.',
+    links: [{ label: 'How we rank tools', href: '/methodology' }],
+  },
+  {
+    question: 'Are the best-of lists kept up to date?',
+    answer:
+      'Yes. Guides are reviewed and refreshed regularly so the picks reflect current pricing, features, and new entrants — the AI tool market moves fast.',
+  },
+  {
+    question: 'How do I choose between the top tools?',
+    answer:
+      'Read the guide for your use case for the head-to-head reasoning, or describe your goal in the planner and we’ll match a complete stack to it.',
+    links: [{ label: 'Plan my AI stack', href: '/plan' }],
+  },
+]
 
 export default function BestIndexPage() {
   return (
     <>
+      <script
+        {...jsonLdScriptProps([
+          itemListJsonLd(
+            'Best AI Tools Guides',
+            'Curated, ranked guides to the best AI tools for every use case.',
+            '/best',
+            BEST_PAGES.map((p) => ({ name: p.title, url: `/best/${p.slug}` })),
+          ),
+          faqPageJsonLd(BEST_FAQS.map(({ question, answer }) => ({ question, answer }))),
+        ])}
+      />
       <Navbar />
 
       <main className="flex-1">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-          <div className="mb-10">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
+          <Breadcrumbs crumbs={[{ name: 'Home', url: '/' }, { name: 'Best AI Tools', url: '/best' }]} />
+
+          <div className="mb-10 mt-4">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-5 w-5 text-emerald-400" />
               <span className="text-xs font-semibold uppercase tracking-wider text-emerald-500">
@@ -32,8 +77,9 @@ export default function BestIndexPage() {
               </span>
             </div>
             <h1 className="text-3xl font-bold text-white">Best AI Tools by Use Case</h1>
-            <p className="mt-3 text-zinc-400">
-              Ranked, compared, and updated regularly. Find the right AI tool for what you're building.
+            <p className="mt-3 text-zinc-400 max-w-2xl leading-relaxed">
+              Hand-tested, ranked, and updated regularly — find the best AI tools for what you&apos;re building.
+              Every guide ranks tools on features, price, and real user sentiment, with a clear pick for each use case.
             </p>
           </div>
 
@@ -56,6 +102,33 @@ export default function BestIndexPage() {
               </Link>
             ))}
           </div>
+
+          {/* FAQ */}
+          <section className="mt-16">
+            <h2 className="text-xl font-semibold text-white mb-6">Frequently asked questions</h2>
+            <div className="divide-y divide-zinc-800/70 rounded-xl border border-zinc-800 bg-zinc-900/20">
+              {BEST_FAQS.map((faq) => (
+                <details key={faq.question} className="group px-5">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 py-4 text-sm font-medium text-zinc-200 marker:content-['']">
+                    {faq.question}
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-zinc-500 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="pb-5 text-sm text-zinc-400 leading-relaxed">
+                    <p>{faq.answer}</p>
+                    {faq.links && (
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                        {faq.links.map((l) => (
+                          <Link key={l.href} href={l.href} className="text-emerald-400 hover:text-emerald-300">
+                            {l.label} →
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
         </div>
       </main>
 

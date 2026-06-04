@@ -13,12 +13,51 @@ import { RecentlyViewed } from '@/components/home/recently-viewed'
 import Link from 'next/link'
 import { getTools, logSearch } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
+import { faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
+import { ChevronDown } from 'lucide-react'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
+// Phase 9 (2026-06-04) advanced SEO. The critical fix is the canonical: the
+// directory takes ?category/?pricing/?skill_level/?platform/?has_api/?search/
+// ?sort/?page params, which would otherwise spawn unbounded duplicate/thin
+// indexable URLs. Individual tools are discovered via /tools/sitemap.xml (not
+// listing pagination), so consolidating every filtered/sorted/paged view onto
+// the clean /tools is safe and prevents index bloat. See doc 19-hub-pages-seo.md.
 export const metadata: Metadata = {
-  title: 'Browse AI Tools',
-  description: 'Discover and compare AI tools. Filter by category, pricing, platform, and more.',
+  title: 'Browse All AI Tools — Directory & Comparison',
+  description:
+    'Browse and compare 2,000+ AI tools by category, pricing, and real user sentiment. Filter by what you need, or describe your goal and get a recommended AI stack.',
+  alternates: { canonical: '/tools' },
+  openGraph: {
+    title: 'Browse All AI Tools — Directory & Comparison',
+    description: 'Browse and compare 2,000+ AI tools by category, pricing, and real user sentiment.',
+    url: 'https://rightaichoice.com/tools',
+    type: 'website',
+  },
 }
+
+const TOOLS_FAQS = [
+  {
+    question: 'How do I find the right AI tool?',
+    answer:
+      'Filter the directory by category, pricing, or platform, or search by what you want to do. To get a complete recommendation across a whole workflow, describe your goal in the planner and we’ll build an AI stack for you.',
+  },
+  {
+    question: 'How are AI tools rated on RightAIChoice?',
+    answer:
+      'Each tool is scored on features, pricing, integrations, and aggregated real user sentiment — independently, never pay-for-placement.',
+  },
+  {
+    question: 'Are these AI tools free?',
+    answer:
+      'Many have a free tier. Each tool lists its current pricing, and you can filter the directory to free tools.',
+  },
+  {
+    question: 'How many AI tools are listed, and how often is it updated?',
+    answer:
+      'The directory tracks 2,000+ AI tools and is refreshed continuously as pricing, features, and new tools change.',
+  },
+]
 
 type SearchParams = Promise<{
   category?: string
@@ -40,6 +79,7 @@ export default async function ToolsPage({
 
   return (
     <>
+      <script {...jsonLdScriptProps([faqPageJsonLd(TOOLS_FAQS)])} />
       <Navbar />
 
       <main className="flex-1">
@@ -73,6 +113,22 @@ export default async function ToolsPage({
           <Suspense fallback={<FiltersSkeleton />}>
             <ToolResults params={params} />
           </Suspense>
+
+          {/* FAQ — crawlable; FAQPage schema emitted once at page level above */}
+          <section className="mt-16 max-w-3xl">
+            <h2 className="text-xl font-semibold text-white mb-6">Frequently asked questions</h2>
+            <div className="divide-y divide-zinc-800/70 rounded-xl border border-zinc-800 bg-zinc-900/20">
+              {TOOLS_FAQS.map((faq) => (
+                <details key={faq.question} className="group px-5">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 py-4 text-sm font-medium text-zinc-200 marker:content-['']">
+                    {faq.question}
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-zinc-500 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="pb-5 text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* Phase 6.4 (2026-05-11): recently-viewed rail at the bottom of

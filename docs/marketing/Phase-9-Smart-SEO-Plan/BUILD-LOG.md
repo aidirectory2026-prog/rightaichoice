@@ -13,6 +13,28 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont. 2) — 2026-06-04 — Three-lever push toward the targets (recrawl + hub SEO + authority)
+
+Executing the operator's "do it in the order" — the three levers from the perf diagnosis.
+
+**Lever 1 — accelerate the winnable compares (done):** bumped `pages_freshness`
+(→ sitemap `lastmod` Google recrawl signal) + IndexNow-pinged (Bing/Yandex, HTTP 200)
+the 8 page-1 compares getting ~0 clicks (duolingo-vs-loora, duolingo-vs-talkpal,
+openhands-vs-devin, clay-vs-phantombuster, fliki-vs-pictory, dify-vs-langflow-vs-fastgpt,
+moises-vs-suno, alphasense-vs-claude) so the new CTR descriptions recrawl fast. Internal
+links already covered by the related-compare rails + homepage featured set.
+
+**Lever 2 — hub-page SEO sweep (done):** `/tools`, `/categories`, `/best` brought to the
+`/stacks` standard (doc **19-hub-pages-seo.md**). Highlights: **`/tools` canonical** (was
+missing — its filter/sort/search/page params risked unbounded duplicate URLs; tools are
+discovered via sitemap, so consolidating to `/tools` stops index bloat + saves crawl
+budget); `/best` canonical (was missing); ItemList + FAQPage + Breadcrumb schema + AEO
+intros + FAQ accordions on all three; demand-led titles. `tsc` + `eslint` clean.
+
+**Lever 3 — authority/distribution (doc 10):** see next entry.
+
+---
+
 ## Day 9 (cont.) — 2026-06-04 — Performance diagnosis + compare CTR rewrite (targets: +30% impr/wk, CTR >0.5%)
 
 **Trigger:** operator saw a 24h GSC view (140 impr, 0 clicks, pos 38) and feared a
