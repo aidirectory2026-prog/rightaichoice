@@ -34,6 +34,7 @@ const RESOURCES_LINKS: Array<{ href: string; label: string }> = [
 const COMPANY_LINKS: Array<{ href: string; label: string }> = [
   { href: '/about', label: 'About' },
   { href: '/team', label: 'Team' },
+  { href: '/press', label: 'Press & brand kit' },
 ]
 
 const LEGAL_LINKS: Array<{ href: string; label: string }> = [

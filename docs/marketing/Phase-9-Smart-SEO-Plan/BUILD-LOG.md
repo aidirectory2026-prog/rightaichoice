@@ -13,6 +13,27 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 9 (cont. 3) — 2026-06-04 — Lever 3: authority enablers — `/press` kit + action plan
+
+The real ceiling-breaker (Bing `InLinks: 0`; rank gated by referring domains). Code can
+only build *enablers*; the links themselves are operator/human work.
+
+- **`/press`** (new) — journalist-ready brand kit: boilerplate (one-line + paragraph),
+  fast facts, founder bio, downloadable logos (svg/png/icon), contact via socials. A
+  stable, citable URL that earns links when writers mention RAC. Added to footer (Company).
+- **doc 20 — authority & backlink action plan** (new): prioritized, operator-executable —
+  Tier A (directory submissions: Product Hunt, There's An AI For That, Futurepedia,
+  AlternativeTo, SaaSHub…; awesome-list PR follow-ups; foundational citations), Tier B
+  (HARO/Connectively editorial links; data-PR from the catalog), Tier C (Reddit cadence;
+  `/embed` widget distribution). Targets: referring domains +20/30d; log in `/admin/authority`.
+- Offered next: Claude can draft the data-PR study from the live catalog + a
+  directory-submission checklist + HARO templates on request.
+
+`tsc` + `eslint` clean. This closes the three-lever push; remaining authority work is
+human (the plan is in doc 20).
+
+---
+
 ## Day 9 (cont. 2) — 2026-06-04 — Three-lever push toward the targets (recrawl + hub SEO + authority)
 
 Executing the operator's "do it in the order" — the three levers from the perf diagnosis.
