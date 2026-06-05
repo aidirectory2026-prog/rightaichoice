@@ -59,9 +59,15 @@ export default async function BestPage({ params }: PageProps) {
   if (config.skillLevel) filters.skill_level = config.skillLevel
   if (config.slug === 'free') filters.pricing = 'free'
 
-  // Query by first category if specified
-  const category = config.categories?.[0]
-  if (category) filters.category = category
+  // Phase 9 (2026-06-05) — niche pages populate via full-text search (niche-
+  // relevant tools) instead of a category dump. Falls back to category filter
+  // for non-niche pages. See doc 22.
+  if (config.niche) {
+    filters.search = config.niche
+  } else {
+    const category = config.categories?.[0]
+    if (category) filters.category = category
+  }
 
   const { tools } = await getTools(filters)
 

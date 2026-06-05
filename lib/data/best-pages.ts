@@ -11,6 +11,14 @@ export type BestPageConfig = {
   description: string
   /** Category slugs to include */
   categories?: string[]
+  /**
+   * Phase 9 (2026-06-05) — niche filter. When set, the page populates its tool
+   * list via full-text `search` (websearch_to_tsquery on search_vector) instead
+   * of a category dump, so "best AI tools for [niche]" shows niche-RELEVANT
+   * tools. Only add a niche page that returns ≥8 relevant tools (quality gate).
+   * See doc 22.
+   */
+  niche?: string
   /** Feature keywords to match (OR logic) */
   featureKeywords?: string[]
   /** Skill level filter */
@@ -489,6 +497,41 @@ export const BEST_PAGES: BestPageConfig[] = [
       'Design professional logos in minutes with AI. Compare the top AI logo makers for startups, small businesses, and personal brands.',
     categories: ['design-ui'],
     featureKeywords: ['logo', 'brand', 'branding', 'identity'],
+  },
+  // ── Phase 9 (2026-06-05) niche pages — populated by `niche` full-text search
+  //    (niche-relevant tools), each with a unique, hand-written intro. Coverage
+  //    quality-gated (each returns ≥8 relevant tools). See doc 22. ──
+  {
+    slug: 'insurance',
+    title: 'Best AI Tools for Insurance',
+    h1: 'Best AI Tools for Insurance in 2026',
+    description:
+      'AI is reshaping insurance across claims processing, underwriting, fraud detection, and customer service. These are the tools insurers and agencies are actually using — compared on capability, pricing, and real user sentiment.',
+    niche: 'insurance',
+  },
+  {
+    slug: 'nonprofits',
+    title: 'Best AI Tools for Nonprofits',
+    h1: 'Best AI Tools for Nonprofits in 2026',
+    description:
+      'From grant writing and donor outreach to fundraising analytics and volunteer coordination, AI helps lean nonprofit teams do more with less. Here are the best AI tools for nonprofits — with free-tier options highlighted.',
+    niche: 'nonprofit',
+  },
+  {
+    slug: 'construction',
+    title: 'Best AI Tools for Construction',
+    h1: 'Best AI Tools for Construction in 2026',
+    description:
+      'AI is moving onto the job site — estimating and takeoffs, project scheduling, design and BIM, and safety monitoring. These are the best AI tools for construction firms and contractors, ranked on real-world fit and cost.',
+    niche: 'construction',
+  },
+  {
+    slug: 'finance',
+    title: 'Best AI Tools for Finance Teams',
+    h1: 'Best AI Tools for Finance Teams in 2026',
+    description:
+      'Beyond bookkeeping: AI for FP&A, forecasting, reporting, spend management, and treasury. These are the best AI tools for finance teams and CFOs — compared on features, integrations, pricing, and user sentiment.',
+    niche: 'finance',
   },
 ]
 

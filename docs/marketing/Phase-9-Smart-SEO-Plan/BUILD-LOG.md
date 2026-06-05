@@ -13,6 +13,34 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 10 (cont.) — 2026-06-05 — Part 2: niche-page engine + first new niches (doc 22)
+
+**Engine (cheap + penalty-safe):** added a `niche?: string` field to `BestPageConfig`; when
+set, `/best/[slug]` populates its tool list via full-text `search` (websearch_to_tsquery on
+`search_vector`) instead of a category dump — so "best AI tools for [niche]" shows niche-
+RELEVANT tools. No migration; reuses the existing `getTools({search})` path + the AEO `/best`
+template (Quick-answer TL;DR + rendered FAQ + ItemList/FAQPage/Breadcrumb + sibling links).
+
+**Quality gate (verified):** websearch coverage clears ≥8 relevant tools for every candidate
+niche (HR 8 … real-estate 42 … design 1499). Only add niches that pass.
+
+**Reframe discovered during execution:** the site **already has ~53 `/best` + 20 `/for`
+pages** covering most obvious industry/role niches (legal, sales, ecommerce, real-estate,
+students, social-media, HR, data-analysis…). So "100 brand-new pages" would duplicate. The
+honest path to ~100 *strong* niche pages = **(a) the engine [done], (b) add genuinely-
+uncovered niches, (c) upgrade the existing category-only pages to niche-filtering + un-noindex
+the now-strong ones.** No duplicate slugs.
+
+**Shipped (proof + real new pages):** 4 coverage-verified, clearly-uncovered niches with
+unique hand-written intros — `/best/insurance`, `/best/nonprofits`, `/best/construction`,
+`/best/finance` — each niche-filtered + the full AEO template. `tsc`/`eslint` clean.
+
+**Next (Phase B):** roll `niche` onto the ~50 existing category-only `/best` pages (relevance
+upgrade) + un-noindex the strong ones; add the deeper-niche long tail (coverage-checked) +
+per-niche unique intros via the DeepSeek pipeline at scale; recrawl in batches → ~100 strong.
+
+---
+
 ## Day 10 — 2026-06-05 — Part 1: finished per-page-type architecture (doc 22)
 
 The two remaining page-architecture gaps from doc 22:
