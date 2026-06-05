@@ -13,6 +13,27 @@
 > living on the `phase9-sentiment-checker` branch). This file is the *Smart SEO*
 > log only.
 
+## Day 10 — 2026-06-05 — Part 1: finished per-page-type architecture (doc 22)
+
+The two remaining page-architecture gaps from doc 22:
+- **Tool pages** (`app/tools/[slug]/page.tsx`): added an above-the-fold **direct-answer /
+  "In short" block** under the hero — "{Tool} — {tagline}. Best for {…}. {pricing sentence}"
+  built from `tagline` + `best_for` + the real pricing tiers (reusing the AggregateOffer
+  computation). Extractable answer for AI Overviews / snippets on "what is X" + "X pricing".
+- **Compare pages** (`app/compare/[slug]/page.tsx`): added **category internal links** ("Best
+  AI {category} tools" → `/categories/{slug}`, deduped from both tools' categories) so the
+  compare flows topical authority up the tree (was a gap — compares only linked tools +
+  sibling compares).
+- **Deliberately skipped** the doc-22 "synthesized verdict for non-editorial compares" — an
+  auto-generated prose verdict is exactly the thin/auto content the May-2026 update punishes;
+  non-editorial compares already show the factual comparison table, and the money compares are
+  editorial (real verdicts). Quality call > rote plan-following.
+
+`tsc` clean. Every money page type is now both citation-shaped (direct answer + schema + FAQ)
+and conversion-shaped. Part 2 (the niche-page engine + ~100 "AI tools for [X]" pages) next.
+
+---
+
 ## Day 9 (cont. 6) — 2026-06-04 — Executed the 50-money-page plan (template upgrades + recrawl)
 
 Executed doc 21's batches 2–3 — AI-era template upgrades (lift all pages of each type) +

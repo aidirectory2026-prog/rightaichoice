@@ -243,6 +243,22 @@ export default async function ToolDetailPage({ params }: PageProps) {
           description: pricingLabel(tool.pricing_type),
         }
 
+  // Phase 9 (2026-06-05) — above-the-fold direct-answer line (what it is + who
+  // for + cost) for AI-Overview / featured-snippet extraction on "what is X" +
+  // "X pricing". Built from the same pricing tiers as the schema. See doc 22.
+  const minPaidPrice = tierPrices.filter((p) => p > 0)
+  const pricingSentence = hasFreeTier
+    ? minPaidPrice.length
+      ? `Free to start; paid plans from $${Math.min(...minPaidPrice)}/mo.`
+      : 'Free to use.'
+    : tierPrices.length
+      ? `Plans from $${Math.min(...tierPrices)}/mo.`
+      : `${pricingLabel(tool.pricing_type)} pricing.`
+  const bestForLine =
+    tool.best_for && tool.best_for.length > 0
+      ? ` Best for ${tool.best_for.slice(0, 3).join(', ')}.`
+      : ''
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -400,6 +416,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
               />
               <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page" />
             </div>
+          </div>
+
+          {/* Phase 9 (2026-06-05): above-the-fold direct-answer / TL;DR block.
+              Concise, extractable "what is X + who for + cost" for AI Overviews
+              and featured snippets ("what is {tool}", "{tool} pricing"). */}
+          <div className="mt-6 rounded-xl border border-emerald-900/40 bg-emerald-950/15 p-5">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-500">In short</p>
+            <p className="text-sm leading-relaxed text-zinc-200">
+              <strong className="text-white">{tool.name}</strong>
+              {tool.tagline ? ` — ${tool.tagline.replace(/\.$/, '')}.` : ' is an AI tool.'}
+              {bestForLine} {pricingSentence}
+            </p>
           </div>
 
           {/* Phase 9 B1 (2026-05-28): elevated "Compared with" strip.

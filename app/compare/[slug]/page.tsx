@@ -111,6 +111,21 @@ export default async function ComparisonSlugPage({ params }: Props) {
   const toolSlugs = tools.map((t) => (t as { slug: string }).slug)
   const editorial = comparison as EditorialComparison
 
+  // Phase 9 (2026-06-05) — category internal links. Both tools carry
+  // tool_categories(categories(*)); dedupe and link the category hubs so the
+  // compare flows topical authority to /categories and gives users a way up the
+  // tree (was a gap — compares only linked tools + sibling compares). See doc 22.
+  type CatRef = { slug: string; name: string }
+  const compareCategories: CatRef[] = Array.from(
+    new Map(
+      (tools as Array<{ tool_categories?: Array<{ categories?: CatRef | null }> | null }>)
+        .flatMap((t) => t.tool_categories ?? [])
+        .map((tc) => tc.categories)
+        .filter((c): c is CatRef => Boolean(c))
+        .map((c) => [c.slug, { slug: c.slug, name: c.name }] as [string, CatRef]),
+    ).values(),
+  ).slice(0, 4)
+
   // Universal-propagation badge (B2): real "Updated <date>" sourced from
   // pages_freshness.last_changed_at for this compare path — so when a
   // referenced tool changes and the cascade fans out, this badge reflects the
@@ -436,6 +451,26 @@ export default async function ComparisonSlugPage({ params }: Props) {
               ))}
             </div>
           </section>
+
+          {/* Category hubs — internal links up the tree (topical authority) */}
+          {compareCategories.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+                Browse these categories
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {compareCategories.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/categories/${c.slug}`}
+                    className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/50 px-4 py-1.5 text-sm text-zinc-400 transition-colors hover:border-emerald-800/50 hover:text-emerald-300"
+                  >
+                    Best AI {c.name} tools
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Last-reviewed note for editorial pages */}
           {editorial.is_editorial && editorial.last_reviewed_at && (
