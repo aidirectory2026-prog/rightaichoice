@@ -6,6 +6,7 @@ import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { pricingForRequest, getCountryFromRequest } from '@/lib/geo/currency'
 import { serverAnalytics } from '@/lib/mixpanel-server'
+import { payTestOverride } from '@/lib/payments/pay-test'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -74,6 +75,19 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     .eq('is_published', true)
     .single()
   if (!tool) return NextResponse.json({ error: 'tool_not_found' }, { status: 404 })
+
+  // ── TEMP admin `?paytest=` override ───────────────────────────────────────
+  // Force the paywall (in the chosen gateway/region) until the admin holds a
+  // paid credit, so they can test a checkout their geo hides. Once they pay,
+  // paid_balance>0 and we fall through to the normal claim → the scan runs.
+  const ptPricing = await payTestOverride(req, admin, user.id)
+  if (ptPricing) {
+    const { data: q } = await admin.from('sentiment_quota').select('paid_balance').eq('user_id', user.id).maybeSingle()
+    if ((q?.paid_balance ?? 0) <= 0) {
+      void serverAnalytics.sentimentEvent('sentiment_paywall_shown', user.id, { tool_slug: tool.slug, currency: ptPricing.currency, amount_minor: ptPricing.amountMinor }, getIp(req))
+      return NextResponse.json({ error: 'payment_required', pricing: ptPricing }, { status: 402 })
+    }
+  }
 
   // ── Quota claim (free → paid → payment_required) ──────────────────────────
   const { data: claim, error: claimErr } = await admin.rpc('claim_sentiment_scan', { p_user: user.id })

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { pricingForRequest } from '@/lib/geo/currency'
 import { razorpayConfigured } from '@/lib/payments/razorpay'
 import { paypalConfigured } from '@/lib/payments/paypal'
+import { payTestOverride } from '@/lib/payments/pay-test'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,21 +19,26 @@ type RouteContext = { params: Promise<{ slug: string }> }
  */
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
-  const pricing = pricingForRequest(req)
-  // Whether the gateway for THIS user's region actually has live keys. When
-  // false (e.g. Razorpay pre-KYC, or PayPal before live creds are set) the
-  // client shows a "paid scans coming soon" message instead of a dead payment
-  // box once the free allowance is used. Flips on automatically when keys land.
-  const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
+  let pricing = pricingForRequest(req)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user?.id) {
+    const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
     return NextResponse.json({ authed: false, pricing, paymentsLive })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = getAdminClient() as any
+
+  // TEMP admin-only `?paytest=` override — force a gateway/region so an admin can
+  // test a checkout their geo wouldn't show (e.g. India → the PayPal flow).
+  const ptPricing = await payTestOverride(req, admin, user.id)
+  if (ptPricing) pricing = ptPricing
+
+  // Whether the gateway for this user's region has live keys — drives the
+  // "paid scans coming soon" card vs a real payment box. Flips on when keys land.
+  const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
   const [{ data: quota }, { data: last }] = await Promise.all([
     admin.from('sentiment_quota').select('free_used, free_limit, paid_balance').eq('user_id', user.id).maybeSingle(),
     admin

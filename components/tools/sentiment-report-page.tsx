@@ -49,6 +49,15 @@ const SCAN_STAGES = [
   'Synthesizing your report',
 ]
 
+// TEMP admin-only `?paytest=` passthrough: if the page URL carries it, forward
+// it to the status + scan calls so the server-side admin override can force a
+// gateway/region for testing. No-op for normal visitors (param absent).
+function payTestSuffix(): string {
+  if (typeof window === 'undefined') return ''
+  const p = new URLSearchParams(window.location.search).get('paytest')
+  return p ? `?paytest=${encodeURIComponent(p)}` : ''
+}
+
 function loadScript(src: string): Promise<boolean> {
   return new Promise((resolve) => {
     if (document.querySelector(`script[src="${src}"]`)) return resolve(true)
@@ -107,7 +116,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
 
   const refreshStatus = useCallback(async () => {
     try {
-      const r = await fetch(`/api/tools/${toolSlug}/sentiment-checker/status`)
+      const r = await fetch(`/api/tools/${toolSlug}/sentiment-checker/status${payTestSuffix()}`)
       if (r.ok) setStatus((await r.json()) as Status)
     } catch { /* ignore */ }
   }, [toolSlug])
@@ -135,7 +144,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
     setError(null); setStageIdx(0); setPhase('scanning')
     analytics.sentimentScanStarted(toolSlug, status?.quota?.canScanFree ? 'free' : 'paid')
     try {
-      const r = await fetch(`/api/tools/${toolSlug}/sentiment-checker/scan`, { method: 'POST' })
+      const r = await fetch(`/api/tools/${toolSlug}/sentiment-checker/scan${payTestSuffix()}`, { method: 'POST' })
       if (r.status === 401) { setPhase('signin'); return }
       if (r.status === 402) {
         const data = (await r.json()) as { pricing: Pricing }
