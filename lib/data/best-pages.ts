@@ -187,12 +187,11 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'students',
+    niche: 'student',
     title: 'Best AI Tools for Students',
     h1: 'Best AI Tools for Students in 2026',
     description:
-      'The best AI tools every student needs — for research, writing essays, studying, note-taking, and exam prep. All budget-friendly or free.',
-    categories: ['research-education'],
-    skillLevel: 'beginner',
+      'The best AI tools every student needs — for research, writing essays, studying, note-taking, and exam prep. Ranked on accuracy, free tiers, and real user sentiment.',
   },
   {
     slug: 'resume',
@@ -537,6 +536,147 @@ export const BEST_PAGES: BestPageConfig[] = [
     description:
       'Beyond bookkeeping: AI for FP&A, forecasting, reporting, spend management, and treasury. These are the best AI tools for finance teams and CFOs — compared on features, integrations, pricing, and user sentiment.',
     niche: 'finance',
+  },
+
+  // ── Phase 9 doc 22 — Phase B3 niche expansion (2026-06-06) ──────
+  // Each entry is coverage-gated (>=8 relevant tools) and relevance-ranked
+  // via the niche filter; the template differentiates per niche (ranked set +
+  // quick-answer + FAQ all derive from the niche's own tools).
+  {
+    slug: 'branding',
+    niche: 'branding',
+    title: 'Best AI Branding Tools',
+    h1: 'Best AI Tools for Branding & Brand Identity',
+    description:
+      'Build a brand identity with AI — logos, color palettes, brand voice, style guides, and on-brand visuals at scale. The best AI branding tools, compared on output quality, customization, pricing, and user sentiment.',
+  },
+  {
+    slug: 'customer-success',
+    niche: 'customer success',
+    title: 'Best AI Tools for Customer Success',
+    h1: 'Best AI Tools for Customer Success Teams',
+    description:
+      'AI for customer success — health scoring, churn prediction, renewal forecasting, and automated playbooks. The best AI customer success platforms, compared on signals, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'fitness',
+    niche: 'fitness',
+    title: 'Best AI Fitness Tools',
+    h1: 'Best AI Tools for Fitness & Personal Training',
+    description:
+      'AI fitness tools that build personalized workout plans, track recovery, coach form, and adapt training to your goals. The best AI tools for fitness and trainers, compared on features, accuracy, pricing, and user sentiment.',
+  },
+  {
+    slug: 'hospitality',
+    niche: 'hospitality',
+    title: 'Best AI Tools for Hospitality',
+    h1: 'Best AI Tools for Hotels & Hospitality',
+    description:
+      'AI for hotels and hospitality — guest messaging, revenue management, booking automation, and 24/7 concierge. The best AI hospitality tools, compared on guest experience, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'logistics',
+    niche: 'logistics',
+    title: 'Best AI Tools for Logistics',
+    h1: 'Best AI Tools for Logistics & Freight',
+    description:
+      'AI for logistics — route optimization, freight matching, dispatch, and delivery ETAs. The best AI logistics tools for carriers, brokers, and fleets, compared on optimization, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'manufacturing',
+    niche: 'manufacturing',
+    title: 'Best AI Tools for Manufacturing',
+    h1: 'Best AI Tools for Manufacturing & Factories',
+    description:
+      'AI for manufacturing — predictive maintenance, quality inspection, machine vision, and production analytics. The best AI manufacturing tools, compared on factory-floor fit, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'retail',
+    niche: 'retail',
+    title: 'Best AI Tools for Retail',
+    h1: 'Best AI Tools for Retail & Merchandising',
+    description:
+      'AI for retail — demand forecasting, assortment planning, personalization, and inventory optimization. The best AI retail tools for merchandisers and store operators, compared on features, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'supply-chain',
+    niche: 'supply chain',
+    title: 'Best AI Tools for Supply Chain',
+    h1: 'Best AI Tools for Supply Chain Management',
+    description:
+      'AI for supply chain — demand planning, inventory optimization, supplier risk, and end-to-end visibility. The best AI supply chain tools, compared on planning accuracy, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'travel',
+    niche: 'travel',
+    title: 'Best AI Travel Tools',
+    h1: 'Best AI Tools for Travel Planning',
+    description:
+      'AI travel tools that plan itineraries, find deals, and handle booking and expenses. The best AI tools for travelers and travel agents, compared on planning quality, coverage, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'youtube',
+    niche: 'youtube',
+    title: 'Best AI Tools for YouTube',
+    h1: 'Best AI Tools for YouTube Creators',
+    description:
+      'AI for YouTube — title and thumbnail generation, scripting, video ideas, and SEO optimization. The best AI tools for YouTubers, compared on output quality, time saved, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'wordpress',
+    niche: 'wordpress',
+    title: 'Best AI Tools for WordPress',
+    h1: 'Best AI Tools for WordPress Sites',
+    description:
+      'AI for WordPress — site building, content generation, SEO, and AI-assisted hosting. The best AI WordPress tools and plugins, compared on ease of setup, output quality, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'newsletter',
+    niche: 'newsletter',
+    title: 'Best AI Newsletter Tools',
+    h1: 'Best AI Tools for Newsletters',
+    description:
+      'AI newsletter tools that draft issues, write subject lines, grow subscribers, and optimize sends. The best AI tools for newsletter creators, compared on writing quality, deliverability, pricing, and user sentiment.',
+  },
+  {
+    slug: 'advertising',
+    niche: 'advertising',
+    title: 'Best AI Advertising Tools',
+    h1: 'Best AI Tools for Advertising & Paid Media',
+    description:
+      'AI for advertising — ad creative generation, campaign optimization, audience targeting, and budget allocation across channels. The best AI advertising tools, compared on ROAS impact, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'fashion',
+    niche: 'fashion',
+    title: 'Best AI Tools for Fashion',
+    h1: 'Best AI Tools for Fashion & Apparel',
+    description:
+      'AI for fashion — design generation, trend forecasting, virtual try-on, and product visualization. The best AI fashion tools for designers and brands, compared on output quality, workflow fit, pricing, and user sentiment.',
+  },
+  {
+    slug: 'agriculture',
+    niche: 'agriculture',
+    title: 'Best AI Tools for Agriculture',
+    h1: 'Best AI Tools for Agriculture & Farming',
+    description:
+      'AI for agriculture — crop monitoring, yield prediction, precision spraying, and farm management. The best AI agriculture tools for growers and agronomists, compared on field results, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'restaurants',
+    niche: 'restaurant',
+    title: 'Best AI Tools for Restaurants',
+    h1: 'Best AI Tools for Restaurants',
+    description:
+      'AI for restaurants — phone-order taking, reservations, demand forecasting, and back-office automation. The best AI restaurant tools for operators, compared on guest experience, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'interior-design',
+    niche: 'interior design',
+    title: 'Best AI Interior Design Tools',
+    h1: 'Best AI Tools for Interior Design',
+    description:
+      'AI interior design tools that redesign rooms, render concepts, and stage spaces from a photo. The best AI tools for interior designers and home renovators, compared on realism, control, pricing, and real user sentiment.',
   },
 ]
 
