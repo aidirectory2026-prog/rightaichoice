@@ -1967,8 +1967,14 @@ Un-noindex'd + niche-filtered the strong use-case pages stuck on the Phase 9 noi
 ### #3 Relevance-ranking engine fix — ALL 28 niche pages (`5e500b2`, RPC `niche_tool_ids`)
 Live verification exposed a quality bug: niche pages ordered full-text matches by `review_count` (popularity), floating broadly-popular loose matches to the top (game-dev→Riffusion/music, spreadsheet→TurboTax, healthcare→Locus Robotics/warehouse). Added `niche_tool_ids(p_niche, p_limit)` RPC ordering by `ts_rank_cd` (review_count tiebreak) + a `rankByRelevance` path in `getTools` that constrains+reorders the main query by the ranked id list (full row shape / category embed / other filters intact; `/tools` listing untouched). Verified live: spreadsheets→Rows/Glide/Equals, game-dev→Masterpiece Studio/Inworld/Tripo, healthcare→Notable/Innovaccer, recruiting→Mercor/Recruit CRM/Manatal. Freshness-bumped + IndexNow'd all 28 (HTTP 200). tsc clean throughout.
 
+### #4 Phase B3 — 18 new niche /best pages (`6ea1422`)
+Coverage-tested ~65 candidate niches; kept only those passing the ≥8-relevant-tools gate **AND** a relevance spot-check (ts_rank top-4 must be genuinely on-topic). Shipped **17 brand-new** + upgraded `/best/students` to the niche filter: branding, customer-success, fitness, hospitality, logistics, manufacturing, retail, students, supply-chain, travel, youtube, wordpress, newsletter, advertising, fashion, agriculture, restaurants, interior-design. **Dropped** weak/generic matches the gate-by-count would have missed: author→course tools, consultant→medical, web-design→testing, virtual-assistant→voicebots, journalism→academic, event-planning→supply-chain, therapy (YMYL). Discovered the template is already non-thin per niche **without** a bespoke intro — quick-answer, the 4 FAQs, ItemList schema, and the ranked list all derive from each niche's own tools, so pages differ materially by construction; only title/h1/description are hand-written (unique each). Verified live: all indexable, in sitemap (**68 indexable /best URLs**), relevance-ranked (manufacturing→Sight Machine/Covariant, restaurants→SoundHound/Slang.ai, agriculture→Cropin/Solinftec). Freshness + IndexNow 200. **46 niche entries total** (28 + 18).
+
+### Tally toward "100"
+**46 niche /best pages** (relevance-ranked, AEO template) + ~22 already-precise category /best pages ≈ **68 indexable best-of pages**. Remaining toward ~100: a B4 batch of held-back/clean niches (data-scientist, automotive, veterinary, real-estate-investor, fashion-adjacent, finance roles…) + deeper long-tail — same coverage+relevance gate.
+
 ### Next (Phase B continued)
-- **B3:** add ~30–45 genuinely-new niches (dentists, architects, financial advisors, restaurants, coaches, logistics…) toward ~100 — coverage-gated (≥8), unique intros via the DeepSeek editorial pipeline at scale.
+- **B4:** next ~15–20 niches from the verified pool (data-scientist, automotive, veterinary, real-estate-investor, + a fresh candidate sweep) → toward ~100.
 - Re-check GSC Jun 3–6 once finalized (~2 days) to confirm spike-revert (not decay).
 
 ---
