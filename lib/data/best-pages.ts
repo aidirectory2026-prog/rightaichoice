@@ -130,6 +130,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'startups',
+    niche: 'startups',
     title: 'Best AI Tools for Startups',
     h1: 'Best AI Tools for Startups & Entrepreneurs',
     description:
@@ -138,6 +139,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'social-media',
+    niche: 'social media',
     title: 'Best AI Social Media Tools',
     h1: 'Best AI Tools for Social Media Marketing',
     description:
@@ -165,6 +167,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   // High search volume
   {
     slug: 'email-marketing',
+    niche: 'email marketing',
     title: 'Best AI Email Marketing Tools',
     h1: 'Best AI Tools for Email Marketing',
     description:
@@ -174,6 +177,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'sales',
+    niche: 'sales',
     title: 'Best AI Sales Tools',
     h1: 'Best AI Tools for Sales Teams',
     description:
@@ -192,6 +196,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'resume',
+    niche: 'resume',
     title: 'Best AI Resume Builders',
     h1: 'Best AI Resume & CV Builders',
     description:
@@ -209,6 +214,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'ecommerce',
+    niche: 'ecommerce',
     title: 'Best AI Tools for Ecommerce',
     h1: 'Best AI Tools for Ecommerce & Online Stores',
     description:
@@ -238,6 +244,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'translation',
+    niche: 'translation',
     title: 'Best AI Translation Tools',
     h1: 'Best AI Translation & Localization Tools',
     description:
@@ -255,6 +262,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'legal',
+    niche: 'legal',
     title: 'Best AI Tools for Lawyers',
     h1: 'Best AI Tools for Legal Professionals',
     description:
@@ -263,6 +271,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'real-estate',
+    niche: 'real estate',
     title: 'Best AI Tools for Real Estate',
     h1: 'Best AI Tools for Real Estate Agents',
     description:
@@ -308,6 +317,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'accounting',
+    niche: 'accounting',
     title: 'Best AI Accounting Tools',
     h1: 'Best AI Tools for Accounting & Bookkeeping',
     description:
@@ -376,6 +386,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   // Role-based and audience pages
   {
     slug: 'freelancers',
+    niche: 'freelancers',
     title: 'Best AI Tools for Freelancers',
     h1: 'Best AI Tools for Freelancers',
     description:
@@ -384,6 +395,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'solopreneurs',
+    niche: 'solopreneur',
     title: 'Best AI Tools for Solopreneurs',
     h1: 'Best AI Tools for Solo Founders & Solopreneurs',
     description:
@@ -401,6 +413,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'content-repurposing',
+    niche: 'content repurposing',
     title: 'Best AI Content Repurposing Tools',
     h1: 'Best AI Tools for Content Repurposing',
     description:
@@ -464,6 +477,7 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'social-media-scheduling',
+    niche: 'social media scheduling',
     title: 'Best AI Social Media Scheduling Tools',
     h1: 'Best AI Social Media Scheduling & Management Tools',
     description:
