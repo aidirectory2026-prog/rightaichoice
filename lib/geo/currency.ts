@@ -38,6 +38,18 @@ export function pricingForCountry(country: string): Pricing {
   return country === 'IN' ? INDIA : INTL(country)
 }
 
+/**
+ * Free on-demand scans per user before the paywall. India gets a generous 25
+ * (no easy paid path yet — Razorpay KYC pending); everyone else gets 5. Resolved
+ * from the same Vercel geo header as pricing, so the limit follows the request
+ * region and existing users self-correct without a backfill.
+ */
+export const FREE_SCANS_IN = 25
+export const FREE_SCANS_INTL = 5
+export function freeScanLimit(country: string): number {
+  return country === 'IN' ? FREE_SCANS_IN : FREE_SCANS_INTL
+}
+
 /** Convenience: resolve pricing straight from the request. */
 export function pricingForRequest(request: Request): Pricing {
   return pricingForCountry(getCountryFromRequest(request))

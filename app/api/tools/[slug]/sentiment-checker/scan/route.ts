@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { scrapeAllSources } from '@/lib/scrapers'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { pricingForRequest, getCountryFromRequest } from '@/lib/geo/currency'
+import { pricingForRequest, getCountryFromRequest, freeScanLimit } from '@/lib/geo/currency'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 import { payTestOverride } from '@/lib/payments/pay-test'
 
@@ -90,7 +90,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   // ── Quota claim (free → paid → payment_required) ──────────────────────────
-  const { data: claim, error: claimErr } = await admin.rpc('claim_sentiment_scan', { p_user: user.id })
+  // Free limit is geo-resolved: India 25, everyone else 5 (passed to the RPC so
+  // the gate + the stored row reflect the caller's region).
+  const country = getCountryFromRequest(req)
+  const { data: claim, error: claimErr } = await admin.rpc('claim_sentiment_scan', { p_user: user.id, p_free_limit: freeScanLimit(country) })
   if (claimErr) return NextResponse.json({ error: 'quota_error' }, { status: 500 })
   const chargeType = claim as 'free' | 'paid' | 'payment_required'
 
@@ -103,7 +106,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   void serverAnalytics.sentimentEvent('sentiment_scan_requested', user.id, { tool_slug: tool.slug, charge_type: chargeType }, getIp(req))
 
   // ── Run the scan under a hard cap ─────────────────────────────────────────
-  const country = getCountryFromRequest(req)
   const startedAt = Date.now()
   const { data: searchRow } = await admin
     .from('sentiment_searches')

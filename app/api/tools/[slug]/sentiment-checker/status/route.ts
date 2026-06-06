@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
-import { pricingForRequest } from '@/lib/geo/currency'
+import { pricingForRequest, getCountryFromRequest, freeScanLimit } from '@/lib/geo/currency'
 import { razorpayConfigured } from '@/lib/payments/razorpay'
 import { paypalLive } from '@/lib/payments/paypal'
 import { payTestOverride } from '@/lib/payments/pay-test'
@@ -20,12 +20,15 @@ type RouteContext = { params: Promise<{ slug: string }> }
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
   let pricing = pricingForRequest(req)
+  // Geo-resolved free-scan limit (India 25, everyone else 5) — same source as
+  // pricing, so display matches what the scan route will actually enforce.
+  const freeLimit = freeScanLimit(getCountryFromRequest(req))
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user?.id) {
     const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalLive()
-    return NextResponse.json({ authed: false, pricing, paymentsLive })
+    return NextResponse.json({ authed: false, pricing, paymentsLive, freeLimit })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,7 +63,6 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   ])
 
   const freeUsed = quota?.free_used ?? 0
-  const freeLimit = quota?.free_limit ?? 3
   const paidBalance = quota?.paid_balance ?? 0
 
   return NextResponse.json({
