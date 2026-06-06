@@ -204,11 +204,11 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'transcription',
+    niche: 'transcription',
     title: 'Best AI Transcription Tools',
     h1: 'Best AI Transcription & Speech-to-Text Tools',
     description:
       'Accurate, fast AI transcription tools for meetings, interviews, podcasts, and videos. Compare Otter, Whisper, Descript, and more.',
-    categories: ['voice-speech'],
     featureKeywords: ['transcription', 'speech-to-text', 'captions'],
   },
   {
@@ -677,6 +677,144 @@ export const BEST_PAGES: BestPageConfig[] = [
     h1: 'Best AI Tools for Interior Design',
     description:
       'AI interior design tools that redesign rooms, render concepts, and stage spaces from a photo. The best AI tools for interior designers and home renovators, compared on realism, control, pricing, and real user sentiment.',
+  },
+
+  // ── Phase 9 doc 22 — Phase B4 niche expansion (2026-06-06) ──────
+  {
+    slug: 'compliance',
+    niche: 'compliance',
+    title: 'Best AI Compliance Tools',
+    h1: 'Best AI Tools for Compliance & GRC',
+    description:
+      'AI for compliance — policy automation, control monitoring, audit evidence, and regulatory change tracking. The best AI compliance and GRC tools, compared on framework coverage, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'no-code',
+    niche: 'no-code',
+    title: 'Best AI No-Code Tools',
+    h1: 'Best AI No-Code & Low-Code Tools',
+    description:
+      'Build apps, automations, and workflows without writing code. The best AI no-code tools and platforms, compared on what you can ship, learning curve, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'knowledge-base',
+    niche: 'knowledge base',
+    title: 'Best AI Knowledge Base Tools',
+    h1: 'Best AI Knowledge Base & Documentation Tools',
+    description:
+      'AI knowledge base tools that write, organize, and surface documentation and support answers. The best AI knowledge base software, compared on search quality, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'market-research',
+    niche: 'market research',
+    title: 'Best AI Market Research Tools',
+    h1: 'Best AI Tools for Market Research',
+    description:
+      'AI market research tools for surveys, social listening, competitor analysis, and synthesizing insights. The best AI market research software, compared on data sources, depth, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'prompt-engineering',
+    niche: 'prompt engineering',
+    title: 'Best AI Prompt Engineering Tools',
+    h1: 'Best AI Prompt Engineering Tools',
+    description:
+      'Tools to write, test, version, and optimize prompts across models. The best AI prompt engineering tools for builders, compared on testing workflow, model coverage, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'contract-management',
+    niche: 'contract',
+    title: 'Best AI Contract Tools',
+    h1: 'Best AI Tools for Contract Review & Management',
+    description:
+      'AI contract tools that review, redline, extract clauses, and manage the contract lifecycle. The best AI contract management software, compared on accuracy, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: '3d-modeling',
+    niche: '3d modeling',
+    title: 'Best AI 3D Modeling Tools',
+    h1: 'Best AI Tools for 3D Modeling',
+    description:
+      'AI 3D modeling tools that generate meshes, textures, and assets from text or images. The best AI tools for 3D modeling and game/asset creators, compared on output quality, control, pricing, and user sentiment.',
+  },
+  {
+    slug: 'property-management',
+    niche: 'property management',
+    title: 'Best AI Property Management Tools',
+    h1: 'Best AI Tools for Property Management',
+    description:
+      'AI for property management — tenant screening, leasing automation, maintenance triage, and rent collection. The best AI property management software, compared on features, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'procurement',
+    niche: 'procurement',
+    title: 'Best AI Procurement Tools',
+    h1: 'Best AI Tools for Procurement & Sourcing',
+    description:
+      'AI for procurement — spend analysis, supplier sourcing, contract intake, and approvals. The best AI procurement software, compared on savings impact, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'graphic-design',
+    niche: 'graphic design',
+    title: 'Best AI Graphic Design Tools',
+    h1: 'Best AI Tools for Graphic Design',
+    description:
+      'AI graphic design tools that generate visuals, edit images, and produce on-brand assets fast. The best AI graphic design software, compared on output quality, ease of use, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'data-scientists',
+    niche: 'data scientist',
+    title: 'Best AI Tools for Data Scientists',
+    h1: 'Best AI Tools for Data Scientists',
+    description:
+      'AI tools for data scientists — model building, evaluation, monitoring, and MLOps. The best AI tools for data science teams, compared on workflow fit, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'photography',
+    niche: 'photography',
+    title: 'Best AI Photography Tools',
+    h1: 'Best AI Tools for Photography & Photo Editing',
+    description:
+      'AI photography tools that retouch, upscale, remove backgrounds, and enhance images automatically. The best AI tools for photographers, compared on output quality, batch workflow, pricing, and user sentiment.',
+  },
+  {
+    slug: 'automotive',
+    niche: 'automotive',
+    title: 'Best AI Tools for Automotive',
+    h1: 'Best AI Tools for Automotive',
+    description:
+      'AI for automotive — autonomous systems, dealership sales and service, and inventory intelligence. The best AI automotive tools for OEMs and dealers, compared on capability, integrations, pricing, and user sentiment.',
+  },
+  {
+    slug: 'call-center',
+    niche: 'call center',
+    title: 'Best AI Call Center Tools',
+    h1: 'Best AI Tools for Call Centers',
+    description:
+      'AI for call centers — voice agents, real-time agent assist, call summaries, and QA. The best AI call center software, compared on call handling, integrations, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'real-estate-investing',
+    niche: 'real estate investor',
+    title: 'Best AI Tools for Real Estate Investors',
+    h1: 'Best AI Tools for Real Estate Investing',
+    description:
+      'AI tools for real estate investors — deal sourcing, property valuation, market analytics, and underwriting. The best AI real estate investing tools, compared on data quality, accuracy, pricing, and user sentiment.',
+  },
+  {
+    slug: 'veterinary',
+    niche: 'veterinary',
+    title: 'Best AI Tools for Veterinary',
+    h1: 'Best AI Tools for Veterinary Practices',
+    description:
+      'AI for veterinary practices — clinical note generation, triage, and client communication. The best AI veterinary tools for vets and clinics, compared on time saved, accuracy, pricing, and real user sentiment.',
+  },
+  {
+    slug: 'product-design',
+    niche: 'product design',
+    title: 'Best AI Product Design Tools',
+    h1: 'Best AI Tools for Product Design',
+    description:
+      'AI product design tools for UI generation, prototyping, design systems, and 3D concepts. The best AI tools for product and UX designers, compared on output quality, workflow fit, pricing, and user sentiment.',
   },
 ]
 
