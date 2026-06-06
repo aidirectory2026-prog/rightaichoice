@@ -13,6 +13,17 @@ export function paypalConfigured(): boolean {
   return !!process.env.PAYPAL_CLIENT_ID && !!process.env.PAYPAL_CLIENT_SECRET
 }
 
+/**
+ * Public "payments are live" check for the paywall UI. True only when keys are
+ * configured AND we're NOT in sandbox test mode — so while prod runs sandbox
+ * keys (owner testing the checkout), real visitors keep the graceful
+ * "paid scans coming soon" card instead of a live-looking sandbox button.
+ * The admin `?paytest=` path forces the button on separately.
+ */
+export function paypalLive(): boolean {
+  return paypalConfigured() && (process.env.PAYPAL_ENV ?? 'live') !== 'sandbox'
+}
+
 async function accessToken(): Promise<string | null> {
   const id = process.env.PAYPAL_CLIENT_ID
   const secret = process.env.PAYPAL_CLIENT_SECRET

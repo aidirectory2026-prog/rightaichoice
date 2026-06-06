@@ -3,7 +3,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { pricingForRequest } from '@/lib/geo/currency'
 import { razorpayConfigured } from '@/lib/payments/razorpay'
-import { paypalConfigured } from '@/lib/payments/paypal'
+import { paypalLive } from '@/lib/payments/paypal'
 import { payTestOverride } from '@/lib/payments/pay-test'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user?.id) {
-    const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
+    const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalLive()
     return NextResponse.json({ authed: false, pricing, paymentsLive })
   }
 
@@ -34,11 +34,18 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   // TEMP admin-only `?paytest=` override — force a gateway/region so an admin can
   // test a checkout their geo wouldn't show (e.g. India → the PayPal flow).
   const ptPricing = await payTestOverride(req, admin, user.id)
+  const adminTest = !!ptPricing
   if (ptPricing) pricing = ptPricing
 
-  // Whether the gateway for this user's region has live keys — drives the
-  // "paid scans coming soon" card vs a real payment box. Flips on when keys land.
-  const paymentsLive = pricing.gateway === 'razorpay' ? razorpayConfigured() : paypalConfigured()
+  // Whether the gateway for this user's region is live for the PUBLIC — drives the
+  // "paid scans coming soon" card vs a real payment box. In sandbox test mode
+  // this is false for real visitors; the admin `?paytest=` path forces it on so
+  // the owner can exercise the sandbox checkout without exposing it to users.
+  const paymentsLive = adminTest
+    ? true
+    : pricing.gateway === 'razorpay'
+      ? razorpayConfigured()
+      : paypalLive()
   const [{ data: quota }, { data: last }] = await Promise.all([
     admin.from('sentiment_quota').select('free_used, free_limit, paid_balance').eq('user_id', user.id).maybeSingle(),
     admin
