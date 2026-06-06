@@ -1956,6 +1956,23 @@ Rejected a fake recrawl-wave (would contradict the freshness-honesty we just shi
 
 ---
 
+## Day 11 — 2026-06-06 — Phase B niche scale (chunk 2) + relevance-ranking engine fix + GSC drop diagnosis
+
+### #1 GSC "4-day cliff" — diagnosed as reporting-lag + spike-revert, NOT damage
+Operator saw "very few impressions, 0 clicks last 4 days." Pulled the **daily** GSC breakdown directly (DB snapshot only ran through Jun 1). Findings: (a) GSC's 2–3-day finalization lag means Jun 3–6 return **no data yet** — the "last 4 days" always looks empty; (b) the real visible dip (Jun 1→2: 4,207→2,282 impr) is **regression from a temporary spike** — May 30–31 the site got test-ranked to avg pos ~36 (vs baseline ~50), inflating impressions to ~5k/day, then reverted to baseline (Jun 2 = pos 49.5, 2,282 impr ≈ May 26 baseline). Site health verified clean (robots.txt, canonicals, all key pages `200`+`index,follow`). **28-day trend still up: 25.5k→31.7k→41.2k.** Root issue unchanged: position oscillation = low authority (doc 20). Position-band data confirms why clicks≈0: **94% of impressions sit at pos 31+** (page 4+).
+
+### #2 Phase B chunk 2 — revived 10 noindex'd /best pages (`ad9a163`)
+Un-noindex'd + niche-filtered the strong use-case pages stuck on the Phase 9 noindex sweep, all passing the ≥8-relevant-tools gate: presentations(61), hr-recruiting(46), healthcare-ai(107), education(105), cybersecurity(19), game-dev(31), agencies(123), cold-outreach(16), copywriting(18), spreadsheets(51). Left noindex (true duplicates of stronger pages): writing, design, voiceover, video-editing. **28 niche entries total** (18 prior + 10).
+
+### #3 Relevance-ranking engine fix — ALL 28 niche pages (`5e500b2`, RPC `niche_tool_ids`)
+Live verification exposed a quality bug: niche pages ordered full-text matches by `review_count` (popularity), floating broadly-popular loose matches to the top (game-dev→Riffusion/music, spreadsheet→TurboTax, healthcare→Locus Robotics/warehouse). Added `niche_tool_ids(p_niche, p_limit)` RPC ordering by `ts_rank_cd` (review_count tiebreak) + a `rankByRelevance` path in `getTools` that constrains+reorders the main query by the ranked id list (full row shape / category embed / other filters intact; `/tools` listing untouched). Verified live: spreadsheets→Rows/Glide/Equals, game-dev→Masterpiece Studio/Inworld/Tripo, healthcare→Notable/Innovaccer, recruiting→Mercor/Recruit CRM/Manatal. Freshness-bumped + IndexNow'd all 28 (HTTP 200). tsc clean throughout.
+
+### Next (Phase B continued)
+- **B3:** add ~30–45 genuinely-new niches (dentists, architects, financial advisors, restaurants, coaches, logistics…) toward ~100 — coverage-gated (≥8), unique intros via the DeepSeek editorial pipeline at scale.
+- Re-check GSC Jun 3–6 once finalized (~2 days) to confirm spike-revert (not decay).
+
+---
+
 ## Open tasks blocking next ship
 
 1. **#43 Brand SERP audit** — open incognito, search "rightaichoice", paste top-5 URLs back. 5 minutes. Tells us what to do for brand defense.
