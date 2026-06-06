@@ -11,6 +11,7 @@ import Link from 'next/link'
 import {
   Sparkles, Loader2, ShieldCheck, Zap, Lock, Download, ArrowLeft, ArrowRight,
   MessageSquareText, Flame, ThumbsUp, ThumbsDown, Quote, AlertTriangle, Radar, ExternalLink,
+  Gauge, TrendingUp, TrendingDown, Activity, Users, UserMinus, BookOpen, ShieldAlert,
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
@@ -22,12 +23,18 @@ type Mention = { source: string; title: string; snippet: string; date: string | 
 type Report = {
   ai_verdict: string
   bottom_line?: string
-  standout_quotes?: { text: string; source: string }[]
+  standout_quotes?: { text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed' }[]
+  scorecard?: { overall: number; value: number; ease_of_use: number; support: number; reliability: number; performance: number }
+  red_flags?: { title: string; detail: string; severity: 'low' | 'medium' | 'high' }[]
+  momentum?: { direction: 'rising' | 'steady' | 'cooling'; summary: string; drivers: string[] }
   pros: string[]
   cons: string[]
   sentiment_score: 'positive' | 'mixed' | 'negative'
   sentiment_breakdown?: Record<string, number>
   themes?: { theme: string; sources: string[] }[]
+  best_for?: string[]
+  not_for?: string[]
+  learning_curve?: { time_to_start?: string; skill_level?: string; hurdles?: string[] }
   community_buzz?: { volume?: string; trend?: string; topics?: string[] }
   pricing_analysis?: { hidden_costs?: string[]; verdict?: string }
   mentions?: Mention[]
@@ -36,6 +43,7 @@ type Status = {
   authed: boolean
   pricing: Pricing
   paymentsLive?: boolean
+  freeLimit?: number
   quota?: { freeRemaining: number; freeLimit: number; paidBalance: number; canScanFree: boolean }
   lastResult?: { report: Report; sources: string[]; mention_count: number; created_at: string } | null
 }
@@ -219,6 +227,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
   }, [phase, status?.pricing.gateway, status?.paymentsLive, toolSlug, refreshStatus, runScan])
 
   const freeLeft = status?.quota?.freeRemaining ?? null
+  const freeLimit = status?.quota?.freeLimit ?? status?.freeLimit ?? 5
   const price = status?.pricing.amountDisplay ?? '₹20 / $1'
   const lastResult = status?.lastResult
 
@@ -249,7 +258,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
           <div className="relative mt-6 flex flex-wrap items-center gap-3">
             <button onClick={runScan} className="group inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
               {!user ? <Lock className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-              {!user ? 'Sign up free — unlock 3 scans' : phase === 'report' ? 'Run a fresh scan' : freeLeft !== null && freeLeft <= 0 ? `Run a scan — ${price}` : 'Run my free sentiment scan'}
+              {!user ? `Sign up free — unlock ${freeLimit} scans` : phase === 'report' ? 'Run a fresh scan' : freeLeft !== null && freeLeft <= 0 ? `Run a scan — ${price}` : 'Run my free sentiment scan'}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </button>
             {freeLeft !== null && freeLeft > 0 && <span className="text-xs text-zinc-400">{freeLeft} free {freeLeft === 1 ? 'scan' : 'scans'} left · then {price}</span>}
@@ -262,11 +271,11 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
         {error && phase === 'idle' && <p className="relative mt-3 text-xs text-red-400">{error}</p>}
       </div>
 
-      {phase === 'idle' && <IdleLanding toolName={toolName} onScan={runScan} authed={!!user} freeLeft={freeLeft} price={price} />}
+      {phase === 'idle' && <IdleLanding toolName={toolName} onScan={runScan} authed={!!user} freeLeft={freeLeft} freeLimit={freeLimit} price={price} />}
 
       {phase === 'signin' && (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-          <h2 className="text-lg font-semibold text-white">Create a free account to unlock your 3 scans</h2>
+          <h2 className="text-lg font-semibold text-white">Create a free account to unlock your {freeLimit} scans</h2>
           <p className="mt-1 text-sm text-zinc-400">Takes a few seconds — no card, no spam.</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:max-w-md">
             <button onClick={() => signInWithOAuthClient('google', typeof window !== 'undefined' ? window.location.pathname : null)} className="flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"><GoogleIcon /> Continue with Google</button>
@@ -294,7 +303,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
       {(phase === 'paywall' || phase === 'paying') && status && (
         status.paymentsLive ? (
           <div className="rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-6">
-            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? 3} free scans 🎉</h2>
+            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? freeLimit} free scans 🎉</h2>
             <p className="mt-1 text-sm text-zinc-400">Unlock another full, downloadable report of {toolName} for <span className="font-semibold text-white">{price}</span> — one-time, no subscription.</p>
             <div className="mt-4">
               {status.pricing.gateway === 'razorpay'
@@ -309,7 +318,7 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
           // friendly "coming soon" instead of a dead payment box. Auto-replaced by
           // the real paywall the moment live keys are configured (status.paymentsLive).
           <div className="rounded-2xl border border-emerald-600/40 bg-gradient-to-br from-emerald-950/40 to-zinc-950 p-7 text-center">
-            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? 25} free scans 🎉</h2>
+            <h2 className="text-lg font-semibold text-white">You&apos;ve used your {status.quota?.freeLimit ?? freeLimit} free scans 🎉</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-zinc-400">Paid scans are <span className="font-medium text-emerald-300">coming soon</span> — we&apos;re just finishing checkout. Every report you ran is saved, and you&apos;ll be first to know the moment more scans unlock.</p>
             <p className="mt-3 text-xs text-zinc-600">Thanks for trying the live sentiment on {toolName}.</p>
           </div>
@@ -327,6 +336,60 @@ function Block({ icon, title, accent, children }: { icon: ReactNode; title: stri
       {children}
     </div>
   )
+}
+
+// ── Verdict scorecard (overall ring + sub-score bars) ───────────────────────
+const SCORE_AXES: { key: keyof NonNullable<Report['scorecard']>; label: string }[] = [
+  { key: 'value', label: 'Value for money' },
+  { key: 'ease_of_use', label: 'Ease of use' },
+  { key: 'reliability', label: 'Reliability' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'support', label: 'Support' },
+]
+const scoreColor = (n: number) => (n >= 75 ? 'bg-emerald-500' : n >= 50 ? 'bg-amber-500' : 'bg-red-500')
+const scoreText = (n: number) => (n >= 75 ? 'text-emerald-400' : n >= 50 ? 'text-amber-400' : 'text-red-400')
+
+function Scorecard({ s }: { s: NonNullable<Report['scorecard']> }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 sm:p-6">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-emerald-400"><Gauge className="h-4 w-4" />Verdict scorecard</h3>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center self-center sm:self-auto">
+          <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" className="fill-none stroke-zinc-800" strokeWidth="10" />
+            <circle cx="50" cy="50" r="42" className={`fill-none ${scoreText(s.overall)}`} stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(s.overall / 100) * 264} 264`} />
+          </svg>
+          <div className="absolute text-center">
+            <div className={`text-2xl font-extrabold ${scoreText(s.overall)}`}>{s.overall}</div>
+            <div className="text-[9px] uppercase tracking-wide text-zinc-500">overall</div>
+          </div>
+        </div>
+        <div className="grid flex-1 grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+          {SCORE_AXES.map(({ key, label }) => {
+            const n = s[key]
+            return (
+              <div key={key}>
+                <div className="mb-1 flex items-center justify-between text-[11px]"><span className="text-zinc-400">{label}</span><span className={`font-semibold ${scoreText(n)}`}>{n}</span></div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800"><div className={`h-full rounded-full ${scoreColor(n)}`} style={{ width: `${n}%` }} /></div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Sentiment momentum helpers ──────────────────────────────────────────────
+type Momentum = 'rising' | 'steady' | 'cooling'
+const momentumIcon = (d: Momentum): ReactNode => (d === 'rising' ? <TrendingUp className="h-4 w-4" /> : d === 'cooling' ? <TrendingDown className="h-4 w-4" /> : <Activity className="h-4 w-4" />)
+const momentumAccent = (d: Momentum) => (d === 'rising' ? 'text-emerald-400' : d === 'cooling' ? 'text-red-400' : 'text-amber-400')
+const momentumPill = (d: Momentum) => (d === 'rising' ? 'bg-emerald-500/15 text-emerald-300' : d === 'cooling' ? 'bg-red-500/15 text-red-300' : 'bg-amber-500/15 text-amber-300')
+const momentumLabel = (d: Momentum) => (d === 'rising' ? '↑ Buzz rising' : d === 'cooling' ? '↓ Buzz cooling' : '→ Holding steady')
+const SEVERITY_PILL: Record<'low' | 'medium' | 'high', string> = {
+  high: 'bg-red-500/15 text-red-300 border-red-500/30',
+  medium: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  low: 'bg-zinc-700/40 text-zinc-300 border-zinc-600/40',
 }
 
 function ReportBody({ report, toolName, meta, onDownload }: {
@@ -361,9 +424,23 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         {report.bottom_line && <div className="mt-4 rounded-lg border-l-4 border-emerald-500 bg-emerald-950/30 px-4 py-3 text-sm font-medium text-emerald-100">{report.bottom_line}</div>}
       </div>
 
+      {report.scorecard && <Scorecard s={report.scorecard} />}
+
       <Block icon={<Flame className="h-4 w-4" />} title="The verdict">
         <p className="text-sm leading-relaxed text-zinc-300">{report.ai_verdict}</p>
       </Block>
+
+      {report.momentum && (
+        <Block icon={momentumIcon(report.momentum.direction)} title="Sentiment momentum" accent={momentumAccent(report.momentum.direction)}>
+          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${momentumPill(report.momentum.direction)}`}>{momentumLabel(report.momentum.direction)}</span>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-300">{report.momentum.summary}</p>
+          {report.momentum.drivers && report.momentum.drivers.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {report.momentum.drivers.map((d, i) => <li key={i} className="flex gap-2 text-sm text-zinc-400"><span className="text-zinc-600">›</span>{d}</li>)}
+            </ul>
+          )}
+        </Block>
+      )}
 
       {/* Live mentions feed — the real-time, data-rich, distinct section */}
       {mentions.length > 0 && (
@@ -394,12 +471,35 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         </Block>
       </div>
 
+      {((report.best_for && report.best_for.length > 0) || (report.not_for && report.not_for.length > 0)) && (
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {report.best_for && report.best_for.length > 0 && (
+            <Block icon={<Users className="h-4 w-4" />} title="Who it's for">
+              <ul className="space-y-2 text-sm text-zinc-300">{report.best_for.map((b, i) => <li key={i} className="flex gap-2"><span className="text-emerald-400">✓</span>{b}</li>)}</ul>
+            </Block>
+          )}
+          {report.not_for && report.not_for.length > 0 && (
+            <Block icon={<UserMinus className="h-4 w-4" />} title="Who should skip it" accent="text-red-400">
+              <ul className="space-y-2 text-sm text-zinc-300">{report.not_for.map((b, i) => <li key={i} className="flex gap-2"><span className="text-red-400">✗</span>{b}</li>)}</ul>
+            </Block>
+          )}
+        </div>
+      )}
+
       {report.standout_quotes && report.standout_quotes.length > 0 && (
-        <Block icon={<Quote className="h-4 w-4" />} title="In their words">
+        <Block icon={<Quote className="h-4 w-4" />} title={`Community quote wall (${report.standout_quotes.length})`}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {report.standout_quotes.map((q, i) => (
-              <blockquote key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-sm italic text-zinc-300">&ldquo;{q.text}&rdquo;<span className="mt-1 block not-italic text-xs text-zinc-500">— {q.source}</span></blockquote>
-            ))}
+            {report.standout_quotes.map((q, i) => {
+              const tone = q.sentiment === 'positive' ? 'border-emerald-900/50 bg-emerald-950/10' : q.sentiment === 'critical' ? 'border-red-900/50 bg-red-950/10' : 'border-zinc-800 bg-zinc-900/40'
+              const dot = q.sentiment === 'positive' ? 'bg-emerald-400' : q.sentiment === 'critical' ? 'bg-red-400' : 'bg-zinc-500'
+              return (
+                <blockquote key={i} className={`relative rounded-xl border ${tone} p-4 pr-6 text-sm italic text-zinc-300`}>
+                  <span className={`absolute right-3 top-3 h-2 w-2 rounded-full ${dot}`} title={q.sentiment ?? 'mixed'} />
+                  &ldquo;{q.text}&rdquo;
+                  <span className="mt-2 block not-italic text-xs text-zinc-500">— {q.source}</span>
+                </blockquote>
+              )
+            })}
           </div>
         </Block>
       )}
@@ -410,9 +510,38 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         </Block>
       )}
 
+      {report.red_flags && report.red_flags.length > 0 && (
+        <Block icon={<ShieldAlert className="h-4 w-4" />} title="Red flags & dealbreakers" accent="text-red-400">
+          <div className="space-y-3">
+            {report.red_flags.map((f, i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5">
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SEVERITY_PILL[f.severity] ?? SEVERITY_PILL.low}`}>{f.severity}</span>
+                  <p className="text-sm font-semibold text-white">{f.title}</p>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.detail}</p>
+              </div>
+            ))}
+          </div>
+        </Block>
+      )}
+
+      {report.learning_curve && (report.learning_curve.time_to_start || report.learning_curve.skill_level || (report.learning_curve.hurdles && report.learning_curve.hurdles.length > 0)) && (
+        <Block icon={<BookOpen className="h-4 w-4" />} title="Learning curve" accent="text-blue-400">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {report.learning_curve.skill_level && <span className="rounded-full border border-blue-900/40 bg-blue-950/30 px-2.5 py-0.5 capitalize text-blue-300">{report.learning_curve.skill_level}</span>}
+            {report.learning_curve.time_to_start && <span className="text-zinc-400">Up &amp; running in ~{report.learning_curve.time_to_start}</span>}
+          </div>
+          {report.learning_curve.hurdles && report.learning_curve.hurdles.length > 0 && (
+            <ul className="mt-3 space-y-1.5">{report.learning_curve.hurdles.map((h, i) => <li key={i} className="flex gap-2 text-sm text-zinc-400"><span className="text-zinc-600">›</span>{h}</li>)}</ul>
+          )}
+        </Block>
+      )}
+
       {report.pricing_analysis?.hidden_costs && report.pricing_analysis.hidden_costs.length > 0 && (
-        <Block icon={<AlertTriangle className="h-4 w-4" />} title="Red flags & hidden costs" accent="text-amber-400">
+        <Block icon={<AlertTriangle className="h-4 w-4" />} title="Hidden costs people mention" accent="text-amber-400">
           <ul className="space-y-2 text-sm text-amber-200/90">{report.pricing_analysis.hidden_costs.map((h, i) => <li key={i} className="flex gap-2"><span>⚠</span>{h}</li>)}</ul>
+          {report.pricing_analysis.verdict && <p className="mt-3 text-sm text-zinc-400">{report.pricing_analysis.verdict}</p>}
         </Block>
       )}
 
@@ -425,8 +554,8 @@ function ReportBody({ report, toolName, meta, onDownload }: {
 }
 
 // ── Idle landing (shown before a scan; sells the value, fills the page) ─────
-function IdleLanding({ toolName, onScan, authed, freeLeft, price }: {
-  toolName: string; onScan: () => void; authed: boolean; freeLeft: number | null; price: string
+function IdleLanding({ toolName, onScan, authed, freeLeft, freeLimit, price }: {
+  toolName: string; onScan: () => void; authed: boolean; freeLeft: number | null; freeLimit: number; price: string
 }) {
   const features = [
     { icon: <MessageSquareText className="h-5 w-5" />, title: 'Live mentions', desc: `The actual posts, reviews & complaints about ${toolName} — with links and dates.` },
@@ -437,7 +566,7 @@ function IdleLanding({ toolName, onScan, authed, freeLeft, price }: {
     { icon: <AlertTriangle className="h-5 w-5" />, title: 'Red flags', desc: 'Hidden costs and dealbreakers people only discover after signing up.' },
   ]
   const steps = [
-    { n: '1', title: 'Sign up free', desc: 'Create an account in seconds — get 3 free scans, no card.' },
+    { n: '1', title: 'Sign up free', desc: `Create an account in seconds — get ${freeLimit} free scans, no card.` },
     { n: '2', title: 'We sweep the web', desc: 'Live social media, forums, reviews & video opinions — in ~30–60s.' },
     { n: '3', title: 'Get your report', desc: 'An honest, downloadable verdict with the real mentions behind it.' },
   ]
@@ -478,7 +607,7 @@ function IdleLanding({ toolName, onScan, authed, freeLeft, price }: {
         <p className="max-w-md text-sm text-zinc-400">{freeLeft !== null && freeLeft > 0 ? `You have ${freeLeft} free ${freeLeft === 1 ? 'scan' : 'scans'} — no card needed.` : `Your scan is ready in under a minute · ${price}.`}</p>
         <button onClick={onScan} className="group inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
           {authed ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-          {authed ? 'Run my free sentiment scan' : 'Sign up free — unlock 3 scans'}
+          {authed ? 'Run my free sentiment scan' : `Sign up free — unlock ${freeLimit} scans`}
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
         </button>
       </div>

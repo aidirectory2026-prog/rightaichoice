@@ -14,7 +14,22 @@ export type SynthesizedReport = {
   ai_verdict: string
   /** Premium report extras (Phase 9 S6 redesign) — optional for back-compat. */
   bottom_line?: string
-  standout_quotes?: Array<{ text: string; source: string }>
+  standout_quotes?: Array<{ text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed' }>
+  /** Phase 9 S8 depth pass — optional for back-compat with older cached reports. */
+  scorecard?: {
+    overall: number
+    value: number
+    ease_of_use: number
+    support: number
+    reliability: number
+    performance: number
+  }
+  red_flags?: Array<{ title: string; detail: string; severity: 'low' | 'medium' | 'high' }>
+  momentum?: {
+    direction: 'rising' | 'steady' | 'cooling'
+    summary: string
+    drivers: string[]
+  }
   pros: string[]
   cons: string[]
   sentiment_score: 'positive' | 'mixed' | 'negative'
@@ -124,9 +139,12 @@ ${scrapeContext}
 Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be specific, data-rich, and genuinely useful — this report is sold to users, so depth and honesty matter. Return ONLY valid JSON matching this exact schema:
 
 {
-  "ai_verdict": "A thorough, honest executive summary (5-7 sentences) of what the community really thinks: overall reception, who it's great for, the main strengths, the recurring complaints, and whether it's worth it. Specific, not generic.",
+  "ai_verdict": "A thorough, honest executive summary (6-9 sentences) of what the community really thinks: overall reception, who it's great for, the main strengths, the recurring complaints, how it compares to expectations, and whether it's worth it. Specific and data-grounded, never generic.",
   "bottom_line": "One punchy sentence — the single most important takeaway a buyer needs.",
-  "standout_quotes": [{"text": "A representative, paraphrased real user opinion (positive or critical), 1-2 sentences", "source": "the kind of source, e.g. 'a developer in a community thread' or 'a reviewer'"}],
+  "scorecard": {"overall": 0-100, "value": 0-100, "ease_of_use": 0-100, "support": 0-100, "reliability": 0-100, "performance": 0-100},
+  "momentum": {"direction": "rising" | "steady" | "cooling", "summary": "2 sentences on whether community sentiment/buzz is trending up, holding, or cooling recently — and the why behind it", "drivers": ["specific recent driver of the shift", "another driver"]},
+  "standout_quotes": [{"text": "A representative, paraphrased real user opinion, 1-2 sentences", "source": "the kind of source, e.g. 'a developer in a community thread' or 'a reviewer'", "sentiment": "positive" | "critical" | "mixed"}],
+  "red_flags": [{"title": "Short dealbreaker name", "detail": "1-2 sentences: the concrete risk and exactly who it bites", "severity": "low" | "medium" | "high"}],
   "pros": ["6-8 specific strengths grounded in real user feedback, max 18 words each"],
   "cons": ["6-8 specific weaknesses/complaints grounded in real user feedback, max 18 words each"],
   "sentiment_score": "positive" | "mixed" | "negative",
@@ -153,13 +171,18 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
 }
 
 For sentiment_breakdown, use 0.0-1.0 where 1.0 is fully positive. Set to 0 for sources with no data.
+For scorecard, every field is an integer 0-100 grounded in the actual sentiment (overall = the weighted gist; be honest — a flawed tool should score low on its weak axes, not a flat 70s).
+For red_flags, surface 3-5 genuine dealbreakers/risks from real complaints — these are about reliability, support, lock-in, churn, data/safety, NOT the pricing hidden_costs (keep those separate).
+For standout_quotes, return 6-8 quotes that mix genuine praise and genuine criticism so the reader sees both sides.
+For momentum, judge the recent trajectory of opinion, not the all-time average.
+Make every section deep, specific and decision-useful — this is a paid report; thin or generic output is a failure.
 If you don't have enough data for a section, provide your best assessment based on available info and the tool's characteristics.
 Return ONLY the JSON — no markdown fences, no explanation.`
 
   const text = await callDeepSeek({
     system: SYSTEM_PROMPT,
     user: prompt,
-    max_tokens: 4096,
+    max_tokens: 5200,
     json: true,
   })
 
@@ -183,6 +206,25 @@ Return ONLY the JSON — no markdown fences, no explanation.`
   if (!Array.isArray(report.cons)) report.cons = []
   if (report.pros.length > 8) report.pros = report.pros.slice(0, 8)
   if (report.cons.length > 8) report.cons = report.cons.slice(0, 8)
+
+  // Depth-pass fields (optional): clamp the scorecard to 0-100 and bound arrays.
+  if (report.scorecard) {
+    const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(typeof n === 'number' ? n : 0)))
+    report.scorecard = {
+      overall: clamp(report.scorecard.overall),
+      value: clamp(report.scorecard.value),
+      ease_of_use: clamp(report.scorecard.ease_of_use),
+      support: clamp(report.scorecard.support),
+      reliability: clamp(report.scorecard.reliability),
+      performance: clamp(report.scorecard.performance),
+    }
+  }
+  if (!Array.isArray(report.red_flags)) report.red_flags = []
+  if (report.red_flags.length > 5) report.red_flags = report.red_flags.slice(0, 5)
+  if (Array.isArray(report.standout_quotes) && report.standout_quotes.length > 8) {
+    report.standout_quotes = report.standout_quotes.slice(0, 8)
+  }
+  if (report.momentum && !Array.isArray(report.momentum.drivers)) report.momentum.drivers = []
 
   return report
 }
