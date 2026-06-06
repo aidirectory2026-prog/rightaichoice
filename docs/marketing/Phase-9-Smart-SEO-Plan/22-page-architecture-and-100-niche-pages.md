@@ -111,3 +111,38 @@ internal-link clustering, aligned to the May-2026 context-to-citation shift. It 
 winnable long-tail surface and AI-citation coverage; absolute rank still compounds with
 authority (doc 20). **Quality over raw count** — we publish the niches the catalog serves
 well, targeting ~100.
+
+---
+
+## Execution record (2026-06-06) — shipped
+
+**64 relevance-ranked niche `/best` pages live** (+ ~21 precise category pages = **85 indexable
+best-of pages**, the full per-batch detail is in BUILD-LOG Day 11):
+- **Phase A** — niche engine + first 4 pages (insurance, nonprofits, construction, finance).
+- **Chunk 1** — niche-filtered 14 existing use-case pages (legal, sales, real-estate, …).
+- **Chunk 2** — revived 10 noindex'd pages (agencies, healthcare-ai, game-dev, …); left 4 true
+  duplicates noindex (writing, design, voiceover, video-editing).
+- **B3 + B4** — 36 new niches, each coverage-gated (≥8 tools) **and** relevance spot-checked;
+  ~14 weak/generic candidates dropped (author→course tools, machine-learning→biotech, etc.).
+
+**Engine quality fix — relevance ranking (not popularity):** the niche pages first ordered
+full-text matches by `review_count`, floating broadly-popular loose matches to the top
+(game-dev→a music tool, spreadsheet→TurboTax). Fixed with the **`niche_tool_ids` RPC**
+(`ts_rank_cd`, review_count tiebreak) + a `rankByRelevance` path in `getTools` — now every niche
+page leads with genuinely niche-relevant tools. The non-thin guarantee comes from the template
+itself: the Quick-answer block, the 4 FAQs, the ItemList schema, and the ranked list **all derive
+from each niche's own tools**, so a bespoke per-niche intro was unnecessary — only title/h1/
+description are hand-written.
+
+## Measurement layer (build → measure → deepen winners)
+Three **service-role-only** Postgres objects (anon/authenticated revoked — GSC data):
+- **`tracked_niche_pages`** — the 64 niche slugs, seeded from `lib/data/best-pages.ts` (no drift).
+- **`niche_page_metrics`** — per-page 28-day time series, unnested from `gsc_snapshots`
+  (impression-weighted avg position).
+- **`niche_page_latest`** — latest snapshot + Δ-vs-prior, impressions-desc.
+
+Surfaced via **`/admin/niche-tracker`** (admin-nav) — summary tiles + sorted with-data table +
+awaiting-first-data chips — and a **weekly-digest strip** (`email-weekly-digest`, Mon 08:00 UTC):
+with-data/total · impr · clicks + **top-5 WoW impression gainers** + deep-link. Refreshes weekly
+with the GSC snapshot; recently-built pages read 0 for ~2–4 weeks (pre-index). Use it to decide
+which niches to deepen (internal links, content) once impressions accrue — not day-one.

@@ -120,6 +120,25 @@ async function loadSnapshotPair(scope: '7d' | '28d'): Promise<{ current: Snapsho
   }
 }
 
+type NicheRow = {
+  slug: string
+  niche: string
+  impressions: number
+  clicks: number
+  avg_position: number | null
+  impr_delta_vs_prior: number | null
+}
+
+async function loadNicheTracker(): Promise<NicheRow[]> {
+  const db = getAdminClient()
+  const { data, error } = await db
+    .from('niche_page_latest')
+    .select('slug, niche, impressions, clicks, avg_position, impr_delta_vs_prior')
+    .order('impressions', { ascending: false })
+  if (error) throw new Error(`load niche tracker: ${error.message}`)
+  return (data ?? []) as unknown as NicheRow[]
+}
+
 // ── HTML composition ─────────────────────────────────────────────────
 
 function escapeHtml(s: string): string {
@@ -185,11 +204,44 @@ function actionItemHtml(a: ActionRow, scope: string): string {
   `
 }
 
+// Niche-page tracker strip: the 64 niche /best pages (doc 22 Phase B).
+// Surfaces the top week-over-week impression gainers so the operator sees
+// which niches are warming up without opening /admin/niche-tracker.
+function nicheSectionHtml(rows: NicheRow[]): string {
+  if (rows.length === 0) return ''
+  const withData = rows.filter((r) => r.impressions > 0)
+  const totalImpr = rows.reduce((a, r) => a + r.impressions, 0)
+  const totalClicks = rows.reduce((a, r) => a + r.clicks, 0)
+  const gainers = withData
+    .filter((r) => (r.impr_delta_vs_prior ?? 0) > 0)
+    .sort((a, b) => (b.impr_delta_vs_prior ?? 0) - (a.impr_delta_vs_prior ?? 0))
+    .slice(0, 5)
+  const topLine = gainers.length
+    ? gainers
+        .map(
+          (g) =>
+            `${escapeHtml(g.niche)} <span style="color:#059669;font-weight:600">+${g.impr_delta_vs_prior}</span>`,
+        )
+        .join(' &nbsp;·&nbsp; ')
+    : 'No week-over-week gainers yet — most niche pages are still pre-index.'
+  return `
+    <div style="padding:16px 0;border-top:1px solid #e5e7eb">
+      <h2 style="margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:#6b7280">
+        Niche pages
+        <span style="color:#9ca3af;font-weight:400;text-transform:none;font-size:12px">&nbsp;— ${withData.length}/${rows.length} with data · ${totalImpr.toLocaleString()} impr · ${totalClicks.toLocaleString()} clicks</span>
+      </h2>
+      <div style="font-size:13px;color:#374151;line-height:1.6">Top gainers: ${topLine}</div>
+      <div style="margin-top:10px"><a href="${SITE}/admin/niche-tracker" style="color:#0891b2;text-decoration:none;font-size:13px">→ Open niche tracker</a></div>
+    </div>
+  `
+}
+
 function composeHtml(
   actions: ActionRow[],
   diffTotals: DiffTotals[],
   pairs: { '7d': { current: SnapshotTotals | null; prior: SnapshotTotals | null }; '28d': { current: SnapshotTotals | null; prior: SnapshotTotals | null } },
   snapshotDate: string,
+  nicheRows: NicheRow[],
 ): string {
   const sortedActions = [...actions].sort((a, b) => PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority])
   const top = sortedActions.slice(0, TOP_N)
@@ -249,6 +301,8 @@ function composeHtml(
         ${actions.length > TOP_N ? `<p style="color:#6b7280;font-size:12px;margin-top:8px">+ ${actions.length - TOP_N} more in the dashboard.</p>` : ''}
       </div>
 
+      ${nicheSectionHtml(nicheRows)}
+
       <div style="padding:24px 0;text-align:center;border-top:1px solid #e5e7eb;margin-top:16px">
         <a href="${SITE}/admin/seo-pulse" style="display:inline-block;padding:12px 24px;background:#059669;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">→ Review & accept actions</a>
       </div>
@@ -270,11 +324,12 @@ export const GET = cronRoute({ pipelineKey: 'email-weekly-digest' }, async (ctx)
     return { ok: true, skipped: 'env_not_configured' }
   }
 
-  const [actions, diffTotals, p7, p28] = await Promise.all([
+  const [actions, diffTotals, p7, p28, nicheRows] = await Promise.all([
     loadProposed(),
     loadDiffTotals(),
     loadSnapshotPair('7d'),
     loadSnapshotPair('28d'),
+    loadNicheTracker(),
   ])
 
   // snapshot_date for the subject — use the latest proposed-action date,
@@ -289,7 +344,7 @@ export const GET = cronRoute({ pipelineKey: 'email-weekly-digest' }, async (ctx)
   for (const a of actions) byPriority[a.priority]++
 
   const subject = `[SEO Pulse] ${snapshotDate} — ${actions.length} actions (${byPriority.critical} critical, ${byPriority.high} high)`
-  const html = composeHtml(actions, diffTotals, { '7d': p7, '28d': p28 }, snapshotDate)
+  const html = composeHtml(actions, diffTotals, { '7d': p7, '28d': p28 }, snapshotDate, nicheRows)
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
