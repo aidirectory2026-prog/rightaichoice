@@ -1970,12 +1970,15 @@ Live verification exposed a quality bug: niche pages ordered full-text matches b
 ### #4 Phase B3 — 18 new niche /best pages (`6ea1422`)
 Coverage-tested ~65 candidate niches; kept only those passing the ≥8-relevant-tools gate **AND** a relevance spot-check (ts_rank top-4 must be genuinely on-topic). Shipped **17 brand-new** + upgraded `/best/students` to the niche filter: branding, customer-success, fitness, hospitality, logistics, manufacturing, retail, students, supply-chain, travel, youtube, wordpress, newsletter, advertising, fashion, agriculture, restaurants, interior-design. **Dropped** weak/generic matches the gate-by-count would have missed: author→course tools, consultant→medical, web-design→testing, virtual-assistant→voicebots, journalism→academic, event-planning→supply-chain, therapy (YMYL). Discovered the template is already non-thin per niche **without** a bespoke intro — quick-answer, the 4 FAQs, ItemList schema, and the ranked list all derive from each niche's own tools, so pages differ materially by construction; only title/h1/description are hand-written (unique each). Verified live: all indexable, in sitemap (**68 indexable /best URLs**), relevance-ranked (manufacturing→Sight Machine/Covariant, restaurants→SoundHound/Slang.ai, agriculture→Cropin/Solinftec). Freshness + IndexNow 200. **46 niche entries total** (28 + 18).
 
-### Tally toward "100"
-**46 niche /best pages** (relevance-ranked, AEO template) + ~22 already-precise category /best pages ≈ **68 indexable best-of pages**. Remaining toward ~100: a B4 batch of held-back/clean niches (data-scientist, automotive, veterinary, real-estate-investor, fashion-adjacent, finance roles…) + deeper long-tail — same coverage+relevance gate.
+### #5 Phase B4 — 18 more niche /best pages (`3a5c4ab`)
+Fresh candidate sweep (count + ts_rank relevance in one pass). Shipped 17 brand-new + upgraded `/best/transcription`: compliance, no-code, transcription, knowledge-base, market-research, prompt-engineering, contract-management, 3d-modeling, property-management, procurement, graphic-design, data-scientists, photography, automotive, call-center, real-estate-investing, veterinary, product-design. **Dropped:** customer-service (dup of customer-support), machine-learning (biotech leak), SaaS (security tools), voice-acting (agents). Verified live (compliance→Hyperproof/Saifr, property-management→Buildium/AppFolio, contract→Ironclad/Lexion). Freshness + IndexNow 200.
 
-### Next (Phase B continued)
-- **B4:** next ~15–20 niches from the verified pool (data-scientist, automotive, veterinary, real-estate-investor, + a fresh candidate sweep) → toward ~100.
-- Re-check GSC Jun 3–6 once finalized (~2 days) to confirm spike-revert (not decay).
+### Tally toward "100" — essentially there
+**64 niche /best pages** (relevance-ranked, AEO template) + ~21 precise category /best pages = **85 indexable best-of pages live** (`/best/sitemap.xml`). The "100 keyword pages" goal is effectively met on the best-of family; remaining headroom is thinning (most ≥8-coverage niches with clean relevance are now built). **Recommendation:** stop net-new niche minting around here (further niches risk the thin/duplicate territory the May-2026 update punishes) and pivot effort to (a) authority/backlinks (doc 20 — the actual rank unlock) and (b) measuring which of the 64 niches gain impressions, then deepening the winners.
+
+### Next
+- Re-check GSC Jun 3–6 once finalized (~1–2 days) to confirm the spike-revert read (not decay).
+- Optional B5 only if a future catalog-growth pass surfaces new ≥8-coverage niches with clean relevance.
 
 ---
 
