@@ -129,6 +129,13 @@ export interface ToolFilters {
   search?: string
   sort?: 'trending' | 'newest' | 'most_reviewed' | 'alphabetical'
   page?: number
+  /**
+   * Phase 9 doc 22 — when set with `search`, rank full-text matches by
+   * relevance (ts_rank_cd via the niche_tool_ids RPC) instead of popularity.
+   * Used by /best niche pages so "best AI tools for [niche]" leads with the
+   * most niche-relevant tools, not the most broadly-popular loose match.
+   */
+  rankByRelevance?: boolean
 }
 
 // ── AI / Workflow types ───────────────────────────────────────────────────────

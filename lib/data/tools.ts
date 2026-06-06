@@ -23,6 +23,23 @@ export async function getTools(filters: ToolFilters = {}) {
     ? '*, tool_categories(category_id, categories(*)), cat_filter:tool_categories!inner(categories!inner(slug))'
     : '*, tool_categories(category_id, categories(*))'
 
+  // Relevance-ranked niche path (doc 22): resolve the niche term to a list of
+  // tool ids pre-ordered by ts_rank_cd (via the niche_tool_ids RPC), then
+  // constrain + reorder the main query by that id list. This keeps the full
+  // row shape / category embed / other filters intact while replacing the
+  // popularity ordering with relevance — so "best AI tools for [niche]" leads
+  // with niche-relevant tools, not broadly-popular loose matches.
+  const term = filters.search?.trim() ?? ''
+  let rankedIds: string[] | null = null
+  if (filters.rankByRelevance && term.length > 2) {
+    const { data: idRows, error: rankErr } = await supabase.rpc('niche_tool_ids', {
+      p_niche: term,
+      p_limit: TOOLS_PER_PAGE * 2,
+    })
+    if (rankErr) throw rankErr
+    rankedIds = ((idRows as { id: string }[] | null) ?? []).map((r) => r.id)
+  }
+
   // Cast the (runtime-valid) select to the base literal: supabase-js parses the
   // select string at the type level and rejects the nested `categories!inner`
   // embed, but the cat_filter embed is stripped from the result below, so the
@@ -41,8 +58,13 @@ export async function getTools(filters: ToolFilters = {}) {
   // (Phase 5.4 migration 079) for everything else. websearch_to_tsquery
   // accepts natural input ("video editor without watermark") without
   // requiring users to learn tsquery syntax.
-  if (filters.search) {
-    const term = filters.search.trim()
+  if (rankedIds) {
+    // No matches → return empty (avoid an unconstrained `.in('id', [])`).
+    if (rankedIds.length === 0) {
+      return { tools: [], total: 0, page, totalPages: 0 }
+    }
+    query = query.in('id', rankedIds)
+  } else if (filters.search) {
     if (term.length <= 2) {
       const safe = sanitizeLike(term)
       query = query.ilike('name', `%${safe}%`)
@@ -73,14 +95,16 @@ export async function getTools(filters: ToolFilters = {}) {
       query = query.order('view_count', { ascending: false })
   }
 
-  query = query.range(from, to)
+  // Ranked path: fetch the whole ranked set (DB order is overridden by the JS
+  // reorder below) so the relevance order isn't truncated by pagination.
+  query = rankedIds ? query.range(0, rankedIds.length - 1) : query.range(from, to)
 
   const { data, count, error } = await query
   if (error) throw error
 
   // Drop the filter-only `cat_filter` embed so the returned shape matches the
   // unfiltered query exactly (consumers only read `tool_categories`).
-  const tools = (data ?? []).map((row) => {
+  let tools = (data ?? []).map((row) => {
     if (row && typeof row === 'object' && 'cat_filter' in row) {
       const clone = { ...(row as Record<string, unknown>) }
       delete clone.cat_filter
@@ -88,6 +112,17 @@ export async function getTools(filters: ToolFilters = {}) {
     }
     return row
   })
+
+  // Ranked path: PostgREST `.in('id', …)` ignores list order, so re-sort the
+  // returned rows to match the relevance order from niche_tool_ids.
+  if (rankedIds) {
+    const pos = new Map(rankedIds.map((id, i) => [id, i]))
+    tools = tools.sort((a, b) => {
+      const ai = pos.get((a as { id: string }).id) ?? Number.MAX_SAFE_INTEGER
+      const bi = pos.get((b as { id: string }).id) ?? Number.MAX_SAFE_INTEGER
+      return ai - bi
+    })
+  }
 
   return {
     tools,

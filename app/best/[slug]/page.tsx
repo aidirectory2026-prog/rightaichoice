@@ -64,6 +64,7 @@ export default async function BestPage({ params }: PageProps) {
   // for non-niche pages. See doc 22.
   if (config.niche) {
     filters.search = config.niche
+    filters.rankByRelevance = true
   } else {
     const category = config.categories?.[0]
     if (category) filters.category = category
