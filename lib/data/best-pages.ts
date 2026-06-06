@@ -235,12 +235,12 @@ export const BEST_PAGES: BestPageConfig[] = [
   // Medium-high volume
   {
     slug: 'presentations',
+    niche: 'presentation',
     title: 'Best AI Presentation Tools',
     h1: 'Best AI Presentation & Slide Deck Tools',
     description:
       'Create stunning presentations in minutes with AI. Compare Gamma, Beautiful.ai, Tome, and other tools that generate professional slides from text.',
     featureKeywords: ['presentation', 'slides', 'pitch deck', 'slideshow'],
-    noindex: true,
   },
   {
     slug: 'translation',
@@ -327,51 +327,46 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'hr-recruiting',
+    niche: 'recruiting',
     title: 'Best AI HR & Recruiting Tools',
     h1: 'Best AI Tools for HR & Recruiting',
     description:
       'AI tools for hiring teams — automated resume screening, candidate sourcing, interview scheduling, employee onboarding, and performance management.',
-    categories: ['business-finance'],
     featureKeywords: ['HR', 'recruiting', 'hiring', 'talent'],
-    noindex: true,
   },
   {
     slug: 'healthcare-ai',
+    niche: 'healthcare',
     title: 'Best AI Tools for Healthcare',
     h1: 'Best AI Tools for Healthcare Professionals',
     description:
       'AI tools for medical professionals — clinical note generation, diagnostic assistance, patient communication, medical imaging analysis, and research.',
-    categories: ['healthcare'],
-    noindex: true,
   },
   {
     slug: 'education',
+    niche: 'education',
     title: 'Best AI Tools for Teachers',
     h1: 'Best AI Tools for Educators & Teachers',
     description:
       'AI tools that help teachers create lesson plans, generate quizzes, personalize learning, grade assignments, and save hours of prep time every week.',
-    categories: ['research-education'],
     featureKeywords: ['education', 'teaching', 'lesson plan', 'quiz'],
-    noindex: true,
   },
   {
     slug: 'cybersecurity',
+    niche: 'cybersecurity',
     title: 'Best AI Cybersecurity Tools',
     h1: 'Best AI Tools for Cybersecurity',
     description:
       'AI-powered cybersecurity tools for threat detection, vulnerability scanning, incident response, and security operations. Compare top solutions.',
-    categories: ['security-privacy'],
-    noindex: true,
   },
   {
     slug: 'game-dev',
+    niche: 'game development',
     title: 'Best AI Tools for Game Development',
     h1: 'Best AI Tools for Game Developers',
     description:
       'AI tools for indie and professional game developers — generate 2D/3D assets, write dialogue, design levels, create music, and test gameplay.',
-    categories: ['code-development'],
     featureKeywords: ['game', 'game development', '3D', 'assets'],
-    noindex: true,
   },
   {
     slug: 'architecture',
@@ -403,13 +398,12 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'agencies',
+    niche: 'agency',
     title: 'Best AI Tools for Agencies',
     h1: 'Best AI Tools for Marketing & Creative Agencies',
     description:
       'AI tools that help agencies scale — from client reporting and content generation to campaign optimization and white-label solutions.',
-    categories: ['marketing-seo'],
     featureKeywords: ['agency', 'white-label', 'client reporting'],
-    noindex: true,
   },
   {
     slug: 'content-repurposing',
@@ -422,13 +416,12 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'cold-outreach',
+    niche: 'cold outreach',
     title: 'Best AI Cold Outreach Tools',
     h1: 'Best AI Tools for Cold Email & Outreach',
     description:
       'AI-powered cold outreach tools for personalized emails at scale — find leads, write copy, automate sequences, and track responses.',
-    categories: ['marketing-seo'],
     featureKeywords: ['cold email', 'outreach', 'lead generation', 'personalization'],
-    noindex: true,
   },
   {
     slug: 'data-analysis',
@@ -467,13 +460,12 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'copywriting',
+    niche: 'copywriting',
     title: 'Best AI Copywriting Tools',
     h1: 'Best AI Copywriting & Ad Copy Tools',
     description:
       'Write high-converting ad copy, landing pages, product descriptions, and marketing emails with AI. Compare Jasper, Copy.ai, Writesonic, and more.',
-    categories: ['writing-content'],
     featureKeywords: ['copywriting', 'ad copy', 'landing page', 'marketing copy'],
-    noindex: true,
   },
   {
     slug: 'social-media-scheduling',
@@ -495,13 +487,12 @@ export const BEST_PAGES: BestPageConfig[] = [
   },
   {
     slug: 'spreadsheets',
+    niche: 'spreadsheet',
     title: 'Best AI Spreadsheet Tools',
     h1: 'Best AI Tools for Spreadsheets & Excel',
     description:
       'AI-powered spreadsheet tools that write formulas, clean data, generate charts, and automate analysis. Stop staring at cells — let AI handle it.',
-    categories: ['data-analytics'],
     featureKeywords: ['spreadsheet', 'Excel', 'Google Sheets', 'formula'],
-    noindex: true,
   },
   {
     slug: 'logo-design',
