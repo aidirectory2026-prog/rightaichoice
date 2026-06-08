@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { capturePaypalOrder } from '@/lib/payments/paypal'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +16,9 @@ function getIp(req: Request): string | undefined {
  * paid scan credit. Idempotent via grant_sentiment_credit (keyed on capture id).
  */
 export async function POST(req: NextRequest) {
+  const rl = rateLimit('pp-capture', req, { limit: 10, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.id) return NextResponse.json({ error: 'auth_required' }, { status: 401 })

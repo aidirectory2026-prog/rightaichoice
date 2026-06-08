@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { scrapeAllSources } from '@/lib/scrapers'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { pricingForRequest, getCountryFromRequest, freeScanLimit } from '@/lib/geo/currency'
+import { pricingForRequest, freeScanLimitFromRequest, getCountryFromRequest } from '@/lib/geo/currency'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 import { payTestOverride } from '@/lib/payments/pay-test'
 
@@ -92,8 +92,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   // ── Quota claim (free → paid → payment_required) ──────────────────────────
   // Free limit is geo-resolved: India 25, everyone else 5 (passed to the RPC so
   // the gate + the stored row reflect the caller's region).
+  // Phase 10 #23 — elevated India allowance keys off the trusted Vercel edge
+  // header only, so a forged country header cannot raise the free limit off-edge.
+  // `country` is recorded on the row for analytics only (not the limit decision).
   const country = getCountryFromRequest(req)
-  const { data: claim, error: claimErr } = await admin.rpc('claim_sentiment_scan', { p_user: user.id, p_free_limit: freeScanLimit(country) })
+  const { data: claim, error: claimErr } = await admin.rpc('claim_sentiment_scan', { p_user: user.id, p_free_limit: freeScanLimitFromRequest(req) })
   if (claimErr) return NextResponse.json({ error: 'quota_error' }, { status: 500 })
   const chargeType = claim as 'free' | 'paid' | 'payment_required'
 

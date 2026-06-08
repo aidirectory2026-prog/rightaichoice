@@ -45,6 +45,25 @@ export function verifyRazorpaySignature(orderId: string, paymentId: string, sign
   return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
 
+/**
+ * Phase 10 #5 — fetch a payment server-side to confirm it really belongs to our
+ * order and matches the amount we charged. The Checkout signature only proves
+ * Razorpay vouches for the (order,payment) pair the CLIENT sent; it says nothing
+ * about which order or how much. This closes the "pay a cheap order, submit its
+ * signed ids" substitution.
+ */
+export async function fetchRazorpayPayment(
+  paymentId: string,
+): Promise<{ status: string; amount: number; order_id: string; currency: string } | null> {
+  const a = auth()
+  if (!a) return null
+  const res = await fetch(`${API}/payments/${paymentId}`, { headers: { Authorization: a } })
+  if (!res.ok) return null
+  const j = (await res.json()) as { status?: string; amount?: number; order_id?: string; currency?: string }
+  if (!j.order_id) return null
+  return { status: j.status ?? '', amount: j.amount ?? 0, order_id: j.order_id, currency: j.currency ?? '' }
+}
+
 /** Verify a webhook payload signature: HMAC-SHA256(body, webhook_secret). */
 export function verifyRazorpayWebhook(rawBody: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET

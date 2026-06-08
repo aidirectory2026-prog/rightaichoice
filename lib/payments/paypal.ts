@@ -59,6 +59,41 @@ export async function createPaypalOrder(amountMinor: number, currency: string, r
   return json.id ? { id: json.id } : null
 }
 
+/**
+ * Phase 10 #6 — verify a PayPal webhook against PAYPAL_WEBHOOK_ID using PayPal's
+ * verify-webhook-signature API. Returns true only on SUCCESS. Without the env
+ * var configured it returns false (fail-closed) so an unverified event is never
+ * trusted to grant credit.
+ */
+export async function verifyPaypalWebhook(headers: Headers, rawBody: string): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID
+  if (!webhookId) return false
+  const token = await accessToken()
+  if (!token) return false
+  let event: unknown
+  try {
+    event = JSON.parse(rawBody)
+  } catch {
+    return false
+  }
+  const res = await fetch(`${apiBase()}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      auth_algo: headers.get('paypal-auth-algo'),
+      cert_url: headers.get('paypal-cert-url'),
+      transmission_id: headers.get('paypal-transmission-id'),
+      transmission_sig: headers.get('paypal-transmission-sig'),
+      transmission_time: headers.get('paypal-transmission-time'),
+      webhook_id: webhookId,
+      webhook_event: event,
+    }),
+  })
+  if (!res.ok) return false
+  const j = (await res.json()) as { verification_status?: string }
+  return j.verification_status === 'SUCCESS'
+}
+
 /** Capture an approved order. Returns the capture id when COMPLETED. */
 export async function capturePaypalOrder(orderId: string): Promise<{ captured: boolean; captureId?: string }> {
   const token = await accessToken()
