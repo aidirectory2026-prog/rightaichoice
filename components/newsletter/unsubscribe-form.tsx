@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react'
 import { Check } from 'lucide-react'
 
-export function UnsubscribeForm({ prefillEmail }: { prefillEmail: string }) {
+export function UnsubscribeForm({ prefillEmail, token }: { prefillEmail: string; token?: string }) {
   const [email, setEmail] = useState(prefillEmail)
   const [state, setState] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -13,10 +13,12 @@ export function UnsubscribeForm({ prefillEmail }: { prefillEmail: string }) {
     setState('sending')
     setErrorMsg(null)
     try {
+      // A signed token (from the email link) takes precedence — it proves the
+      // requester owns the address. Otherwise fall back to the typed email.
       const res = await fetch('/api/newsletter/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(token ? { token } : { email }),
       })
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string }

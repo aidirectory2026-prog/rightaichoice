@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 
 // GET /api/keys — list current user's API keys
@@ -44,15 +45,18 @@ export async function POST(req: Request) {
     .join('')
   const key = `rac_${raw}`
   const key_prefix = key.slice(0, 12) // "rac_" + 8 hex chars
+  // Phase 10 #20 — store only a SHA-256 hash, never the raw key. A DB/backup
+  // leak then exposes no usable keys; we look up by hashing the inbound key.
+  const key_hash = createHash('sha256').update(key).digest('hex')
 
   const { data, error } = await supabase
     .from('api_keys')
-    .insert({ user_id: user.id, name, key, key_prefix })
-    .select('id, name, key, key_prefix, requests_total, last_used_at, is_active, created_at')
+    .insert({ user_id: user.id, name, key_hash, key_prefix })
+    .select('id, name, key_prefix, requests_total, last_used_at, is_active, created_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Return the full key once — caller must store it
-  return NextResponse.json(data, { status: 201 })
+  // Return the full key once (it is NOT persisted in plaintext) — caller must store it
+  return NextResponse.json({ ...data, key }, { status: 201 })
 }

@@ -11,12 +11,13 @@ export const metadata: Metadata = {
 }
 
 type PageProps = {
-  searchParams: Promise<{ email?: string }>
+  searchParams: Promise<{ email?: string; token?: string }>
 }
 
 export default async function UnsubscribePage({ searchParams }: PageProps) {
   const sp = await searchParams
   const prefill = sp.email ?? ''
+  const token = sp.token
 
   return (
     <>
@@ -28,7 +29,7 @@ export default async function UnsubscribePage({ searchParams }: PageProps) {
             Enter your email to stop receiving the RightAIChoice newsletter. You can
             re-subscribe any time from the footer.
           </p>
-          <UnsubscribeForm prefillEmail={prefill} />
+          <UnsubscribeForm prefillEmail={prefill} token={token} />
         </div>
       </main>
       <Footer />
