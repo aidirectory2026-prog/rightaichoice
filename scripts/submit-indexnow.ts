@@ -166,6 +166,7 @@ async function main() {
   // Batch submit (IndexNow allows up to 10,000 URLs per request)
   const batches = chunk(unique, BATCH_CAP)
   let submittedTotal = 0
+  let failedBatches = 0 // Phase 10 #73 — track failures so the run exits non-zero
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i]
     const body = {
@@ -184,6 +185,7 @@ async function main() {
       submittedTotal += batch.length
       console.log(`  ✓ Batch ${i + 1}/${batches.length} (${batch.length} URLs) — ${res.status} ${res.statusText}`)
     } else {
+      failedBatches++
       console.error(`  ✗ Batch ${i + 1}/${batches.length} — ${res.status} ${res.statusText}: ${text.slice(0, 300)}`)
     }
   }
@@ -192,6 +194,13 @@ async function main() {
   console.log(`✓ Submitted ${submittedTotal} URLs to IndexNow.`)
   console.log(`  Bing typically begins crawling within 24h.`)
   console.log(`  Track: https://www.bing.com/webmasters → IndexNow tab`)
+
+  // Phase 10 #73 — exit non-zero if any batch failed, so the daily run surfaces
+  // as a failure (was silently green even when submissions were rejected).
+  if (failedBatches > 0) {
+    console.error(`\n❌ ${failedBatches} batch(es) failed — exiting non-zero.`)
+    process.exit(1)
+  }
 }
 
 main().catch((err) => {
