@@ -144,9 +144,12 @@ export async function POST(request: Request) {
       tools: [],
     })
   } catch (error) {
+    // Phase 10 #16 — log the raw error server-side, return an opaque message so
+    // we don't leak provider/billing/auth internals to the browser.
     console.error('Chat API error:', error)
-    const message =
-      error instanceof Error ? error.message : 'An unexpected error occurred'
-    return Response.json({ error: message }, { status: 500 })
+    return Response.json(
+      { error: 'The assistant is temporarily unavailable. Please try again in a moment.' },
+      { status: 500 },
+    )
   }
 }

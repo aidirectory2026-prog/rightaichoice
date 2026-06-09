@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server'
 import { headers as nextHeaders } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -42,6 +43,11 @@ function sanitizeText(input: string): string {
 }
 
 export async function POST(req: Request) {
+  // Phase 10 #15 — this is an unauthenticated, service-role write surface; cap it
+  // so it can't be flooded.
+  const rl = await rateLimit('plan-intent', req, { limit: 20, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   let body: PostBody
   try {
     body = (await req.json()) as PostBody
@@ -114,7 +120,9 @@ export async function POST(req: Request) {
   })
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    // Phase 10 #15 — log raw, return opaque (don't leak DB internals).
+    console.error('plan/intent insert failed:', error)
+    return NextResponse.json({ ok: false, error: 'save_failed' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, char_count: charCount })
