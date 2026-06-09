@@ -23,7 +23,7 @@ function getIp(req: Request): string | undefined {
  * + captured status before granting. Also rate-limited (#2.5).
  */
 export async function POST(req: NextRequest) {
-  const rl = rateLimit('rzp-verify', req, { limit: 10, windowMs: 60_000 })
+  const rl = await rateLimit('rzp-verify', req, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   const supabase = await createClient()

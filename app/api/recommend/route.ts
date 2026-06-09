@@ -11,7 +11,7 @@ const recommendSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const rl = rateLimit('recommend', request, { limit: 20, windowMs: 60_000 })
+  const rl = await rateLimit('recommend', request, { limit: 20, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   try {

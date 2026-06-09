@@ -11,7 +11,7 @@ type RouteContext = { params: Promise<{ slug: string }> }
  * Returns cached report if fresh, or { status: "generating" } if stale/missing.
  */
 export async function GET(req: NextRequest, { params }: RouteContext) {
-  const rl = rateLimit('report-get', req, { limit: 30, windowMs: 60_000 })
+  const rl = await rateLimit('report-get', req, { limit: 30, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   const { slug } = await params

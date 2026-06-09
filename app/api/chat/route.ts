@@ -23,7 +23,7 @@ const chatSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const rl = rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
+  const rl = await rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   try {

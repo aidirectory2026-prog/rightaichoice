@@ -15,7 +15,7 @@ type RouteContext = { params: Promise<{ slug: string }> }
  * Triggers scraping + AI synthesis and stores the result.
  */
 export async function POST(req: NextRequest, { params }: RouteContext) {
-  const rl = rateLimit('report-generate', req, { limit: 3, windowMs: 60_000 })
+  const rl = await rateLimit('report-generate', req, { limit: 3, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   const { slug } = await params

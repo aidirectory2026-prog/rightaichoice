@@ -12,7 +12,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: NextRequest) {
-  const limit = rateLimit('newsletter-unsubscribe', req, { limit: 5, windowMs: 60_000 })
+  const limit = await rateLimit('newsletter-unsubscribe', req, { limit: 5, windowMs: 60_000 })
   if (!limit.ok) return rateLimitResponse(limit)
 
   let body: { email?: string; token?: string }

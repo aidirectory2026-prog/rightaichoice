@@ -452,7 +452,7 @@ function profileToPromptContext(profile: UserProfile): string {
 }
 
 export async function POST(request: Request) {
-  const rl = rateLimit('plan', request, { limit: 5, windowMs: 60_000 })
+  const rl = await rateLimit('plan', request, { limit: 5, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   try {

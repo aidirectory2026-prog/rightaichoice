@@ -53,7 +53,7 @@ function buildMentions(scrape: Awaited<ReturnType<typeof scrapeAllSources>>): Li
  * <45s budget and never charges a user for a scan that errors.
  */
 export async function POST(req: NextRequest, { params }: RouteContext) {
-  const rl = rateLimit('sentiment-scan', req, { limit: 8, windowMs: 60_000 })
+  const rl = await rateLimit('sentiment-scan', req, { limit: 8, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 
   const { slug } = await params

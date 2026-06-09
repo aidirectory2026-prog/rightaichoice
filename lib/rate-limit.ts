@@ -1,25 +1,22 @@
 /**
- * In-memory rate limiter for Next.js API routes.
+ * Rate limiter for Next.js API routes (Phase 10 #19).
  *
- * Limits requests per IP per endpoint using a sliding window.
- * Works for single-instance deployments (Vercel serverless warm instances).
- * To scale across instances, swap the Map for Upstash Redis:
- *   https://upstash.com/docs/redis/sdks/ratelimit-ts/overview
+ * Backed by Postgres (shared across all serverless instances, survives cold
+ * starts) via the rate_limit_check RPC — one atomic upsert per call. If the DB
+ * is briefly unreachable we fall back to a per-instance in-memory window so a
+ * limiter outage never hard-fails a request (fail-open on infra error only).
  *
- * Usage:
- *   const result = rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
- *   if (!result.ok) return Response.json({ error: 'Too many requests' }, { status: 429 })
+ * Usage (now async):
+ *   const result = await rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
+ *   if (!result.ok) return rateLimitResponse(result)
  */
 
-type RateLimitEntry = {
-  count: number
-  resetAt: number
-}
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 
-// Separate maps per endpoint so limits don't interfere
-const stores = new Map<string, Map<string, RateLimitEntry>>()
+type RateLimitEntry = { count: number; resetAt: number }
 
-// Periodic cleanup to prevent memory leaks — runs at most once per 60s
+// Per-instance fallback store, used only when the DB call fails.
+const fallbackStores = new Map<string, Map<string, RateLimitEntry>>()
 let lastCleanup = 0
 const CLEANUP_INTERVAL = 60_000
 
@@ -27,22 +24,19 @@ function cleanupExpiredEntries() {
   const now = Date.now()
   if (now - lastCleanup < CLEANUP_INTERVAL) return
   lastCleanup = now
-  for (const store of stores.values()) {
+  for (const store of fallbackStores.values()) {
     for (const [key, entry] of store) {
       if (now > entry.resetAt) store.delete(key)
     }
   }
 }
 
-function getStore(endpoint: string): Map<string, RateLimitEntry> {
-  if (!stores.has(endpoint)) {
-    stores.set(endpoint, new Map())
-  }
-  return stores.get(endpoint)!
+function getFallbackStore(endpoint: string): Map<string, RateLimitEntry> {
+  if (!fallbackStores.has(endpoint)) fallbackStores.set(endpoint, new Map())
+  return fallbackStores.get(endpoint)!
 }
 
 function getClientIp(request: Request): string {
-  // Vercel forwards real IP in x-forwarded-for
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) return forwarded.split(',')[0].trim()
   return 'unknown'
@@ -62,34 +56,51 @@ type RateLimitResult = {
   resetAt: number
 }
 
-export function rateLimit(
-  endpoint: string,
-  request: Request,
-  options: RateLimitOptions
-): RateLimitResult {
-  const { limit, windowMs } = options
-  const ip = getClientIp(request)
-  const key = ip
+function inMemory(endpoint: string, key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now()
-  const store = getStore(endpoint)
-
+  const store = getFallbackStore(endpoint)
   cleanupExpiredEntries()
-
   const entry = store.get(key)
-
   if (!entry || now > entry.resetAt) {
-    // New window
     const resetAt = now + windowMs
     store.set(key, { count: 1, resetAt })
     return { ok: true, limit, remaining: limit - 1, resetAt }
   }
-
-  if (entry.count >= limit) {
-    return { ok: false, limit, remaining: 0, resetAt: entry.resetAt }
-  }
-
+  if (entry.count >= limit) return { ok: false, limit, remaining: 0, resetAt: entry.resetAt }
   entry.count += 1
   return { ok: true, limit, remaining: limit - entry.count, resetAt: entry.resetAt }
+}
+
+export async function rateLimit(
+  endpoint: string,
+  request: Request,
+  options: RateLimitOptions,
+): Promise<RateLimitResult> {
+  const { limit, windowMs } = options
+  const ip = getClientIp(request)
+  const key = `${endpoint}:${ip}`
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = getAdminClient() as any
+    const { data, error } = await admin.rpc('rate_limit_check', {
+      p_key: key,
+      p_limit: limit,
+      p_window_ms: windowMs,
+    })
+    if (error || !data) throw error ?? new Error('no_data')
+    const count = Number(data.count ?? 0)
+    const resetAt = data.reset_at ? new Date(data.reset_at).getTime() : Date.now() + windowMs
+    return {
+      ok: Boolean(data.ok),
+      limit,
+      remaining: Math.max(limit - count, 0),
+      resetAt,
+    }
+  } catch {
+    // DB unreachable — degrade to a per-instance window rather than 500.
+    return inMemory(endpoint, ip, limit, windowMs)
+  }
 }
 
 /** Convenience: returns a 429 Response with Retry-After header */
@@ -103,9 +114,9 @@ export function rateLimitResponse(result: RateLimitResult): Response {
         'Content-Type': 'application/json',
         'Retry-After': String(retryAfterSecs),
         'X-RateLimit-Limit': String(result.limit),
-        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Remaining': String(result.remaining),
         'X-RateLimit-Reset': String(result.resetAt),
       },
-    }
+    },
   )
 }
