@@ -111,7 +111,8 @@ export default async function RolePage({ params }: PageProps) {
 
   return (
     <>
-      <script {...jsonLdScriptProps([itemList, faq, breadcrumbs])} />
+      {/* Phase 10 #9 — don't emit empty ItemList/FAQ when there are 0 tools. */}
+      <script {...jsonLdScriptProps(tools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">

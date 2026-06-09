@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Scale, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
@@ -83,29 +83,11 @@ export default async function ComparisonSlugPage({ params }: Props) {
 
   const tools = await getToolsForComparisonByIds(comparison.tool_ids as string[])
 
-  if (tools.length < 2) {
-    return (
-      <>
-        <Navbar />
-        <main className="flex-1">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 text-center">
-            <Scale className="mx-auto h-12 w-12 text-zinc-700 mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Tools Not Found</h1>
-            <p className="text-zinc-500 mb-6">
-              One or more tools in this comparison no longer exist.
-            </p>
-            <Link
-              href="/tools"
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
-            >
-              Browse Tools
-            </Link>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
-  }
+  // Phase 10 #27/#68 — a comparison with <2 existing tools used to render a
+  // styled "Tools Not Found" page at HTTP 200, which Google treats as a soft-404
+  // and which dragged down crawl trust for the whole /compare set. Return a real
+  // 404 instead. (The 14 live broken comparisons are cleaned up in S8.)
+  if (tools.length < 2) notFound()
 
   const toolNames = tools.map((t) => (t as { name: string }).name)
   const toolSlugs = tools.map((t) => (t as { slug: string }).slug)
@@ -184,14 +166,17 @@ export default async function ComparisonSlugPage({ params }: Props) {
   )
 
   const jsonLdBlocks: Record<string, unknown>[] = [faq, breadcrumbs, itemList]
-  if (editorial.is_editorial) {
+  // Phase 10 #42 — only emit the Article block when there's a REAL publish date.
+  // The old `?? new Date()` fallback stamped "published today" on every crawl of
+  // an editorial with a null date — dishonest freshness signalling.
+  if (editorial.is_editorial && editorial.published_at) {
     jsonLdBlocks.push(
       articleJsonLd({
         headline: `${toolNames.join(' vs ')} — AI Tool Comparison`,
         description: `In-depth side-by-side comparison of ${toolNames.join(' and ')}.`,
         url: `/compare/${slug}`,
-        datePublished: editorial.published_at ?? new Date().toISOString(),
-        dateModified: editorial.last_reviewed_at ?? editorial.published_at ?? new Date().toISOString(),
+        datePublished: editorial.published_at,
+        dateModified: editorial.last_reviewed_at ?? editorial.published_at,
       }),
     )
   }

@@ -378,8 +378,12 @@ export function comparisonJsonLd(tools: ComparisonTool[], url: string) {
     url: canonicalUrl,
     numberOfItems: tools.length,
     itemListElement: tools.map((tool, i) => {
+      // Phase 10 #28 — only emit a ratingValue inside schema.org's 1–5 bounds.
+      // A 0 or >5 (data glitch) makes Google reject the AggregateRating and can
+      // suppress ALL rich results on the page.
       const ratingValue =
-        typeof tool.avg_rating === 'number' && Number.isFinite(tool.avg_rating)
+        typeof tool.avg_rating === 'number' && Number.isFinite(tool.avg_rating) &&
+        tool.avg_rating >= 1 && tool.avg_rating <= 5
           ? tool.avg_rating
           : null
       const reviewCount =
@@ -466,6 +470,21 @@ function sanitize(str: string): string {
 export function jsonLdScriptProps(data: Record<string, unknown> | Record<string, unknown>[]) {
   return {
     type: 'application/ld+json' as const,
-    dangerouslySetInnerHTML: { __html: JSON.stringify(data) },
+    // Phase 10 #7/#43 — JSON.stringify does NOT escape `<`/`>`, so a value
+    // containing `</script>` (e.g. a user-supplied saved-stack title) would
+    // break out of the script tag → stored XSS. Escape the script-significant
+    // characters to safe JSON unicode escapes (valid JSON, inert in HTML).
+    dangerouslySetInnerHTML: { __html: safeJsonLd(data) },
   }
+}
+
+/** Serialize JSON-LD and neutralize characters that could break out of the
+ *  <script> tag. Use this for ANY application/ld+json injection. */
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
 }

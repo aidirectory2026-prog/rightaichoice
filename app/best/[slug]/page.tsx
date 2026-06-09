@@ -130,7 +130,10 @@ export default async function BestPage({ params }: PageProps) {
 
   return (
     <>
-      <script {...jsonLdScriptProps([itemList, faq, breadcrumbs])} />
+      {/* Phase 10 #9 — never emit an empty ItemList / FAQ (Google rejects empty
+          structured data and the placeholder FAQ text can surface in AI
+          Overviews). Only the breadcrumb ships when there are 0 ranked tools. */}
+      <script {...jsonLdScriptProps(topTools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">
