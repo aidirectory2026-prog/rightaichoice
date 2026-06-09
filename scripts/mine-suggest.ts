@@ -26,6 +26,12 @@ import { join } from 'path'
 import { getAdminClient } from '../lib/cron/supabase-admin'
 import { getSuggestionsThrottled } from '../lib/seo/suggest-client'
 
+// Phase 10 #77 — the progress file accumulates `opportunities` across runs and
+// is only keyed by which tool slugs were `processed`. A SCOPED/partial re-run
+// (different --limit / --slug subset) will therefore MIX old opportunities into
+// the new output. Before a scoped re-run, delete this file first:
+//   rm scripts/.suggest-mining-progress.json
+// A full clean run is unaffected.
 const PROGRESS_FILE = join(process.cwd(), 'scripts', '.suggest-mining-progress.json')
 const OUTPUT_FILE = join(process.cwd(), 'scripts', '.suggest-opportunities.json')
 

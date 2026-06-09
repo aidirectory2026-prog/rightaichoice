@@ -93,7 +93,8 @@ export async function scrapeTrustpilot(
         author: r.user_profile?.name,
         score: rating,
         sentiment: rating ? (rating >= 4 ? 'positive' : rating <= 2 ? 'negative' : 'mixed') : undefined,
-        date: r.timestamp,
+        // Phase 10 #71 — only store a parseable timestamp; drop garbage dates.
+        date: r.timestamp && !Number.isNaN(Date.parse(r.timestamp)) ? r.timestamp : undefined,
         url: r.url,
       }
     }).filter((p) => p.body.length > 10)

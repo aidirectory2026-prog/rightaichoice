@@ -92,6 +92,7 @@ async function main() {
   console.log(`[tier1:approve] ${APPROVALS.length} curated approvals (dry=${isDry})`)
 
   let applied = 0
+  const appliedPaths: string[] = [] // Phase 10 #74 — ping IndexNow only for these
   for (const a of APPROVALS) {
     const finalTitle = withBrand(a.title)
     if (finalTitle.length > 80) {
@@ -133,6 +134,7 @@ async function main() {
       console.warn(`  bumpFreshness failed: ${(e as Error).message}`)
     }
     applied++
+    appliedPaths.push(a.path)
   }
 
   if (isDry) {
@@ -140,13 +142,16 @@ async function main() {
     return
   }
 
-  // 4. IndexNow ping for all approved URLs in one batch (Bing/Yandex instant).
-  const urls = APPROVALS.map((a) => `${BASE_URL}${a.path}`)
-  try {
-    await submitToIndexNow(urls)
-    console.log(`[tier1:approve] IndexNow pinged ${urls.length} URLs`)
-  } catch (e) {
-    console.warn(`[tier1:approve] IndexNow failed: ${(e as Error).message}`)
+  // 4. IndexNow ping — Phase 10 #74: only the URLs we actually applied (was
+  // pinging ALL approvals, including ones skipped >80c or whose write failed).
+  const urls = appliedPaths.map((p) => `${BASE_URL}${p}`)
+  if (urls.length > 0) {
+    try {
+      await submitToIndexNow(urls)
+      console.log(`[tier1:approve] IndexNow pinged ${urls.length} URLs`)
+    } catch (e) {
+      console.warn(`[tier1:approve] IndexNow failed: ${(e as Error).message}`)
+    }
   }
 
   console.log(`[tier1:approve] done — ${applied} overrides applied + recrawl signalled`)

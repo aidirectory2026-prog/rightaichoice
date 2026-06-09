@@ -241,14 +241,25 @@ function normalizeEnrichmentPayload(p: Record<string, unknown>): void {
       .filter((u) => u && typeof u === 'object')
       .map((u) => {
         const title = (typeof u.title === 'string' && u.title) || (typeof u.headline === 'string' && u.headline) || ''
-        const date = typeof u.date === 'string' ? u.date.slice(0, 40) : ''
+        // Phase 10 #67 — extract a real YYYY-MM-DD (was any 40-char string), to
+        // match the canonical latest-updates path and avoid storing junk dates.
+        const dm = typeof u.date === 'string' ? u.date.match(/\d{4}-\d{2}-\d{2}/) : null
+        const date = dm ? dm[0] : ''
         const source = validSource.has(u.source as string) ? (u.source as string) : 'blog'
         const type = validType.has(u.type as string) ? (u.type as string) : (source === 'changelog' ? 'changelog' : 'news')
         const url = typeof u.url === 'string' && /^https?:\/\//.test(u.url) ? u.url : ''
         const summary = (typeof u.summary === 'string' && u.summary) || (typeof u.headline === 'string' && u.headline.length > 60 ? u.headline : '')
         return { date, source, type, title: title.slice(0, 200), url, summary: summary.slice(0, 280) }
       })
-      .filter((u) => u.title && u.date && u.url)
+      // Require title + url + a parseable date within the last ~90 days (no
+      // fabricated/stale dates), matching lib/cron/latest-updates.ts rules.
+      .filter((u) => {
+        if (!u.title || !u.url || !u.date) return false
+        const t = Date.parse(u.date)
+        if (Number.isNaN(t)) return false
+        const ageDays = (Date.now() - t) / 86_400_000
+        return ageDays >= -2 && ageDays <= 90
+      })
       .slice(0, 5)
   }
   // Coerce null strings in scalar string fields
