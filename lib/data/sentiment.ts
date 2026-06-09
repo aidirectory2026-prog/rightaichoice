@@ -56,7 +56,11 @@ function normalizeBreakdown(v: unknown): Record<string, number> | undefined {
     return total > 0 ? { positive: pos / total } : undefined
   }
   const nums = Object.fromEntries(Object.entries(o).filter(([, n]) => typeof n === 'number'))
-  return Object.keys(nums).length ? (nums as Record<string, number>) : undefined
+  // Backfilled rows often carry an all-zero breakdown (no per-source signal).
+  // Treat that as "no data" so the renderer hides the bar instead of showing a
+  // misleading 0% positivity.
+  const sum = Object.values(nums).reduce((a, b) => a + (b as number), 0)
+  return sum > 0 ? (nums as Record<string, number>) : undefined
 }
 
 /** Old themes: {title,description}; new themes: {theme,sources}. */
