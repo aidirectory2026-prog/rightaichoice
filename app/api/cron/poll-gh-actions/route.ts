@@ -177,6 +177,54 @@ export const POST = cronRoute({ pipelineKey: 'poll-gh-actions' }, async (ctx) =>
     }
   }
 
+  // Phase 10 #4.3 — reconcile rows still 'running' from earlier polls. The
+  // checkpoint (created>sinceISO) only pulls NEW runs, so a run that was
+  // 'running' when first synced and completed AFTER the checkpoint advanced past
+  // it would never be updated — the root cause of the stuck-row leak. Re-fetch
+  // each still-running run by id and settle it to its terminal state. (The
+  // pg_cron sweeper is the backstop for runs GH no longer returns.)
+  let reconciled = 0
+  const { data: stillRunning } = await db
+    .from('pipeline_runs')
+    .select('external_id')
+    .eq('source', 'gh_actions')
+    .eq('status', 'running')
+    .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .limit(50)
+  for (const r of (stillRunning ?? []) as Array<{ external_id: string }>) {
+    if (!r.external_id) continue
+    try {
+      const rr = await fetch(
+        `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs/${r.external_id}`,
+        { headers },
+      )
+      if (!rr.ok) continue
+      const run = (await rr.json()) as GhRun
+      if (run.status !== 'completed') continue
+      const settled =
+        run.conclusion === 'success' ? 'success'
+          : run.conclusion === 'failure' || run.conclusion === 'cancelled' ? 'failure'
+            : 'success'
+      const finishedAt = run.updated_at
+      await db
+        .from('pipeline_runs')
+        .update({
+          status: settled,
+          finished_at: finishedAt,
+          duration_ms: run.run_started_at
+            ? new Date(finishedAt).getTime() - new Date(run.run_started_at).getTime()
+            : null,
+          items_succeeded: settled === 'success' ? 1 : 0,
+          items_failed: settled === 'failure' ? 1 : 0,
+        } as never)
+        .eq('source', 'gh_actions')
+        .eq('external_id', String(run.id))
+      reconciled++
+    } catch {
+      // best-effort; the pg_cron sweeper backstops anything missed
+    }
+  }
+
   ctx.recordItems({
     processed: totalProcessed,
     succeeded: totalUpserted,
@@ -185,6 +233,7 @@ export const POST = cronRoute({ pipelineKey: 'poll-gh-actions' }, async (ctx) =>
   ctx.recordMetadata({
     since: sinceISO,
     failed_runs: totalFailedRuns,
+    reconciled_running: reconciled,
     synced_run_ids: synced.slice(0, 10),
   })
 
@@ -194,5 +243,6 @@ export const POST = cronRoute({ pipelineKey: 'poll-gh-actions' }, async (ctx) =>
     processed: totalProcessed,
     upserted: totalUpserted,
     failed_runs: totalFailedRuns,
+    reconciled_running: reconciled,
   }
 })

@@ -23,7 +23,12 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 
 export const maxDuration = 60
 
-const ALERT_LOOKBACK_MS = 35 * 60 * 1000
+// Phase 10 #37 — widened from 35→120 min. The pg_cron stuck-sweeper marks dead
+// 'running' rows as 'timeout' only after their grace window (15 min Vercel / 210
+// min GH), so the alerter must look back far enough to still catch a freshly
+// swept row before it ages out. Dedup (pipeline_alerts_sent) makes the wider
+// window safe — nothing is alerted twice.
+const ALERT_LOOKBACK_MS = 120 * 60 * 1000
 const FROM_EMAIL = process.env.ALERT_FROM_EMAIL ?? 'alerts@rightaichoice.com'
 
 type FailedRun = {

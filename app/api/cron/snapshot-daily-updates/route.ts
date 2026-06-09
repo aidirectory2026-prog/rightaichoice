@@ -15,7 +15,11 @@ type CompareSlugRow = { slug: string | null }
 
 const handler = cronRoute({ pipelineKey: 'snapshot-daily-updates' }, async (ctx) => {
   const supabase = getAdminClient()
-  const today = new Date().toISOString().slice(0, 10)
+  // Phase 10 #40 — anchor the day on (now - 5 min) so a fire that slips past
+  // 00:00 UTC (queue/cold-start latency) still files under the day it summarises
+  // (it runs at 23:55). Prevents an almost-empty row landing on the next date.
+  const ref = new Date(Date.now() - 5 * 60 * 1000)
+  const today = ref.toISOString().slice(0, 10)
   const startISO = `${today}T00:00:00.000Z`
 
   // ── Pipeline 1: refresh-tools (last 24h, scoped to today UTC)

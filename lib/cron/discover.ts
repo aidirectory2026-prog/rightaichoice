@@ -1,4 +1,14 @@
-import { fetchHTML } from './scrape'
+// Phase 10 #58 — tool discovery via STABLE JSON APIs.
+//
+// The old implementation scraped ProductHunt / GitHub-trending / aggregator HTML
+// with regexes tied to CSS class names on JS-rendered SPAs. Those break silently
+// on any markup change and return 0 while reporting success — which is why the
+// discovery queue had dried up to ~1 row. We now use:
+//   - ProductHunt GraphQL v2 `posts` feed (PRODUCTHUNT_TOKEN)
+//   - GitHub Search API (stable JSON; GITHUB_REPO_TOKEN optional, raises limits)
+// Both prefer the tool's REAL website URL (better dedup downstream) and degrade
+// gracefully to [] when their token is missing. Per-source yields are logged so
+// a silent zero is visible (and the pg_cron pipeline heartbeat alerts on it).
 
 export interface DiscoveredTool {
   name: string
@@ -7,111 +17,100 @@ export interface DiscoveredTool {
   source: string
 }
 
-// Discover AI tools from multiple sources
 export async function discoverTools(): Promise<DiscoveredTool[]> {
   const results: DiscoveredTool[] = []
 
   const sources = await Promise.allSettled([
     discoverFromProductHunt(),
-    discoverFromGitHubTrending(),
-    discoverFromAIAggregators(),
+    discoverFromGitHub(),
   ])
 
-  for (const result of sources) {
+  const labels = ['producthunt', 'github']
+  sources.forEach((result, i) => {
     if (result.status === 'fulfilled') {
+      console.log(`[discover] ${labels[i]}: ${result.value.length} candidates`)
+      if (result.value.length === 0) {
+        console.warn(`[discover] ${labels[i]} returned 0 — check token/API shape`)
+      }
       results.push(...result.value)
     } else {
-      console.error('Source discovery failed:', result.reason)
+      console.error(`[discover] ${labels[i]} failed:`, result.reason)
     }
-  }
+  })
 
   return results
 }
 
 async function discoverFromProductHunt(): Promise<DiscoveredTool[]> {
-  const tools: DiscoveredTool[] = []
-  try {
-    const html = await fetchHTML('https://www.producthunt.com/topics/artificial-intelligence', 15000)
-    // Extract tool names and URLs from the listing
-    const matches = html.matchAll(
-      /<a[^>]*href="\/posts\/([^"]+)"[^>]*>[\s\S]*?<h3[^>]*>(.*?)<\/h3>[\s\S]*?<p[^>]*>(.*?)<\/p>/gi
-    )
-    for (const match of matches) {
-      const slug = match[1]
-      const name = match[2].replace(/<[^>]+>/g, '').trim()
-      const description = match[3].replace(/<[^>]+>/g, '').trim()
-      if (name && description) {
-        tools.push({
-          name,
-          url: `https://www.producthunt.com/posts/${slug}`,
-          description,
-          source: 'producthunt',
-        })
-      }
-    }
-  } catch (e) {
-    console.error('ProductHunt discovery failed:', e)
+  const token = process.env.PRODUCTHUNT_TOKEN
+  if (!token) {
+    console.warn('[discover] PRODUCTHUNT_TOKEN not set — skipping PH discovery')
+    return []
   }
-  return tools.slice(0, 80)
+  const query = `query RecentAI($after: DateTime) {
+    posts(order: NEWEST, postedAfter: $after, first: 50, topic: "artificial-intelligence") {
+      edges { node { name tagline slug website votesCount } }
+    }
+  }`
+  const after = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const res = await fetch('https://api.producthunt.com/v2/api/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ query, variables: { after } }),
+  })
+  if (!res.ok) throw new Error(`ProductHunt GraphQL HTTP ${res.status}`)
+  const json = (await res.json()) as {
+    data?: { posts?: { edges?: Array<{ node?: { name?: string; tagline?: string; slug?: string; website?: string } }> } }
+  }
+  const edges = json.data?.posts?.edges ?? []
+  const tools: DiscoveredTool[] = []
+  for (const e of edges) {
+    const n = e.node
+    if (!n?.name) continue
+    tools.push({
+      name: n.name,
+      // Prefer the real product website over the PH listing URL so downstream
+      // dedup keys on the actual vendor domain, not a shared aggregator host.
+      url: n.website || (n.slug ? `https://www.producthunt.com/products/${n.slug}` : 'https://www.producthunt.com'),
+      description: n.tagline ?? '',
+      source: 'producthunt',
+    })
+  }
+  return tools
 }
 
-async function discoverFromGitHubTrending(): Promise<DiscoveredTool[]> {
-  const tools: DiscoveredTool[] = []
-  try {
-    const html = await fetchHTML('https://github.com/trending?since=daily&spoken_language_code=en', 15000)
-    // Extract repo info from trending page
-    const repoMatches = html.matchAll(
-      /<h2[^>]*class="[^"]*lh-condensed[^"]*"[^>]*>[\s\S]*?<a[^>]*href="\/([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<p[^>]*class="[^"]*col-9[^"]*"[^>]*>([\s\S]*?)<\/p>/gi
-    )
-    for (const match of repoMatches) {
-      const repoPath = match[1].trim()
-      const description = match[3].replace(/<[^>]+>/g, '').trim().toLowerCase()
-      // Only include AI-related repos
-      const aiKeywords = ['ai', 'llm', 'machine learning', 'deep learning', 'neural', 'gpt', 'transformer', 'diffusion', 'agent', 'chatbot', 'nlp', 'computer vision', 'generative']
-      if (aiKeywords.some(kw => description.includes(kw))) {
-        const name = repoPath.split('/')[1] || repoPath
-        tools.push({
-          name,
-          url: `https://github.com/${repoPath}`,
-          description,
-          source: 'github_trending',
-        })
-      }
-    }
-  } catch (e) {
-    console.error('GitHub trending discovery failed:', e)
+async function discoverFromGitHub(): Promise<DiscoveredTool[]> {
+  // GitHub Search API — recent AI repos by stars. Stable JSON (no HTML scraping).
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const q = encodeURIComponent(`topic:ai created:>${since}`)
+  const url = `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&per_page=50`
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
   }
-  return tools.slice(0, 60)
-}
+  const token = process.env.GITHUB_REPO_TOKEN
+  if (token) headers.Authorization = `token ${token}`
 
-async function discoverFromAIAggregators(): Promise<DiscoveredTool[]> {
-  const tools: DiscoveredTool[] = []
-  const aggregatorUrls = [
-    'https://theresanaiforthat.com/new/',
-    'https://www.futurepedia.io/ai-tools?sort=newest',
-  ]
-
-  for (const url of aggregatorUrls) {
-    try {
-      const html = await fetchHTML(url, 15000)
-      // Generic extraction: find tool cards with names and descriptions
-      const cardMatches = html.matchAll(
-        /<(?:h[23]|a)[^>]*class="[^"]*(?:tool|card|item)[^"]*"[^>]*>([\s\S]*?)<\/(?:h[23]|a)>/gi
-      )
-      for (const match of cardMatches) {
-        const text = match[1].replace(/<[^>]+>/g, '').trim()
-        if (text.length > 5 && text.length < 200) {
-          tools.push({
-            name: text.split(/[:\-–]/)[0].trim(),
-            url,
-            description: text,
-            source: 'aggregator',
-          })
-        }
-      }
-    } catch (e) {
-      console.error(`Aggregator ${url} failed:`, e)
-    }
+  const res = await fetch(url, { headers })
+  if (!res.ok) throw new Error(`GitHub Search HTTP ${res.status}`)
+  const json = (await res.json()) as {
+    items?: Array<{ name?: string; full_name?: string; description?: string; homepage?: string; html_url?: string }>
   }
-  return tools.slice(0, 60)
+  const tools: DiscoveredTool[] = []
+  for (const it of json.items ?? []) {
+    if (!it.full_name) continue
+    const desc = (it.description ?? '').trim()
+    if (!desc) continue
+    tools.push({
+      name: it.name || it.full_name,
+      url: it.homepage?.startsWith('http') ? it.homepage : it.html_url || `https://github.com/${it.full_name}`,
+      description: desc.slice(0, 300),
+      source: 'github',
+    })
+  }
+  return tools
 }
