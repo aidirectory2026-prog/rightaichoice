@@ -120,6 +120,7 @@ export async function runIngestion(
                   redditThreads: traction.reddit.threadCount,
                   score: traction.score,
                   hardPass: traction.hardPass,
+                  probed: traction.probed,
                 }
               : undefined,
           },
@@ -166,14 +167,15 @@ export async function runIngestion(
         use_cases: enriched.use_cases,
         our_views: enriched.our_views,
         // Anti-starvation (Phase 9 onboarding): leave the three freshness
-        // columns NULL on insert so the stalest-first pipelines (refresh →
-        // last_verified_at, viability → viability_updated_at, latest-updates →
-        // latest_updates_at — all ORDER BY ... ASC NULLS FIRST) grab a
-        // brand-new tool FIRST instead of pushing it to the back of the queue.
-        // onboarded_at also defaults to NULL so the fast onboard orchestrator
-        // (lib/cron/onboard.ts) picks it up within ~30 min.
+        // columns NULL on insert so the stalest-first pipelines grab a brand-new
+        // tool FIRST. onboarded_at also defaults to NULL.
         last_verified_at: null,
-        is_published: true,
+        // Phase 10 #51 — DRAFT-until-green. New tools insert UNPUBLISHED and only
+        // go live once the gated SOP lane (onboard-tools?mode=sop, scheduled in
+        // vercel.json) confirms all quality gates pass (categories, ≥3 alts, ≥2
+        // editorial compares, ≥9 FAQs, editorial fields, logo). Prevents users +
+        // Google seeing half-built pages in the window before onboarding finishes.
+        is_published: false,
       })
 
       if (insertError) {

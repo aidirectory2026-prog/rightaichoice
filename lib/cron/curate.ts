@@ -37,6 +37,8 @@ export interface CandidateSignals {
     redditThreads: number
     score: number
     hardPass: boolean
+    /** Phase 10 #56 — at least one probe source responded. */
+    probed?: boolean
   }
 }
 
@@ -147,8 +149,12 @@ export function curateCandidate(input: CurateInput, ctx: CurateContext): CurateD
   // it didn't hardPass, reject. Tools that "appeared on a list" but
   // have zero real-world buzz get filtered here. Skipped when the
   // probe wasn't run (legacy scale-catalog path).
+  // Phase 10 #56 — only HARD-reject on traction when the probe actually ran
+  // (probed !== false). A probe outage/block returns all-zeros which is NOT the
+  // same as "no buzz"; rejecting then would silently drop real tools. When the
+  // probe was inconclusive we fall back to the soft criteria below.
   const t = input.signals?.tractionHard
-  if (t && !t.hardPass) {
+  if (t && t.probed !== false && !t.hardPass) {
     reasons.push(`traction-hard:hn=${t.hnPoints}/reddit=${t.redditThreads}/score=${Math.round(t.score)}`)
   }
 
@@ -158,13 +164,19 @@ export function curateCandidate(input: CurateInput, ctx: CurateContext): CurateD
     evalTrending(input.signals),
     evalGrowing(input.signals),
     evalInUse(input.signals, input.enriched),
-    evalCategoryGap(input.predictedCategories, ctx),
     evalViability(viabilityProxy, ctx.minViabilityProxy),
   ]
+  // Phase 10 #65 — the category-gap criterion only applies when categories were
+  // actually predicted. The ingest path doesn't predict pre-gate, so including it
+  // unconditionally made it a permanent "always-fail" that misrepresented the
+  // "X of 5" bar. Count it only when we have the data.
+  if (input.predictedCategories && input.predictedCategories.length > 0) {
+    criteria.push(evalCategoryGap(input.predictedCategories, ctx))
+  }
 
   const criteriaPassed = criteria.filter((c) => c.passed).length
   if (criteriaPassed < ctx.minCriteria) {
-    reasons.push(`criteria:${criteriaPassed}/5<min${ctx.minCriteria}`)
+    reasons.push(`criteria:${criteriaPassed}/${criteria.length}<min${ctx.minCriteria}`)
     for (const c of criteria) {
       if (!c.passed) reasons.push(`miss-${c.name}`)
     }
