@@ -188,14 +188,30 @@ function normalizeEnrichmentPayload(p: Record<string, unknown>): void {
   if (typeof p.has_api !== 'boolean') {
     p.has_api = p.has_api === true || p.has_api === 'true' || p.has_api === 1
   }
-  // pricing_type must match enum; coerce common variants/null to 'contact'
+  // pricing_type must match the enum. Phase 10 #52 — the old coercion dumped
+  // every unrecognized value to 'contact', which falsely implies enterprise
+  // "contact sales" and caused ~38% of the catalog (262 with no pricing data) to
+  // be mislabeled. Recognize far more real signals, and default genuinely-unknown
+  // tools to 'freemium' (the modal AI-tool model) rather than 'contact'.
   const validPricing = new Set(['free', 'freemium', 'paid', 'contact'])
   if (typeof p.pricing_type !== 'string' || !validPricing.has(p.pricing_type as string)) {
     const raw = String(p.pricing_type ?? '').toLowerCase()
-    if (raw.includes('trial')) p.pricing_type = 'freemium'
-    else if (raw.includes('subscription') || raw.includes('paid')) p.pricing_type = 'paid'
+    const hasFreeTier = Array.isArray(p.pricing_details) &&
+      (p.pricing_details as Array<Record<string, unknown>>).some((t) => {
+        const price = String(t?.price ?? '').toLowerCase()
+        return price.includes('free') || price === '$0' || price === '0'
+      })
+    const hasPaidTier = Array.isArray(p.pricing_details) && (p.pricing_details as unknown[]).length > 0
+    if (raw.includes('open') || raw === 'oss' || raw === '$0' || raw === '0' || raw === 'none') p.pricing_type = 'free'
     else if (raw === 'free') p.pricing_type = 'free'
-    else p.pricing_type = 'contact'
+    else if (raw.includes('trial') || raw.includes('freemium') || hasFreeTier) p.pricing_type = 'freemium'
+    else if (raw.includes('enterprise') || raw.includes('custom') || raw.includes('quote') || raw.includes('contact') || raw.includes('sales')) p.pricing_type = 'contact'
+    else if (
+      raw.includes('subscription') || raw.includes('paid') || raw.includes('usage') ||
+      raw.includes('pay') || raw.includes('credit') || raw.includes('seat') ||
+      raw.includes('tier') || raw.includes('month') || raw.includes('/mo') || raw.includes('$')
+    ) p.pricing_type = 'paid'
+    else p.pricing_type = hasPaidTier ? 'paid' : 'freemium'
   }
   // skill_level enum guard
   const validSkill = new Set(['beginner', 'intermediate', 'advanced'])

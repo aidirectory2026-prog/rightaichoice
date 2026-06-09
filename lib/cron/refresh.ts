@@ -146,37 +146,47 @@ async function processTools(
 
     try {
       let pageText = ''
+      let scrapeOk = false
       try {
         pageText = await fetchPageText(tool.website_url)
+        scrapeOk = pageText.trim().length >= 200
       } catch {
-        // Continue with just the name — DeepSeek can still produce
-        // a baseline editorial from its training-data knowledge.
+        // scrape failed — handled below (do NOT overwrite editorial fields).
       }
 
       // GitHub stars — cheap side-fetch, doesn't affect main payload.
+      // Phase 10 #64 — authenticate (lifts the 60/hr unauthenticated cap so a
+      // full run actually refreshes stars) and type-guard the value.
       let githubStars: number | null = null
       if (tool.github_url) {
         try {
           const repoPath = new URL(tool.github_url).pathname.slice(1)
-          const ghRes = await fetch(`https://api.github.com/repos/${repoPath}`, {
-            headers: { Accept: 'application/vnd.github.v3+json' },
-          })
+          const ghHeaders: Record<string, string> = { Accept: 'application/vnd.github.v3+json' }
+          if (process.env.GITHUB_REPO_TOKEN) ghHeaders.Authorization = `token ${process.env.GITHUB_REPO_TOKEN}`
+          const ghRes = await fetch(`https://api.github.com/repos/${repoPath}`, { headers: ghHeaders })
           if (ghRes.ok) {
             const ghData = await ghRes.json()
-            githubStars = ghData.stargazers_count
+            if (typeof ghData.stargazers_count === 'number') githubStars = ghData.stargazers_count
           }
         } catch {
           // Non-fatal — keep prior stars.
         }
       }
 
-      const parsed = await synthesize(tool.name, tool.website_url, pageText)
-
-      const fieldsUpdated = Object.keys(parsed)
+      // Phase 10 #53 — only overwrite editorial fields when the vendor page
+      // actually loaded. A failed scrape used to still call synthesize(), which
+      // produced an AI "baseline" hallucinated from no input and clobbered
+      // hand-curated content. On failure we preserve existing content and just
+      // advance freshness (+ stars), so the tool isn't stuck or retried forever.
       const updateData: Record<string, unknown> = {
-        ...parsed,
         last_verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+      }
+      let fieldsUpdated: string[] = []
+      if (scrapeOk) {
+        const parsed = await synthesize(tool.name, tool.website_url, pageText)
+        Object.assign(updateData, parsed)
+        fieldsUpdated = Object.keys(parsed)
       }
 
       if (githubStars !== null) {
@@ -201,6 +211,7 @@ async function processTools(
         tool_slug: tool.slug,
         status: 'refreshed',
         fields_updated: fieldsUpdated,
+        error_message: scrapeOk ? null : 'scrape_failed: editorial fields preserved',
         duration_ms: duration,
       } as never)
     } catch (e) {

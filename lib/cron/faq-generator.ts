@@ -1,7 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
+import { stripJsonFences } from '@/lib/plan/deepseek'
 import { gatherFaqSources } from './faq-sources'
 import { z } from 'zod'
+
+// Phase 10 #55 — never destroy a tool's FAQs for a thin/empty generation.
+const MIN_FAQS = 5
 
 const faqSchema = z.array(
   z.object({
@@ -53,7 +57,14 @@ Only output valid JSON array.`
       })
 
       const text = response.content[0].type === 'text' ? response.content[0].text : ''
-      const faqs = faqSchema.parse(JSON.parse(text))
+      const faqs = faqSchema.parse(JSON.parse(stripJsonFences(text)))
+
+      // Phase 10 #55 — require a healthy set BEFORE the destructive delete, so a
+      // weak/empty AI response can never leave a tool with fewer (or zero) FAQs.
+      if (faqs.length < MIN_FAQS) {
+        console.warn(`[faqs:${runId}] ${tool.slug}: only ${faqs.length} FAQs generated (<${MIN_FAQS}) — keeping existing`)
+        continue
+      }
 
       // Delete existing FAQs and insert fresh ones
       await supabase.from('tool_faqs').delete().eq('tool_id', tool.id)

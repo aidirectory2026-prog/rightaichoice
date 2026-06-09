@@ -160,8 +160,11 @@ export async function fetchNewsMentions(
 
   const needle = toolName.toLowerCase().trim()
   if (needle.length < 2) return []
-  // Word-boundary regex to reject substring noise
-  const wbRe = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\\\]\\\\]/g, '\\\\$&')}\\b`, 'i')
+  // Word-boundary regex to reject substring noise.
+  // Phase 10 #54 — was double-escaped (`\\$&` produced `\\.` → a literal
+  // backslash in the pattern), so any tool name with a "." (Notion.so, v0.dev,
+  // Make.com…) could never match. Correct single-backslash regex escape:
+  const wbRe = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
 
   const matched = allItems.filter((it) => wbRe.test(it.title) || wbRe.test(it.description))
   // Sort by date desc (null last)
