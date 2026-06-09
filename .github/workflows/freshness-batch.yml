@@ -19,9 +19,11 @@ name: Freshness Batch Pipelines
 
 on:
   schedule:
-    # Refresh 360 stalest tools — daily 02:00 UTC (7-day freshness SLA:
-    # 2500/360 ≈ 6.9d full-catalog cycle at the 2,500 cap, <7d with margin)
+    # Phase 10 S5 — 3-DAY freshness SLA. Tier-aware refresh runs TWICE daily
+    # (02:00 + 14:00 UTC, 500 tools each): always the due daily-tier (top-150),
+    # then stalest 'standard' fill → ~850 standard/day, long-tail cycle ≈2.2d.
     - cron: '0 2 * * *'
+    - cron: '0 14 * * *'
     # Refresh "Latest from" data — 360 stalest tools daily 03:00 UTC.
     # Whole catalog (~2,000, cap 2,500) checked within 7 days; cheap
     # change-detector means only changed tools pay the DeepSeek cost.
@@ -60,14 +62,15 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ── Refresh 360 stalest tools nightly (7-day freshness SLA) ────────
+  # ── Refresh tools — twice daily (02:00 + 14:00 UTC), 3-day freshness SLA ──
   refresh-tools:
     if: >-
       github.event.schedule == '0 2 * * *' ||
+      github.event.schedule == '0 14 * * *' ||
       (github.event_name == 'workflow_dispatch' &&
        (github.event.inputs.pipeline == 'refresh-tools-batch' || github.event.inputs.pipeline == 'all'))
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

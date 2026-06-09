@@ -224,22 +224,50 @@ export async function runRefresh(
   const runId = crypto.randomUUID()
   const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
 
-  // Stalest-first ordering. nullsFirst → tools never refreshed jump the queue.
-  const { data: tools, error } = await supabase
+  // Phase 10 S5 — tier-aware, SLA-driven selection.
+  //   1) DAILY tier (the top-150): refresh any that are "due" (>20h since last
+  //      verify, or never) so the daily SLA holds — without re-burning AI on
+  //      ones already refreshed today (lets small Vercel batches reach standard).
+  //   2) STANDARD tier: fill the remaining budget stalest-first, so the long
+  //      tail's max age stays within the 3-day SLA (throughput sized in
+  //      freshness-batch.yml: ~765/day total).
+  const dailyDueCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString()
+  const { data: dailyDue, error: dailyErr } = await supabase
     .from('tools')
     .select('id, slug, name, website_url, github_url')
     .eq('is_published', true)
+    .eq('refresh_tier', 'daily')
+    .or(`last_verified_at.is.null,last_verified_at.lt.${dailyDueCutoff}`)
     .order('last_verified_at', { ascending: true, nullsFirst: true })
     .limit(batchSize)
+  if (dailyErr) console.error('Failed to fetch daily-tier tools for refresh:', dailyErr)
+  const daily = (dailyDue ?? []) as ToolRow[]
 
-  if (error || !tools) {
-    console.error('Failed to fetch tools for refresh:', error)
+  const remaining = Math.max(batchSize - daily.length, 0)
+  let standard: ToolRow[] = []
+  if (remaining > 0) {
+    const { data: std, error: stdErr } = await supabase
+      .from('tools')
+      .select('id, slug, name, website_url, github_url')
+      .eq('is_published', true)
+      .eq('refresh_tier', 'standard')
+      .order('last_verified_at', { ascending: true, nullsFirst: true })
+      .limit(remaining)
+    if (stdErr) console.error('Failed to fetch standard-tier tools for refresh:', stdErr)
+    standard = (std ?? []) as ToolRow[]
+  }
+
+  const tools = [...daily, ...standard]
+  if (tools.length === 0) {
+    console.log(`[refresh:${runId}] Nothing due to refresh`)
     return result
   }
 
-  await processTools(supabase, tools as ToolRow[], runId, result)
+  await processTools(supabase, tools, runId, result)
 
-  console.log(`[refresh:${runId}] Done: ${result.refreshed} refreshed, ${result.failed} failed`)
+  console.log(
+    `[refresh:${runId}] Done: ${result.refreshed} refreshed (${daily.length} daily + ${standard.length} standard), ${result.failed} failed`,
+  )
   return result
 }
 
