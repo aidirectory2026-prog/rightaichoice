@@ -37,9 +37,17 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     .single()
 
   if (cached) {
-    // If currently generating, return status
+    // If currently generating, return status — UNLESS the row is stale (a prior
+    // generation was killed mid-run, e.g. function timeout/deploy). Phase 10 #10:
+    // treat a 'generating' row older than 3 min as expired so the report can be
+    // regenerated instead of showing an infinite spinner forever.
     if (cached.status === 'generating') {
-      return NextResponse.json({ status: 'generating', tool_name: tool.name })
+      const startedAt = cached.scraped_at ? new Date(cached.scraped_at).getTime() : 0
+      const isStale = Date.now() - startedAt > 3 * 60 * 1000
+      if (!isStale) {
+        return NextResponse.json({ status: 'generating', tool_name: tool.name })
+      }
+      // fall through → not_generated, allowing the client to re-trigger
     }
 
     // If fresh (not expired), return full report

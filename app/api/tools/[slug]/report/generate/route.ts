@@ -39,12 +39,18 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   // Check if already generating
   const { data: existing } = await supabase
     .from('tool_sentiment_cache')
-    .select('id, status, expires_at')
+    .select('id, status, expires_at, scraped_at')
     .eq('tool_id', tool.id)
     .single()
 
+  // Phase 10 #10 — only block on an ACTIVE generation. A 'generating' row older
+  // than 3 min is stale (a prior run was killed mid-flight) and must not wedge
+  // the report forever — fall through and regenerate.
   if (existing?.status === 'generating') {
-    return NextResponse.json({ status: 'generating', message: 'Report generation already in progress' })
+    const startedAt = existing.scraped_at ? new Date(existing.scraped_at).getTime() : 0
+    if (Date.now() - startedAt <= 3 * 60 * 1000) {
+      return NextResponse.json({ status: 'generating', message: 'Report generation already in progress' })
+    }
   }
 
   // If fresh cache exists, return it

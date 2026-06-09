@@ -139,6 +139,10 @@ export function buildReportPageMeta(toolName: string, slug: string) {
     alternates: {
       canonical: `https://rightaichoice.com/tools/${slug}/report`,
     },
+    // Phase 10 #1 — noindex: these AI deep-dive reports are derived/thin pages,
+    // and indexing them invited crawlers to trigger paid generation across the
+    // whole catalog. Keep follow so tool-page link equity still flows.
+    robots: { index: false, follow: true },
   }
 }
 

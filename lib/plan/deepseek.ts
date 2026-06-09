@@ -52,23 +52,30 @@ export async function callDeepSeek(args: DeepSeekArgs): Promise<string> {
     body.response_format = { type: 'json_object' }
   }
 
-  const fetchCall = fetch(DEEPSEEK_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-
-  const res = args.timeout_ms
-    ? await Promise.race([
-        fetchCall,
-        new Promise<Response>((_, reject) =>
-          setTimeout(() => reject(new Error('deepseek_timeout')), args.timeout_ms),
-        ),
-      ])
-    : await fetchCall
+  // Phase 10 #2 — always bound the request with an AbortController (default 90s
+  // for the main planner call; the quality-gate still passes its tight 1500ms).
+  // AbortController actually cancels the socket, unlike the previous Promise.race
+  // which left the fetch running after a timeout.
+  const timeoutMs = args.timeout_ms ?? 90_000
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), timeoutMs)
+  let res: Response
+  try {
+    res = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: ac.signal,
+    })
+  } catch (e) {
+    if (ac.signal.aborted) throw new Error('deepseek_timeout')
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
