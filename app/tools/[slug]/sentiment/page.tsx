@@ -6,6 +6,7 @@ import { SentimentReportPage } from '@/components/tools/sentiment-report-page'
 import { SentimentRelated } from '@/components/tools/sentiment-related'
 import { getToolBySlug, getAlternativeTools } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
+import { getCachedSentiment } from '@/lib/data/sentiment'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,11 +32,12 @@ export default async function ToolSentimentPage({ params }: PageProps) {
   const categories = (tool as any).tool_categories?.map((tc: { categories: { id: string; name: string; slug: string } }) => tc.categories).filter(Boolean) ?? []
   const categoryIds = categories.map((c: { id: string }) => c.id)
 
-  const [alternatives, compares] = await Promise.all([
+  const [alternatives, compares, cached] = await Promise.all([
     categoryIds.length
       ? getAlternativeTools(tool.id, categoryIds, 8).catch(() => [] as Awaited<ReturnType<typeof getAlternativeTools>>)
       : Promise.resolve([] as Awaited<ReturnType<typeof getAlternativeTools>>),
     getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
+    getCachedSentiment(tool.id).catch(() => null),
   ])
 
   return (
@@ -43,7 +45,7 @@ export default async function ToolSentimentPage({ params }: PageProps) {
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-          <SentimentReportPage toolSlug={slug} toolName={tool.name} />
+          <SentimentReportPage toolSlug={slug} toolName={tool.name} cached={cached} />
           <SentimentRelated
             toolName={tool.name}
             toolSlug={slug}
