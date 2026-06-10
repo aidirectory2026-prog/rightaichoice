@@ -19,10 +19,15 @@ import { submitToIndexNow } from '@/lib/indexnow'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { revalidatePath } from 'next/cache'
 
-export const maxDuration = 60
+// Dept C (fable 5 review) — was 60; a full 500-page backlog pass (safety
+// sweep + revalidatePath ×500 + IndexNow + stamping) can exceed it, and the
+// platform kill leaves a stale `running` row (timeout email — seen
+// 2026-06-10 18:00 UTC). 300s is the Fluid Compute default; the hourly
+// cadence tolerates it fine.
+export const maxDuration = 300
 
 const BASE = 'https://rightaichoice.com'
-const MAX_PER_RUN = 500 // cap to keep within 60s budget
+const MAX_PER_RUN = 500 // cap per hourly run
 const SAFETY_WINDOW_MIN = 65
 
 export const POST = cronRoute({ pipelineKey: 'cascade-hubs' }, async (ctx) => {

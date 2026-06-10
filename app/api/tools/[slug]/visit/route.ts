@@ -57,8 +57,28 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   }
 
   // Determine destination — prefer affiliate URL when set
-  const destination = tool.affiliate_url ?? tool.website_url
+  let destination = tool.affiliate_url ?? tool.website_url
   const isAffiliate = !!tool.affiliate_url
+
+  // Dept B — tag plain website_url destinations with UTM params so vendors
+  // see rightaichoice in their analytics (groundwork for affiliate
+  // negotiations). Affiliate URLs are left untouched — their params are
+  // controlled by the program. Existing utm_source on the destination wins.
+  if (!isAffiliate && destination) {
+    try {
+      const u = new URL(destination)
+      if (!u.searchParams.has('utm_source')) {
+        const surface =
+          new URL(req.url).searchParams.get('src')?.slice(0, 64) || 'site'
+        u.searchParams.set('utm_source', 'rightaichoice')
+        u.searchParams.set('utm_medium', 'referral')
+        u.searchParams.set('utm_campaign', surface)
+        destination = u.toString()
+      }
+    } catch {
+      /* malformed website_url — redirect as stored */
+    }
+  }
 
   // Phase 9.0.2 — never count bots, crawlers, prefetch/prerender, or auto-HEAD
   // as affiliate clicks. This endpoint previously logged 1,014 redirects vs

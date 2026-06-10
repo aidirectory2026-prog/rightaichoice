@@ -12,6 +12,7 @@ import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
+import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
@@ -222,6 +223,20 @@ export default async function BlogPostPage({ params }: PageProps) {
               </div>
             </div>
           )}
+
+          {/* Dept B — email capture at the article footer: readers who
+              finished a post are the warmest newsletter audience the site
+              has; blog pages previously had no capture at all. */}
+          <div className="mt-12">
+            <NewsletterForm
+              source="blog_post"
+              sourceEntity={slug}
+              variant="card"
+              headline="Get the weekly AI tools brief"
+              sub="One email a week — new tools worth your time, honest takes, no spam."
+              ctaLabel="Subscribe free"
+            />
+          </div>
 
           {/* Back link */}
           <div className="mt-10">

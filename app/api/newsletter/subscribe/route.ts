@@ -14,6 +14,7 @@ const VALID_SOURCES = new Set([
   'footer',
   'tool_detail',
   'compare_detail',
+  'blog_post',
   'other',
 ])
 

@@ -765,7 +765,7 @@ export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
  * Pass `slugs` to target specific drafts (e.g. the smoke test).
  */
 export async function runOnboardSop(
-  opts: { limit?: number; slugs?: string[] } = {},
+  opts: { limit?: number; slugs?: string[]; deadlineMs?: number } = {},
 ): Promise<OnboardResult> {
   const runId = crypto.randomUUID()
   const supabase = getAdminClient()
@@ -787,6 +787,16 @@ export async function runOnboardSop(
   const validTagSlugs = await loadValidTagSlugs(supabase)
 
   for (const tool of tools) {
+    // Dept C (fable 5 review) — time budget. One SOP tool runs many live
+    // fetch + LLM steps; 5 of them regularly blew the route's 300s
+    // maxDuration, so Vercel killed the process mid-run and the orphaned
+    // `running` row was swept to `timeout` (8 alert emails on 2026-06-10
+    // alone). Stop STARTING new tools past the deadline — each completed
+    // tool is already committed, the rest are picked up next half-hour.
+    if (opts.deadlineMs && Date.now() > opts.deadlineMs) {
+      console.log(`[onboard:${runId}] SOP deadline reached after ${result.processed} tool(s) — deferring the rest`)
+      break
+    }
     result.processed++
     const stepRes = await onboardOne(supabase, tool, validSlugs, validTagSlugs, true).catch((e) =>
       fatalResult(tool.slug, e),

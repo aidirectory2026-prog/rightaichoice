@@ -61,9 +61,13 @@ export function PlanCTAInline({ context }: Props) {
 
   if (!eligible) return null
 
+  // Dept B copy pass — baseline CTR was 0.37% with "Skip the guesswork" +
+  // "Plan my stack". New framing sells the concrete output (a ranked stack),
+  // the price (free) and the effort (60 seconds, no signup). Measured per
+  // surface on /admin/plan-conversion.
   const headline = context
-    ? `Researching ${context}? Skip the guesswork.`
-    : 'Not sure which AI tools to pick?'
+    ? `Researching ${context}? Get your full AI stack in 60 seconds.`
+    : 'Get a ranked AI stack for your exact goal — in 60 seconds.'
 
   return (
     <section
@@ -83,8 +87,8 @@ export function PlanCTAInline({ context }: Props) {
           </h3>
           {/* Short human-voice description — one line, ~18 words. */}
           <p className="mt-0.5 text-xs sm:text-[13px] text-zinc-400 leading-snug">
-            Tell us what you want to build — we&apos;ll match the AI tools that
-            fit your goal, budget &amp; existing stack.
+            Free, no signup — tell us your goal and get tools matched to your
+            budget &amp; existing stack.
           </p>
         </div>
 
@@ -96,7 +100,7 @@ export function PlanCTAInline({ context }: Props) {
               onClick={onClick}
               className="shrink-0 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors whitespace-nowrap"
             >
-              Plan my stack
+              Get my free stack
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </button>
           )}
