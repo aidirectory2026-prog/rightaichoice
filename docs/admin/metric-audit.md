@@ -52,10 +52,47 @@ missing-ORDER-BY issue did not manifest; treat as verified for current data volu
 - **Repro:** see audit query in build log 1.3 (in_window vs per_visitor.last_seen comparison → 637 / 633 / 4).
 - **Fix direction (Phase 2):** active-in-window must be `exists (event in [cutoff,end))`, not a predicate on lifetime last_seen; returning = first_seen < cutoff (that part is correct).
 
+## /admin/insights — second verification batch (all exact matches)
+
+| Metric | Claimed (humans) | Hand SQL | Verdict |
+|---|---|---|---|
+| Page views by device | desktop 790 / mobile 56 / unknown 10 | identical | ✅ PASS |
+| Top events (top 3) | scroll 2178 / page_viewed 856 / cta_impr 701 | identical | ✅ PASS |
+| Top viewed tools | screenplayiq 8 / vercel 7 | identical | ✅ PASS |
+| Plan funnel (insights variant) | plan_started 4 → 0 → 0 → 0 | identical | ✅ PASS |
+| Reconciliation stats | client 5711 + server 529 = 6240 total | internally consistent w/ events_all | ✅ PASS |
+| Plan-conversion surface parity | 747+37+68+0+0 = 852 total impressions | sums match funnel total | ✅ PASS (but see F6) |
+
+## ❌ FINDING F3 — `plan_cta_clicked` is (at best) partially wired
+
+- **Observed:** 852 CTA impressions in the audit week, modal shown 4×, plan_started 4× — but `plan_cta_clicked` = 0 in window and only **5 all-time**. The modal cannot open without a click, so clicks are happening and not being tracked on at least the main path.
+- **Impact:** the plan-conversion funnel's step 2 ("CTA clicked") is a hole — CTR reads ~0% forever; per-surface CTR meaningless.
+- **Fix direction:** trace the CTA components (sticky_bar/inline_card/homepage) — fire `plan_cta_clicked` on every path that opens the modal or navigates to /plan. Synthetic recipe in Phase 3 prevents regression.
+- Related dead/dormant events (all-time counts): `search_query_submitted` 5, `ai_chat_message` 1, `tool_saved` **0 ever** (save feature either unused or broken — needs a manual click-test in Phase 2).
+
+## ❌ FINDING F4 — "Top referrers" counts events, hides half the traffic
+
+- **Where:** RPC `insights_top_property` `first_touch_referrer` branch (121_insights_window_threading.sql:369-383) — joins events to `user_intent_profile` and counts EVENTS per profile-level first-touch.
+- **Observed (audit week, humans):** claimed "direct 2489 / google 56 / chatgpt 12" — in visitor terms that's **direct 208 / google 11** visitors. Worse: **2,585 human events (≈50% of the window) are silently excluded** because their visitor has no profile row or empty first-touch — no "(unknown)" bucket exists. The panel shows less than half the traffic and implies event-volume = source-volume.
+- **Verdict:** ❌ FAIL on semantics (values reproducible, meaning wrong).
+- **Fix direction (Phase 2):** count distinct visitors (or sessions); add an explicit "(unknown — pre-tracking or no profile)" bucket; annotate with the 2026-06-10 attribution epoch.
+
+## ⚠️ FINDING F5 — Engagement tiles ignore the global date filter by design (`void sel`)
+
+- **Where:** `queries.ts:236-258` — DAU/WAU/MAU + signed-in tiles always use now-anchored IST-today/7d/30d, discard the page's RangeSelection (`void sel`, no `p_end`).
+- **Impact:** with a custom/historical range selected, these six tiles silently show different windows than every other panel. Labels do say "(today)/(7d)/(30d)", so it's not lying — but it breaks the "every filter works" contract.
+- **Fix direction (Phase 4):** move them to a visually distinct "Right now" pulse strip exempt from filters, or thread the range through. Decide in the shell rebuild; document either way.
+
+## ❌ FINDING F6 — /admin/plan-conversion has NO bot filtering anywhere
+
+- **Observed:** plan-conversion funnel "CTA shown" = 852 = with-bots count; humans = 701. The page's queries (`lib/admin/plan-conversion.ts`) never touch `bot_likely` — every number on a *conversion* page is ~18% bot-inflated this week (and bots never convert, so all rates are understated).
+- **Verdict:** ❌ FAIL.
+- **Fix direction (Phase 2):** thread `includeBots` through plan-conversion.ts identically to insights; default humans-only.
+
 ## ⏳ Remaining audit queue (next sessions)
 
-- insights: getPageViewsByDevice, getTopReferrers (epoch-null handling — known suspect), getPlanFunnel, getTopExistingTools/UseCases, getTopEvents, getTopSearches, getChatMetrics, getTopChat/Viewed/Clicked/Saved/Compared tools, getRecentVisitors, getReconciliationStats, getEngagementMetrics (**confirmed code smell:** queries.ts:240-246 omits `p_end` + mixes IST-midnight with rolling cutoffs — verify + fix), getKpiRows, getVolumeProjection, getEventHealth, getToolAudienceDetail.
-- plan-conversion: funnel (branch-label issue), surface breakdown parity, link rate.
+- insights: getRecentVisitors, getKpiRows, getVolumeProjection, getEventHealth, getToolAudienceDetail (param'd spot-check).
+- plan-conversion: funnel branch-label issue (4a/4b) — fix alongside F6.
 - /admin/updates (Knowledge Room): catalog freshness counts, pipeline cost disaggregation (known suspect: subtraction math), top tools (null tool_id), top searches (null-vs-0 zero-result conflation).
 - /admin/health: SLA verdicts (36h rule vs weekly crons), success rates, durations.
 - /admin/sentiment: funnel + revenue (bot checks missing on payment routes — known suspect).
