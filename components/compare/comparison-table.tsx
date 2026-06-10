@@ -4,10 +4,10 @@ import {
   Check,
   X,
   Globe,
-  ExternalLink,
 } from 'lucide-react'
 import { pricingLabel, pricingColor, formatNumber } from '@/lib/utils'
 import { ToolLogo } from '@/components/tools/tool-logo'
+import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
 
 type ComparedTool = {
   id: string
@@ -90,16 +90,17 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
                 <span className="text-zinc-600">({tool.review_count})</span>
               </div>
             )}
-            <a
-              href={tool.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
+            {/* Dept B — was a raw website_url anchor that bypassed the visit
+                endpoint entirely: the #2 traffic surface produced zero click
+                logs. Now routed through /api/tools/[slug]/visit. */}
+            <VisitWebsiteButton
+              slug={tool.slug}
+              url={tool.website_url}
+              toolId={tool.id}
+              source="compare_table"
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 min-h-[40px] text-xs text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
-            >
-              <Globe className="h-3.5 w-3.5" />
-              Visit Website
-              <ExternalLink className="h-3 w-3" />
-            </a>
+              icon={<Globe className="h-3.5 w-3.5" />}
+            />
           </div>
         ))}
       </div>

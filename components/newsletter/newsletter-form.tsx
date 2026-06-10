@@ -20,6 +20,7 @@ export function NewsletterForm({
     | 'footer'
     | 'tool_detail'
     | 'compare_detail'
+    | 'blog_post'
   variant?: Variant
   headline?: string
   sub?: string

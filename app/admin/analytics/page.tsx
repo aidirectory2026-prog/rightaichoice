@@ -54,7 +54,41 @@ async function getAnalyticsData(sel: RangeSelection) {
 
   const [toolsTotal, reviewsTotal, questionsTotal, workflowsTotal, usersTotal] = totalsRes
 
+  // Dept B (fable 5 review) — affiliate enrollment to-do list: tools earning
+  // real human outbound clicks with no affiliate_url configured. Every row
+  // here is revenue the site sends out for free. Volume is small enough to
+  // tally in JS (windowed human visit events, capped at 5k rows).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any
+  const { data: visitEvents } = await admin
+    .from('user_events')
+    .select('properties')
+    .eq('event_name', 'tool_visit_redirected')
+    .eq('bot_likely', false)
+    .gte('created_at', cutoff)
+    .lt('created_at', end)
+    .limit(5000)
+  const clicksBySlug = new Map<string, number>()
+  for (const row of (visitEvents ?? []) as Array<{ properties: { tool_slug?: unknown } | null }>) {
+    const s = row.properties?.tool_slug
+    if (typeof s === 'string' && s) clicksBySlug.set(s, (clicksBySlug.get(s) ?? 0) + 1)
+  }
+  let affiliateGaps: Array<{ slug: string; name: string; clicks: number }> = []
+  if (clicksBySlug.size > 0) {
+    const { data: gapTools } = await admin
+      .from('tools')
+      .select('slug, name')
+      .in('slug', [...clicksBySlug.keys()].slice(0, 200))
+      .is('affiliate_url', null)
+      .eq('is_published', true)
+    affiliateGaps = ((gapTools ?? []) as Array<{ slug: string; name: string }>)
+      .map((t) => ({ slug: t.slug, name: t.name, clicks: clicksBySlug.get(t.slug) ?? 0 }))
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 50)
+  }
+
   return {
+    affiliateGaps,
     totalViews: totalViewsRes.count ?? 0,
     recentViews: recentViewsRes.count ?? 0,
     totalClicks: totalClicksRes.count ?? 0,
@@ -185,6 +219,42 @@ export default async function AnalyticsPage({
               <p className="text-xs text-zinc-600">No searches recorded in this window.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Affiliate gaps — Dept B (fable 5 review). Human outbound clicks the
+          site is sending out with no affiliate program attached: the
+          founder's enrollment to-do list, highest-clicked first. */}
+      <div className="mt-6 rounded-xl border border-amber-900/40 bg-zinc-900/50 p-5">
+        <h2 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+          <MousePointerClick className="h-4 w-4 text-amber-400" />
+          Affiliate gaps · {sel.label}
+        </h2>
+        <p className="text-xs text-zinc-500 mb-4">
+          Tools real humans clicked out to that have <span className="text-amber-400">no affiliate_url</span> set
+          — each row is unmonetized outbound traffic. Enroll in these programs first.
+        </p>
+        <div className="space-y-2">
+          {data.affiliateGaps.map((t, i) => (
+            <div key={t.slug} className="flex items-center gap-3">
+              <span className="w-5 text-right text-xs text-zinc-600 font-mono">{i + 1}</span>
+              <a
+                href={`/tools/${t.slug}`}
+                className="flex-1 min-w-0 text-sm text-zinc-300 hover:text-white truncate transition-colors"
+              >
+                {t.name}
+              </a>
+              <span className="text-xs text-zinc-500 shrink-0">
+                {t.clicks} human click{t.clicks === 1 ? '' : 's'}
+              </span>
+            </div>
+          ))}
+          {data.affiliateGaps.length === 0 && (
+            <p className="text-xs text-zinc-600">
+              No unmonetized outbound clicks in this window — either every clicked tool has an
+              affiliate_url, or there were no human outbound clicks yet.
+            </p>
+          )}
         </div>
       </div>
     </div>

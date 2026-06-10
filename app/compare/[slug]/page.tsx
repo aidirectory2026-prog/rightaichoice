@@ -7,6 +7,8 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ComparisonTable } from '@/components/compare/comparison-table'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
+import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
+import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 import { mdxComponents } from '@/components/blog/mdx-components'
 import {
   getComparisonBySlug,
@@ -290,6 +292,25 @@ export default async function ComparisonSlugPage({ params }: Props) {
                   {editorial.verdict}
                 </p>
               )}
+              {/* Dept B — the verdict is the highest-intent moment on the
+                  site; give the reader a tracked next step for each tool
+                  instead of making them scroll back to the table header. */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {tools.map((t) => {
+                  const tt = t as { id: string; slug: string; name: string; website_url: string }
+                  return (
+                    <VisitWebsiteButton
+                      key={tt.id}
+                      slug={tt.slug}
+                      url={tt.website_url}
+                      toolId={tt.id}
+                      source="compare_verdict"
+                      label={`Try ${tt.name}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white transition-colors"
+                    />
+                  )
+                })}
+              </div>
             </section>
           )}
 
@@ -415,7 +436,9 @@ export default async function ComparisonSlugPage({ params }: Props) {
               Explore each tool further
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {tools.map((t: any) => (
+              {tools.map((row) => {
+                const t = row as { slug: string; name: string }
+                return (
                 <div key={t.slug} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
                   <div className="text-base font-semibold text-white mb-2">{t.name}</div>
                   <div className="flex flex-wrap gap-2">
@@ -433,7 +456,8 @@ export default async function ComparisonSlugPage({ params }: Props) {
                     </Link>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </section>
 
@@ -456,6 +480,20 @@ export default async function ComparisonSlugPage({ params }: Props) {
               </div>
             </section>
           )}
+
+          {/* Dept B — email capture on the #2 traffic surface (420 views/14d,
+              previously zero capture). Compare readers are mid-research:
+              the weekly brief is the natural "not deciding today" offramp. */}
+          <div className="mt-10">
+            <NewsletterForm
+              source="compare_detail"
+              sourceEntity={slug}
+              variant="card"
+              headline="Still deciding? Get the weekly AI tools brief"
+              sub="One email a week — new tools, honest comparisons, no spam."
+              ctaLabel="Subscribe free"
+            />
+          </div>
 
           {/* Last-reviewed note for editorial pages */}
           {editorial.is_editorial && editorial.last_reviewed_at && (
