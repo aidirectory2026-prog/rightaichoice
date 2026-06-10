@@ -120,4 +120,25 @@ _Plain language: of the six alarm types in your inbox, two had already stopped o
 
 ## Department D — SEO / Growth
 
-_(pending)_
+### 2026-06-11 — Diagnosis + first fixes (commit `2d554e3` on `fable5-review`, awaiting PR merge)
+
+**D1. GSC diagnosis of the 64 niche /best pages — COMPLETE. Verdict: indexed but invisible.**
+- Indexing is NOT the problem: 50/51 inspected /best URLs are "Submitted and indexed" (`gsc_url_inspections`).
+- Ranking IS the problem: latest snapshot (Jun 8) shows **51/64 pages with zero impressions**; the 13 that appear average **position 69**; zero clicks across all 64.
+- Root cause: thin internal authority — their only inbound internal link was the footer `/best` hub.
+- _Plain language: Google knows the pages exist but parks them on page 7 because nothing on our own site points at them. The fix is links from our strong pages, not rewriting the content._
+
+**D2. Internal links INTO /best — SHIPPED.**
+- New `lib/seo/best-page-links.ts`: matches best-pages to a context by category intersection first, then niche-keyword-in-text. Pure static-config lookup, no DB cost.
+- Tool pages (~2,000 indexed): "Best-of guides" chips in the right rail → thousands of new internal edges into /best.
+- Category pages: best-of guide chips above the tool listing.
+
+**D3. OG images — SHIPPED (site-wide gap, not just /best).**
+- Discovery: the site declared `summary_large_image` cards but had **no OG image anywhere** — every social/chat share rendered as a bare text link.
+- Added `app/opengraph-image.tsx` (site-wide default, inherited by all routes) + `app/best/[slug]/opengraph-image.tsx` (per-guide title card), both via `next/og` ImageResponse.
+
+**D4. Position 31–50 cohort — NAMED (content upgrades = next phase).**
+- Latest GSC snapshot, top of cohort by impressions: `langchain` (pos 47.8, 273 impr), `amazon-translate` (48.2, 187), `google-earth-studio` (39.1, 117), `appgyver` (43.5, 56), `dynamic-yield` (41.9, 55), `amper-music` (38.5, 53), `rebuy` (39.4, 52), `orca-security` (49.8, 50), `amira-learning` (41.9, 48), `hackerone` (48.6, 47) — ~25 tools total in range with ≥20 impressions.
+- All but one are on the `standard` refresh tier. Recommended next step (not done yet): editorial content upgrades on the top ~10 (deeper our_views, FAQs, comparison links), tracked before/after via the Monday `seo-impact` digest. NOT title rewrites — titles only matter on page 1.
+
+**Measurement:** /best impressions + position tracked weekly in `niche_page_latest` (already automated); expect first visible movement 2–4 weeks after the internal links deploy and get recrawled (cascade-hubs + IndexNow accelerate this).
