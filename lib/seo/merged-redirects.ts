@@ -21,6 +21,10 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "ada"
   ],
   [
+    "ai-flashcard-maker",
+    "ai-flashcard-maker-by-coursebox"
+  ],
+  [
     "airtable-ai",
     "airtable"
   ],
@@ -99,6 +103,14 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   [
     "fusionads-ai",
     "fusionos-ai"
+  ],
+  [
+    "galileo-ai-design",
+    "galileo-ai"
+  ],
+  [
+    "genspark-ai",
+    "genspark"
   ],
   [
     "get3d-by-nvidia",
@@ -245,6 +257,10 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "pthai"
   ],
   [
+    "qodo-ai",
+    "qodo"
+  ],
+  [
     "quizlet-ai",
     "quizlet"
   ],
@@ -269,6 +285,14 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "runway"
   ],
   [
+    "skyline-ai-proptech",
+    "skyline-ai"
+  ],
+  [
+    "spellbook-legal",
+    "spellbook"
+  ],
+  [
     "sweep-ai",
     "sweep"
   ],
@@ -289,6 +313,14 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
     "typeform"
   ],
   [
+    "undermind-ai",
+    "undermind"
+  ],
+  [
+    "v0",
+    "v0-by-vercel"
+  ],
+  [
     "v0-dev",
     "v0"
   ],
@@ -303,7 +335,11 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   [
     "wellsaid-labs",
     "wellsaid"
+  ],
+  [
+    "writer-ai",
+    "writer"
   ]
 ])
 
-export const MERGED_LAST_GENERATED_AT = '2026-06-01T06:05:16.839Z'
+export const MERGED_LAST_GENERATED_AT = '2026-06-10T09:54:38.853Z'
