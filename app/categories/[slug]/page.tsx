@@ -28,6 +28,7 @@ import { CornerstoneSection } from '@/components/seo/cornerstone-section'
 import { getCornerstone } from '@/lib/cornerstones/registry'
 import { UpdatedBadge } from '@/components/shared/updated-badge'
 import { getLastChangedAt } from '@/lib/seo/freshness'
+import { getRelatedBestPages } from '@/lib/seo/best-page-links'
 import type { PricingType, Platform, SkillLevel } from '@/types'
 
 type PageProps = {
@@ -129,6 +130,13 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     { name: category.name, url: `https://rightaichoice.com/categories/${slug}` },
   ])
 
+  // Dept D — /best guides relevant to this category (static config match).
+  const relatedBestPages = getRelatedBestPages({
+    categorySlugs: [slug],
+    text: `${category.name} ${category.description ?? ''}`,
+    limit: 6,
+  })
+
   // Phase 9 (2026-05-28): cornerstone editorial layer. When the slug has a
   // registered cornerstone, render the long-form editorial above the
   // listing AND emit Article + FAQPage JSON-LD so the page can rank for
@@ -200,6 +208,26 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                   conversion intent on a category page is right after the user
                   reads "what is this category" copy. */}
               <PlanCTAInline context={`${category.name} AI tools`} />
+            </div>
+          )}
+
+          {/* Dept D (fable 5 review) — internal links into the /best guides
+              for this category (indexed but ~pos 69; the footer hub was
+              their only inbound link). */}
+          {relatedBestPages.length > 0 && (
+            <div className="mb-8 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Best-of guides:
+              </span>
+              {relatedBestPages.map((bp) => (
+                <Link
+                  key={bp.slug}
+                  href={`/best/${bp.slug}`}
+                  className="rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-sm text-zinc-400 hover:border-emerald-800/50 hover:text-emerald-300 transition-colors"
+                >
+                  {bp.label}
+                </Link>
+              ))}
             </div>
           )}
 
