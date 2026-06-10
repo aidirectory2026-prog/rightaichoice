@@ -28,6 +28,12 @@ async function mirrorServerEvent(args: {
   ip?: string | null
   pagePath?: string | null
   insertId?: string
+  /** Attribution-fix (2026-06-10) — request UA, stored for retroactive bot
+   *  forensics. Server-mirrored rows previously had user_agent=null forever,
+   *  so historical tool_visit_redirected inflation couldn't be re-classified. */
+  userAgent?: string | null
+  /** Caller-determined bot flag (e.g. UA regex on the redirect route). */
+  botLikely?: boolean
 }): Promise<void> {
   try {
     const db = getAdminClient()
@@ -41,7 +47,8 @@ async function mirrorServerEvent(args: {
         page_path: args.pagePath ?? null,
         source_kind: 'server',
         ip: args.ip ?? null,
-        bot_likely: false,
+        user_agent: args.userAgent ? args.userAgent.slice(0, 300) : null,
+        bot_likely: args.botLikely ?? false,
         insert_id: args.insertId ?? crypto.randomUUID(),
         created_at: new Date().toISOString(),
       }] as never,
@@ -160,7 +167,7 @@ export const serverAnalytics = {
       properties: { tool_id: toolId, rating, source: 'server' },
     })
   },
-  toolVisitRedirected(distinctId: string, toolSlug: string, referrerPath: string, ip?: string) {
+  toolVisitRedirected(distinctId: string, toolSlug: string, referrerPath: string, ip?: string, userAgent?: string | null) {
     // Fires from the server-side /api/tools/[slug]/visit affiliate redirect
     // handler — this is the authoritative revenue event. Client also fires
     // tool_visit_clicked; Mixpanel de-dupes via $insert_id on the server call.
@@ -176,6 +183,7 @@ export const serverAnalytics = {
       pagePath: referrerPath,
       insertId,
       properties: props,
+      userAgent,
     })
     return trackServer({
       event: 'tool_visit_redirected',

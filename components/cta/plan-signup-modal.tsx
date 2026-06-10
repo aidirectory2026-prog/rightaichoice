@@ -107,7 +107,21 @@ export function PlanSignupModal({
     analytics.planSignupModalOAuthClicked({ provider })
     // Stash goal + original page so auth-provider can persist them after
     // the OAuth round-trip with full provenance intact.
-    if (typedGoal.trim()) stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
+    if (typedGoal.trim()) {
+      stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
+      // Attribution-fix (2026-06-10) — ALSO persist immediately (keepalive,
+      // fire-and-forget, outcome='unknown') so the typed goal survives even
+      // when the OAuth round-trip never completes (28d of data showed 5 OAuth
+      // clicks → 0 plan_intents rows during the chunked-cookie OAuth bug).
+      // If OAuth completes, auth-provider writes a second row with
+      // signup_outcome='completed_*' — analysts dedupe on outcome.
+      void persistPlanIntent({
+        typed_goal: typedGoal,
+        source_surface: sourceSurface,
+        signup_outcome: 'unknown',
+        page_path: effectivePagePath(),
+      })
+    }
     sessionStorage.setItem('plan_signup_provider', provider)
 
     // Phase 9 S2: client-side OAuth init (reliable PKCE — see lib/auth/oauth-client.ts).

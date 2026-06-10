@@ -40,6 +40,9 @@ type MirrorEvent = {
   page_path?: string
   referrer?: string
   device_type?: 'mobile' | 'tablet' | 'desktop'
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
   first_touch_utm_source?: string
   first_touch_referrer?: string
   first_touch_landing?: string
@@ -156,6 +159,73 @@ async function mirrorFlush() {
   }
 }
 
+// ── Attribution-fix (2026-06-10) — session id + first-touch fallback ──
+// Mirror-side session identifier: one UUID per browser tab session
+// (sessionStorage), independent of Mixpanel. Rides in properties.session_id
+// on every mirrored event so SQL can group events into sessions without a
+// schema migration.
+const SESSION_ID_KEY = 'rac_session_id'
+function getSessionId(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    let id = sessionStorage.getItem(SESSION_ID_KEY)
+    if (!id) {
+      id = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+      sessionStorage.setItem(SESSION_ID_KEY, id)
+    }
+    return id
+  } catch {
+    return null // storage blocked — events still flow, just sessionless
+  }
+}
+
+// First-touch attribution fallback persisted in localStorage, captured on the
+// FIRST mirrored event and never overwritten. Mixpanel's register_once does
+// the same job, but its store is wiped by mixpanel.reset() (logout) and is
+// unavailable until the SDK boots — this copy survives both.
+const FIRST_TOUCH_KEY = 'rac_first_touch_v1'
+type FirstTouch = { referrer: string; landing: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }
+function getFirstTouchFallback(): FirstTouch | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(FIRST_TOUCH_KEY)
+    if (raw) return JSON.parse(raw) as FirstTouch
+    const params = new URLSearchParams(window.location.search)
+    const ft: FirstTouch = {
+      referrer: document.referrer || 'direct',
+      landing: window.location.pathname,
+    }
+    for (const k of ['utm_source', 'utm_medium', 'utm_campaign'] as const) {
+      const v = params.get(k)
+      if (v) ft[k] = v.slice(0, 200)
+    }
+    localStorage.setItem(FIRST_TOUCH_KEY, JSON.stringify(ft))
+    return ft
+  } catch {
+    return null
+  }
+}
+
+// Current-URL UTM params, read at event time so every mirrored event carries
+// last-touch campaign attribution (user_events.utm_* columns were always null
+// because the client never sent these fields).
+function getCurrentUtm(): { utm_source?: string; utm_medium?: string; utm_campaign?: string } {
+  if (typeof window === 'undefined') return {}
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const out: { utm_source?: string; utm_medium?: string; utm_campaign?: string } = {}
+    for (const k of ['utm_source', 'utm_medium', 'utm_campaign'] as const) {
+      const v = params.get(k)
+      if (v) out[k] = v.slice(0, 200)
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 // Pull super-prop snapshot from mixpanel-browser so each mirrored event
 // carries the same context Mixpanel has. Lazy — only on flush, not on every
 // enqueue, so we don't import mixpanel-browser repeatedly.
@@ -192,15 +262,36 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
   if (typeof propsSnapshot.clarity_session_id === 'string' && propsSnapshot.clarity_session_id.length > 0) {
     mergedProps.clarity_session_id = propsSnapshot.clarity_session_id
   }
+  // Attribution-fix (2026-06-10) — session id + automation signal travel in
+  // properties (JSONB) so no DDL is needed. navigator.webdriver=true is the
+  // standard headless/automation marker (Playwright, Puppeteer, Selenium);
+  // /api/track-mirror folds it into bot_likely.
+  const sessionId = getSessionId()
+  if (sessionId) mergedProps.session_id = sessionId
+  try {
+    if (typeof navigator !== 'undefined' && (navigator as { webdriver?: boolean }).webdriver === true) {
+      mergedProps.webdriver = true
+    }
+  } catch { /* ignore */ }
+  // First-touch: prefer the Mixpanel super-prop (historical continuity),
+  // fall back to our localStorage copy when the SDK store is empty/reset.
+  const ftFallback = getFirstTouchFallback()
+  const utm = getCurrentUtm()
   return {
     event_name: eventName,
     distinct_id: distinctId,
     auth_state: (propsSnapshot.auth_state as 'anon' | 'known' | undefined) ?? 'anon',
     device_type: propsSnapshot.device_type as 'mobile' | 'tablet' | 'desktop' | undefined,
     page_path: propsSnapshot.page_path as string | undefined,
-    first_touch_utm_source: propsSnapshot.first_touch_utm_source as string | undefined,
-    first_touch_referrer: propsSnapshot.first_touch_referrer as string | undefined,
-    first_touch_landing: propsSnapshot.first_touch_landing as string | undefined,
+    utm_source: utm.utm_source,
+    utm_medium: utm.utm_medium,
+    utm_campaign: utm.utm_campaign,
+    first_touch_utm_source:
+      (propsSnapshot.first_touch_utm_source as string | undefined) ?? ftFallback?.utm_source,
+    first_touch_referrer:
+      (propsSnapshot.first_touch_referrer as string | undefined) ?? ftFallback?.referrer,
+    first_touch_landing:
+      (propsSnapshot.first_touch_landing as string | undefined) ?? ftFallback?.landing,
     referrer: typeof document !== 'undefined' ? document.referrer : undefined,
     properties: mergedProps,
     insert_id: typeof crypto !== 'undefined' ? crypto.randomUUID() : undefined,
