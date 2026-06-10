@@ -60,7 +60,9 @@ Every unit of work done under [`Plan_phase-10-fable-5-review.md`](./Plan_phase-1
 
 **Verification:** `tsc --noEmit` + `eslint` clean. Post-merge checks: human visits collapse to ~5/day baseline; `click_logs` rows start appearing; uBlock browser still records plan intent.
 
-**⚠️ Needs founder:** `gh` CLI is not installed and the local GitHub token lacks API access, so the PR couldn't be opened/merged from this machine. Open + squash-merge here: https://github.com/aidirectory2026-prog/rightaichoice/pull/new/fable5-review (or install GitHub CLI: `brew install gh && gh auth login`).
+**MERGED 2026-06-10** — PR #11 (`ced60c4`), squash-merged by founder via GitHub web. Vercel auto-deploy in progress; post-deploy verification (human-baseline visits, click_logs rows appearing) tracked under Dept C's observation week.
+
+**Status: done.**
 
 ## Department B — Conversion / CTA Architecture
 
