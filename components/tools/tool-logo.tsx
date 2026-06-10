@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import { resolveToolLogoUrl } from '@/lib/tool-logo'
+import { ToolLogoImage } from './tool-logo-image'
 
 type ToolLogoInput = {
   name: string
@@ -25,13 +25,13 @@ export function ToolLogo({ tool, size, className, fallbackClassName }: ToolLogoP
   return (
     <div className={containerClass} style={{ width: size, height: size }}>
       {src ? (
-        <Image
+        <ToolLogoImage
           src={src}
           alt={tool.name}
-          width={size}
-          height={size}
-          className="h-full w-full object-contain p-1"
+          size={size}
           unoptimized={src.includes('google.com/s2/favicons')}
+          fallbackClass={fallbackClass}
+          fallbackChar={tool.name.charAt(0).toUpperCase()}
         />
       ) : (
         <span className={fallbackClass} style={{ fontSize: size * 0.4 }}>
