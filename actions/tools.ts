@@ -1,8 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { toggleSaveTool, logPageView, logClick } from '@/lib/data/tools'
+import { isBotUserAgent } from '@/lib/bot-detection'
 import { slugify } from '@/lib/utils/slugify'
 
 type ActionState = { error?: string; success?: string } | null
@@ -333,10 +335,16 @@ export async function toggleSave(toolId: string): Promise<{ saved: boolean; erro
   return { saved, error: null }
 }
 
-export async function recordPageView(path: string, toolId?: string) {
+export async function recordPageView(path: string, toolId?: string, referrer?: string | null) {
+  // Attribution-fix (2026-06-10) — skip bot/automation traffic. The visit and
+  // views routes already filter on the same shared detector; this table now
+  // matches instead of counting every JS-executing crawler as a page view.
+  const h = await headers()
+  if (isBotUserAgent(h.get('user-agent'))) return
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  await logPageView(path, toolId, user?.id)
+  await logPageView(path, toolId, user?.id, referrer ?? null)
 }
 
 export async function recordClick(toolId: string, source: string) {

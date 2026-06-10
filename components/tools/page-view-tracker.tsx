@@ -18,7 +18,11 @@ export function PageViewTracker({
   useEffect(() => {
     if (tracked.current) return
     tracked.current = true
-    recordPageView(path, toolId).catch(() => {})
+    // Attribution-fix (2026-06-10) — pass document.referrer through to the
+    // page_views insert. The column existed since 001_initial_schema but was
+    // never populated (100% null), making page_views useless for attribution.
+    const referrer = typeof document !== 'undefined' ? document.referrer || null : null
+    recordPageView(path, toolId, referrer).catch(() => {})
     if (toolId && toolSlug) {
       analytics.toolPageViewed(toolId, toolSlug)
     }

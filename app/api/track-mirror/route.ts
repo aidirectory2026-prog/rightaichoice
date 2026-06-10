@@ -204,6 +204,20 @@ export async function POST(req: NextRequest) {
     // Clarity session ID rides along inside event properties; lift it to
     // a column for fast filter + JOIN to the replay deep-link.
     const claritySid = typeof props.clarity_session_id === 'string' ? props.clarity_session_id : null
+    // Attribution-fix (2026-06-10) — persist first-touch referrer/landing in
+    // properties (JSONB): user_events has no dedicated columns for them, and
+    // without this they were silently dropped, leaving first_touch_utm_source
+    // as the only retro-queryable first-touch signal.
+    if (typeof e.first_touch_referrer === 'string' && e.first_touch_referrer && props.first_touch_referrer === undefined) {
+      props.first_touch_referrer = e.first_touch_referrer.slice(0, 400)
+    }
+    if (typeof e.first_touch_landing === 'string' && e.first_touch_landing && props.first_touch_landing === undefined) {
+      props.first_touch_landing = e.first_touch_landing.slice(0, 400)
+    }
+    // navigator.webdriver=true (Playwright/Puppeteer/Selenium) marks the whole
+    // row as bot even when the UA regex misses — stealth-headless browsers
+    // ship stock Chrome UAs.
+    const rowBotLikely = botLikely || props.webdriver === true
     // user_id is STRICTLY server-resolved from the auth cookie. Never
     // trust whatever the client put in the payload — otherwise a hostile
     // client could spoof events as any user and inflate the unique-users
@@ -229,7 +243,7 @@ export async function POST(req: NextRequest) {
       region,
       clarity_session_id: claritySid,
       insert_id: e.insert_id ?? null,
-      bot_likely: botLikely,
+      bot_likely: rowBotLikely,
       created_at: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
     }
   })

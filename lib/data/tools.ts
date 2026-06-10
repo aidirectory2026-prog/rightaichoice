@@ -855,13 +855,16 @@ export async function toggleSaveTool(toolId: string, userId: string): Promise<bo
   }
 }
 
-export async function logPageView(path: string, toolId?: string, userId?: string) {
+export async function logPageView(path: string, toolId?: string, userId?: string, referrer?: string | null) {
   const supabase = await createClient()
   await supabase.from('page_views').insert({
     path,
     tool_id: toolId ?? null,
     user_id: userId ?? null,
-  })
+    // Attribution-fix (2026-06-10) — column existed since 001 but every row
+    // was null because no caller ever passed it.
+    referrer: referrer ? referrer.slice(0, 400) : null,
+  } as never)
 }
 
 export async function logClick(toolId: string, source: string, userId?: string) {

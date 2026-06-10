@@ -91,7 +91,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const clientDistinct = url.searchParams.get('d')?.slice(0, 64) || null
     const referrerPath = url.searchParams.get('ref')?.slice(0, 256) || '/'
     const distinctId = user?.id ?? clientDistinct ?? `anon-${getClientIp(req) ?? 'unknown'}`
-    void serverAnalytics.toolVisitRedirected(distinctId, slug, referrerPath, getClientIp(req))
+    // Attribution-fix (2026-06-10) — pass the UA so the mirrored row stores
+    // it; historical rows had user_agent=null, blocking retro bot analysis.
+    void serverAnalytics.toolVisitRedirected(distinctId, slug, referrerPath, getClientIp(req), req.headers.get('user-agent'))
   }
 
   return NextResponse.redirect(destination, { status: 302 })
