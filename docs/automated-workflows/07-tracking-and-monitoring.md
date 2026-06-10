@@ -1,5 +1,10 @@
 # Tracking & Monitoring
 
+> ⚠️ **Out of date (April 2026).** Phase 8–10 added the real monitoring layer: every cron self-logs
+> to `pipeline_runs` (Knowledge Room at `/admin/updates`); `alert-failed-pipelines` (now a **Vercel**
+> cron) emails via Resend; and **pg_cron** runs a stuck-row sweep, three heartbeats (silence
+> detection), and a freshness-SLA monitor. See [README.md](./README.md) for the current inventory.
+
 ## Where to Check Pipeline Health
 
 ### 1. GitHub Actions — Run History

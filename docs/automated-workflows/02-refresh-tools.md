@@ -1,5 +1,10 @@
 # Workflow 2: Refresh Tools (Data Freshness Pipeline)
 
+> ⚠️ **Partially out of date (April 2026).** Phase 10 changed this pipeline substantially:
+> it's now **tier-aware** (daily top-150 + standard), runs **twice daily at batch 500** (≤3-day
+> SLA), uses **DeepSeek** (not Anthropic), authenticates the GitHub-stars fetch, and **won't
+> overwrite editorial fields when a scrape fails**. See [README.md](./README.md) for the current state.
+
 ## Purpose
 Re-analyzes existing tools to keep their data current. Fetches fresh website content, re-runs Claude AI analysis, updates GitHub stars, and stamps `last_verified_at` so the platform never serves stale information.
 

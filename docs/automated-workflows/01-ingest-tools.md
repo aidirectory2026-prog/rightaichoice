@@ -1,5 +1,10 @@
 # Workflow 1: Ingest Tools (Daily New-Tool Pipeline)
 
+> ⚠️ **Partially out of date (April 2026).** Phase 10 changes: new tools now insert as
+> **draft (`is_published=false`)** and publish only via the gated SOP lane once all quality gates
+> pass; **discovery** uses the ProductHunt GraphQL + GitHub Search APIs (not HTML scraping); dedup
+> skips multi-tenant hosts; and enrich no longer fabricates pricing. See [README.md](./README.md).
+
 ## Purpose
 Automatically discovers new AI tools from multiple sources across the internet, deduplicates them against existing tools in the database, enriches them with structured metadata using Claude AI, and inserts them into the `tools` table — fully published and ready for users.
 
