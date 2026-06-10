@@ -99,3 +99,31 @@ missing-ORDER-BY issue did not manifest; treat as verified for current data volu
 - /admin/seo-pulse, niche-tracker, ai-citations, freshness, tracking-health, data-audit: source-trace + spot checks.
 - bot_likely precision/recall sample (200 bot + 200 human UAs, manual classification).
 - range.ts custom-range consumer sweep (`.lt` vs `.lte` vs RPCs ignoring p_end).
+
+---
+
+## bot_likely precision/recall sample (agent-audited, 2026-06-11)
+
+**Window:** last 30 days (19,475 events; 3,714 flagged bot, 15,761 flagged human). Method: every distinct UA classified by hand (flagged-true side has only 13 UAs + NULL; flagged-false top ~90 UAs cover >95% of volume), ambiguous UAs resolved behaviorally (engagement mix, visitor-to-IP ratios, country concentration, page spread). Estimates weighted by event count.
+
+| Metric | Value | Math |
+|---|---|---|
+| Precision | ≈100% | 3,714 / 3,714 — no flagged-bot UA looks human |
+| **Recall** | **≈29–30%** | 3,714 / 12,342 true-bot events |
+| "Human" events that are actually bot | **8,628 of 15,761 (~55%)** | SG farm 7,460 + auth prober 944 + dev-builds 194 + named bots 25 + fake-UA 5 |
+
+Flagged-true composition (all correct): 2,073 NULL-UA server redirect fetches; 1,388 HeadlessChrome; 253 named crawlers.
+
+**True human picture (30d):** ~7,100 events — of which ~3,900 are the owner's own devices → **genuine third-party human traffic ≈ 3,200 events/30d, ~6× smaller than dashboards currently show.**
+
+Top false-negative signatures: Win10 Chrome/103–133 stale-version band (7,460 ev, ~1,323 "visitors" ≈ 977 IPs, 97% Singapore, 4,732 auto-scrolls, **0 time_on_page, 0 tool clicks**); Chrome/142.x auth prober (944 ev, 118 ids on 13 IPs, only /login /signup /plan /); dev-build UA strings (`Chrome/\d+.0.…0`); `OAI-SearchBot` (regex gap — `oai-searchbot` missing); `TPCWorker`, `newsai/1.0`; impossible UA combos (Safari 10 on iOS 14).
+
+Special checks: webdriver=true ⇒ bot_likely=true holds (16/16, zero violations). Server-mirrored events: 99.7% NULL user_agent pre-2026-06-10 (UA pass-through shipped then); NULL-UA→bot convention does NOT apply on the server path (`mirrorServerEvent` defaults `botLikely ?? false`) — sentiment/auth server events ride as human (acceptable: authenticated), but reference-repo vs deployed flagging of `tool_visit_redirected` should be reconciled.
+
+## ❌ FINDING F7 — UA-regex-only bot detection misses ~70% of bot events; "human" metrics ~2× inflated
+
+- **Where:** `lib/bot-detection.ts` BOT_UA_REGEX (sole signal besides webdriver), consumed by track-mirror; every insights RPC filters on bot_likely=false.
+- **Observed:** see table above. The SG farm alone = 38% of all events counted as human; scroll-depth metrics are the worst-poisoned (4,732 fake scrolls).
+- **Impact:** every bot-excluded dashboard number (visitors, page views, engagement, funnel tops) is roughly **2× its true value**; after real bot removal, ~55% of remaining traffic is the owner's own devices.
+- **Repro:** `SELECT country, count(*), count(*) FILTER (WHERE event_name='time_on_page') FROM user_events WHERE created_at >= now()-interval '30 days' AND bot_likely=false AND user_agent ~ 'Windows NT 10\.0.*Chrome/1(0[3-9]|1[0-9]|2[0-9]|3[0-3])' AND user_agent NOT ILIKE '%edg%' GROUP BY 1` → SG ≈ 7,138 events, 0 time_on_page.
+- **Fix direction (Phase 2, high priority):** (1) regex additions: `oai-searchbot`, `tpcworker`, `newsai`; (2) behavioral second-pass classifier as a nightly SQL job (≥N events with zero time_on_page/tool clicks; visitor-to-IP ratio ≫1 on auth pages); (3) ingest heuristics: desktop Chrome major-version >12 behind current = bot-likely; dev-build patch patterns; (4) **one-time backfill** re-flagging SG-band + prober signatures so historical dashboards correct; (5) exclude owner's user_id from default insights views (separate "team traffic" toggle).
