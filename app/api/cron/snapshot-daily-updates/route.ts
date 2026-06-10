@@ -61,19 +61,26 @@ const handler = cronRoute({ pipelineKey: 'snapshot-daily-updates' }, async (ctx)
     .select('id', { count: 'exact', head: true })
     .gte('latest_updates_at', startISO)
 
-  // ── Bing direct submission lifetime delta — pulled from bing_submit_state
-  const { data: bingState } = await supabase
-    .from('bing_submit_state')
-    .select('lifetime_submitted, last_run_utc')
-    .eq('id', 1)
-    .single()
-  const bingToday =
-    bingState && (bingState as { last_run_utc: string }).last_run_utc?.startsWith(today)
-      ? // The state row only tracks lifetime — exact per-day delta needs
-        // a separate log we don't have yet. Approximation: if the cron
-        // ran today, ~100 URLs were submitted (the typical daily quota).
-        100
-      : 0
+  // ── Bing direct submissions today — real count from the cron's own run
+  // log (items_succeeded), not the old "assume 100 if it ran" approximation.
+  // (Fable-5 review Dept A — dashboard previously showed a hardcoded 100.)
+  const { data: bingRuns } = await supabase
+    .from('pipeline_runs')
+    .select('items_succeeded')
+    .eq('pipeline_key', 'submit-urls-bing')
+    .eq('status', 'success')
+    .gte('started_at', startISO)
+  const bingToday = ((bingRuns ?? []) as Array<{ items_succeeded: number | null }>).reduce(
+    (sum, r) => sum + (r.items_succeeded ?? 0),
+    0,
+  )
+
+  // ── IndexNow pings today — real count of pages stamped by cascade-hubs
+  // (previously hardcoded 0 even when pings fired).
+  const { count: indexnowToday } = await supabase
+    .from('pages_freshness')
+    .select('page_path', { count: 'exact', head: true })
+    .gte('last_indexnow_at', startISO)
 
   // ── Catalog snapshot
   const { count: totalPublished } = await supabase
@@ -113,7 +120,7 @@ const handler = cronRoute({ pipelineKey: 'snapshot-daily-updates' }, async (ctx)
     compares_cascade_failed: 0,
     tools_latest_updates_refreshed: latestRefreshedCount ?? 0,
     bing_urls_submitted: bingToday,
-    indexnow_urls_pinged: 0,
+    indexnow_urls_pinged: indexnowToday ?? 0,
     refreshed_slugs_sample: refreshedOk
       .map((r) => r.tool_slug)
       .filter((s): s is string => !!s)

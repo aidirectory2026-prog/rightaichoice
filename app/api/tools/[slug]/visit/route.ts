@@ -15,6 +15,31 @@ function getClientIp(request: Request): string | undefined {
   )
 }
 
+// Fable-5 review (Dept A) — UA-regex alone missed crawlers with browser UAs
+// fetching this URL directly: 1,762 of 1,836 tool_visit_redirected events in
+// 14 days had referrer '/' + anon-IP distinct_ids (645 unique IPs). A real
+// click on VisitWebsiteButton is a same-origin navigation: the browser sends
+// Sec-Fetch-Site and/or a same-host Referer, and the button appends ?d= when
+// Mixpanel is up. A request with NONE of those is a direct fetch — redirect
+// it, but never count it.
+function hasSameOriginEvidence(req: NextRequest): boolean {
+  const sfs = req.headers.get('sec-fetch-site')
+  if (sfs === 'same-origin' || sfs === 'same-site') return true
+  if (sfs) return false // cross-site / none — direct fetch, not our button
+  // Older browsers without Sec-Fetch-*: fall back to Referer host match.
+  const referer = req.headers.get('referer')
+  if (referer) {
+    try {
+      return new URL(referer).host === req.nextUrl.host
+    } catch {
+      return false
+    }
+  }
+  // No Sec-Fetch-Site and no Referer: only count if the client button
+  // stamped its Mixpanel distinct_id onto the URL.
+  return !!req.nextUrl.searchParams.get('d')
+}
+
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
   const supabase = await createClient()
@@ -39,7 +64,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   // only 4 client-side tool_visit_clicked events; much of that gap was
   // speculative/automated loads inflating revenue-critical click counts.
   // We still redirect them (harmless) but skip the click_logs insert + event.
-  const countable = !isNonHumanRequest(req.headers, req.method)
+  const countable = !isNonHumanRequest(req.headers, req.method) && hasSameOriginEvidence(req)
 
   if (countable) {
     // Log click — fire and forget

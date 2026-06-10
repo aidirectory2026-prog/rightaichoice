@@ -14,7 +14,7 @@
  * navigation is never blocked by a failed persist call.
  */
 
-import { analytics, getMixpanelDistinctId } from '@/lib/analytics'
+import { analytics, getDistinctIdWithFallback } from '@/lib/analytics'
 
 type Surface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
 type Outcome = 'completed_google' | 'completed_linkedin' | 'skipped' | 'unknown'
@@ -81,7 +81,8 @@ export async function persistPlanIntent(opts: {
   page_path?: string
 }): Promise<void> {
   if (typeof window === 'undefined') return
-  const distinctId = getMixpanelDistinctId() ?? ''
+  // Dept A — fallback id so a blocked/late Mixpanel SDK never loses the goal.
+  const distinctId = getDistinctIdWithFallback() ?? ''
   if (!distinctId || !opts.typed_goal.trim()) return
   try {
     await fetch('/api/plan/intent', {
@@ -111,7 +112,9 @@ export async function persistPlanIntent(opts: {
  */
 export async function linkPlanIntentsToUser(): Promise<void> {
   if (typeof window === 'undefined') return
-  const distinctId = getMixpanelDistinctId() ?? ''
+  // Same fallback as persistPlanIntent — rows written under the fb- id must
+  // be linkable with the same id after auth.
+  const distinctId = getDistinctIdWithFallback() ?? ''
   if (!distinctId) return
   try {
     const res = await fetch('/api/plan/intent/link', {
