@@ -32,6 +32,10 @@ export async function submitReview(
   if (pros.length < 10) return { error: 'Pros must be at least 10 characters.' }
   if (cons.length < 10) return { error: 'Cons must be at least 10 characters.' }
   if (use_case.length < 10) return { error: 'Use case must be at least 10 characters.' }
+  // Phase 10 #29 — cap lengths (was unbounded; a huge payload could bloat the row).
+  if (pros.length > 2000 || cons.length > 2000 || use_case.length > 2000) {
+    return { error: 'Each field must be under 2000 characters.' }
+  }
 
   // Check for duplicate
   const { data: existing } = await supabase
@@ -55,7 +59,11 @@ export async function submitReview(
     skill_level,
   })
 
-  if (error) return { error: error.message }
+  // Phase 10 #29 — opaque error (don't leak DB internals to the client).
+  if (error) {
+    console.error('submitReview insert failed:', error)
+    return { error: 'Could not submit your review. Please try again.' }
+  }
 
   // Update review_count on tools and profiles
   await Promise.all([

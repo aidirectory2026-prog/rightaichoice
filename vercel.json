@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
+      "path": "/api/cron/cascade-hubs",
+      "schedule": "0 * * * *"
+    },
+    {
       "path": "/api/cron/scrape-sentiment",
       "schedule": "0 4 * * 0"
     },
@@ -52,6 +56,10 @@
     {
       "path": "/api/cron/onboard-tools",
       "schedule": "7,37 * * * *"
+    },
+    {
+      "path": "/api/cron/onboard-tools?mode=sop",
+      "schedule": "17,47 * * * *"
     }
   ]
 }

@@ -5,13 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
+// Phase 10 #69 — duplicate slugify removed (had no importers and diverged from
+// the canonical lib/utils/slugify.ts, risking mismatched slugs). Use
+// `@/lib/utils/slugify` everywhere.
 
 export function formatNumber(n: number): string {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`

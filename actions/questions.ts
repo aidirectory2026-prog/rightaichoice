@@ -39,6 +39,11 @@ export async function submitQuestion(
     return { error: 'Description must be at least 20 characters.' }
   }
 
+  // Phase 10 #29 — cap lengths (was unbounded).
+  if (title.length > 300 || body.length > 5000) {
+    return { error: 'Your question is too long.' }
+  }
+
   const { error } = await supabase.from('questions').insert({
     tool_id,
     user_id: user.id,

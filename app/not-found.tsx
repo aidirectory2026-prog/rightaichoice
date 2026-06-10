@@ -1,4 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+
+// Phase 10 #47 — explicit title + noindex (the 404 status already prevents
+// indexing; this is the defensive best-practice belt-and-suspenders).
+export const metadata: Metadata = {
+  title: 'Page not found — RightAIChoice',
+  robots: { index: false, follow: true },
+}
 
 export default function NotFound() {
   return (

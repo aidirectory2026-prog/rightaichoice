@@ -18,6 +18,9 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 const DEEPSEEK_MODEL = 'deepseek-chat'
 const BATCH_SIZE = 10 // tools per DeepSeek call
+// Phase 10 #75 — preview mode (matches the repo's dry/apply convention). With
+// --dry-run we classify + report but never write tool_categories rows.
+const DRY = process.argv.includes('--dry-run')
 
 interface Category {
   id: string
@@ -243,6 +246,13 @@ async function main() {
         continue
       }
 
+      if (DRY) {
+        rowsInserted += rows.length
+        toolsCategorized++
+        if (examples.length < 8) examples.push({ name: tool.name, slugs })
+        continue
+      }
+
       const { error: insErr } = await supabase
         .from('tool_categories')
         .upsert(rows as never, { onConflict: 'tool_id,category_id', ignoreDuplicates: true })
@@ -258,7 +268,7 @@ async function main() {
   }
 
   console.log('\n──────────────────────────────────────────')
-  console.log('[backfill-categories] SUMMARY')
+  console.log(`[backfill-categories] SUMMARY${DRY ? ' (DRY RUN — no writes)' : ''}`)
   console.log(`  tools processed:    ${processed}`)
   console.log(`  tools categorized:  ${toolsCategorized}`)
   console.log(`  rows inserted:      ${rowsInserted}`)

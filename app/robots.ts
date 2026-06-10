@@ -6,7 +6,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/dashboard', '/auth/', '/api/'],
+        // Phase 10 #46 — also block /mp (internal mirror/redirect catch-all);
+        // a wildcard route is a classic source of accidentally-indexed junk.
+        disallow: ['/admin', '/dashboard', '/auth/', '/api/', '/mp'],
       },
       // Defensive explicit allow for AI / LLM crawlers + training bots.
       // `*` already covers them, but listing them by name is a stronger

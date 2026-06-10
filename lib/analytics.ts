@@ -285,7 +285,18 @@ export const analytics = {
       role?: string
     },
   ) {
-    identifyInternal(userId, traits)
+    // Privacy: never send the raw email address to Mixpanel. Reduce it to the
+    // domain only, matching the site-wide email_domain-only policy enforced in
+    // track-mirror and the keystroke PII scrub. (Phase 10 #25)
+    let safeTraits: EventProperties | undefined = traits
+    if (traits && 'email' in traits) {
+      const { email, ...rest } = traits
+      safeTraits = { ...rest }
+      if (typeof email === 'string' && email.includes('@')) {
+        safeTraits.email_domain = email.split('@')[1]
+      }
+    }
+    identifyInternal(userId, safeTraits)
   },
   /**
    * Super properties are attached to every subsequent event. Use this for

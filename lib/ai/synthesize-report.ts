@@ -226,5 +226,37 @@ Return ONLY the JSON — no markdown fences, no explanation.`
   }
   if (report.momentum && !Array.isArray(report.momentum.drivers)) report.momentum.drivers = []
 
+  // Phase 10 #35 — guarantee every object the report UI reads exists, so a model
+  // that omits a section can never throw an unguarded `.tiers`/`.topics` access
+  // and white-screen the (error-boundary-less) report page.
+  if (typeof report.ai_verdict !== 'string') report.ai_verdict = ''
+  if (!['positive', 'mixed', 'negative'].includes(report.sentiment_score as string)) {
+    report.sentiment_score = 'mixed'
+  }
+  if (!report.sentiment_breakdown || typeof report.sentiment_breakdown !== 'object') {
+    report.sentiment_breakdown = {}
+  }
+  if (!Array.isArray(report.themes)) report.themes = []
+  if (!Array.isArray(report.best_for)) report.best_for = []
+  if (!Array.isArray(report.not_for)) report.not_for = []
+  if (!report.pricing_analysis || typeof report.pricing_analysis !== 'object') {
+    report.pricing_analysis = { tiers: [], hidden_costs: [], verdict: '' }
+  } else {
+    if (!Array.isArray(report.pricing_analysis.tiers)) report.pricing_analysis.tiers = []
+    if (!Array.isArray(report.pricing_analysis.hidden_costs)) report.pricing_analysis.hidden_costs = []
+    if (typeof report.pricing_analysis.verdict !== 'string') report.pricing_analysis.verdict = ''
+  }
+  if (!report.community_buzz || typeof report.community_buzz !== 'object') {
+    report.community_buzz = { volume: 'low', trend: 'stable', topics: [] }
+  } else if (!Array.isArray(report.community_buzz.topics)) {
+    report.community_buzz.topics = []
+  }
+  if (!report.learning_curve || typeof report.learning_curve !== 'object') {
+    report.learning_curve = { time_to_start: '', skill_level: 'beginner', hurdles: [] }
+  } else if (!Array.isArray(report.learning_curve.hurdles)) {
+    report.learning_curve.hurdles = []
+  }
+  if (!Array.isArray(report.integration_insights)) report.integration_insights = []
+
   return report
 }

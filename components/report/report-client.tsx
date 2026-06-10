@@ -93,9 +93,10 @@ export function ReportClient({
         setStatus('generating')
         startPolling()
       } else {
-        // not_generated — trigger generation
-        setStatus('generating')
-        triggerGeneration()
+        // Phase 10 #1 — do NOT auto-trigger paid generation on page load (that
+        // let crawlers/anonymous visits run scrape+LLM across the whole catalog).
+        // Show an explicit "Generate" CTA instead; the user opts in with a click.
+        setStatus('not_generated')
       }
     } catch {
       setError('Failed to load report')
@@ -228,6 +229,28 @@ export function ReportClient({
         >
           <RefreshCw className="h-4 w-4" />
           Try Again
+        </button>
+      </div>
+    )
+  }
+
+  // ── Not-yet-generated State (explicit opt-in, Phase 10 #1) ──
+  if (status === 'not_generated') {
+    return (
+      <div className="py-20 text-center">
+        <Sparkles className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Deep-Dive Report for {toolName}</h2>
+        <p className="text-sm text-zinc-400 mb-6 max-w-md mx-auto">
+          Generate an independent report — pros, cons, market sentiment, pricing breakdown and a
+          buyer-first verdict, built from real community signals. Takes about a minute; we cache it
+          so it&apos;s instant next time.
+        </p>
+        <button
+          onClick={() => { setStatus('generating'); triggerGeneration() }}
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate report
         </button>
       </div>
     )

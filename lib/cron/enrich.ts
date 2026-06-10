@@ -188,14 +188,30 @@ function normalizeEnrichmentPayload(p: Record<string, unknown>): void {
   if (typeof p.has_api !== 'boolean') {
     p.has_api = p.has_api === true || p.has_api === 'true' || p.has_api === 1
   }
-  // pricing_type must match enum; coerce common variants/null to 'contact'
+  // pricing_type must match the enum. Phase 10 #52 — the old coercion dumped
+  // every unrecognized value to 'contact', which falsely implies enterprise
+  // "contact sales" and caused ~38% of the catalog (262 with no pricing data) to
+  // be mislabeled. Recognize far more real signals, and default genuinely-unknown
+  // tools to 'freemium' (the modal AI-tool model) rather than 'contact'.
   const validPricing = new Set(['free', 'freemium', 'paid', 'contact'])
   if (typeof p.pricing_type !== 'string' || !validPricing.has(p.pricing_type as string)) {
     const raw = String(p.pricing_type ?? '').toLowerCase()
-    if (raw.includes('trial')) p.pricing_type = 'freemium'
-    else if (raw.includes('subscription') || raw.includes('paid')) p.pricing_type = 'paid'
+    const hasFreeTier = Array.isArray(p.pricing_details) &&
+      (p.pricing_details as Array<Record<string, unknown>>).some((t) => {
+        const price = String(t?.price ?? '').toLowerCase()
+        return price.includes('free') || price === '$0' || price === '0'
+      })
+    const hasPaidTier = Array.isArray(p.pricing_details) && (p.pricing_details as unknown[]).length > 0
+    if (raw.includes('open') || raw === 'oss' || raw === '$0' || raw === '0' || raw === 'none') p.pricing_type = 'free'
     else if (raw === 'free') p.pricing_type = 'free'
-    else p.pricing_type = 'contact'
+    else if (raw.includes('trial') || raw.includes('freemium') || hasFreeTier) p.pricing_type = 'freemium'
+    else if (raw.includes('enterprise') || raw.includes('custom') || raw.includes('quote') || raw.includes('contact') || raw.includes('sales')) p.pricing_type = 'contact'
+    else if (
+      raw.includes('subscription') || raw.includes('paid') || raw.includes('usage') ||
+      raw.includes('pay') || raw.includes('credit') || raw.includes('seat') ||
+      raw.includes('tier') || raw.includes('month') || raw.includes('/mo') || raw.includes('$')
+    ) p.pricing_type = 'paid'
+    else p.pricing_type = hasPaidTier ? 'paid' : 'freemium'
   }
   // skill_level enum guard
   const validSkill = new Set(['beginner', 'intermediate', 'advanced'])
@@ -225,14 +241,25 @@ function normalizeEnrichmentPayload(p: Record<string, unknown>): void {
       .filter((u) => u && typeof u === 'object')
       .map((u) => {
         const title = (typeof u.title === 'string' && u.title) || (typeof u.headline === 'string' && u.headline) || ''
-        const date = typeof u.date === 'string' ? u.date.slice(0, 40) : ''
+        // Phase 10 #67 — extract a real YYYY-MM-DD (was any 40-char string), to
+        // match the canonical latest-updates path and avoid storing junk dates.
+        const dm = typeof u.date === 'string' ? u.date.match(/\d{4}-\d{2}-\d{2}/) : null
+        const date = dm ? dm[0] : ''
         const source = validSource.has(u.source as string) ? (u.source as string) : 'blog'
         const type = validType.has(u.type as string) ? (u.type as string) : (source === 'changelog' ? 'changelog' : 'news')
         const url = typeof u.url === 'string' && /^https?:\/\//.test(u.url) ? u.url : ''
         const summary = (typeof u.summary === 'string' && u.summary) || (typeof u.headline === 'string' && u.headline.length > 60 ? u.headline : '')
         return { date, source, type, title: title.slice(0, 200), url, summary: summary.slice(0, 280) }
       })
-      .filter((u) => u.title && u.date && u.url)
+      // Require title + url + a parseable date within the last ~90 days (no
+      // fabricated/stale dates), matching lib/cron/latest-updates.ts rules.
+      .filter((u) => {
+        if (!u.title || !u.url || !u.date) return false
+        const t = Date.parse(u.date)
+        if (Number.isNaN(t)) return false
+        const ageDays = (Date.now() - t) / 86_400_000
+        return ageDays >= -2 && ageDays <= 90
+      })
       .slice(0, 5)
   }
   // Coerce null strings in scalar string fields

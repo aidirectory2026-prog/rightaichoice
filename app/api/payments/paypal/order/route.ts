@@ -14,7 +14,7 @@ function getIp(req: Request): string | undefined {
 
 /** POST /api/payments/paypal/order — create a $1 order for one sentiment scan. */
 export async function POST(req: NextRequest) {
-  const rl = rateLimit('pp-order', req, { limit: 10, windowMs: 60_000 })
+  const rl = await rateLimit('pp-order', req, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
   if (!paypalConfigured()) return NextResponse.json({ error: 'paypal_unconfigured' }, { status: 503 })
 

@@ -60,11 +60,12 @@ export const POST = cronRoute({ pipelineKey: 'cascade-hubs' }, async (ctx) => {
 
   // ----- (2) Fetch the "needs ISR" set -----
   // Rows where last_revalidated_at is null OR last_revalidated_at < last_changed_at.
-  // The partial index `idx_pages_freshness_unrevalidated` makes this cheap.
+  // Phase 10 #14 — read from the pages_freshness_needs_isr VIEW: PostgREST can't
+  // do column-to-column comparison in a .or() filter (it treated last_changed_at
+  // as a string literal, erroring the whole run), so the comparison lives in SQL.
   const { data: pending, error: pendErr } = await db
-    .from('pages_freshness')
+    .from('pages_freshness_needs_isr')
     .select('page_path, last_changed_at, last_revalidated_at')
-    .or('last_revalidated_at.is.null,last_revalidated_at.lt.last_changed_at')
     .order('last_changed_at', { ascending: false })
     .limit(MAX_PER_RUN)
 
@@ -137,3 +138,7 @@ export const POST = cronRoute({ pipelineKey: 'cascade-hubs' }, async (ctx) => {
     message: `Cascaded ${revalidated} pages, IndexNow=${fullUrls.length}, safety-resweeps=${safetyCalls}`,
   }
 })
+
+// Phase 10 #13 — Vercel cron fires GET; without this the route 405s on every
+// scheduled run. (Scheduled hourly in vercel.json — Phase 10 #4.)
+export const GET = POST

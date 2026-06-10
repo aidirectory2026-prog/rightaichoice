@@ -21,6 +21,17 @@ export async function saveStack(input: SaveStackInput) {
     return { error: 'You must be logged in to save a stack.' }
   }
 
+  // Phase 10 #17 — the stages/summary blob is user-supplied and was inserted
+  // raw; bound it so a multi-megabyte payload can't bloat the DB / public page.
+  if (!Array.isArray(input.stages)) {
+    return { error: 'Invalid stack data.' }
+  }
+  const stages = input.stages.slice(0, 20)
+  const summary = input.summary && typeof input.summary === 'object' ? input.summary : null
+  if (JSON.stringify({ stages, summary }).length > 100_000) {
+    return { error: 'This stack is too large to save.' }
+  }
+
   const { data, error } = await supabase
     .from('saved_stacks')
     .insert({
@@ -28,10 +39,10 @@ export async function saveStack(input: SaveStackInput) {
       title: input.title.slice(0, 200),
       goal: input.goal.slice(0, 500),
       description: input.description?.slice(0, 1000) || null,
-      stages: input.stages,
-      summary: input.summary || null,
+      stages,
+      summary,
       source: input.source,
-      source_slug: input.sourceSlug || null,
+      source_slug: input.sourceSlug?.slice(0, 200) || null,
     })
     .select('id')
     .single()
@@ -73,11 +84,10 @@ export async function incrementStackView(id: string) {
     column_name: 'view_count',
     row_id: id,
   })
+  // Phase 10 #32 — do NOT fall back to `update({ view_count: 1 })`: that RESET
+  // the counter to 1 on every call. A missed view bump is harmless; clobbering
+  // the real count is not. Just log if the atomic RPC is unavailable.
   if (error) {
-    // Fallback: direct update if RPC doesn't exist
-    await supabase
-      .from('saved_stacks')
-      .update({ view_count: 1 })
-      .eq('id', id)
+    console.warn('[incrementStackView] increment_counter failed:', error.message)
   }
 }

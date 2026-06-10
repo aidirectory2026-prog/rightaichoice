@@ -35,6 +35,7 @@ export function SaveStackButton({
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null) // Phase 10 #31
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const autoSaveAttempted = useRef(false)
@@ -87,12 +88,16 @@ export function SaveStackButton({
       return
     }
 
+    setError(null)
     startTransition(async () => {
       const result = await saveStack(payload)
       if (result.id) {
         setSaved(true)
         setSavedId(result.id)
         fireStackSavedRich(payload, result.id)
+      } else {
+        // Phase 10 #31 — surface the failure instead of silently doing nothing.
+        setError(result.error ?? 'Could not save — please try again.')
       }
     })
   }
@@ -143,22 +148,25 @@ export function SaveStackButton({
   }
 
   return (
-    <button
-      onClick={handleSave}
-      disabled={isPending}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 min-h-[40px] text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors disabled:opacity-50"
-    >
-      {!isLoggedIn ? (
-        <>
-          <LogIn className="h-3.5 w-3.5" />
-          Log in to save
-        </>
-      ) : (
-        <>
-          <Bookmark className="h-3.5 w-3.5" />
-          {isPending ? 'Saving...' : 'Save Stack'}
-        </>
-      )}
-    </button>
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={handleSave}
+        disabled={isPending}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 min-h-[40px] text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors disabled:opacity-50"
+      >
+        {!isLoggedIn ? (
+          <>
+            <LogIn className="h-3.5 w-3.5" />
+            Log in to save
+          </>
+        ) : (
+          <>
+            <Bookmark className="h-3.5 w-3.5" />
+            {isPending ? 'Saving...' : 'Save Stack'}
+          </>
+        )}
+      </button>
+      {error && <p className="text-xs text-rose-400">{error}</p>}
+    </div>
   )
 }

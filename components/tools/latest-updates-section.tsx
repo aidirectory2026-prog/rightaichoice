@@ -164,7 +164,7 @@ export function LatestUpdatesSection({
           <Radio className="h-5 w-5 text-emerald-400" />
           Latest from {toolName}
         </h2>
-        {headerStamp && <span className="text-xs text-zinc-500">Updated {headerStamp}</span>}
+        {headerStamp && <span className="text-xs text-zinc-500" suppressHydrationWarning>Updated {headerStamp}</span>}
       </div>
 
       {/* "What changed lately" recap */}
@@ -231,7 +231,9 @@ export function LatestUpdatesSection({
                   </span>
                   <span className="text-zinc-500">{sm.label}</span>
                   <span className="text-zinc-600">·</span>
-                  <span className="text-zinc-500">{formatDate(item.date)}</span>
+                  {/* Phase 10 #76 — relative time uses Date.now(); suppress the
+                      harmless server/client hydration diff at the day boundary. */}
+                  <span className="text-zinc-500" suppressHydrationWarning>{formatDate(item.date)}</span>
                   {isNewest && (
                     <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
                       Newest

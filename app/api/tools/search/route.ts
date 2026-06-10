@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeLike } from '@/lib/data/_sanitize'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 /**
  * GET /api/tools/search?q=<query>
@@ -9,6 +10,10 @@ import { sanitizeLike } from '@/lib/data/_sanitize'
  * website_url lets the client render a favicon fallback when logo_url is missing/bad.
  */
 export async function GET(request: Request) {
+  // Phase 10 #33 — type-ahead hits the DB on every keystroke; cap per IP.
+  const rl = await rateLimit('tools-search', request, { limit: 40, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   const { searchParams } = new URL(request.url)
   const q = (searchParams.get('q') ?? '').trim()
 

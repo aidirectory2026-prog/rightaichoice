@@ -12,11 +12,13 @@ type HnResult = {
   storyCount: number       // stories last 30 days
   maxPoints: number        // top story points last 30 days
   totalComments: number    // sum across last 30 days
+  ok: boolean              // the probe actually got a response (not an error)
 }
 
 type RedditResult = {
   threadCount: number      // unique threads last 30 days mentioning the name
   totalUpvotes: number     // sum of upvotes across those threads
+  ok: boolean              // the probe actually got a response (not an error)
 }
 
 export type TractionSignal = {
@@ -26,6 +28,10 @@ export type TractionSignal = {
   score: number
   /** True if any single signal is strong enough to call "trending". */
   hardPass: boolean
+  /** Phase 10 #56 — true only if at least one source responded. When false the
+   *  probe was inconclusive (outage/block) and must NOT be used to hard-reject —
+   *  "probe failed" is not the same as "no buzz". */
+  probed: boolean
 }
 
 const HN_ALGOLIA = 'https://hn.algolia.com/api/v1/search'
@@ -48,7 +54,7 @@ async function probeHN(toolName: string): Promise<HnResult> {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'RightAIChoice-Ingest/1.0' },
     })
-    if (!res.ok) return { storyCount: 0, maxPoints: 0, totalComments: 0 }
+    if (!res.ok) return { storyCount: 0, maxPoints: 0, totalComments: 0, ok: false }
     const json = (await res.json()) as {
       hits: Array<{ points?: number; num_comments?: number }>
     }
@@ -57,9 +63,10 @@ async function probeHN(toolName: string): Promise<HnResult> {
       storyCount: hits.length,
       maxPoints: hits.reduce((m, h) => Math.max(m, h.points ?? 0), 0),
       totalComments: hits.reduce((s, h) => s + (h.num_comments ?? 0), 0),
+      ok: true,
     }
   } catch {
-    return { storyCount: 0, maxPoints: 0, totalComments: 0 }
+    return { storyCount: 0, maxPoints: 0, totalComments: 0, ok: false }
   }
 }
 
@@ -74,7 +81,7 @@ async function probeReddit(toolName: string): Promise<RedditResult> {
         'User-Agent': 'RightAIChoice-Ingest/1.0 (rightaichoice.com)',
       },
     })
-    if (!res.ok) return { threadCount: 0, totalUpvotes: 0 }
+    if (!res.ok) return { threadCount: 0, totalUpvotes: 0, ok: false }
     const json = (await res.json()) as {
       data?: { children?: Array<{ data?: { ups?: number; created_utc?: number } }> }
     }
@@ -85,9 +92,10 @@ async function probeReddit(toolName: string): Promise<RedditResult> {
     return {
       threadCount: fresh.length,
       totalUpvotes: fresh.reduce((s, c) => s + (c.data?.ups ?? 0), 0),
+      ok: true,
     }
   } catch {
-    return { threadCount: 0, totalUpvotes: 0 }
+    return { threadCount: 0, totalUpvotes: 0, ok: false }
   }
 }
 
@@ -102,7 +110,9 @@ export async function probeTraction(toolName: string): Promise<TractionSignal> {
     hn.maxPoints >= HN_HARD_FLOOR ||
     reddit.threadCount >= REDDIT_THREAD_FLOOR ||
     score >= SCORE_FLOOR
-  return { hn, reddit, score, hardPass }
+  // probed = at least one source actually responded. If both errored, the gate
+  // can't conclude "no buzz" — curate.ts skips the hard-reject in that case.
+  return { hn, reddit, score, hardPass, probed: hn.ok || reddit.ok }
 }
 
 /** Probe an array of candidates in parallel; returns map keyed by name. */

@@ -94,11 +94,12 @@ type PendingTool = {
   description: string | null
   features: string[] | null
   best_for: string[] | null
+  onboard_attempts: number | null
 }
 
 // Columns the SELECT pulls for every onboard candidate (used by both lanes).
 const ONBOARD_SELECT =
-  'id, slug, name, website_url, changelog_url, blog_url, logo_url, is_wrapper, github_url, github_stars, pricing_type, created_at, tagline, description, features, best_for'
+  'id, slug, name, website_url, changelog_url, blog_url, logo_url, is_wrapper, github_url, github_stars, pricing_type, created_at, tagline, description, features, best_for, onboard_attempts'
 
 // ── Gate model (Phase 9 D2) ────────────────────────────────────────────────
 export type GateStatus = 'pass' | 'warn' | 'fail'
@@ -148,6 +149,11 @@ const HARD_GATES = new Set([
 const SOFT_GATES = new Set(['logo', 'sentiment', 'tutorials', 'models', 'latest_updates', 'tags'])
 
 const VALID_PRICING = new Set(['free', 'freemium', 'paid', 'contact'])
+
+// Phase 10 #66 — stop re-running the full paid SOP forever on a tool that keeps
+// failing. After this many unsuccessful attempts the lanes skip it (draft-stuck
+// alert surfaces any draft that never published).
+const MAX_ONBOARD_ATTEMPTS = 6
 
 /** Upsert the per-tool QA record. */
 async function writeQaRecord(
@@ -714,6 +720,7 @@ export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
     .select(ONBOARD_SELECT)
     .eq('is_published', true)
     .is('onboarded_at', null)
+    .lt('onboard_attempts', MAX_ONBOARD_ATTEMPTS) // Phase 10 #66 — stop retrying forever
     .order('created_at', { ascending: true })
     .limit(limit)
 
@@ -735,6 +742,14 @@ export async function onboardPendingTools(limit = 5): Promise<OnboardResult> {
     if (stepRes.published) result.published++
     result.results.push(stepRes)
     logStep(runId, stepRes)
+    // Phase 10 #66 — count a failed attempt so a permanently-broken tool is
+    // eventually dropped from the retry pool (surfaced by the draft-stuck alert).
+    if (!stepRes.onboarded) {
+      await supabase
+        .from('tools')
+        .update({ onboard_attempts: (tool.onboard_attempts ?? 0) + 1 } as never)
+        .eq('id', tool.id)
+    }
   }
 
   console.log(`[onboard:${runId}] Done: ${result.onboarded}/${result.processed} onboarded`)
@@ -758,6 +773,9 @@ export async function runOnboardSop(
 
   let q = supabase.from('tools').select(ONBOARD_SELECT).eq('is_published', false)
   if (opts.slugs && opts.slugs.length > 0) q = q.in('slug', opts.slugs)
+  // Phase 10 #66 — skip drafts that have failed too many times (unless an
+  // operator explicitly targets them by slug).
+  else q = q.lt('onboard_attempts', MAX_ONBOARD_ATTEMPTS)
   q = q.order('created_at', { ascending: true }).limit(opts.limit ?? 5)
 
   const { data: drafts, error } = await q
@@ -777,6 +795,14 @@ export async function runOnboardSop(
     if (stepRes.published) result.published++
     result.results.push(stepRes)
     logStep(runId, stepRes)
+    // Phase 10 #66 — count a failed attempt so a permanently-broken tool is
+    // eventually dropped from the retry pool (surfaced by the draft-stuck alert).
+    if (!stepRes.onboarded) {
+      await supabase
+        .from('tools')
+        .update({ onboard_attempts: (tool.onboard_attempts ?? 0) + 1 } as never)
+        .eq('id', tool.id)
+    }
   }
 
   console.log(

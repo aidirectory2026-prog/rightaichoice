@@ -146,37 +146,47 @@ async function processTools(
 
     try {
       let pageText = ''
+      let scrapeOk = false
       try {
         pageText = await fetchPageText(tool.website_url)
+        scrapeOk = pageText.trim().length >= 200
       } catch {
-        // Continue with just the name — DeepSeek can still produce
-        // a baseline editorial from its training-data knowledge.
+        // scrape failed — handled below (do NOT overwrite editorial fields).
       }
 
       // GitHub stars — cheap side-fetch, doesn't affect main payload.
+      // Phase 10 #64 — authenticate (lifts the 60/hr unauthenticated cap so a
+      // full run actually refreshes stars) and type-guard the value.
       let githubStars: number | null = null
       if (tool.github_url) {
         try {
           const repoPath = new URL(tool.github_url).pathname.slice(1)
-          const ghRes = await fetch(`https://api.github.com/repos/${repoPath}`, {
-            headers: { Accept: 'application/vnd.github.v3+json' },
-          })
+          const ghHeaders: Record<string, string> = { Accept: 'application/vnd.github.v3+json' }
+          if (process.env.GITHUB_REPO_TOKEN) ghHeaders.Authorization = `token ${process.env.GITHUB_REPO_TOKEN}`
+          const ghRes = await fetch(`https://api.github.com/repos/${repoPath}`, { headers: ghHeaders })
           if (ghRes.ok) {
             const ghData = await ghRes.json()
-            githubStars = ghData.stargazers_count
+            if (typeof ghData.stargazers_count === 'number') githubStars = ghData.stargazers_count
           }
         } catch {
           // Non-fatal — keep prior stars.
         }
       }
 
-      const parsed = await synthesize(tool.name, tool.website_url, pageText)
-
-      const fieldsUpdated = Object.keys(parsed)
+      // Phase 10 #53 — only overwrite editorial fields when the vendor page
+      // actually loaded. A failed scrape used to still call synthesize(), which
+      // produced an AI "baseline" hallucinated from no input and clobbered
+      // hand-curated content. On failure we preserve existing content and just
+      // advance freshness (+ stars), so the tool isn't stuck or retried forever.
       const updateData: Record<string, unknown> = {
-        ...parsed,
         last_verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+      }
+      let fieldsUpdated: string[] = []
+      if (scrapeOk) {
+        const parsed = await synthesize(tool.name, tool.website_url, pageText)
+        Object.assign(updateData, parsed)
+        fieldsUpdated = Object.keys(parsed)
       }
 
       if (githubStars !== null) {
@@ -201,6 +211,7 @@ async function processTools(
         tool_slug: tool.slug,
         status: 'refreshed',
         fields_updated: fieldsUpdated,
+        error_message: scrapeOk ? null : 'scrape_failed: editorial fields preserved',
         duration_ms: duration,
       } as never)
     } catch (e) {
@@ -224,22 +235,50 @@ export async function runRefresh(
   const runId = crypto.randomUUID()
   const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
 
-  // Stalest-first ordering. nullsFirst → tools never refreshed jump the queue.
-  const { data: tools, error } = await supabase
+  // Phase 10 S5 — tier-aware, SLA-driven selection.
+  //   1) DAILY tier (the top-150): refresh any that are "due" (>20h since last
+  //      verify, or never) so the daily SLA holds — without re-burning AI on
+  //      ones already refreshed today (lets small Vercel batches reach standard).
+  //   2) STANDARD tier: fill the remaining budget stalest-first, so the long
+  //      tail's max age stays within the 3-day SLA (throughput sized in
+  //      freshness-batch.yml: ~765/day total).
+  const dailyDueCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString()
+  const { data: dailyDue, error: dailyErr } = await supabase
     .from('tools')
     .select('id, slug, name, website_url, github_url')
     .eq('is_published', true)
+    .eq('refresh_tier', 'daily')
+    .or(`last_verified_at.is.null,last_verified_at.lt.${dailyDueCutoff}`)
     .order('last_verified_at', { ascending: true, nullsFirst: true })
     .limit(batchSize)
+  if (dailyErr) console.error('Failed to fetch daily-tier tools for refresh:', dailyErr)
+  const daily = (dailyDue ?? []) as ToolRow[]
 
-  if (error || !tools) {
-    console.error('Failed to fetch tools for refresh:', error)
+  const remaining = Math.max(batchSize - daily.length, 0)
+  let standard: ToolRow[] = []
+  if (remaining > 0) {
+    const { data: std, error: stdErr } = await supabase
+      .from('tools')
+      .select('id, slug, name, website_url, github_url')
+      .eq('is_published', true)
+      .eq('refresh_tier', 'standard')
+      .order('last_verified_at', { ascending: true, nullsFirst: true })
+      .limit(remaining)
+    if (stdErr) console.error('Failed to fetch standard-tier tools for refresh:', stdErr)
+    standard = (std ?? []) as ToolRow[]
+  }
+
+  const tools = [...daily, ...standard]
+  if (tools.length === 0) {
+    console.log(`[refresh:${runId}] Nothing due to refresh`)
     return result
   }
 
-  await processTools(supabase, tools as ToolRow[], runId, result)
+  await processTools(supabase, tools, runId, result)
 
-  console.log(`[refresh:${runId}] Done: ${result.refreshed} refreshed, ${result.failed} failed`)
+  console.log(
+    `[refresh:${runId}] Done: ${result.refreshed} refreshed (${daily.length} daily + ${standard.length} standard), ${result.failed} failed`,
+  )
   return result
 }
 

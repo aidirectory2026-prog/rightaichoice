@@ -36,6 +36,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${page.title} 2026`,
       description: page.description,
       url: `https://rightaichoice.com/for/${slug}`,
+      siteName: 'RightAIChoice',
+      type: 'article' as const,
+    },
+    // Phase 10 #44 — rich social card on share.
+    twitter: {
+      card: 'summary_large_image' as const,
+      title: `${page.title} 2026`,
+      description: page.description,
     },
     alternates: {
       canonical: `https://rightaichoice.com/for/${slug}`,
@@ -111,7 +119,8 @@ export default async function RolePage({ params }: PageProps) {
 
   return (
     <>
-      <script {...jsonLdScriptProps([itemList, faq, breadcrumbs])} />
+      {/* Phase 10 #9 — don't emit empty ItemList/FAQ when there are 0 tools. */}
+      <script {...jsonLdScriptProps(tools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">

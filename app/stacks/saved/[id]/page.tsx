@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { createClient } from '@/lib/supabase/server'
+import { safeJsonLd } from '@/lib/seo/json-ld'
 
 type Stage = {
   name: string
@@ -320,7 +321,9 @@ export default async function SavedStackPage({ params }: Props) {
 
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          // Phase 10 #7 — safeJsonLd escapes </script> etc. in user-supplied
+          // stack title/description so a saved stack can't inject script.
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       </main>
 

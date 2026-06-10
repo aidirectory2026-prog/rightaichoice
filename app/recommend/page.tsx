@@ -1,20 +1,30 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { Sparkles, RotateCcw, AlertCircle } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { RecommendationWizard } from '@/components/recommendations/recommendation-wizard'
 import { RecommendedToolCard } from '@/components/recommendations/recommended-tool-card'
 import { getRecommendations } from '@/lib/data/recommendations'
-
-export const metadata: Metadata = {
-  title: 'Find My AI Tool',
-  description:
-    'Answer 3 quick questions and get AI-powered tool recommendations tailored to your use case, budget, and skill level.',
-}
+import { rateLimit } from '@/lib/rate-limit'
 
 type Props = {
   searchParams: Promise<{ usecase?: string; budget?: string; level?: string }>
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams
+  const base: Metadata = {
+    title: 'Find My AI Tool',
+    description:
+      'Answer 3 quick questions and get AI-powered tool recommendations tailored to your use case, budget, and skill level.',
+  }
+  // Phase 10 #3 — noindex the param-combinatorial results pages so crawlers
+  // don't index them or trigger the per-URL paid AI call. The base wizard page
+  // (no usecase) stays indexable.
+  if (params.usecase?.trim()) base.robots = { index: false, follow: true }
+  return base
 }
 
 const PRICING_LABELS: Record<string, string> = {
@@ -68,17 +78,26 @@ export default async function RecommendPage({ searchParams }: Props) {
     )
   }
 
-  // Fetch recommendations server-side
+  // Fetch recommendations server-side.
+  // Phase 10 #3 — this runs a paid AI call per unique URL, so cap it per IP to
+  // stop crawlers/attackers fanning out arbitrary ?usecase= variants. Errors are
+  // kept opaque (no raw provider message to the page).
   let result = null
   let error = null
-  try {
-    result = await getRecommendations({
-      use_case: usecase,
-      pricing_type: budget,
-      skill_level: level,
-    })
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Something went wrong'
+  const h = await headers()
+  const rl = await rateLimit('recommend-ssr', { headers: h } as unknown as Request, { limit: 12, windowMs: 60_000 })
+  if (!rl.ok) {
+    error = 'You’ve run a lot of recommendations in a short time — please wait a minute and try again.'
+  } else {
+    try {
+      result = await getRecommendations({
+        use_case: usecase,
+        pricing_type: budget,
+        skill_level: level,
+      })
+    } catch {
+      error = 'Something went wrong generating recommendations. Please try again.'
+    }
   }
 
   return (

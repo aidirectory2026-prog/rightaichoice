@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
-import { pricingForRequest, getCountryFromRequest, freeScanLimit } from '@/lib/geo/currency'
+import { pricingForRequest, freeScanLimitFromRequest } from '@/lib/geo/currency'
 import { razorpayConfigured } from '@/lib/payments/razorpay'
 import { paypalLive } from '@/lib/payments/paypal'
 import { payTestOverride } from '@/lib/payments/pay-test'
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   let pricing = pricingForRequest(req)
   // Geo-resolved free-scan limit (India 25, everyone else 5) — same source as
   // pricing, so display matches what the scan route will actually enforce.
-  const freeLimit = freeScanLimit(getCountryFromRequest(req))
+  const freeLimit = freeScanLimitFromRequest(req)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

@@ -37,6 +37,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${page.title} 2026`,
       description: page.description,
       url: `https://rightaichoice.com/best/${slug}`,
+      siteName: 'RightAIChoice',
+      type: 'article' as const,
+    },
+    // Phase 10 #44 — rich social card on share (was a bare text link).
+    twitter: {
+      card: 'summary_large_image' as const,
+      title: `${page.title} 2026`,
+      description: page.description,
     },
     alternates: {
       canonical: `https://rightaichoice.com/best/${slug}`,
@@ -130,7 +138,10 @@ export default async function BestPage({ params }: PageProps) {
 
   return (
     <>
-      <script {...jsonLdScriptProps([itemList, faq, breadcrumbs])} />
+      {/* Phase 10 #9 — never emit an empty ItemList / FAQ (Google rejects empty
+          structured data and the placeholder FAQ text can surface in AI
+          Overviews). Only the breadcrumb ships when there are 0 ranked tools. */}
+      <script {...jsonLdScriptProps(topTools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">

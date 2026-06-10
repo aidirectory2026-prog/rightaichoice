@@ -50,6 +50,23 @@ export function freeScanLimit(country: string): number {
   return country === 'IN' ? FREE_SCANS_IN : FREE_SCANS_INTL
 }
 
+/**
+ * Phase 10 #23 — the free-scan LIMIT (25 vs 5) is the abuse target, so the
+ * elevated India allowance must rely ONLY on the Vercel edge header, which the
+ * platform sets and strips from client input on the canonical domain. We do not
+ * honour the generic `cf-ipcountry` fallback here: that header is meaningful for
+ * currency display, but must never be able to *raise* a user's free allowance
+ * via a forged request that bypasses the edge. Defaults to the conservative
+ * limit unless the trusted header confirms India.
+ */
+export function freeScanLimitFromRequest(request: Request): number {
+  if (process.env.NODE_ENV !== 'production' && process.env.DEV_FORCE_COUNTRY) {
+    return process.env.DEV_FORCE_COUNTRY.toUpperCase() === 'IN' ? FREE_SCANS_IN : FREE_SCANS_INTL
+  }
+  const vercelCountry = request.headers.get('x-vercel-ip-country')?.toUpperCase()
+  return vercelCountry === 'IN' ? FREE_SCANS_IN : FREE_SCANS_INTL
+}
+
 /** Convenience: resolve pricing straight from the request. */
 export function pricingForRequest(request: Request): Pricing {
   return pricingForCountry(getCountryFromRequest(request))

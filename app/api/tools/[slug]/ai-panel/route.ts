@@ -15,7 +15,7 @@ type RouteContext = { params: Promise<{ slug: string }> }
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const { slug } = await params
 
-  const limit = rateLimit('ai-panel', req, { limit: 5, windowMs: 60_000 })
+  const limit = await rateLimit('ai-panel', req, { limit: 5, windowMs: 60_000 })
   if (!limit.ok) return rateLimitResponse(limit)
 
   const supabase = await createClient()

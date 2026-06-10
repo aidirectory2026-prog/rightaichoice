@@ -14,7 +14,7 @@ function getIp(req: Request): string | undefined {
 
 /** POST /api/payments/razorpay/order — create a ₹20 order for one sentiment scan. */
 export async function POST(req: NextRequest) {
-  const rl = rateLimit('rzp-order', req, { limit: 10, windowMs: 60_000 })
+  const rl = await rateLimit('rzp-order', req, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
   if (!razorpayConfigured()) return NextResponse.json({ error: 'razorpay_unconfigured' }, { status: 503 })
 

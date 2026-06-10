@@ -59,6 +59,7 @@ import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
 import { hasUserReviewed } from '@/lib/data/reviews'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
 import { SectionErrorBoundary } from '@/components/shared/section-error-boundary'
@@ -134,12 +135,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params
   const tool = await getToolBySlug(slug)
   if (!tool) {
-    // Phase 4 dedup (migration 076): if this slug was merged into a
-    // canonical row, the original is_published=false. Check the merged_into
-    // column and 308-redirect to the canonical slug. Preserves SEO equity
-    // from any external backlinks pointing at the old URL.
-    const supabase = await createClient()
-    const { data: merged } = await supabase
+    // Phase 4 dedup (migration 076): if this slug was merged into a canonical
+    // row, the original is_published=false. Check merged_into and 308-redirect
+    // to the canonical slug. Preserves SEO equity from external backlinks.
+    // Phase 10 fix — use the ADMIN client: the merged row is is_published=false,
+    // and the anon client's RLS only exposes published rows, so the lookup
+    // returned null and the redirect silently never fired (soft-404 instead).
+    const admin = getAdminClient()
+    const { data: merged } = await admin
       .from('tools')
       .select('merged_into')
       .eq('slug', slug)
