@@ -390,3 +390,10 @@ green. Squash-merged to main (PR #10, sha 6013a34) → Vercel production deploy.
   workflows (today's merge may have re-armed them; the heartbeat will keep watching). Stronger fix
   (OPT-2): move the sub-daily crons (poll-gh-actions, alert) to native Vercel Pro crons for
   reliability; the nightly batch must stay on GH (runtime) but is now heartbeat-monitored.
+- **2026-06-10 UPDATE — root cause confirmed & OPT-2 DONE (sha c245efc):** the git PAT is valid
+  (push/PR/merge/dispatch all worked; `/user`=200). GH Actions IS running — but it **throttles/drops
+  the frequent schedules** (`Automation Pipelines` */10 + */30 fired only sporadically; 3h gaps),
+  while the nightly `Freshness Batch` runs fine. Fix: moved `poll-gh-actions` (*/10) and
+  `alert-failed-pipelines` (*/30) to **native Vercel Pro crons** (`vercel.json`; added `GET=POST`),
+  removed their GH schedule triggers (jobs kept for manual dispatch). Monitors now run reliably; the
+  nightly freshness batch stays on GH (heartbeat-watched). NO token regeneration needed.
