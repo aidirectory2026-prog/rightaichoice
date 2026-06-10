@@ -142,3 +142,44 @@ _Plain language: of the six alarm types in your inbox, two had already stopped o
 - All but one are on the `standard` refresh tier. Recommended next step (not done yet): editorial content upgrades on the top ~10 (deeper our_views, FAQs, comparison links), tracked before/after via the Monday `seo-impact` digest. NOT title rewrites — titles only matter on page 1.
 
 **Measurement:** /best impressions + position tracked weekly in `niche_page_latest` (already automated); expect first visible movement 2–4 weeks after the internal links deploy and get recrawled (cascade-hubs + IndexNow accelerate this).
+
+**MERGED 2026-06-11 (IST)** — PR #14 (`358d7cd`), squash-merged by founder. **Status: done.**
+
+---
+
+## 2026-06-11 (IST) — Full post-merge re-verification (production)
+
+Every shipped change re-checked against the LIVE site and database after PR #14 deployed:
+
+| Check | Result |
+|---|---|
+| Site-wide OG image (`/opengraph-image`) | ✅ 200, image/png |
+| Per-guide OG image (`/best/writing/opengraph-image`) | ✅ 200, image/png |
+| "Best-of guides" chips on tool pages | ✅ live (checked /tools/langchain) |
+| New Plan-CTA copy ("Get my free stack") | ✅ live |
+| Newsletter card on compare pages ("Still deciding?") | ✅ live |
+| "Try {tool}" CTAs at comparison verdict | ✅ live (Try ChatGPT / Try Claude on /compare/chatgpt-vs-claude) |
+| Auto-UTM on outbound redirect | ✅ Location header carries `utm_source=rightaichoice&utm_medium=referral&utm_campaign=<surface>` |
+| cascade-hubs post-deploy | ✅ 19:00 UTC run success; ISR backlog 2,845 → **446** and draining hourly |
+| Tool freshness | 482 tools >3d (down from 935), batch refresh on track |
+| Pipeline failures since fixes | none logged (next scheduled tests: sentiment 04:00 UTC daily run, Bing 09:00 UTC, onboard :17/:47 runs overnight) |
+
+**Still in observation (needs real traffic/time, checked through ~2026-06-13):** human visit counts at the new truthful baseline, compare-surface click events, first newsletter subs, alert-email volume ~zero, sentiment/Bing/onboard runs completing clean on their new budgets.
+
+---
+
+## Phase summary — everything done and verified (in plain words)
+
+This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
+
+1. **We found out why there were no conversions.** Visitors arrive from Google onto tool pages and comparison pages, already knowing what they're researching. Our main button asked them to "plan their AI stack" — the wrong ask — and only 5 people in two weeks clicked it. Meanwhile the thing they naturally do (click out to a tool's website) was happening at a healthy rate all along — we just couldn't see it through the bot noise, and we weren't earning from it.
+
+2. **The counters now tell the truth.** About 96% of the "tool visits" number was robots being counted as people — over 2,000 fake rows cleaned out of history, and the door is now shut on new ones. A second click counter that had been silently broken since day one is fixed. Goals typed by people with ad-blockers are no longer lost. Two dashboard numbers that were literally hardcoded fakes now show real counts.
+
+3. **The site now asks for the right things in the right places.** Every "Visit Website" button is tracked (comparison pages — our #2 traffic source — were completely untracked before). The decision moment on comparison pages now has "Try X" buttons. Every outbound click carries our name so tool vendors see us in their stats — our calling card for affiliate deals. A new admin card lists exactly which tools people click out to that we haven't monetized yet — that's the money to-do list. Newsletter signup boxes now exist where readers actually are. The Plan button got sharper wording ("Get your free AI stack in 60 seconds") and we measure whether it beats the old 0.37% click rate.
+
+4. **The pipelines are genuinely running, and the one big broken one is revived.** Tool data was already fresh (nothing older than a week). But the hourly job that tells Google "this page changed, come look again" had *never worked once* in its life — it came alive this phase and has been re-notifying Google about all ~2,800 pages. Every failure email from the inbox was traced to its cause and fixed: jobs that took on more work than their time limit now stop early and hand the rest to the next run, and Bing's daily quota running out is logged as routine, not as an emergency.
+
+5. **We know exactly why the 64 niche SEO pages get no traffic, and the first fix is live.** Google has indexed them but ranks them around page 7 — because almost nothing on our own site linked to them. Now ~2,000 tool pages and every category page link into the relevant guides. We also discovered no page on the site had a social-share image (every shared link looked like bare text) — fixed site-wide. Results will show in Google's data over 2–4 weeks; the weekly tracker measures it automatically.
+
+**What's left (intentionally):** a week of watching the alerts stay quiet and the new conversion numbers come in; enrolling in affiliate programs from the admin list (founder task — this is where revenue starts); and content upgrades for the ~25 tool pages sitting just off Google's page 3.
