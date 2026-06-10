@@ -7,7 +7,11 @@ const TOOLS_PER_PAGE = 24
 
 export async function getTools(filters: ToolFilters = {}) {
   const supabase = await createClient()
-  const page = filters.page ?? 1
+  // Phase 10 #18 — clamp the page to a sane integer. A NaN/negative/garbage page
+  // (e.g. ?page=abc or ?page=-5) previously produced a negative/NaN .range() that
+  // PostgREST rejected → a thrown error / blank page that crawlers could trigger.
+  const rawPage = Number(filters.page)
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1
   const from = (page - 1) * TOOLS_PER_PAGE
   const to = from + TOOLS_PER_PAGE - 1
 

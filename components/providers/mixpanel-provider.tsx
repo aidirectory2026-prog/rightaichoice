@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import mixpanel from 'mixpanel-browser'
 import { analytics } from '@/lib/analytics'
@@ -266,7 +266,12 @@ export function MixpanelProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <PageViewCapture />
+      {/* Phase 10 #63 — PageViewCapture reads useSearchParams(); without a
+          Suspense boundary that de-opts EVERY page to dynamic rendering. Isolate
+          it so content pages can be statically generated again. */}
+      <Suspense fallback={null}>
+        <PageViewCapture />
+      </Suspense>
       <EngagementCapture />
       {children}
     </>

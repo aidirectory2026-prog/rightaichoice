@@ -8,15 +8,19 @@ import { createClient } from '@/lib/supabase/server'
 // + logs a server-side warning. Phase 4's backfill is what populates the
 // cache for every published tool.
 
+// Phase 10 #21 — types now match what synthesize-report.ts ACTUALLY writes
+// (per-source positivity + {theme,sources} + {time_to_start,skill_level,hurdles}).
+// The old types ({positive,neutral,negative} / {title,description} / {difficulty})
+// never matched the producer, so the bar read 0% and theme cards rendered blank.
 type SentimentRow = {
   ai_verdict: string | null
   pros: string[] | null
   cons: string[] | null
   sentiment_score: string | null
-  sentiment_breakdown: { positive: number; neutral: number; negative: number } | null
-  themes: { title: string; description: string; sentiment?: string }[] | null
-  learning_curve: { difficulty: string; time_to_productivity: string; notes?: string } | null
-  pricing_analysis: { hidden_costs?: string[]; value_rating?: string } | null
+  sentiment_breakdown: Record<string, number> | null
+  themes: { theme: string; sources: string[] }[] | null
+  learning_curve: { time_to_start: string; skill_level: string; hurdles?: string[] } | null
+  pricing_analysis: { tiers?: unknown[]; hidden_costs?: string[]; verdict?: string } | null
   mention_count: number | null
   sources_scraped: string[] | null
   status: string
@@ -50,8 +54,15 @@ export async function SentimentSynthesis({
     return null
   }
 
-  const breakdown = cached.sentiment_breakdown ?? { positive: 0, neutral: 0, negative: 0 }
-  const total = breakdown.positive + breakdown.neutral + breakdown.negative || 1
+  // sentiment_breakdown is per-source positivity (0–1). Average the sources that
+  // reported, then derive a positive/negative split for the bar.
+  const breakdownVals = Object.values(cached.sentiment_breakdown ?? {}).filter(
+    (v): v is number => typeof v === 'number' && v >= 0 && v <= 1,
+  )
+  const avgPositivity = breakdownVals.length
+    ? breakdownVals.reduce((a, b) => a + b, 0) / breakdownVals.length
+    : null
+  const positivePct = avgPositivity != null ? Math.round(avgPositivity * 100) : 0
   const pros = (cached.pros ?? []).slice(0, 5)
   const cons = (cached.cons ?? []).slice(0, 5)
   const themes = (cached.themes ?? []).slice(0, 3)
@@ -79,18 +90,16 @@ export async function SentimentSynthesis({
         )}
       </div>
 
-      {/* Sentiment breakdown bar */}
-      {breakdown.positive + breakdown.neutral + breakdown.negative > 0 && (
+      {/* Sentiment breakdown bar — overall positivity across the sources that reported */}
+      {avgPositivity != null && (
         <div className="mb-5">
           <div className="flex h-2 overflow-hidden rounded-full bg-zinc-800">
-            <div className="bg-emerald-500" style={{ width: `${(breakdown.positive / total) * 100}%` }} />
-            <div className="bg-zinc-600" style={{ width: `${(breakdown.neutral / total) * 100}%` }} />
-            <div className="bg-red-500" style={{ width: `${(breakdown.negative / total) * 100}%` }} />
+            <div className="bg-emerald-500" style={{ width: `${positivePct}%` }} />
+            <div className="bg-red-500" style={{ width: `${100 - positivePct}%` }} />
           </div>
           <div className="mt-1.5 flex items-center justify-between text-xs text-zinc-500">
-            <span className="text-emerald-400">{Math.round((breakdown.positive / total) * 100)}% positive</span>
-            <span>{Math.round((breakdown.neutral / total) * 100)}% neutral</span>
-            <span className="text-red-400">{Math.round((breakdown.negative / total) * 100)}% negative</span>
+            <span className="text-emerald-400">{positivePct}% positive</span>
+            <span className="text-red-400">{100 - positivePct}% critical</span>
           </div>
         </div>
       )}
@@ -140,8 +149,10 @@ export async function SentimentSynthesis({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {themes.map((t, i) => (
               <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
-                <div className="text-xs font-medium text-white mb-1">{t.title}</div>
-                <div className="text-xs text-zinc-500 leading-relaxed line-clamp-3">{t.description}</div>
+                <div className="text-xs font-medium text-white mb-1">{t.theme}</div>
+                {t.sources?.length > 0 && (
+                  <div className="text-xs text-zinc-500 leading-relaxed">Seen on {t.sources.join(', ')}</div>
+                )}
               </div>
             ))}
           </div>
@@ -156,9 +167,9 @@ export async function SentimentSynthesis({
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="rounded-full border border-blue-900/40 bg-blue-950/30 px-2.5 py-0.5 text-blue-300 capitalize">
-              {learning.difficulty}
+              {learning.skill_level}
             </span>
-            <span className="text-zinc-400">Productive in ~{learning.time_to_productivity}</span>
+            {learning.time_to_start && <span className="text-zinc-400">Productive in ~{learning.time_to_start}</span>}
           </div>
         </div>
       )}
