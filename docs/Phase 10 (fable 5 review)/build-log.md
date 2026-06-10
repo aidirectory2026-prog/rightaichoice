@@ -36,7 +36,31 @@ Every unit of work done under [`Plan_phase-10-fable-5-review.md`](./Plan_phase-1
 
 ## Department A — Tracking Integrity
 
-_(pending)_
+### 2026-06-10 — Code complete on branch `fable5-review` (worktree `../rac-fable5`), awaiting PR merge
+
+**A1. Visit-endpoint bot gate** — `app/api/tools/[slug]/visit/route.ts`
+- A redirect now counts as a human click only with same-origin evidence: `Sec-Fetch-Site: same-origin/same-site`, OR a same-host Referer, OR the `?d=` param the client button appends. Bots are still redirected, never counted.
+- _Plain language: robots that fetched our outbound links directly were counted as people. Now a click only counts when it demonstrably came from a real page on our own site._
+
+**A2. Historical backfill — DONE (live DB).**
+- Reclassified **2,073** `tool_visit_redirected` rows (all-time, May 25 → Jun 10) matching the crawler pattern (`referrer='/'` + `anon-<ip>` id) as `bot_likely=true`. Verified: **92 genuine human visit events remain all-time** — that's the true baseline the dashboard will now show.
+
+**A3. NEW BUG found & fixed: `click_logs` insert never worked.**
+- The table had **exactly 1 row ever** while redirects flowed for weeks: the route inserted with the user-context client, RLS rejected anon inserts, and the fire-and-forget `void` swallowed every error. Now inserts via the admin client and warns on failure.
+- _Plain language: a second click counter existed but had been broken since day one — silently. Fixed._
+
+**A4. Plan-intent fallback id** — `lib/analytics.ts` + `lib/cta/persist-intent.ts`
+- New `getDistinctIdWithFallback()`: localStorage-backed `fb-` UUID when Mixpanel is blocked (ad-blockers) or not yet loaded. Typed goals are never silently dropped; the same id is used for post-auth linking.
+
+**A5. Honest dashboard numbers** — `app/api/cron/snapshot-daily-updates/route.ts`
+- Bing submissions: real count from `pipeline_runs.items_succeeded` (was hardcoded 100 whenever the cron ran). IndexNow pings: real count from `pages_freshness.last_indexnow_at` stamps (was hardcoded 0).
+
+**A6. Surface-breakdown parity row** — `lib/admin/plan-conversion.ts`
+- Appended an unfiltered "ALL (parity check)" row to /admin/plan-conversion. If per-surface rows don't sum to it, a silent JSONB-filter failure is visible instead of masquerading as "zero conversions". (Live SQL ground-truth check today showed the per-surface data is real: sticky_bar 1,159 impr/4 clicks, homepage 102/1, inline_card 82/0 over 30d — the dashboard was honest; the conversions genuinely weren't happening. That's Dept B's job.)
+
+**Verification:** `tsc --noEmit` + `eslint` clean. Post-merge checks: human visits collapse to ~5/day baseline; `click_logs` rows start appearing; uBlock browser still records plan intent.
+
+**⚠️ Needs founder:** `gh` CLI is not installed and the local GitHub token lacks API access, so the PR couldn't be opened/merged from this machine. Open + squash-merge here: https://github.com/aidirectory2026-prog/rightaichoice/pull/new/fable5-review (or install GitHub CLI: `brew install gh && gh auth login`).
 
 ## Department B — Conversion / CTA Architecture
 
