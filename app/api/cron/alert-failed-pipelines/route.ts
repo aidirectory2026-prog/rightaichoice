@@ -186,3 +186,7 @@ export const POST = cronRoute({ pipelineKey: 'alert-failed-pipelines' }, async (
     delivery_errors: deliveryErrors.slice(0, 10),
   }
 })
+
+// Phase 10 OPT-2 — moved to a NATIVE Vercel cron (vercel.json) because GitHub
+// Actions silently throttles/drops frequent schedules. Vercel fires GET.
+export const GET = POST

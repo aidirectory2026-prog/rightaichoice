@@ -60,6 +60,14 @@
     {
       "path": "/api/cron/onboard-tools?mode=sop",
       "schedule": "17,47 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-gh-actions",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/alert-failed-pipelines",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

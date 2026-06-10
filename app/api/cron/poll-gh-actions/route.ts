@@ -246,3 +246,7 @@ export const POST = cronRoute({ pipelineKey: 'poll-gh-actions' }, async (ctx) =>
     reconciled_running: reconciled,
   }
 })
+
+// Phase 10 OPT-2 — moved to a NATIVE Vercel cron (vercel.json) because GitHub
+// Actions silently throttles/drops frequent schedules. Vercel fires GET.
+export const GET = POST
