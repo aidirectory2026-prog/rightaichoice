@@ -51,13 +51,17 @@ async function getViabilityLeaderboard() {
 export default async function ViabilityPage() {
   const { safest, riskiest } = await getViabilityLeaderboard()
 
+  // Honest descriptions of what each signal actually measures today. Some
+  // signals (wrapper status, GitHub stars, pricing model) are tool-specific;
+  // the category-level factors are applied as baselines while per-tool detection
+  // is built out — the copy says so rather than overstating.
   const signals = [
-    { name: 'Wrapper Dependency', weight: '30%', desc: 'Is the tool built entirely on top of another AI API with no proprietary technology? Pure wrappers face the highest shutdown risk when the underlying API changes pricing or adds the same feature natively.' },
-    { name: 'GitHub Activity', weight: '20%', desc: 'For open-source tools: commit frequency, contributor count, and star trajectory over the past 90 days. Active development signals a healthy, invested team.' },
-    { name: 'Funding Runway', weight: '20%', desc: 'Estimated financial runway based on last funding round, total raised, and revenue indicators. Tools with no funding and no paid tier are the most fragile.' },
-    { name: 'Hyperscaler Overlap', weight: '15%', desc: 'Is Google, Microsoft, or OpenAI building the same feature natively? When a hyperscaler enters your space, the window to differentiate shrinks fast.' },
-    { name: 'Category Mortality', weight: '10%', desc: 'Historical death rate of tools in the same category. Some categories (AI writing wrappers) have 40%+ mortality. Others (dev tools with deep integrations) are much safer.' },
-    { name: 'Website Health', weight: '5%', desc: 'Is the website consistently accessible? Is the pricing page still active? Basic signals that the business is still operating.' },
+    { name: 'Wrapper Dependency', weight: '30%', desc: 'Is the tool built entirely on top of another AI API with no proprietary technology? Pure wrappers face the highest shutdown risk when the underlying API changes pricing or ships the same feature natively. (Tool-specific.)' },
+    { name: 'GitHub Traction', weight: '20%', desc: 'For tools with a public GitHub repo: star count and whether the project is openly developed. Widely-starred, public projects signal an active, invested community. Tools without a repo get a neutral score here. (Tool-specific.)' },
+    { name: 'Revenue Model', weight: '20%', desc: 'Inferred from the pricing model: tools with a paid or freemium tier have a clearer revenue path than free-only tools with no monetization. A proxy for financial durability — not a funding-database lookup. (Tool-specific.)' },
+    { name: 'Hyperscaler Overlap', weight: '15%', desc: 'The risk that a big platform (Google, Microsoft, OpenAI) builds the same feature natively. Applied as a category baseline today; automated per-tool detection is on our roadmap.' },
+    { name: 'Category Mortality', weight: '10%', desc: 'How fragile the tool’s category tends to be. Applied as an industry baseline today (~29% AI-tool mortality); per-category rates are on our roadmap.' },
+    { name: 'Website Presence', weight: '5%', desc: 'Whether the tool has a live website and pricing page — a basic signal that the business is still operating.' },
   ]
 
   const jsonLd = {

@@ -647,7 +647,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
                   <p className="text-sm text-zinc-400 mb-4">
                     How likely is {tool.name} to still be operational in 12 months? Based on 6 signals
-                    including funding, development activity, and platform risk.
+                    including wrapper dependency, GitHub traction, pricing model, and category risk.
                   </p>
 
                   {tool.viability_signals && (
