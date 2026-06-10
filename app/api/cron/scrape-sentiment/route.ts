@@ -62,11 +62,25 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
 
   let processed = 0
   let failed = 0
+  let deferred = 0
   const errors: string[] = []
   const succeededSlugs: string[] = []
 
+  // Dept C (fable 5 review) — time budget. A big expired set (scrape + LLM
+  // synthesis per tool) blew the 300s maxDuration in one run; Vercel killed
+  // it mid-batch and the orphaned `running` row alerted as timeout
+  // (2026-06-07). Stop STARTING batches past the deadline — every finished
+  // tool is committed to tool_sentiment_cache; the next (now daily) run
+  // continues with what's left.
+  const deadlineMs = Date.now() + 240_000
+
   // Process in batches
   for (let i = 0; i < needsScraping.length; i += BATCH_SIZE) {
+    if (Date.now() > deadlineMs) {
+      deferred = needsScraping.length - i
+      console.log(`[cron/scrape-sentiment] deadline reached — deferring ${deferred} tool(s) to the next run`)
+      break
+    }
     const batch = needsScraping.slice(i, i + BATCH_SIZE)
 
     await Promise.all(
@@ -150,14 +164,15 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
     )
   }
 
-  ctx.recordItems({ processed: needsScraping.length, succeeded: processed, failed })
+  ctx.recordItems({ processed: needsScraping.length - deferred, succeeded: processed, failed })
   ctx.recordMetadata({
     total_top_tools: tools.length,
     needed_scraping: needsScraping.length,
+    deferred,
     succeeded_slugs: succeededSlugs.slice(0, 20),
     errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
   })
-  if (failed > 0 && processed > 0) ctx.setStatus('partial')
+  if ((failed > 0 || deferred > 0) && processed > 0) ctx.setStatus('partial')
 
   return {
     ok: true,
@@ -165,6 +180,7 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
     needed_scraping: needsScraping.length,
     processed,
     failed,
+    deferred,
     errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
   }
 })

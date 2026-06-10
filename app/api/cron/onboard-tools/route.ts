@@ -31,9 +31,13 @@ const handler = cronRoute({ pipelineKey: 'onboard-tools' }, async (ctx, request)
   const slugsParam = url.searchParams.get('slug')
   const slugs = slugsParam ? slugsParam.split(',').map((s) => s.trim()).filter(Boolean) : undefined
 
+  // Dept C — leave ~60s of the 300s maxDuration as headroom so the run
+  // always finishes + logs instead of being platform-killed mid-tool.
+  const deadlineMs = Date.now() + 240_000
+
   const result =
     mode === 'sop' || slugs
-      ? await runOnboardSop({ limit, slugs })
+      ? await runOnboardSop({ limit, slugs, deadlineMs })
       : await onboardPendingTools(limit)
 
   ctx.recordItems({

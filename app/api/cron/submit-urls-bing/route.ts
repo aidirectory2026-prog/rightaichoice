@@ -91,6 +91,12 @@ async function fetchDailyQuota(apiKey: string): Promise<number | null> {
   }
 }
 
+// Dept C (fable 5 review) — quota exhaustion is an expected daily condition
+// (Bing's quota day doesn't align with our 09:00 UTC cron), not an incident.
+// Signal it distinctly so the handler can record a clean partial instead of
+// a failure email every morning.
+class BingQuotaExhausted extends Error {}
+
 async function submitChunk(apiKey: string, urls: string[]) {
   const url = `${BING_ENDPOINT}?apikey=${encodeURIComponent(apiKey)}`
   const res = await fetch(url, {
@@ -100,6 +106,9 @@ async function submitChunk(apiKey: string, urls: string[]) {
   })
   if (!res.ok) {
     const body = await res.text()
+    if (/exceeded your daily url submission quota/i.test(body)) {
+      throw new BingQuotaExhausted(`Bing daily quota exhausted (${urls.length} URLs deferred)`)
+    }
     throw new Error(`Bing API ${res.status}: ${body.slice(0, 300)}`)
   }
 }
@@ -177,8 +186,37 @@ const handler = cronRoute({ pipelineKey: 'submit-urls-bing' }, async (ctx) => {
   }
 
   const requestCap = Math.min(PER_REQUEST_CAP, cap)
-  for (let i = 0; i < slice.length; i += requestCap) {
-    await submitChunk(apiKey, slice.slice(i, i + requestCap))
+  let submitted = 0
+  try {
+    for (let i = 0; i < slice.length; i += requestCap) {
+      await submitChunk(apiKey, slice.slice(i, i + requestCap))
+      submitted += Math.min(requestCap, slice.length - i)
+    }
+  } catch (err) {
+    if (err instanceof BingQuotaExhausted) {
+      // Dept C — quota ran out mid-run (or Bing's quota day hadn't reset
+      // yet). Advance the cursor past what WAS accepted (so tomorrow starts
+      // at the first unsent URL), record a partial — NOT a failure. This
+      // was emailing the operator every morning.
+      if (submitted > 0) {
+        await supabase
+          .from('bing_submit_state')
+          .update({
+            offset_in_pass: offset + submitted,
+            last_run_utc: new Date().toISOString(),
+            lifetime_submitted: state.lifetime_submitted + submitted,
+            lifetime_runs: state.lifetime_runs + 1,
+            last_quota: quota,
+            updated_at: new Date().toISOString(),
+          } as never)
+          .eq('id', 1)
+      }
+      ctx.recordItems({ processed: submitted, succeeded: submitted })
+      ctx.recordMetadata({ quota_exhausted: true, submitted, deferred: slice.length - submitted, type, offset, quota })
+      if (submitted > 0) ctx.setStatus('partial')
+      return { ok: true, quota_exhausted: true, submitted, deferred: slice.length - submitted }
+    }
+    throw err
   }
 
   // Advance cursor — if we exhausted this type's pool, hop to the next type.

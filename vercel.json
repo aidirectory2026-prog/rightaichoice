@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/scrape-sentiment",
-      "schedule": "0 4 * * 0"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/cron/resubmit-sitemap-gsc",
