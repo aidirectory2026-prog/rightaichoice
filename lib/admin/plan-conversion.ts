@@ -47,8 +47,8 @@ const EVENT_FUNNEL: ReadonlyArray<{ event: string; label: string }> = [
   { event: 'plan_cta_impression',          label: '1. CTA shown' },
   { event: 'plan_cta_clicked',             label: '2. CTA clicked' },
   { event: 'plan_signup_modal_shown',      label: '3. Signup modal shown' },
-  { event: 'plan_signup_modal_oauth_clicked', label: '4. OAuth clicked' },
-  { event: 'plan_signup_modal_skipped',    label: '4. Skipped (still tracked)' },
+  { event: 'plan_signup_modal_oauth_clicked', label: '4a. OAuth clicked' },
+  { event: 'plan_signup_modal_skipped',    label: '4b. Skipped (alt path)' },
   { event: 'plan_signup_modal_completed',  label: '5. Signup completed' },
   { event: 'plan_started',                 label: '6. /plan loaded' },
   { event: 'plan_completed',               label: '7. Plan finalized' },
@@ -62,6 +62,7 @@ export async function getPlanFunnel(sel: RangeSelection): Promise<FunnelStep[]> 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { count } = await (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
         .eq('event_name', event)
+        .eq('bot_likely', false) // Phase 10.2 F6 — conversion metrics are humans-only
         .gte('created_at', sel.cutoffISO)
         .lt('created_at', sel.endCutoffISO)
       return { step: event, label, count: count ?? 0 }
@@ -80,18 +81,21 @@ export async function getSurfaceBreakdown(sel: RangeSelection): Promise<SurfaceS
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
         .eq('event_name', 'plan_cta_impression')
+        .eq('bot_likely', false)
         .eq('properties->>surface', surface)
         .gte('created_at', sel.cutoffISO)
         .lt('created_at', sel.endCutoffISO),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
         .eq('event_name', 'plan_cta_clicked')
+        .eq('bot_likely', false)
         .eq('properties->>surface', surface)
         .gte('created_at', sel.cutoffISO)
         .lt('created_at', sel.endCutoffISO),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
         .eq('event_name', 'plan_signup_modal_completed')
+        .eq('bot_likely', false)
         .eq('properties->>source_surface', surface)
         .gte('created_at', sel.cutoffISO)
         .lt('created_at', sel.endCutoffISO),
@@ -118,16 +122,19 @@ export async function getSurfaceBreakdown(sel: RangeSelection): Promise<SurfaceS
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
       .eq('event_name', 'plan_cta_impression')
+      .eq('bot_likely', false)
       .gte('created_at', sel.cutoffISO)
       .lt('created_at', sel.endCutoffISO),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
       .eq('event_name', 'plan_cta_clicked')
+      .eq('bot_likely', false)
       .gte('created_at', sel.cutoffISO)
       .lt('created_at', sel.endCutoffISO),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
       .eq('event_name', 'plan_signup_modal_completed')
+      .eq('bot_likely', false)
       .gte('created_at', sel.cutoffISO)
       .lt('created_at', sel.endCutoffISO),
   ])
