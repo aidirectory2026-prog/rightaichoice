@@ -66,7 +66,34 @@ Every unit of work done under [`Plan_phase-10-fable-5-review.md`](./Plan_phase-1
 
 ## Department B — Conversion / CTA Architecture
 
-_(pending)_
+### 2026-06-10 — Code complete on branch `fable5-review` (commit `7a1d954`), awaiting PR merge
+
+Strategy applied: **affiliate-first 60% + /plan funnel improvement 40%** (locked with founder).
+
+**B1. Compare-table Visit links now tracked** — `components/compare/comparison-table.tsx`
+- Was a raw `website_url` anchor: the #2 traffic surface (420 views/14d) produced zero click logs. Now routes through `/api/tools/[slug]/visit` with `source='compare_table'`.
+- `VisitWebsiteButton` gained `className`/`label`/`icon` props for reuse, and its `?d=` param now uses the fallback-aware distinct id (clicks count even with Mixpanel blocked).
+
+**B2. "Try {tool}" CTAs at the comparison verdict** — `app/compare/[slug]/page.tsx`
+- The editorial verdict is the highest-intent moment on the site; readers previously had to scroll back up to act. Tracked buttons for each compared tool, `source='compare_verdict'`.
+
+**B3. Auto-UTM on outbound** — `app/api/tools/[slug]/visit/route.ts`
+- Plain `website_url` destinations get `utm_source=rightaichoice&utm_medium=referral&utm_campaign=<surface>`. Affiliate URLs untouched (program-controlled). Existing utm_source on a destination wins.
+- _Plain language: every tool vendor will now see "rightaichoice" in their analytics — that's the door-opener for affiliate negotiations._
+
+**B4. Plan-CTA copy pass** — `components/cta/plan-cta-inline.tsx`
+- Old (0.37% CTR baseline): "Skip the guesswork" / "Plan my stack". New: "Get your full AI stack in 60 seconds" + "Free, no signup" + button "Get my free stack". Measured per surface on /admin/plan-conversion.
+
+**B5. Newsletter capture where the traffic is**
+- `/blog/[slug]`: card at the article footer (`source='blog_post'`, new source registered in form + API).
+- `/compare/[slug]`: "Still deciding?" card near the page bottom (`source='compare_detail'`).
+- Deviation from plan: skipped the scroll-triggered popup on tool pages for now — tool pages already carry 4 CTAs (Visit/Save/Compare/Plan) and a popup risks hurting the funnel that already works; revisit after measuring blog/compare capture.
+
+**B6. "Affiliate gaps" card** — `app/admin/analytics/page.tsx`
+- Tools real humans clicked out to that have no `affiliate_url`, highest-clicked first — the founder's affiliate-enrollment to-do list, range-windowed.
+
+**Verification:** `tsc --noEmit`, `eslint`, and full `next build` clean. Post-merge checks: `tool_visit_redirected` events with `/compare/` referrers; UTM visible in redirect Location; newsletter subs > 0; plan CTA CTR trend vs 0.37%.
+- Also fixed in passing: pre-existing `t: any` lint error in the compare page's "Explore each tool" block.
 
 ## Department C — Pipelines / Reliability
 
