@@ -3,7 +3,7 @@
 Complete documentation for every automated pipeline that keeps RightAIChoice fresh
 without manual intervention.
 
-> **CURRENT STATE — updated 2026-06-10 (Phase 10).** This README is the authoritative,
+> **CURRENT STATE — updated 2026-06-11 (Phase 10 + Fable-5 review Dept C).** This README is the authoritative,
 > up-to-date inventory. The per-topic files `01-09` in this folder are older deep-dives
 > (April 2026) and are partially stale — trust the tables below for schedules/engines.
 > Key shifts since those were written: **DeepSeek** (not Anthropic) powers data-layer
@@ -33,15 +33,15 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 
 | Path | Schedule (UTC) | Purpose |
 |------|----------------|---------|
-| `/api/cron/cascade-hubs` | `0 * * * *` (hourly) | Freshness cascade — ISR-revalidate changed pages + IndexNow ping. **(Phase 10: revived — was orphaned/broken.)** |
+| `/api/cron/cascade-hubs` | `0 * * * *` (hourly) | Freshness cascade — ISR-revalidate changed pages + IndexNow ping. **(Phase 10: revived; verified live 2026-06-10. Fable-5 Dept C: `maxDuration` 60→300 — a full 500-page pass exceeded 60s.)** |
 | `/api/cron/onboard-tools` | `7,37 * * * *` | Fast lane — finish onboarding already-published tools. |
-| `/api/cron/onboard-tools?mode=sop` | `17,47 * * * *` | **(Phase 10)** Draft gate — publish `is_published=false` tools only once all quality gates pass. |
+| `/api/cron/onboard-tools?mode=sop` | `17,47 * * * *` | **(Phase 10)** Draft gate — publish `is_published=false` tools only once all quality gates pass. **(Fable-5 Dept C: 240s time-budget — completed drafts commit, the rest defer to the next half-hour run instead of being platform-killed mid-tool.)** |
 | `/api/cron/poll-gh-actions` | `*/10 * * * *` | **(Phase 10: moved here from GH)** Sync GH Actions runs → `pipeline_runs` + reconcile in-flight runs. |
 | `/api/cron/alert-failed-pipelines` | `*/30 * * * *` | **(Phase 10: moved here from GH)** Email/Slack failure + stuck-running alerts. |
 | `/api/cron/calculate-viability` | `30 0 * * *` | Recompute viability scores (batch). |
 | `/api/cron/cleanup-user-events` | `15 3 * * *` | Prune old analytics events. |
-| `/api/cron/scrape-sentiment` | `0 4 * * 0` | Weekly sentiment cache refresh (top tools). |
-| `/api/cron/submit-urls-bing` | `0 9 * * *` | Bing direct URL submission. |
+| `/api/cron/scrape-sentiment` | `0 4 * * *` | Sentiment cache refresh (top tools). **(Fable-5 Dept C: weekly→daily + 240s time-budget — only re-scrapes tools whose 7-day cache expired, so total work is unchanged but runs always finish; leftovers carry to the next day as `partial`.)** |
+| `/api/cron/submit-urls-bing` | `0 9 * * *` | Bing direct URL submission. **(Fable-5 Dept C: Bing "quota exceeded" is recorded as `partial` with the cursor advanced past accepted URLs — an expected daily condition, not a failure email.)** |
 | `/api/cron/indexnow-unindexed` | `0 10 * * 2` | Re-ping un-indexed URLs. |
 | `/api/cron/resubmit-sitemap-gsc` | `0 6 * * 1` | Resubmit sitemap to GSC. |
 | `/api/cron/snapshot-gsc` | `30 6 * * 1` | Weekly GSC snapshot. |

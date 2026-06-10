@@ -95,6 +95,8 @@ Strategy applied: **affiliate-first 60% + /plan funnel improvement 40%** (locked
 **Verification:** `tsc --noEmit`, `eslint`, and full `next build` clean. Post-merge checks: `tool_visit_redirected` events with `/compare/` referrers; UTM visible in redirect Location; newsletter subs > 0; plan CTA CTR trend vs 0.37%.
 - Also fixed in passing: pre-existing `t: any` lint error in the compare page's "Explore each tool" block.
 
+**MERGED 2026-06-11** — PR #13 (`8789644`), squash-merged by founder (bundled with Dept C). **Status: done**; live verification of compare-click events + UTM tracked under the Dept C observation week.
+
 ## Department C — Pipelines / Reliability
 
 ### 2026-06-11 — Failure-alert triage + fixes (commit `a30d82e` on `fable5-review`, awaiting PR merge)
@@ -113,6 +115,8 @@ Founder reported failure emails. Root-caused every alert from the last 36h of `p
 Also verified: cascade-hubs has IndexNow-pinged **2,899 pages total**, backlog down to 905 and draining hourly. Branch rebased onto main to incorporate the parallel session's PR #12 (attribution fixes) — no conflicts, tsc clean.
 
 _Plain language: of the six alarm types in your inbox, two had already stopped on their own (catch-up noise from Tuesday's deploy), and four were real — all four are now fixed at the cause: jobs that bit off more than their time limit now stop early and hand the rest to the next run, and Bing's daily quota running out is logged as "did what we could today" instead of a failure._
+
+**MERGED 2026-06-11** — PR #13 (`8789644`), squash-merged by founder (bundled with Dept B). `docs/automated-workflows/README.md` updated to reflect the new schedules/budgets (scrape-sentiment daily, cascade-hubs 300s, onboard SOP time-budget, Bing quota→partial). **Remaining: observation week** — confirm alert emails drop to ~zero by 2026-06-13 and compare-surface click events appear post-deploy.
 
 ## Department D — SEO / Growth
 
