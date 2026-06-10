@@ -108,6 +108,40 @@ export async function getSurfaceBreakdown(sel: RangeSelection): Promise<SurfaceS
       signup_rate: clicks > 0 ? Math.round((signups / clicks) * 1000) / 10 : 0,
     })
   }
+
+  // Fable-5 review (Dept A) — built-in parity check. This row is computed
+  // WITHOUT the properties->>surface filter; if the per-surface rows above
+  // don't (roughly) sum to it, the JSONB filter is silently failing or events
+  // are firing without a surface prop — either way the discrepancy is now
+  // visible on the dashboard instead of masquerading as "zero conversions".
+  const [allImpr, allClick, allSig] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
+      .eq('event_name', 'plan_cta_impression')
+      .gte('created_at', sel.cutoffISO)
+      .lt('created_at', sel.endCutoffISO),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
+      .eq('event_name', 'plan_cta_clicked')
+      .gte('created_at', sel.cutoffISO)
+      .lt('created_at', sel.endCutoffISO),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db.from('user_events').select('*', { count: 'exact', head: true }) as any)
+      .eq('event_name', 'plan_signup_modal_completed')
+      .gte('created_at', sel.cutoffISO)
+      .lt('created_at', sel.endCutoffISO),
+  ])
+  const totImpr = allImpr.count ?? 0
+  const totClick = allClick.count ?? 0
+  const totSig = allSig.count ?? 0
+  out.push({
+    surface: 'ALL (parity check)',
+    impressions: totImpr,
+    clicks: totClick,
+    ctr: totImpr > 0 ? Math.round((totClick / totImpr) * 1000) / 10 : 0,
+    signups: totSig,
+    signup_rate: totClick > 0 ? Math.round((totSig / totClick) * 1000) / 10 : 0,
+  })
   return out
 }
 

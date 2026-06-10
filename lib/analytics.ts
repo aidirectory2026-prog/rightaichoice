@@ -271,6 +271,33 @@ export function getMixpanelDistinctId(): string | null {
   }
 }
 
+// Fable-5 review (Dept A) — persistPlanIntent silently dropped typed goals
+// whenever Mixpanel was blocked (ad-blockers) or not yet initialized (user
+// types + skips within the SDK's async load window). Fall back to a stable
+// locally-generated id so the intent is never lost; the `fb-` prefix keeps
+// these distinguishable from Mixpanel ids in plan_intents/user_events.
+const FALLBACK_DISTINCT_KEY = 'rac_fallback_distinct_id'
+
+export function getDistinctIdWithFallback(): string | null {
+  const mp = getMixpanelDistinctId()
+  if (mp) return mp
+  if (typeof window === 'undefined') return null
+  try {
+    let id = localStorage.getItem(FALLBACK_DISTINCT_KEY)
+    if (!id) {
+      id = `fb-${
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`
+      }`
+      localStorage.setItem(FALLBACK_DISTINCT_KEY, id)
+    }
+    return id
+  } catch {
+    return null // storage blocked (private mode hard-block) — nothing stable to use
+  }
+}
+
 export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Identity + profile (must run on login/signup so anon → known is stitched)
