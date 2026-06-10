@@ -97,7 +97,22 @@ Strategy applied: **affiliate-first 60% + /plan funnel improvement 40%** (locked
 
 ## Department C — Pipelines / Reliability
 
-_(pending)_
+### 2026-06-11 — Failure-alert triage + fixes (commit `a30d82e` on `fable5-review`, awaiting PR merge)
+
+Founder reported failure emails. Root-caused every alert from the last 36h of `pipeline_runs`:
+
+| Alert | Verdict | Action |
+|---|---|---|
+| `onboard-tools` timeout ×8 (the :17/:47 SOP runs) | **Real** — 5 heavy SOP drafts per run regularly blew the 300s limit; Vercel killed the process mid-tool, sweeper marked it timeout | **Fixed**: 240s time-budget guard in `runOnboardSop` (`lib/cron/onboard.ts`) — completed drafts commit, the rest defer 30 min |
+| `cascade-hubs` timeout ×1 (18:00 UTC) | **Real** — full 500-page pass can exceed the route's 60s `maxDuration` | **Fixed**: `maxDuration` 60 → 300 |
+| `submit-urls-bing` failure daily 09:00 | **Real but expected condition** — Bing's "quota exceeded" 400 treated as an incident | **Fixed**: detect quota-exceeded, advance cursor past accepted URLs, record `partial` — no more morning emails |
+| `scrape-sentiment` timeout (Sun) | **Real** — up to 100 tools × scrape+LLM in one 300s run | **Fixed**: 240s time-budget + schedule weekly → **daily** 04:00 (7-day cache keeps total work identical; deferred tools catch up within days) |
+| `freshness-sla` breaches | Self-cleared as predicted — none since Jun 10 10:00 UTC; refresh backlog draining (482 tools >3d, down from 935) | Monitor only |
+| `poll-gh-actions-heartbeat` | Stale noise from before the OPT-2 deploy — none since Jun 10 09:07 | None |
+
+Also verified: cascade-hubs has IndexNow-pinged **2,899 pages total**, backlog down to 905 and draining hourly. Branch rebased onto main to incorporate the parallel session's PR #12 (attribution fixes) — no conflicts, tsc clean.
+
+_Plain language: of the six alarm types in your inbox, two had already stopped on their own (catch-up noise from Tuesday's deploy), and four were real — all four are now fixed at the cause: jobs that bit off more than their time limit now stop early and hand the rest to the next run, and Bing's daily quota running out is logged as "did what we could today" instead of a failure._
 
 ## Department D — SEO / Growth
 
