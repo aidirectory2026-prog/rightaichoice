@@ -364,6 +364,29 @@ Stops bad data entering the catalog at the source.
 - **Integration:** 14 commits on `phase10-bugfix`; DB migrations 138–147 ALREADY applied to prod.
   Final squash-merge → `main` (the Vercel production go-live) **held for explicit operator go-ahead.**
 
-## ✅ PHASE 10 COMPLETE (pending final merge)
+## ✅ PHASE 10 COMPLETE — MERGED & DEPLOYED (2026-06-10)
 All 77 audit findings addressed (a few cosmetic items documented as optional) + the real-time data
-SOP (≤3-day refresh, daily top-150 hybrid 75/75, strict pg_cron monitors). tsc + production build green.
+SOP (≤3-day refresh, daily top-150 hybrid 75/75, strict pg_cron monitors). tsc + production build
+green. Squash-merged to main (PR #10, sha 6013a34) → Vercel production deploy.
+
+### Post-merge follow-ups (2026-06-10)
+- **Resend alerts VERIFIED working** — dispatched alert-failed-pipelines via the GH API; operator
+  received the emails. (Test row cleaned up.) The run delivered 4: the test, plus 3 REAL monitoring
+  catches — `freshness-sla` (118 daily >24h / 935 >3d = the expected post-deploy catch-up, self-clears
+  as the 2×/day refresh cycles), `poll-gh-actions-heartbeat` (see below), and `submit-urls-bing`
+  (Bing's own daily quota — benign).
+- **#11/#59 viability — Path A done & deployed** (sha c1c50ac): rewrote `/viability` + tool-page copy
+  to describe what's truly measured (wrapper status, GitHub stars, pricing-model proxy) and flag the
+  category baselines (hyperscaler/mortality) as roadmap; dropped the false claims (commit-frequency,
+  funding-runway lookup, per-tool hyperscaler detection, uptime). Building the real signals = future.
+- **lex/synthesis renames done** — `Lex Markets` + `Synthesis Tutor` now distinct; **live duplicate
+  pairs = 0**.
+- **PITR — skipped** per operator (Supabase Pro daily backups suffice for now).
+- **⚠ KEY OPERATIONAL FINDING — GitHub Actions scheduled crons are NOT firing reliably.** The
+  poll-gh-actions heartbeat fired ("no run in 2h") and the alerter itself hadn't auto-run in ~3h.
+  This matters because the **nightly freshness refresh (freshness-batch.yml) also runs on GH Actions
+  cron** — if schedules are disabled, the 3-day SOP won't run. Likely cause: GitHub auto-disables
+  scheduled workflows after ~60 days of repo inactivity. ACTION: GitHub → Actions → re-enable the
+  workflows (today's merge may have re-armed them; the heartbeat will keep watching). Stronger fix
+  (OPT-2): move the sub-daily crons (poll-gh-actions, alert) to native Vercel Pro crons for
+  reliability; the nightly batch must stay on GH (runtime) but is now heartbeat-monitored.
