@@ -72,6 +72,7 @@ import { buildToolPageMeta } from '@/lib/seo/metadata'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
+import { getRelatedBestPages } from '@/lib/seo/best-page-links'
 
 // Revalidate tool pages every 5 minutes (ISR)
 export const revalidate = 300
@@ -159,6 +160,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
   const tags = tool.tool_tags?.map((tt: { tags: { id: string; name: string; slug: string } }) => tt.tags).filter(Boolean) ?? []
   const categoryIds = categories.map((c: { id: string }) => c.id)
   const tagSlugs = tags.map((t: { slug: string }) => t.slug)
+
+  // Dept D — contextual /best guide links (static config match, no DB cost).
+  const relatedBestPages = getRelatedBestPages({
+    categorySlugs: categories.map((c: { slug: string }) => c.slug),
+    text: `${tool.tagline ?? ''} ${tool.description ?? ''} ${tags.map((t: { name: string }) => t.name).join(' ')}`,
+    limit: 4,
+  })
 
   // Get alternatives + check saved status in parallel
   const supabase = await createClient()
@@ -1119,6 +1127,28 @@ export default async function ToolDetailPage({ params }: PageProps) {
                         className="rounded-lg border border-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
                       >
                         {cat.icon} {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dept D (fable 5 review) — contextual internal links into the
+                  /best guides. GSC diagnosis: the 64 niche pages are indexed
+                  but rank ~pos 69 with only the footer hub linking to them;
+                  ~2,000 tool pages linking contextually is the cheapest
+                  authority lever. */}
+              {relatedBestPages.length > 0 && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                  <h3 className="text-sm font-semibold text-white mb-3">Best-of guides</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {relatedBestPages.map((bp) => (
+                      <Link
+                        key={bp.slug}
+                        href={`/best/${bp.slug}`}
+                        className="rounded-lg border border-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:border-emerald-700 hover:text-emerald-300 transition-colors"
+                      >
+                        {bp.label}
                       </Link>
                     ))}
                   </div>
