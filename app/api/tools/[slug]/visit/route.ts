@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 import { isNonHumanRequest } from '@/lib/bot-detection'
 
@@ -67,13 +68,21 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const countable = !isNonHumanRequest(req.headers, req.method) && hasSameOriginEvidence(req)
 
   if (countable) {
-    // Log click — fire and forget
+    // Log click — fire and forget. Dept A: must use the admin client — the
+    // user-context client's insert was silently rejected by RLS for anon
+    // visitors (click_logs had exactly 1 row ever while redirects flowed),
+    // and `void` swallowed the error.
     const { data: { user } } = await supabase.auth.getUser()
-    void supabase.from('click_logs').insert({
-      tool_id: tool.id,
-      user_id: user?.id ?? null,
-      source: isAffiliate ? 'affiliate_redirect' : 'visit_redirect',
-    })
+    void getAdminClient()
+      .from('click_logs')
+      .insert({
+        tool_id: tool.id,
+        user_id: user?.id ?? null,
+        source: isAffiliate ? 'affiliate_redirect' : 'visit_redirect',
+      } as never)
+      .then(({ error }) => {
+        if (error) console.warn(`[visit] click_logs insert failed: ${error.message}`)
+      })
 
     // Server-authoritative revenue event — fires even when client-side
     // tool_visit_clicked is killed by ad-blockers. Distinct_id flows in via ?d=
