@@ -1,0 +1,1049 @@
+/**
+ * Phase 10.3 — Property-level event-schema registry (single source of truth).
+ *
+ * lib/analytics-registry.ts governs event NAMES (lifecycle: fired / planned /
+ * deprecated). THIS file governs event PROPERTIES: for every event that
+ * actually fires (client call sites in app/+components/, plus the server
+ * emitters in lib/mixpanel-server.ts) it declares a strict zod schema, a
+ * technical description, and a plain-English one-liner.
+ *
+ * Powers:
+ *   - dev/test validation at the capture() / trackServer() choke points
+ *     (lib/analytics.ts, lib/mixpanel-server.ts) — loud locally, free in prod
+ *   - production tagging in /api/track-mirror (schema_valid=false on rows
+ *     that drift — tag, never drop: capture at any cost)
+ *   - the CI guard (scripts/audit/verify-event-registry.ts) — every FIRED
+ *     event must have a schema; every JSONB property the admin panel queries
+ *     must exist in the right schema
+ *   - the auto-generated event dictionary (Phase 8) and property-breakdown
+ *     UI (Phase 6)
+ *
+ * Derivation rule: schemas are derived from the ACTUAL call sites in
+ * lib/analytics.ts / lib/mixpanel-server.ts and were cross-checked against
+ * the last 30 real rows per event in public.user_events (2026-06-11).
+ * TRUST CODE + DATA over docs. When an event has a legacy and a "rich"
+ * emitter under the same name, the schema is the union of both shapes.
+ */
+
+import { z } from 'zod'
+
+// ── Base context (the envelope) ─────────────────────────────────────
+// mirrorContext() in lib/analytics.ts merges these around every mirrored
+// event. Most ride as top-level MirrorEvent fields; the starred ones are
+// folded INTO `properties` (no DDL needed): session_id*, webdriver*,
+// clarity_session_id*, and /api/track-mirror adds first_touch_referrer*,
+// first_touch_landing* (+ schema_valid*/schema_issues* when tagging).
+// Event prop schemas validate ONLY the event-specific payload; the combined
+// validator strips these keys before the strict check.
+export const BASE_CONTEXT_SCHEMA = z
+  .object({
+    // top-level MirrorEvent envelope (lib/analytics.ts mirrorContext ~L232)
+    event_name: z.string(),
+    distinct_id: z.string(),
+    user_id: z.string().nullable(),
+    auth_state: z.enum(['anon', 'known']),
+    device_type: z.enum(['mobile', 'tablet', 'desktop']),
+    page_path: z.string(),
+    referrer: z.string(),
+    utm_source: z.string(),
+    utm_medium: z.string(),
+    utm_campaign: z.string(),
+    first_touch_utm_source: z.string(),
+    first_touch_referrer: z.string(),
+    first_touch_landing: z.string(),
+    insert_id: z.string(),
+    client_time_ms: z.number(),
+    // keys that travel INSIDE properties (JSONB)
+    session_id: z.string(),
+    webdriver: z.boolean(),
+    clarity_session_id: z.string(),
+    schema_valid: z.boolean(),
+    schema_issues: z.array(z.string()),
+  })
+  .partial()
+
+/** Properties-level base-context keys stripped before the strict check. */
+export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
+  'session_id',
+  'webdriver',
+  'clarity_session_id',
+  'first_touch_referrer',
+  'first_touch_landing',
+  'first_touch_utm_source',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'referrer',
+  'page_path_context',
+  'schema_valid',
+  'schema_issues',
+])
+
+export type EventCategory =
+  | 'navigation'
+  | 'tools'
+  | 'plan'
+  | 'search'
+  | 'compare'
+  | 'reviews'
+  | 'chat'
+  | 'sentiment'
+  | 'auth'
+  | 'engagement'
+  | 'discovery'
+  | 'content'
+  | 'system'
+
+export type EventSource = 'client' | 'server' | 'both'
+
+export interface EventSchemaEntry {
+  /** Technical: when it fires, from where (file/component). */
+  description: string
+  /** One sentence a non-technical owner understands. */
+  plainEnglish: string
+  category: EventCategory
+  source: EventSource
+  /** Strict schema (or union of strict shapes) for the event payload. */
+  props: z.ZodType
+}
+
+// Shared shape for the use-debounced-text-tracking.ts typed events.
+const typedFieldProps = z
+  .object({
+    field_id: z.string(),
+    char_count: z.number(),
+    word_count: z.number(),
+    current_text: z.string().optional(), // only capturePolicy:'text' surfaces
+    final_blur: z.boolean().optional(), // only present (true) on blur flush
+  })
+  .strict()
+
+export const EVENT_SCHEMAS = {
+  // ── Navigation & top-level CTAs ───────────────────────────────────
+  page_viewed: {
+    description: 'Fires on every route change from MixpanelProvider via analytics.pageViewed().',
+    plainEnglish: 'Someone opened or navigated to a page on the site.',
+    category: 'navigation',
+    source: 'client',
+    props: z.object({ path: z.string(), url: z.string(), referrer: z.string() }).strict(),
+  },
+  nav_cta_clicked: {
+    description: 'Navbar CTA click — analytics.navCtaClicked(cta, source) from layout nav components.',
+    plainEnglish: 'Someone clicked a button in the top navigation bar.',
+    category: 'navigation',
+    source: 'client',
+    props: z.object({ cta: z.string(), source: z.string() }).strict(),
+  },
+  hero_cta_clicked: {
+    description: 'Homepage hero CTA click — analytics.heroCtaClicked(cta, variant).',
+    plainEnglish: 'Someone clicked the big call-to-action button on the homepage.',
+    category: 'navigation',
+    source: 'client',
+    props: z.object({ cta: z.string(), variant: z.string() }).strict(),
+  },
+  navigation_back: {
+    description: 'Browser back button (popstate) — GlobalInteractionTracker.',
+    plainEnglish: 'Someone pressed the browser back button.',
+    category: 'navigation',
+    source: 'client',
+    props: z.object({ from_path: z.string() }).strict(),
+  },
+
+  // ── Tools ─────────────────────────────────────────────────────────
+  tool_page_viewed: {
+    description: 'Tool detail page view — analytics.toolPageViewed(toolId, toolSlug) from app/tools/[slug].',
+    plainEnglish: 'Someone opened the detail page of a specific AI tool.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), tool_slug: z.string() }).strict(),
+  },
+  tool_saved: {
+    description:
+      'Save/bookmark a tool. Client: SaveToolButton → analytics.toolSaved (tool_id, tool_name, tool_slug). Server: serverAnalytics.toolSavedServer (Mixpanel only, tool_slug + source:"server").',
+    plainEnglish: 'Someone saved a tool to their personal list.',
+    category: 'tools',
+    source: 'both',
+    props: z.union([
+      z.object({ tool_id: z.string(), tool_name: z.string(), tool_slug: z.string().optional() }).strict(),
+      z.object({ tool_id: z.string(), tool_slug: z.string(), source: z.literal('server') }).strict(),
+    ]),
+  },
+  tool_unsaved: {
+    description: 'Un-save a tool — SaveToolButton → analytics.toolUnsaved(tool_id, tool_name, tool_slug).',
+    plainEnglish: 'Someone removed a tool from their saved list.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), tool_name: z.string(), tool_slug: z.string().optional() }).strict(),
+  },
+  tool_visit_clicked: {
+    description:
+      'Client half of the "Visit Website" click (attribution) — analytics.toolVisitClicked; server half is tool_visit_redirected.',
+    plainEnglish: 'Someone clicked through to a tool’s own website.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), tool_slug: z.string(), source: z.string() }).strict(),
+  },
+  tool_visit_redirected: {
+    description:
+      'Authoritative affiliate redirect — serverAnalytics.toolVisitRedirected from /api/tools/[slug]/visit (server-only, bot-filtered at source).',
+    plainEnglish: 'Our server confirmed sending a visitor to a tool’s website (the revenue click).',
+    category: 'tools',
+    source: 'server',
+    props: z.object({ tool_slug: z.string(), referrer_path: z.string(), source: z.literal('server') }).strict(),
+  },
+  tool_faq_opened: {
+    description: 'FAQ accordion expand on a tool page — analytics.toolFaqOpened.',
+    plainEnglish: 'Someone expanded a question in a tool’s FAQ section.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ tool_slug: z.string(), question_index: z.number(), question_text: z.string() }).strict(),
+  },
+  viability_badge_clicked: {
+    description: 'Viability badge click on a tool page — analytics.viabilityBadgeClicked.',
+    plainEnglish: 'Someone clicked a tool’s "safe bet / at risk / rising" badge.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ tool_slug: z.string(), badge: z.enum(['safe_bet', 'at_risk', 'rising']) }).strict(),
+  },
+  viability_page_viewed: {
+    description: 'Viability hub pages view — analytics.viabilityPageViewed.',
+    plainEnglish: 'Someone opened the tool-viability (shutdown-risk) pages.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ slug: z.string(), page_type: z.enum(['index', 'at_risk', 'safe_bets']) }).strict(),
+  },
+
+  // ── Sentiment Checker (client + server family) ────────────────────
+  sentiment_card_viewed: {
+    description: 'Sentiment Checker card became visible on a tool page — analytics.sentimentCardViewed.',
+    plainEnglish: 'Someone saw the Market Sentiment Checker box on a tool page.',
+    category: 'sentiment',
+    source: 'client',
+    props: z.object({ tool_slug: z.string() }).strict(),
+  },
+  sentiment_scan_started: {
+    description: 'User clicked "scan" in the Sentiment Checker UI — analytics.sentimentScanStarted.',
+    plainEnglish: 'Someone started a sentiment scan for a tool.',
+    category: 'sentiment',
+    source: 'client',
+    props: z.object({ tool_slug: z.string(), charge_type: z.string() }).strict(),
+  },
+  sentiment_result_viewed: {
+    description: 'Sentiment report rendered to the user — analytics.sentimentResultViewed.',
+    plainEnglish: 'Someone viewed a finished sentiment report.',
+    category: 'sentiment',
+    source: 'client',
+    props: z
+      .object({ tool_slug: z.string(), sentiment_score: z.string(), result_source: z.enum(['fresh', 'cached']) })
+      .strict(),
+  },
+  sentiment_pay_clicked: {
+    description: 'Pay button click in the sentiment paywall — analytics.sentimentPayClicked.',
+    plainEnglish: 'Someone clicked the pay button for a sentiment scan.',
+    category: 'sentiment',
+    source: 'client',
+    props: z.object({ tool_slug: z.string(), gateway: z.string() }).strict(),
+  },
+  sentiment_scan_requested: {
+    description: 'Server accepted a scan request — serverAnalytics.sentimentEvent from /api/tools/[slug]/sentiment-checker/scan.',
+    plainEnglish: 'Our server accepted and queued a sentiment scan.',
+    category: 'sentiment',
+    source: 'server',
+    props: z.object({ tool_slug: z.string(), charge_type: z.string() }).strict(),
+  },
+  sentiment_scan_completed: {
+    description: 'Scan pipeline finished successfully — serverAnalytics.sentimentEvent in the scan route.',
+    plainEnglish: 'A sentiment scan finished and produced a report.',
+    category: 'sentiment',
+    source: 'server',
+    props: z
+      .object({
+        tool_slug: z.string(),
+        charge_type: z.string(),
+        duration_ms: z.number(),
+        sources: z.array(z.string()),
+        mention_count: z.number(),
+        sentiment_score: z.string(),
+      })
+      .strict(),
+  },
+  sentiment_scan_failed: {
+    description: 'Scan pipeline threw (credit refunded) — serverAnalytics.sentimentEvent in the scan route catch.',
+    plainEnglish: 'A sentiment scan failed and the user’s credit was refunded.',
+    category: 'sentiment',
+    source: 'server',
+    props: z.object({ tool_slug: z.string(), charge_type: z.string(), error: z.string() }).strict(),
+  },
+  sentiment_paywall_shown: {
+    description: 'Server told the client to show the paywall (no free scans left) — scan route.',
+    plainEnglish: 'Someone hit the sentiment paywall (out of free scans).',
+    category: 'sentiment',
+    source: 'server',
+    props: z.object({ tool_slug: z.string(), currency: z.string(), amount_minor: z.number() }).strict(),
+  },
+  sentiment_payment_initiated: {
+    description: 'Payment order created — /api/payments/{paypal,razorpay}/order.',
+    plainEnglish: 'Someone started paying for sentiment scans.',
+    category: 'sentiment',
+    source: 'server',
+    props: z
+      .object({
+        gateway: z.string(),
+        currency: z.string(),
+        amount_minor: z.number(),
+        tool_slug: z.string().nullable(),
+      })
+      .strict(),
+  },
+  sentiment_payment_succeeded: {
+    description: 'Payment captured/verified, credits granted — /api/payments/{paypal/capture,razorpay/verify}.',
+    plainEnglish: 'A sentiment payment went through and credits were added.',
+    category: 'sentiment',
+    source: 'server',
+    props: z.object({ gateway: z.string(), credits: z.number() }).strict(),
+  },
+  sentiment_payment_failed: {
+    description: 'Payment capture/verification failed — paypal capture / razorpay verify routes.',
+    plainEnglish: 'A sentiment payment attempt failed.',
+    category: 'sentiment',
+    source: 'server',
+    props: z.object({ gateway: z.string(), reason: z.string() }).strict(),
+  },
+
+  // ── Compare ───────────────────────────────────────────────────────
+  comparison_viewed: {
+    description:
+      'Compare page render. Rich shape from compare-view-tracker (comparisonViewedRich: tools array); legacy shape (tools joined string + count) kept for old emitters/cached bundles.',
+    plainEnglish: 'Someone viewed a side-by-side comparison of tools.',
+    category: 'compare',
+    source: 'client',
+    props: z.union([
+      z
+        .object({
+          tools: z.array(z.string()),
+          tools_count: z.number(),
+          is_editorial_compare: z.boolean(),
+          compare_slug: z.string(),
+          categories_represented: z.array(z.string()),
+        })
+        .strict(),
+      z.object({ tools: z.string(), count: z.number() }).strict(),
+    ]),
+  },
+  compare_tool_added: {
+    description:
+      'Tool added to compare tray. Legacy shape fires from add-to-compare-button (tool_slug + tray_count); rich shape (compareToolAddedRich) defined for richer surfaces.',
+    plainEnglish: 'Someone added a tool to their comparison tray.',
+    category: 'compare',
+    source: 'client',
+    props: z.union([
+      z.object({ tool_slug: z.string(), tray_count: z.number() }).strict(),
+      z
+        .object({
+          tool_slug: z.string(),
+          source: z.string(),
+          tray_count_before: z.number(),
+          tray_count_after: z.number(),
+          all_tools_in_tray: z.array(z.string()),
+          added_from_tool_page: z.boolean(),
+        })
+        .strict(),
+    ]),
+  },
+  compare_tool_removed: {
+    description: 'Tool removed from compare tray — analytics.compareToolRemoved.',
+    plainEnglish: 'Someone removed a tool from their comparison tray.',
+    category: 'compare',
+    source: 'client',
+    props: z.object({ tool_slug: z.string(), tray_count: z.number() }).strict(),
+  },
+  compare_share_clicked: {
+    description: 'Share button on a comparison — analytics.compareShareClicked (tools = comma-joined slugs).',
+    plainEnglish: 'Someone shared a tool comparison.',
+    category: 'compare',
+    source: 'client',
+    props: z.object({ tools: z.string() }).strict(),
+  },
+  compare_tray_opened: {
+    description: 'Compare tray expanded — analytics.compareTrayOpened.',
+    plainEnglish: 'Someone opened the comparison tray.',
+    category: 'compare',
+    source: 'client',
+    props: z.object({ tray_count: z.number() }).strict(),
+  },
+
+  // ── Plan flow ─────────────────────────────────────────────────────
+  plan_started: {
+    description: 'Plan wizard entered — analytics.planStarted(source).',
+    plainEnglish: 'Someone started building an AI tool plan.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ source: z.string() }).strict(),
+  },
+  plan_intake_submitted: {
+    description: 'Full intake form submitted — analytics.planIntakeSubmitted with every input value captured.',
+    plainEnglish: 'Someone finished the plan questionnaire (goal, budget, team, tools they already use).',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        skill_level: z.string(),
+        budget: z.string(),
+        team_size: z.string(),
+        industry: z.string(),
+        goal_type: z.string(),
+        goal_text: z.string(),
+        goal_text_word_count: z.number(),
+        existing_tools: z.array(z.string()),
+        existing_tools_count: z.number(),
+        existing_tools_matched_slugs: z.array(z.string()),
+        existing_tools_unmatched: z.array(z.string()),
+        time_to_complete_intake_ms: z.number(),
+        source: z.string(),
+      })
+      .strict(),
+  },
+  plan_chip_selected: {
+    description: 'Chip selection in the plan wizard — analytics.planChipSelected.',
+    plainEnglish: 'Someone picked an answer chip in the plan questionnaire.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        step: z.string(),
+        step_index: z.number(),
+        chip_value: z.string(),
+        chip_label: z.string(),
+        chip_index: z.number(),
+        multi_select_count: z.number(),
+        all_selected_values: z.array(z.string()),
+        time_to_select_ms: z.number(),
+      })
+      .strict(),
+  },
+  plan_existing_tool_added: {
+    description: 'User added an existing tool during intake — analytics.planExistingToolAdded.',
+    plainEnglish: 'Someone told us about a tool they already use.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        tool_name: z.string(),
+        matched_tool_slug: z.string().nullable().optional(),
+        matched_tool_id: z.string().nullable().optional(),
+        total_count: z.number(),
+        source: z.enum(['autocomplete', 'free_text', 'pasted']),
+        time_to_add_ms: z.number().optional(),
+      })
+      .strict(),
+  },
+  plan_existing_tool_removed: {
+    description: 'User removed an existing tool during intake — analytics.planExistingToolRemoved.',
+    plainEnglish: 'Someone removed a tool from their "already using" list.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({ tool_name: z.string(), matched_tool_slug: z.string().nullable(), total_count: z.number() })
+      .strict(),
+  },
+  plan_completed: {
+    description:
+      'Plan generation finished. Client: project-planner (use_case + tool_count). Server mirror: planCompletedServer adds recommended_tool_slugs + source:"server".',
+    plainEnglish: 'Someone received their finished AI tool plan.',
+    category: 'plan',
+    source: 'both',
+    props: z.union([
+      z.object({ use_case: z.string(), tool_count: z.number() }).strict(),
+      z
+        .object({
+          use_case: z.string(),
+          tool_count: z.number(),
+          recommended_tool_slugs: z.array(z.string()),
+          source: z.literal('server'),
+        })
+        .strict(),
+    ]),
+  },
+  plan_match_tier: {
+    description: 'Which matching tier produced a plan stage — analytics.planMatchTier.',
+    plainEnglish: 'Internal quality signal: how good the tool match for a plan step was.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({ stage_id: z.string(), tier: z.enum(['keyword', 'category_fallback', 'emergency']) })
+      .strict(),
+  },
+  plan_perf: {
+    description:
+      'Plan pipeline timing marks — analytics.planPerf(timings). Free-form Record<string, number> (e.g. total_ms, search_ms, scoring_ms, cache_hit).',
+    plainEnglish: 'Internal speed measurements of plan generation.',
+    category: 'plan',
+    source: 'client',
+    props: z.record(z.string(), z.number()),
+  },
+  plan_results_displayed: {
+    description: 'Plan results rendered — analytics.planResultsDisplayed with full recommendation set.',
+    plainEnglish: 'The recommended tools were shown to the user.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        recommended_tool_slugs: z.array(z.string()),
+        recommended_tool_ids: z.array(z.string()),
+        recommendation_count: z.number(),
+        stages_count: z.number(),
+        total_estimated_cost_usd_per_month: z.number(),
+        use_case: z.string(),
+        matches_existing_tools: z.array(z.string()),
+        replaces_existing_tools: z.array(z.string()),
+        source_intake_id: z.string(),
+      })
+      .strict(),
+  },
+  plan_results_tool_clicked: {
+    description: 'Click on a recommended tool in plan results — analytics.planResultsToolClicked.',
+    plainEnglish: 'Someone clicked one of the tools we recommended in their plan.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        tool_slug: z.string(),
+        tool_id: z.string().optional(),
+        position: z.number(),
+        recommendation_tier: z.enum(['top', 'alt', 'budget']),
+        stage_id: z.string().optional(),
+        user_intake_use_case: z.string().optional(),
+        user_intake_skill: z.string().optional(),
+        user_intake_budget: z.string().optional(),
+        user_intake_team: z.string().optional(),
+        total_recommended_count: z.number(),
+      })
+      .strict(),
+  },
+
+  // ── Plan CTA + signup-gate funnel ─────────────────────────────────
+  plan_cta_impression: {
+    description: 'Plan CTA became visible (scroll-into-view or mount) — analytics.planCtaImpression.',
+    plainEnglish: 'A "build your plan" button was shown to someone.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        surface: z.enum(['sticky_bar', 'inline_card', 'navbar', 'homepage', 'plan_page']),
+        page_path: z.string(),
+      })
+      .strict(),
+  },
+  plan_cta_clicked: {
+    description: 'Plan CTA button click (before any signup gate) — analytics.planCtaClicked.',
+    plainEnglish: 'Someone clicked a "build your plan" button.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        surface: z.enum(['sticky_bar', 'inline_card', 'navbar', 'homepage', 'plan_page']),
+        page_path: z.string(),
+      })
+      .strict(),
+  },
+  plan_cta_dismissed: {
+    description: 'Sticky/inline plan CTA dismissed (×) — analytics.planCtaDismissed.',
+    plainEnglish: 'Someone closed the "build your plan" banner.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ surface: z.enum(['sticky_bar', 'inline_card']), page_path: z.string() }).strict(),
+  },
+  plan_signup_modal_shown: {
+    description: 'OAuth signup modal opened — analytics.planSignupModalShown from plan-signup-modal.tsx.',
+    plainEnglish: 'The sign-up popup appeared during the plan flow.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ source_surface: z.string(), typed_goal_char_count: z.number() }).strict(),
+  },
+  plan_signup_modal_oauth_clicked: {
+    description: 'Provider button click inside the signup modal — analytics.planSignupModalOAuthClicked.',
+    plainEnglish: 'Someone chose Google or LinkedIn in the sign-up popup.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ provider: z.enum(['google', 'linkedin']) }).strict(),
+  },
+  plan_signup_modal_skipped: {
+    description: '"Skip & continue" inside the signup modal — analytics.planSignupModalSkipped.',
+    plainEnglish: 'Someone skipped signing up and continued anonymously.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ typed_goal_char_count: z.number() }).strict(),
+  },
+  plan_signup_modal_completed: {
+    description:
+      'Post-OAuth identify completed — auth-provider.tsx. source_surface added 10.3 so /admin plan-conversion per-surface signups stop reading 0.',
+    plainEnglish: 'Someone finished signing up through the plan popup.',
+    category: 'plan',
+    source: 'client',
+    props: z
+      .object({
+        provider: z.enum(['google', 'linkedin']),
+        was_anon_to_known: z.boolean(),
+        source_surface: z.string().optional(),
+      })
+      .strict(),
+  },
+
+  // ── Recommend wizard ──────────────────────────────────────────────
+  recommendation_requested: {
+    description:
+      'Recommendation request. Client: analytics.recommendationRequested (use_case/budget/level). Server: recommendationRequestedServer adds result slugs (Mixpanel only).',
+    plainEnglish: 'Someone asked for tool recommendations.',
+    category: 'plan',
+    source: 'both',
+    props: z.union([
+      z.object({ use_case: z.string(), budget: z.string(), level: z.string() }).strict(),
+      z
+        .object({
+          use_case: z.string(),
+          budget: z.string(),
+          skill_level: z.string(),
+          result_count: z.number(),
+          result_tool_slugs: z.array(z.string()),
+          source: z.literal('server'),
+        })
+        .strict(),
+    ]),
+  },
+
+  // ── Search ────────────────────────────────────────────────────────
+  search_query_submitted: {
+    description: 'Search query submitted — analytics.searchQuerySubmitted (query capped 100 chars).',
+    plainEnglish: 'Someone ran a search.',
+    category: 'search',
+    source: 'client',
+    props: z.object({ query: z.string(), result_count: z.number(), source: z.string() }).strict(),
+  },
+  search_result_clicked: {
+    description:
+      'Search result click. Rich shape from search-bar (searchResultClickedRich); legacy 3-prop shape kept for older emitters.',
+    plainEnglish: 'Someone clicked a search result.',
+    category: 'search',
+    source: 'client',
+    props: z.union([
+      z
+        .object({
+          query: z.string(),
+          tool_slug: z.string(),
+          tool_id: z.string(),
+          position: z.number(),
+          total_results: z.number(),
+          page_number: z.number(),
+        })
+        .strict(),
+      z.object({ query: z.string(), tool_slug: z.string(), position: z.number() }).strict(),
+    ]),
+  },
+  search_typing: {
+    description: 'Live-search keystroke progression — analytics.searchTyping (debounced upstream).',
+    plainEnglish: 'Someone was typing in the search box.',
+    category: 'search',
+    source: 'client',
+    props: z.object({ current_query: z.string(), current_length: z.number(), source: z.string() }).strict(),
+  },
+  search_query_typed: {
+    description:
+      'Debounced keystroke capture on the navbar search field — use-debounced-text-tracking via analytics.fieldTextChanged (capturePolicy: text).',
+    plainEnglish: 'What someone typed into the search box (after a pause).',
+    category: 'search',
+    source: 'client',
+    props: typedFieldProps,
+  },
+
+  // ── Typed-field capture (plan goal) ───────────────────────────────
+  plan_goal_typed: {
+    description:
+      'Debounced keystroke capture on the homepage goal input — goal-input.tsx via analytics.fieldTextChanged (capturePolicy: text).',
+    plainEnglish: 'What someone typed as their goal on the homepage (after a pause).',
+    category: 'plan',
+    source: 'client',
+    props: typedFieldProps,
+  },
+
+  // ── Discovery / browse ────────────────────────────────────────────
+  filter_applied: {
+    description: 'Catalog filter applied — analytics.filterApplied.',
+    plainEnglish: 'Someone filtered the tool catalog.',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ filter_type: z.string(), value: z.string(), source: z.string() }).strict(),
+  },
+  category_viewed: {
+    description: 'Category page view — analytics.categoryViewed.',
+    plainEnglish: 'Someone browsed a tool category page.',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ slug: z.string() }).strict(),
+  },
+  collection_viewed: {
+    description: 'Collection page view — analytics.collectionViewed.',
+    plainEnglish: 'Someone browsed a curated tool collection.',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ slug: z.string() }).strict(),
+  },
+
+  // ── AI chat ───────────────────────────────────────────────────────
+  ai_chat_message: {
+    description:
+      'User message in AI chat. Rich shape from chat-interface (aiChatMessageRich, intent nullable); legacy {intent} shape kept.',
+    plainEnglish: 'Someone sent a message to the AI assistant.',
+    category: 'chat',
+    source: 'client',
+    props: z.union([
+      z
+        .object({
+          intent: z.string().nullable(),
+          message_text: z.string(),
+          message_length: z.number(),
+          message_word_count: z.number(),
+          mentioned_tool_slugs: z.array(z.string()),
+          conversation_turn: z.number(),
+          is_follow_up: z.boolean(),
+        })
+        .strict(),
+      z.object({ intent: z.string() }).strict(),
+    ]),
+  },
+  ai_chat_response_received: {
+    description: 'Assistant response landed — analytics.aiChatResponseReceived.',
+    plainEnglish: 'The AI assistant answered someone.',
+    category: 'chat',
+    source: 'client',
+    props: z
+      .object({
+        tool_count_suggested: z.number(),
+        suggested_tool_slugs: z.array(z.string()),
+        response_length: z.number(),
+        latency_ms: z.number(),
+      })
+      .strict(),
+  },
+  ai_chat_tool_clicked: {
+    description:
+      'Click on a tool inside an AI answer. Rich shape (aiChatToolClickedRich) + legacy {tool_slug} shape.',
+    plainEnglish: 'Someone clicked a tool the AI suggested.',
+    category: 'chat',
+    source: 'client',
+    props: z.union([
+      z
+        .object({
+          tool_slug: z.string(),
+          position_in_response: z.number(),
+          user_message_text: z.string(),
+          conversation_turn: z.number(),
+        })
+        .strict(),
+      z.object({ tool_slug: z.string() }).strict(),
+    ]),
+  },
+
+  // ── Reviews ───────────────────────────────────────────────────────
+  review_form_opened: {
+    description: 'Review form opened — analytics.reviewFormOpened.',
+    plainEnglish: 'Someone opened the "write a review" form.',
+    category: 'reviews',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), tool_slug: z.string(), source: z.string() }).strict(),
+  },
+  review_rating_set: {
+    description: 'Star rating picked — analytics.reviewRatingSet.',
+    plainEnglish: 'Someone chose a star rating for a tool.',
+    category: 'reviews',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), rating: z.number(), time_to_rate_ms: z.number() }).strict(),
+  },
+  review_text_changed: {
+    description: 'Review text edited (debounced) — analytics.reviewTextChanged (meta only, no raw text).',
+    plainEnglish: 'Someone was writing their review.',
+    category: 'reviews',
+    source: 'client',
+    props: z.object({ tool_id: z.string(), length: z.number(), word_count: z.number() }).strict(),
+  },
+  review_submitted: {
+    description:
+      'Review submitted. Rich client shape from review-form (full text); legacy {tool_id, rating}; server shape from serverAnalytics.reviewSubmitted (Mixpanel only).',
+    plainEnglish: 'Someone published a review of a tool.',
+    category: 'reviews',
+    source: 'both',
+    props: z.union([
+      z
+        .object({
+          tool_id: z.string(),
+          tool_slug: z.string(),
+          rating: z.number(),
+          text: z.string(),
+          text_length: z.number(),
+          word_count: z.number(),
+          pros_text: z.string(),
+          cons_text: z.string(),
+          has_pros: z.boolean(),
+          has_cons: z.boolean(),
+          recommended: z.boolean(),
+          use_case_tag: z.string(),
+          time_to_submit_ms: z.number(),
+        })
+        .strict(),
+      z.object({ tool_id: z.string(), rating: z.number(), source: z.literal('server') }).strict(),
+      z.object({ tool_id: z.string(), rating: z.number() }).strict(),
+    ]),
+  },
+
+  // ── Auth funnel ───────────────────────────────────────────────────
+  signup_started: {
+    description: 'Signup page/flow entered — analytics.signupStarted(source).',
+    plainEnglish: 'Someone started creating an account.',
+    category: 'auth',
+    source: 'client',
+    props: z.object({ source: z.string() }).strict(),
+  },
+  signup_completed: {
+    description:
+      'Account created. Server-authoritative (serverAnalytics.signupCompleted, deterministic insert_id, mirrors to user_events); client method exists too.',
+    plainEnglish: 'Someone created an account.',
+    category: 'auth',
+    source: 'both',
+    props: z.union([
+      z.object({ method: z.string(), source: z.literal('server') }).strict(),
+      z.object({ method: z.string() }).strict(),
+    ]),
+  },
+  login_completed: {
+    description:
+      'Login. Server-authoritative (serverAnalytics.loginCompleted, per-UTC-day insert_id, mirrors to user_events); client method exists too.',
+    plainEnglish: 'Someone logged in.',
+    category: 'auth',
+    source: 'both',
+    props: z.union([
+      z.object({ method: z.string(), source: z.literal('server') }).strict(),
+      z.object({ method: z.string() }).strict(),
+    ]),
+  },
+  password_reset_completed: {
+    description:
+      'Password reset finished. Client method + serverAnalytics.passwordResetCompletedServer (Mixpanel only).',
+    plainEnglish: 'Someone reset their password.',
+    category: 'auth',
+    source: 'both',
+    props: z.union([
+      z.object({ method: z.literal('email'), source: z.literal('server') }).strict(),
+      z.object({ method: z.literal('email') }).strict(),
+    ]),
+  },
+
+  // ── Content / growth ──────────────────────────────────────────────
+  blog_internal_link_clicked: {
+    description: 'Internal link click inside a blog post — analytics.blogInternalLinkClicked.',
+    plainEnglish: 'Someone clicked a link inside a blog article.',
+    category: 'content',
+    source: 'client',
+    props: z.object({ from_slug: z.string(), to_path: z.string() }).strict(),
+  },
+  share_clicked: {
+    description: 'Generic share action — analytics.shareClicked(entity, entityId, channel).',
+    plainEnglish: 'Someone shared a page.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ entity: z.string(), entity_id: z.string(), channel: z.string() }).strict(),
+  },
+  newsletter_subscribed: {
+    description:
+      'Newsletter signup. Rich client shape (newsletterSubscribedRich, email reduced to domain); legacy {source}; server shape (newsletterSubscribedServer, Mixpanel only).',
+    plainEnglish: 'Someone subscribed to the newsletter.',
+    category: 'engagement',
+    source: 'both',
+    props: z.union([
+      z
+        .object({
+          source: z.string(),
+          email_domain: z.string(),
+          page_path_at_subscribe: z.string(),
+          tool_slug_context: z.string(),
+        })
+        .strict(),
+      z
+        .object({
+          email_domain: z.string(),
+          source: z.string(),
+          page_path_at_subscribe: z.string(),
+          source_kind: z.literal('server'),
+        })
+        .strict(),
+      z.object({ source: z.string() }).strict(),
+    ]),
+  },
+  activation_milestone: {
+    description:
+      'North-star activation signal (first_tool_saved, first_plan_completed, …). Client analytics.activationMilestone + server activationMilestoneServer (Mixpanel only).',
+    plainEnglish: 'Someone hit a meaningful "first" on the site.',
+    category: 'engagement',
+    source: 'both',
+    props: z.union([
+      z.object({ milestone: z.string(), value: z.number().optional() }).strict(),
+      z.object({ milestone: z.string(), source: z.literal('server') }).strict(),
+    ]),
+  },
+
+  // ── Engagement / passive capture ──────────────────────────────────
+  scroll_depth_reached: {
+    description: 'Scroll depth marks (25/50/75/100) — analytics.scrollDepthReached from the scroll tracker.',
+    plainEnglish: 'How far down a page someone scrolled.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        depth: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]),
+      })
+      .strict(),
+  },
+  time_on_page: {
+    description: 'Fire-once time-on-page beacon on unmount/pagehide — analytics.timeOnPage (bucketed).',
+    plainEnglish: 'How long someone stayed on a page.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        seconds: z.number(),
+        bucket: z.enum(['<5s', '5-15s', '15-30s', '30-60s', '1-3min', '>3min']),
+      })
+      .strict(),
+  },
+  copy_text_event: {
+    description: 'Text copied (throttled 1/1.5s) — GlobalInteractionTracker.',
+    plainEnglish: 'Someone copied text from a page.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ selection_length: z.number(), page_path: z.string() }).strict(),
+  },
+  paste_text_event: {
+    description: 'Paste into any element (throttled) — GlobalInteractionTracker.',
+    plainEnglish: 'Someone pasted text into a field.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ target_element_id: z.string(), page_path: z.string() }).strict(),
+  },
+  context_menu_opened: {
+    description: 'Right-click context menu (throttled 1/3s) — GlobalInteractionTracker.',
+    plainEnglish: 'Someone right-clicked on the page.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ target_element_id: z.string(), page_path: z.string() }).strict(),
+  },
+  tab_visibility_changed: {
+    description:
+      'Tab hidden/visible transitions (throttled 1/5s) — GlobalInteractionTracker. duration_ms only on "hidden" (time the tab was visible).',
+    plainEnglish: 'Someone switched away from (or back to) the site’s tab.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ state: z.enum(['hidden', 'visible']), duration_ms: z.number().optional() }).strict(),
+  },
+
+  // ── Dashboard / profile / saved ───────────────────────────────────
+  dashboard_viewed: {
+    description: 'Logged-in dashboard view — analytics.dashboardViewed.',
+    plainEnglish: 'Someone opened their personal dashboard.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ has_saves: z.boolean(), saves_count: z.number(), has_plans: z.boolean() }).strict(),
+  },
+  saved_list_viewed: {
+    description: 'Saved-tools list view — analytics.savedListViewed.',
+    plainEnglish: 'Someone looked at their saved tools.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ count: z.number() }).strict(),
+  },
+  profile_viewed: {
+    description: 'Public profile view — analytics.profileViewed.',
+    plainEnglish: 'Someone viewed a user profile.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ username: z.string(), is_own_profile: z.boolean() }).strict(),
+  },
+
+  // ── Stacks ────────────────────────────────────────────────────────
+  stack_saved: {
+    description:
+      'Stack saved. Rich shape from save-stack-button (stackSavedRich); legacy {stack_slug} shape kept.',
+    plainEnglish: 'Someone saved a bundle of tools as a stack.',
+    category: 'tools',
+    source: 'client',
+    props: z.union([
+      z
+        .object({
+          stack_slug: z.string(),
+          stack_name: z.string(),
+          tool_slugs: z.array(z.string()),
+          tool_ids: z.array(z.string()),
+          tool_count: z.number(),
+          total_estimated_cost_usd: z.number(),
+          source: z.enum(['plan_flow', 'manual_builder', 'compare_page']),
+        })
+        .strict(),
+      z.object({ stack_slug: z.string() }).strict(),
+    ]),
+  },
+} as const satisfies Record<string, EventSchemaEntry>
+
+export type KnownEventName = keyof typeof EVENT_SCHEMAS
+
+/** All schema'd event names (the property-level "known set"). */
+export const SCHEMA_EVENT_NAMES: readonly string[] = Object.keys(EVENT_SCHEMAS)
+
+/**
+ * Events that exist ONLY in lib/mixpanel-server.ts (no client method with a
+ * call site). The CI guard exempts these from the "schema must map to a
+ * client FIRED event" check.
+ */
+export const SERVER_ONLY_EVENTS = new Set<string>([
+  'tool_visit_redirected',
+  'sentiment_scan_requested',
+  'sentiment_scan_completed',
+  'sentiment_scan_failed',
+  'sentiment_paywall_shown',
+  'sentiment_payment_initiated',
+  'sentiment_payment_succeeded',
+  'sentiment_payment_failed',
+])
+
+export type ValidateEventResult = { ok: true } | { ok: false; issues: string[] }
+
+/**
+ * Validate one event payload against its schema.
+ * - Unknown event name → invalid.
+ * - Base-context keys (session_id, webdriver, clarity_session_id,
+ *   first_touch_*, schema_valid/issues, …) are stripped before the strict
+ *   check, so the same validator works at the capture() choke point (raw
+ *   payload) AND in /api/track-mirror (payload + merged envelope keys).
+ */
+export function validateEvent(name: string, props: unknown): ValidateEventResult {
+  const entry = (EVENT_SCHEMAS as Record<string, EventSchemaEntry>)[name]
+  if (!entry) {
+    return { ok: false, issues: [`unknown event name "${name}" — not in EVENT_SCHEMAS (lib/analytics-schema.ts)`] }
+  }
+  const raw = props === undefined || props === null ? {} : props
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, issues: [`properties must be an object, got ${Array.isArray(raw) ? 'array' : typeof raw}`] }
+  }
+  // Strip base-context keys + undefined values (JSON drops undefined anyway).
+  const cleaned: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (BASE_CONTEXT_PROP_KEYS.has(k)) continue
+    if (v === undefined) continue
+    cleaned[k] = v
+  }
+  const result = entry.props.safeParse(cleaned)
+  if (result.success) return { ok: true }
+  const issues = result.error.issues.slice(0, 10).map((i) => {
+    const path = i.path.length ? i.path.join('.') : '(root)'
+    return `${path}: ${i.message}`
+  })
+  return { ok: false, issues }
+}
