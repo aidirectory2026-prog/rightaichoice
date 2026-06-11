@@ -282,7 +282,12 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
     distinct_id: distinctId,
     auth_state: (propsSnapshot.auth_state as 'anon' | 'known' | undefined) ?? 'anon',
     device_type: propsSnapshot.device_type as 'mobile' | 'tablet' | 'desktop' | undefined,
-    page_path: propsSnapshot.page_path as string | undefined,
+    // 10.3.5 — mount-time events (e.g. plan_cta_impression on homepage
+    // GoalInput mount) can fire BEFORE MixpanelProvider registers the
+    // page_path super-prop on first render, landing rows with page_path
+    // NULL (caught by the synthetic suite). The live pathname at event
+    // time is always available and at least as accurate — fall back to it.
+    page_path: (propsSnapshot.page_path as string | undefined) ?? window.location.pathname,
     utm_source: utm.utm_source,
     utm_medium: utm.utm_medium,
     utm_campaign: utm.utm_campaign,
