@@ -1,6 +1,6 @@
 # Phase 10 (Admin Panel) — Verify Everything, Then Rebuild Everything
 
-**Status:** APPROVED · Phase 0 in progress
+**Status:** APPROVED · Phase 0 ✅ complete (PR #15) · Phase 1 next
 **Started:** 2026-06-11
 **Branch / worktree:** `phase10-admin` at `rac-phase10-admin/` (PR per phase, squash-merged)
 **Build log:** see `build-log.md` in this folder (updated every phase)
@@ -95,11 +95,33 @@ The "at any cost" machinery, down to the property level:
 - **Event detail** (`/admin/insights/event/[name]`): volume trend (bot-split), automatic property-breakdown cards for every property in the schema, where-it-fires code references, plain-English + technical schema card, last 50 raw rows, synthetic-test status for this event.
 **Gate:** 5 real users + 10 events fully reproduced by hand SQL; Clarity links open the right sessions.
 
-### Phase 7 — Capture-everything + scale prep (~2–3 sessions)
-- New envelope on every event: locale, timezone, viewport, connection type. Web-vitals performance event. Finer scroll depth (25/50/75/90/100). Time-on-page heartbeat every 30s (visibility-aware) instead of fire-once. Promote the highest-value planned-but-unwired events (pagination, sorts, filter clears, review load-more, newsletter unsubscribe…).
-- **Iron rule enforced by the harness: schema first → code → synthetic recipe → only then it counts.** Nothing fires unschema'd.
-- Scale prep before user_events hits millions: hourly pg_cron rollup tables for dashboard trends (raw stays for drill-downs), rollup-vs-raw reconciliation invariant (another independent verification means), composite + partial indexes verified with explain-analyze.
-**Gate:** synthetic coverage back at 100% incl. new events; rollup invariant green 3 consecutive days.
+### Phase 7 — Capture-everything (ADVANCED) + scale prep (~3–4 sessions)
+*(Expanded 2026-06-11 per owner: "capture the referrer source and very advanced level tracking — capture whatever would be good to capture, like everything.")*
+
+**Already captured per event since 2026-06-10 (PR #12), for reference:** referrer, UTM source/medium/campaign, session_id, first-touch referrer + landing, bot/webdriver flag, device type, geo (country/city/region), IP, user-agent, Clarity session id.
+
+**7a — Source & attribution (the referrer ask):**
+- **Channel classifier** (`lib/analytics/channels.ts`): every referrer host mapped to a channel taxonomy — Search (google/bing/ddg), AI (chatgpt/perplexity/claude/gemini), Social (linkedin/x/facebook/reddit), Community (HN/PH/forums), Email, Referral, Direct, Internal. Stored on the event + shown as the admin "Sources" dimension; unknown hosts surface in a review queue so the map keeps growing.
+- Multi-touch history: per-visitor array of every distinct (source, medium, campaign, landing, ts) touch — first-touch AND last-touch AND full path, so we can answer "which channels assist vs close".
+- Google Ads / Meta click ids (gclid/fbclid/msclkid/ttclid) captured when present; search-engine keyword capture where the referrer still carries it.
+
+**7b — Device, environment & performance envelope (added to every event):**
+locale, timezone, viewport w×h, screen resolution + devicePixelRatio, connection type/downlink/rtt, device memory, CPU cores, touch capability, cookie state, do-not-track, ad-blocker-detected signal (mixpanel blocked but mirror alive), tab count hint (visibility), dark/light preference.
+Web-vitals event per page (LCP, INP, CLS, TTFB, FCP via `useReportWebVitals`) + slow-page flag.
+
+**7c — Behavior depth:**
+- Finer scroll marks (10/25/50/75/90/100) + max-scroll-per-page; engaged-time heartbeat every 30s (active vs idle separated via input/visibility signals) replacing fire-once time_on_page.
+- Rage clicks, dead clicks (click with no UI response), text selection/copy (exists — keep), exit-intent (desktop), outbound-link clicks with full target URL (exists — verify coverage), file/print/share actions.
+- JS errors + unhandled promise rejections + failed resource loads with page context (error_encountered exists — extend + verify).
+- Form analytics on every form: field focus/blur order, per-field correction counts, error shown, abandon point.
+- Per-session computed: landing page, exit page, pages count, duration, engaged seconds, channel — rolled into user_intent_profile.
+- Promote all valuable PLANNED events: pagination, sort changes, filter clears, review load-more, newsletter unsubscribe, compare-tray clear, auth-step events.
+
+**7d — Iron rule (unchanged):** schema entry first → code → synthetic recipe → only then it counts as FIRED. Nothing fires unschema'd; everything new lands in the event dictionary automatically.
+
+**7e — Scale prep (unchanged):** hourly pg_cron rollups for trends, rollup-vs-raw reconciliation invariant, composite + partial indexes verified with explain-analyze. Privacy note: we already store IP + UA; document retention and admin-only access in Resources (Phase 8).
+
+**Gate:** synthetic coverage 100% incl. every new event/property; channel classifier validated against a hand-labeled sample of 100 referrers; rollup invariant green 3 consecutive days.
 
 ### Phase 8 — Resources (the learning guide) (~2 sessions)
 In-admin docs section, rendered from markdown/MDX, written for both audiences:

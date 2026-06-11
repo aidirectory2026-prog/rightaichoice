@@ -69,6 +69,13 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         // what users were exploring even if they don't hit Enter — the
         // "they were searching for X but bailed" funnel.
         analytics.searchTyping(value, 'navbar')
+        // F1 (metric-audit.md) — the admin Search panel counts
+        // search_query_submitted, which never fired because this UI is
+        // live-search with no submit step. Fire it once per settled
+        // (debounced) query at the fetch-response site so the panel and
+        // zero-result RPC (result_count = 0) read real behavior.
+        const resultCount = data.tools.length + data.categories.length + data.tags.length
+        analytics.searchQuerySubmitted(value, resultCount, 'navbar')
       }, 250)
     },
     []

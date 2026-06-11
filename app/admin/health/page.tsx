@@ -69,25 +69,42 @@ type FreshnessSla = {
 // Derived from vercel.json crons + GH Actions workflow schedules. A pipeline
 // whose last success is older than (cadence * SLA_SLACK) is flagged stale.
 // Daily jobs get the hard 36h rule from the spec.
+// F12 (metric-audit.md): map corrected against observed success gaps +
+// vercel.json — calculate-viability is NOT daily (success gaps up to ~354h),
+// and 8 previously-unmapped live keys got real cadences instead of the
+// 8-day fallback (submit-urls-bing was a failing daily job hiding behind it).
 const CADENCE_HOURS: Record<string, number> = {
   'refresh-tools': 1, // hourly
   'onboard-tools': 1, // 7,37 * * * *
   'poll-gh-actions': 1, // */10 (GH workflow) → at least hourly success expected
   'alert-failed-pipelines': 1, // */30
   'cron-pipelines': 1, // umbrella — many jobs, runs frequently
+  'cascade-hubs': 2, // F12: every 2h
   'refresh-latest-updates': 24, // daily 02:00
   'freshness-batch': 24, // daily 02:00 (GH)
-  'calculate-viability': 24, // daily 00:30
   'cleanup-user-events': 24, // daily 03:15
   'refresh-freshness-view': 24, // daily 23:45
   'snapshot-daily-updates': 24, // daily 23:55
+  'submit-urls-bing': 24, // F12: daily (currently flaky — was unmapped, hidden by 8d fallback)
+  'indexnow-recent': 24, // F12: daily
   'refresh-faqs': 48, // every 2 days
   'discover-tutorials': 72, // a few times a week
   'generate-editorials': 168, // weekly
   'scrape-sentiment': 168, // weekly
   'refresh-compare-editorials': 168, // weekly-ish
   'email-weekly-digest': 168, // weekly
+  'snapshot-gsc': 168, // F12: weekly
+  'seo-impact': 168, // F12: weekly
+  'resubmit-sitemap-gsc': 168, // F12: weekly
+  'triage-gsc': 168, // F12: weekly
+  'calculate-viability': 360, // F12: ~15d — real success gaps up to 353.7h; 24h caused false hard-FAILs
 }
+
+// F12: failure-only monitor keys — these log a pipeline_runs row ONLY when
+// the monitored condition breaches (freshness SLA, GH-Actions heartbeat), so
+// "last success" never exists and success-SLA verdicts read forever-failing.
+// They get their own section below instead of polluting the SLA table/KPIs.
+const MONITOR_KEYS = new Set(['freshness-sla', 'poll-gh-actions-heartbeat'])
 
 const HARD_DAILY_SLA_HOURS = 36 // spec: a daily job that hasn't succeeded in >36h = FAIL
 const SLA_SLACK = 2.5 // allow 2.5× the nominal cadence before flagging (covers retries/skew)
@@ -204,7 +221,40 @@ export default async function PipelineHealthPage() {
 
   // ── Derive per-pipeline rows with SLA verdict, sort worst-first. ──
   type Row = Health & { sla: SlaVerdict; last: LastRun | undefined }
-  const rows: Row[] = health.map((h) => ({ ...h, sla: evaluateSla(h), last: lastByKey.get(h.pipeline_key) }))
+
+  // F12: failure-only monitors get their own section — success-SLA verdicts
+  // don't apply to keys that only log on breach.
+  const monitorRows: Row[] = health
+    .filter((h) => MONITOR_KEYS.has(h.pipeline_key))
+    .map((h) => ({ ...h, sla: { state: 'ok' as const, label: 'failure-only monitor' }, last: lastByKey.get(h.pipeline_key) }))
+
+  // F12: a CADENCE_HOURS key with ZERO pipeline_runs rows ever is a silent
+  // blind spot (it never appears in pipeline_health at all) — surface it as
+  // an explicit red row instead of being invisible.
+  const loggedKeys = new Set(health.map((h) => h.pipeline_key))
+  const neverLogged: Row[] = Object.keys(CADENCE_HOURS)
+    .filter((k) => !MONITOR_KEYS.has(k) && !loggedKeys.has(k))
+    .map((k) => ({
+      pipeline_key: k,
+      last_status: 'missing',
+      last_started_at: null,
+      last_success_at: null,
+      runs_7d: 0,
+      failures_24h: 0,
+      failures_7d: 0,
+      avg_duration_ms: null,
+      last_error: null,
+      cost_7d: null,
+      sla: { state: 'fail' as const, label: `expected ~${CADENCE_HOURS[k]}h cadence but never logged a run` },
+      last: undefined,
+    }))
+
+  const rows: Row[] = [
+    ...health
+      .filter((h) => !MONITOR_KEYS.has(h.pipeline_key))
+      .map((h) => ({ ...h, sla: evaluateSla(h), last: lastByKey.get(h.pipeline_key) })),
+    ...neverLogged,
+  ]
 
   function rank(r: Row): number {
     if (r.last_status === 'failure' || r.last_status === 'timeout' || r.sla.state === 'fail') return 0
@@ -218,6 +268,19 @@ export default async function PipelineHealthPage() {
   const staleCount = rows.filter((r) => r.sla.state === 'stale' && rank(r) !== 0).length
   const healthyCount = rows.length - failingCount - staleCount
   const cost7d = rows.reduce((s, r) => s + (Number(r.cost_7d) || 0), 0)
+
+  // F8 (metric-audit.md) — no pipeline_runs row has EVER logged a nonzero
+  // estimated_cost_usd (handlers never call ctx.recordTokens/recordApifyUsd).
+  // "$0.00" on a money KPI is misleading green; show the honest state until
+  // cost instrumentation exists. Exact check against the whole table — it's
+  // a single indexed count.
+  const { data: costEverData } = await (db as unknown as {
+    rpc: (fn: string, args: { p_sql: string }) => Promise<{ data: unknown }>
+  }).rpc('_admin_audit_exec', {
+    p_sql: `SELECT count(*)::int AS n FROM pipeline_runs WHERE coalesce(estimated_cost_usd, 0) > 0`,
+  })
+  const costEverRow = (Array.isArray(costEverData) ? costEverData[0] : costEverData) as { n?: number } | undefined
+  const costInstrumented = Number(costEverRow?.n ?? 0) > 0
 
   return (
     <div className="space-y-8">
@@ -238,7 +301,11 @@ export default async function PipelineHealthPage() {
         <Kpi label="Failing" value={String(failingCount)} tone={failingCount ? 'bad' : 'ok'} />
         <Kpi label="Stale" value={String(staleCount)} tone={staleCount ? 'warn' : 'ok'} />
         <Kpi label="Fails / 24h" value={String(failures24h.length)} tone={failures24h.length ? 'bad' : 'ok'} />
-        <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} />
+        {costInstrumented ? (
+          <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} />
+        ) : (
+          <Kpi label="7d est cost" value="Not instrumented (F8)" tone="warn" />
+        )}
       </div>
 
       {/* Catalog freshness SLA (A1) */}
@@ -341,6 +408,46 @@ export default async function PipelineHealthPage() {
         )}
       </section>
 
+      {/* F12: failure-only monitors — breach loggers, not cadence pipelines */}
+      {monitorRows.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-zinc-200 mb-2">
+            Monitors <span className="text-zinc-500 font-normal">(failure-only — a row here is a breach record, not a crashed cron)</span>
+          </h2>
+          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="px-3 py-2 text-left">Monitor</th>
+                  <th className="px-3 py-2 text-left">Last breach logged</th>
+                  <th className="px-3 py-2 text-right">Breaches 24h/7d</th>
+                  <th className="px-3 py-2 text-left">Last message</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {monitorRows.map((m) => (
+                  <tr key={m.pipeline_key} className={m.failures_24h > 0 ? 'bg-amber-950/15' : 'bg-zinc-950/30'}>
+                    <td className="px-3 py-2 font-mono text-xs text-zinc-200">{m.pipeline_key}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-xs text-zinc-300">{ago(m.last_started_at)}</div>
+                      <div className="text-[10px] text-zinc-600">{ist(m.last_started_at)} IST</div>
+                    </td>
+                    <td className="px-3 py-2 text-right text-xs whitespace-nowrap">
+                      <span className={m.failures_24h > 0 ? 'text-amber-400' : 'text-zinc-500'}>{m.failures_24h}</span>
+                      <span className="text-zinc-700"> / </span>
+                      <span className={m.failures_7d > 0 ? 'text-amber-400' : 'text-zinc-500'}>{m.failures_7d}</span>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-zinc-400 max-w-md truncate" title={m.last_error ?? ''}>
+                      {m.last_error ?? '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {/* 24h failures */}
       <section>
         <h2 className="text-sm font-semibold text-zinc-200 mb-2">
@@ -389,6 +496,8 @@ function StatusPill({ status }: { status: string }) {
     timeout: 'border-rose-800 text-rose-300 bg-rose-900/40',
     partial: 'border-amber-800 text-amber-300 bg-amber-900/40',
     running: 'border-sky-800 text-sky-300 bg-sky-900/40',
+    // F12: synthetic status for expected-but-never-logged pipelines.
+    missing: 'border-rose-800 text-rose-300 bg-rose-900/40',
   }
   return (
     <span className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border ${map[status] ?? 'border-zinc-700 text-zinc-400 bg-zinc-900/40'}`}>

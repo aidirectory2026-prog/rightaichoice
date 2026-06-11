@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 }
 
 import Link from 'next/link'
+import { PlanCTALink } from '@/components/cta/plan-cta-link'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -251,9 +252,9 @@ export default async function HomePage() {
               costed stack with alternatives for every step.
             </p>
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-              <Link href="/plan" className="rai-arrow-nudge inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300">
+              <PlanCTALink surface="homepage" pagePath="/" className="rai-arrow-nudge inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300">
                 Plan your AI stack <ArrowRight data-arrow className="h-3.5 w-3.5" />
-              </Link>
+              </PlanCTALink>
               <Link href="/stacks" className="text-zinc-400 hover:text-white">Browse AI stacks by role</Link>
               <Link href="/compare" className="text-zinc-400 hover:text-white">Compare AI tools</Link>
             </div>
@@ -539,13 +540,14 @@ export default async function HomePage() {
               Costs, tradeoffs, and alternatives — all in one place.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href="/plan"
+              <PlanCTALink
+                surface="homepage"
+                pagePath="/"
                 className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
               >
                 <Sparkles className="h-4 w-4" />
                 Plan Your Stack
-              </Link>
+              </PlanCTALink>
               <Link
                 href="/tools"
                 className="rounded-xl border border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"

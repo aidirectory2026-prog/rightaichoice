@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
@@ -9,6 +10,7 @@ import { analytics } from '@/lib/analytics'
 
 export function Navbar() {
   const { user, profile } = useAuth()
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   // The header sign-in/up is the "general" entry point — it always returns the
   // user to the HOMEPAGE, not whatever page they were on. Context-specific CTAs
@@ -27,7 +29,13 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-6">
             <Link
               href="/plan"
-              onClick={() => analytics.navCtaClicked('plan_your_stack', 'navbar_desktop')}
+              onClick={() => {
+                analytics.navCtaClicked('plan_your_stack', 'navbar_desktop')
+                // F3 (metric-audit.md) — the plan-conversion funnel counts
+                // plan_cta_clicked; the navbar only fired navCtaClicked, so
+                // its /plan navigations were invisible to the funnel.
+                analytics.planCtaClicked({ surface: 'navbar', page_path: pathname ?? '' })
+              }}
               className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -145,6 +153,8 @@ export function Navbar() {
             href="/plan"
             onClick={() => {
               analytics.navCtaClicked('plan_your_stack', 'navbar_mobile')
+              // F3 (metric-audit.md) — see desktop link above.
+              analytics.planCtaClicked({ surface: 'navbar', page_path: pathname ?? '' })
               setMobileOpen(false)
             }}
             className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 py-2"

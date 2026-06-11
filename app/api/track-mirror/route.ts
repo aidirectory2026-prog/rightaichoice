@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
-import { isBotUserAgent } from '@/lib/bot-detection'
+import { isLikelyBotUA } from '@/lib/bot-detection'
 
 // Phase 9 follow-up (2026-05-28) — short retry for transient Supabase 5xx /
 // network blips. Three attempts, exponential backoff capped at 600ms total,
@@ -191,7 +191,8 @@ export async function POST(req: NextRequest) {
 
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null
   const ua = (req.headers.get('user-agent') ?? '').slice(0, 300)
-  const botLikely = isBotUserAgent(ua)
+  // Phase 10.2 (F7): regex + stale-Chrome + dev-build heuristics (recall fix)
+  const botLikely = isLikelyBotUA(ua)
   // Phase 8.g.10 — Vercel auto-populates these on every edge request.
   // Free, no third-party geo lookup needed.
   const country = req.headers.get('x-vercel-ip-country') ?? null
