@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseRange } from '@/lib/admin/range'
+import { baseFilters } from '@/lib/admin/filters'
 import {
   getBotShare,
   getChatMetrics,
@@ -61,26 +62,28 @@ export async function GET(req: NextRequest) {
 
   const sel = parseRange({ days: '7' })
   const includeBots = false
+  // Range+bots only — no optional filters on the diagnostic endpoint.
+  const f = baseFilters(sel, includeBots)
 
   const results = await Promise.all([
-    run('getBotShare', () => getBotShare(sel)),
-    run('getOverviewMetrics', () => getOverviewMetrics(sel, includeBots)),
-    run('getDailyActiveUsers', () => getDailyActiveUsers(sel, includeBots)),
-    run('getPageViewsByDevice', () => getPageViewsByDevice(sel, includeBots)),
-    run('getTopReferrers', () => getTopReferrers(sel, includeBots)),
-    run('getPlanFunnel', () => getPlanFunnel(sel, includeBots)),
+    run('getBotShare', () => getBotShare(f)),
+    run('getOverviewMetrics', () => getOverviewMetrics(f)),
+    run('getDailyActiveUsers', () => getDailyActiveUsers(f)),
+    run('getPageViewsByDevice', () => getPageViewsByDevice(f)),
+    run('getTopReferrers', () => getTopReferrers(f)),
+    run('getPlanFunnel', () => getPlanFunnel(f)),
     run('getTopExistingTools', () => getTopExistingTools(sel, includeBots)),
     run('getTopUseCases', () => getTopUseCases(sel, includeBots)),
     run('getEngagementMetrics', () => getEngagementMetrics(sel, includeBots)),
-    run('getTopEvents', () => getTopEvents(sel, includeBots)),
-    run('getSearchMetrics', () => getSearchMetrics(sel, includeBots)),
+    run('getTopEvents', () => getTopEvents(f)),
+    run('getSearchMetrics', () => getSearchMetrics(f)),
     run('getTopSearches', () => getTopSearches(sel, includeBots)),
-    run('getChatMetrics', () => getChatMetrics(sel, includeBots)),
+    run('getChatMetrics', () => getChatMetrics(f)),
     run('getTopChatTools', () => getTopChatTools(sel, includeBots)),
-    run('getTopViewedTools', () => getTopViewedTools(sel, includeBots)),
-    run('getTopClickedTools', () => getTopClickedTools(sel, includeBots)),
-    run('getTopSavedTools', () => getTopSavedTools(sel, includeBots)),
-    run('getTopComparedTools', () => getTopComparedTools(sel, includeBots)),
+    run('getTopViewedTools', () => getTopViewedTools(f)),
+    run('getTopClickedTools', () => getTopClickedTools(f)),
+    run('getTopSavedTools', () => getTopSavedTools(f)),
+    run('getTopComparedTools', () => getTopComparedTools(f)),
   ])
 
   const failures = results.filter((r) => !r.ok)

@@ -3,6 +3,7 @@
 // Used to isolate whether the crash lives in the render pipeline.
 
 import { parseRange } from '@/lib/admin/range'
+import { baseFilters } from '@/lib/admin/filters'
 import {
   getBotShare,
   getChatMetrics,
@@ -31,26 +32,28 @@ export const metadata = { title: 'Insights raw — Admin' }
 export default async function InsightsRawPage() {
   const sel = parseRange({ days: '7' })
   const includeBots = false
+  // Range+bots only — no optional filters on the diagnostic page.
+  const f = baseFilters(sel, includeBots)
 
   const sections: Array<[string, () => Promise<unknown>]> = [
-    ['botShare', () => getBotShare(sel)],
-    ['overview', () => getOverviewMetrics(sel, includeBots)],
-    ['dailyActive', () => getDailyActiveUsers(sel, includeBots)],
-    ['deviceBreakdown', () => getPageViewsByDevice(sel, includeBots)],
-    ['referrers', () => getTopReferrers(sel, includeBots)],
-    ['planFunnel', () => getPlanFunnel(sel, includeBots)],
+    ['botShare', () => getBotShare(f)],
+    ['overview', () => getOverviewMetrics(f)],
+    ['dailyActive', () => getDailyActiveUsers(f)],
+    ['deviceBreakdown', () => getPageViewsByDevice(f)],
+    ['referrers', () => getTopReferrers(f)],
+    ['planFunnel', () => getPlanFunnel(f)],
     ['topExistingTools', () => getTopExistingTools(sel, includeBots)],
     ['topUseCases', () => getTopUseCases(sel, includeBots)],
     ['engagement', () => getEngagementMetrics(sel, includeBots)],
-    ['topEvents', () => getTopEvents(sel, includeBots)],
-    ['searchMetrics', () => getSearchMetrics(sel, includeBots)],
+    ['topEvents', () => getTopEvents(f)],
+    ['searchMetrics', () => getSearchMetrics(f)],
     ['topSearches', () => getTopSearches(sel, includeBots)],
-    ['chatMetrics', () => getChatMetrics(sel, includeBots)],
+    ['chatMetrics', () => getChatMetrics(f)],
     ['topChatTools', () => getTopChatTools(sel, includeBots)],
-    ['topViewedTools', () => getTopViewedTools(sel, includeBots)],
-    ['topClickedTools', () => getTopClickedTools(sel, includeBots)],
-    ['topSavedTools', () => getTopSavedTools(sel, includeBots)],
-    ['topComparedTools', () => getTopComparedTools(sel, includeBots)],
+    ['topViewedTools', () => getTopViewedTools(f)],
+    ['topClickedTools', () => getTopClickedTools(f)],
+    ['topSavedTools', () => getTopSavedTools(f)],
+    ['topComparedTools', () => getTopComparedTools(f)],
   ]
 
   const results = await Promise.all(
