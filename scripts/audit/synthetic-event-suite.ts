@@ -360,16 +360,21 @@ async function gotoAndSettle(page: Page, url: string): Promise<void> {
   await sleep(2500)
 }
 
+// NOTE on page.evaluate style: every evaluate in this file uses the STRING
+// form, not a function. tsx/esbuild decorates compiled closures with a
+// `__name` helper that does not exist in the page context, so function-form
+// evaluates throw `__name is not defined` at runtime. Template-literal
+// scripts bypass the compiler entirely.
 async function verifySeededDistinctId(page: Page, expected: string): Promise<void> {
-  const actual = await page.evaluate((token) => {
+  const actual = (await page.evaluate(`(() => {
     try {
-      const raw = localStorage.getItem(`mp_${token}_mixpanel`)
+      const raw = localStorage.getItem('mp_${MIXPANEL_TOKEN}_mixpanel')
       if (!raw) return null
-      return (JSON.parse(raw) as { distinct_id?: string }).distinct_id ?? null
+      return JSON.parse(raw).distinct_id ?? null
     } catch {
       return null
     }
-  }, MIXPANEL_TOKEN!)
+  })()`)) as string | null
   if (actual !== expected) {
     throw new Error(`distinct_id seed failed: expected ${expected}, mixpanel has ${actual}`)
   }
@@ -387,25 +392,19 @@ async function flushJourney(page: Page): Promise<void> {
 }
 
 async function clickVisibleButtonByText(page: Page, text: string): Promise<void> {
-  const handle = await page.evaluateHandle((label) => {
+  // DOM click (string-form evaluate) — React's root-delegated onClick handles
+  // dispatched click events fine; avoids handle round-trips entirely.
+  const clicked = (await page.evaluate(`(() => {
+    const label = ${JSON.stringify(text)}
     const buttons = Array.from(document.querySelectorAll('button'))
-    return (
-      buttons.find(
-        (b) =>
-          b.textContent?.trim() === label &&
-          (b as HTMLElement).offsetParent !== null,
-      ) ?? null
+    const b = buttons.find(
+      (x) => (x.textContent || '').trim() === label && x.offsetParent !== null,
     )
-  }, text)
-  const el = handle.asElement()
-  if (!el) throw new Error(`no visible <button> with text "${text}"`)
-  try {
-    await (el as import('puppeteer-core').ElementHandle<Element>).click()
-  } catch {
-    // Fall back to a DOM click (still dispatches a real click event React handles).
-    await page.evaluate((node) => (node as HTMLElement).click(), el)
-  }
-  await handle.dispose()
+    if (!b) return false
+    b.click()
+    return true
+  })()`)) as boolean
+  if (!clicked) throw new Error(`no visible <button> with text "${text}"`)
 }
 
 // ── Recipe table ─────────────────────────────────────────────────────
@@ -490,13 +489,13 @@ const RECIPES: Recipe[] = [
     mode: 'browser',
     journey: 1,
     run: async ({ page }) => {
-      await page.evaluate(async () => {
+      await page.evaluate(`(async () => {
         const h = document.documentElement.scrollHeight
         for (const frac of [0.3, 0.6, 1]) {
           window.scrollTo(0, h * frac)
           await new Promise((r) => setTimeout(r, 250))
         }
-      })
+      })()`)
       await sleep(600)
     },
   },
@@ -505,7 +504,7 @@ const RECIPES: Recipe[] = [
     mode: 'browser',
     journey: 1,
     run: async ({ page }) => {
-      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.evaluate('window.scrollTo(0, 0)')
       await sleep(300)
       await page.click('h1', { button: 'right' })
       await sleep(400)
@@ -516,15 +515,14 @@ const RECIPES: Recipe[] = [
     mode: 'browser',
     journey: 1,
     run: async ({ page }) => {
-      await page.evaluate(() => {
-        const el = document.querySelector('h1') ?? document.body
+      await page.evaluate(`(() => {
+        const el = document.querySelector('h1') || document.body
         const range = document.createRange()
         range.selectNodeContents(el)
         const sel = window.getSelection()
-        sel?.removeAllRanges()
-        sel?.addRange(range)
+        if (sel) { sel.removeAllRanges(); sel.addRange(range) }
         document.dispatchEvent(new Event('copy'))
-      })
+      })()`)
       await sleep(400)
     },
   },
@@ -533,10 +531,10 @@ const RECIPES: Recipe[] = [
     mode: 'browser',
     journey: 1,
     run: async ({ page }) => {
-      await page.evaluate(() => {
-        const el = document.querySelector('textarea') ?? document.body
+      await page.evaluate(`(() => {
+        const el = document.querySelector('textarea') || document.body
         el.dispatchEvent(new Event('paste', { bubbles: true }))
-      })
+      })()`)
       await sleep(400)
     },
   },
@@ -545,11 +543,11 @@ const RECIPES: Recipe[] = [
     mode: 'browser',
     journey: 1,
     run: async ({ page }) => {
-      await page.evaluate(() => {
+      await page.evaluate(`(() => {
         Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
         Object.defineProperty(document, 'hidden', { configurable: true, get: () => true })
         document.dispatchEvent(new Event('visibilitychange'))
-      })
+      })()`)
       await sleep(500)
     },
   },
@@ -605,10 +603,10 @@ const RECIPES: Recipe[] = [
     run: async ({ page }) => {
       const sel = 'a[href^="/api/tools/"]'
       await page.waitForSelector(sel)
-      await page.evaluate((s) => {
-        const a = document.querySelector(s)
-        a?.addEventListener('click', (e) => e.preventDefault())
-      }, sel)
+      await page.evaluate(`(() => {
+        const a = document.querySelector('a[href^="/api/tools/"]')
+        if (a) a.addEventListener('click', (e) => e.preventDefault())
+      })()`)
       await page.click(sel)
       await sleep(500)
     },
@@ -652,10 +650,10 @@ const RECIPES: Recipe[] = [
     journey: 2,
     note: 'same-document pushState + history.back() → real popstate',
     run: async ({ page }) => {
-      await page.evaluate(() => {
+      await page.evaluate(`(() => {
         history.pushState({}, '', location.href + '#probe')
         history.back()
-      })
+      })()`)
       await sleep(900)
     },
   },
