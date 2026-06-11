@@ -68,8 +68,8 @@ export const ADMIN_NAV: AdminNavSection[] = [
         description: 'Every visitor in the window — sortable, filterable, drill-down to the full timeline.',
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
-      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: ['range', 'bots'] },
-      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: ['range', 'bots'] },
+      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: ALL_FILTER_CAPABILITIES },
+      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: ALL_FILTER_CAPABILITIES },
     ],
   },
   {

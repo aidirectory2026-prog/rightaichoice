@@ -1,11 +1,23 @@
+// Phase 10.5a.4 (2026-06-12) — Devices re-skinned onto the Phase-4 shell:
+// global FilterBar (full capability set, URL state), chart-kit cards, and
+// ⓘ provenance popovers. AdminFilters threaded through every query — the
+// breakdown RPC takes p_filters (shared predicate, migration 156); the
+// browser/OS select uses the applyFilters() PostgREST mirror — i.e. the
+// two paths the filter-matrix verifier proves against raw SQL.
+
+import Link from 'next/link'
+import { ChevronLeft, MonitorSmartphone } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { BigNumber, Card, EmptyState, fmt, pct } from '../_ui/primitives'
-import { RangePicker } from '@/components/admin/range-picker'
-import { parseRange } from '@/lib/admin/range'
+import { FilterBar } from '@/components/admin/filter-bar'
+import { MetricInfo } from '@/components/admin/metric-info'
+import { BarList, MetricCard, fmt } from '@/components/admin/charts'
+import { applyFilters, filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
+import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
+import { getCountryFilterOptions } from '../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-export const metadata = { title: 'Devices · Insights' }
+export const metadata = { title: 'Devices — Admin' }
 
 type DeviceRow = {
   device_type: string
@@ -19,12 +31,16 @@ type DeviceRow = {
 type BrowserRow = { browser: string; visitors: number; events: number }
 type OsRow = { os: string; visitors: number; events: number }
 
-async function getDevices(days: number): Promise<DeviceRow[]> {
+async function getDevices(f: AdminFilters): Promise<DeviceRow[]> {
   const db = getAdminClient()
-  const { data } = await db.rpc('insights_device_breakdown' as never, {
-    p_days: days,
-    p_include_bots: false,
-  } as never)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (db as any).rpc('insights_device_breakdown', {
+    p_days: f.range.days,
+    p_include_bots: f.includeBots,
+    p_cutoff: f.range.cutoffISO,
+    p_end: f.range.endCutoffISO,
+    p_filters: filtersToJsonb(f),
+  })
   return (data ?? []) as DeviceRow[]
 }
 
@@ -53,17 +69,20 @@ function osOf(ua: string | null): string {
   return 'other'
 }
 
-async function getBrowsersAndOs(days: number): Promise<{ browsers: BrowserRow[]; oses: OsRow[] }> {
+async function getBrowsersAndOs(f: AdminFilters): Promise<{ browsers: BrowserRow[]; oses: OsRow[] }> {
   const db = getAdminClient()
-  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString()
   type Row = { user_agent: string | null; distinct_id: string }
-  const { data } = await db
+  let q = db
     .from('user_events')
     .select('user_agent, distinct_id')
-    .gte('created_at', cutoff)
-    .eq('bot_likely', false)
+    .gte('created_at', f.range.cutoffISO)
+    .lt('created_at', f.range.endCutoffISO)
     .not('user_agent', 'is', null)
     .limit(10_000)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (!f.includeBots) q = (q as any).eq('bot_likely', false)
+  q = applyFilters(q, f)
+  const { data } = await q
 
   const browserAcc = new Map<string, { visitors: Set<string>; events: number }>()
   const osAcc = new Map<string, { visitors: Set<string>; events: number }>()
@@ -80,103 +99,122 @@ async function getBrowsersAndOs(days: number): Promise<{ browsers: BrowserRow[];
   return {
     browsers: Array.from(browserAcc.entries())
       .map(([browser, v]) => ({ browser, visitors: v.visitors.size, events: v.events }))
-      .sort((a, b) => b.visitors - a.visitors),
+      .sort((a, b) => b.visitors - a.visitors || a.browser.localeCompare(b.browser)),
     oses: Array.from(osAcc.entries())
       .map(([os, v]) => ({ os, visitors: v.visitors.size, events: v.events }))
-      .sort((a, b) => b.visitors - a.visitors),
+      .sort((a, b) => b.visitors - a.visitors || a.os.localeCompare(b.os)),
   }
 }
 
-export default async function DevicesPage({ searchParams }: { searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string }> }) {
+export default async function DevicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
   const sp = await searchParams
-  const sel = parseRange(sp)
-  const days = sel.days
+  const filters = parseAdminFilters(sp)
 
-  const [devices, { browsers, oses }] = await Promise.all([
-    getDevices(days),
-    getBrowsersAndOs(days),
+  const [devices, { browsers, oses }, countryOptions] = await Promise.all([
+    getDevices(filters),
+    getBrowsersAndOs(filters),
+    getCountryFilterOptions(),
   ])
 
-  // Ad-block-rate estimate: per session, are we seeing server-only events?
-  // Computed at the total level: ratio of (sessions w/ server only) / (sessions total).
-  // Approximated here as server_events / total_events because we don't have
-  // per-session aggregation at this layer.
   const totalServer = devices.reduce((s, r) => s + r.server_events, 0)
   const totalClient = devices.reduce((s, r) => s + r.client_events, 0)
   const totalVisitors = devices.reduce((s, r) => s + r.visitors, 0)
-  // Naive ad-block rate: server-event share vs client. If a lot of revenue
-  // events are server-only with no matching client_events, ad-blockers are
-  // active. We expose this as informational, not a hard number.
+  // Directional ad-block proxy: server-event share of all events — a high
+  // share suggests client trackers being stripped. Inference, not a count.
   const adBlockHint = totalClient > 0 ? (totalServer / (totalClient + totalServer)) * 100 : 0
+  const mobilePct = devices.find((d) => d.device_type === 'mobile')?.pct_of_total ?? 0
+  const desktopPct = devices.find((d) => d.device_type === 'desktop')?.pct_of_total ?? 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Devices, browsers, ad-block</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Bucket counts from user_agent + Vercel device-type header.</p>
+    <div>
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <Link href="/admin" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+            <ChevronLeft className="h-3 w-3" />Admin
+          </Link>
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-white">
+            <MonitorSmartphone className="h-5 w-5 text-emerald-500" />
+            Devices
+          </h1>
         </div>
-        <RangePicker active={sel.key} />
+        <FilterBar
+          activeRange={filters.range.key}
+          countries={countryOptions}
+          eventNames={[...SCHEMA_EVENT_NAMES]}
+        />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <BigNumber label="Total visitors" value={totalVisitors} />
-        <BigNumber
-          label="Mobile share"
-          value={pct(devices.find((d) => d.device_type === 'mobile')?.pct_of_total ?? 0)}
-        />
-        <BigNumber
-          label="Desktop share"
-          value={pct(devices.find((d) => d.device_type === 'desktop')?.pct_of_total ?? 0)}
-          tone="accent"
-        />
-        <BigNumber
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MetricCard label="Visitors" value={totalVisitors} info={<MetricInfo docKey="devices_breakdown" />} />
+        <MetricCard label="Mobile share" value={Math.round(mobilePct * 10) / 10} suffix="%" />
+        <MetricCard label="Desktop share" value={Math.round(desktopPct * 10) / 10} suffix="%" />
+        <MetricCard
           label="Ad-block signal"
-          value={pct(adBlockHint)}
-          hint="Server-event share — higher = more blocking"
-          tone={adBlockHint > 30 ? 'warn' : 'default'}
+          value={Math.round(adBlockHint * 10) / 10}
+          suffix="%"
+          info={<MetricInfo docKey="devices_adblock" />}
+          extra={<span className="text-[10px] text-zinc-600">server-event share — higher = more blocking</span>}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card title="Device type" subtitle="From Vercel UA classification">
-          <BarList rows={devices.map((d) => ({ label: d.device_type, value: d.visitors, sub: `${d.pct_of_total}%` }))} colour="emerald" />
-        </Card>
-        <Card title="Browser" subtitle="Heuristic from user_agent">
-          <BarList rows={browsers.map((b) => ({ label: b.browser, value: b.visitors }))} colour="sky" />
-        </Card>
-        <Card title="OS" subtitle="Heuristic from user_agent">
-          <BarList rows={oses.map((o) => ({ label: o.os, value: o.visitors }))} colour="violet" />
-        </Card>
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <BarList
+          title="Device type · visitors"
+          rows={devices.map((d) => ({ label: `${d.device_type} · ${d.pct_of_total}% of events`, value: d.visitors }))}
+          emptyHint="No device data in window"
+          info={<MetricInfo docKey="devices_breakdown" />}
+        />
+        <BarList
+          title="Browser · visitors"
+          rows={browsers.map((b) => ({ label: b.browser, value: b.visitors }))}
+          emptyHint="No user-agent data in window"
+          info={<MetricInfo docKey="devices_browser_os" />}
+        />
+        <BarList
+          title="OS · visitors"
+          rows={oses.map((o) => ({ label: o.os, value: o.visitors }))}
+          emptyHint="No user-agent data in window"
+          info={<MetricInfo docKey="devices_browser_os" />}
+        />
       </div>
 
-      <Card title="Client vs server event mix per device" subtitle="High server share = heavy ad-block in that bucket">
+      <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+        <div className="mb-3 flex items-center justify-between gap-1">
+          <div className="text-sm font-medium text-zinc-300">
+            Client vs server event mix per device · high server share = heavy ad-block in that bucket
+          </div>
+          <MetricInfo docKey="devices_adblock" />
+        </div>
         {devices.length === 0 ? (
-          <EmptyState title="No device data in window" />
+          <div className="py-6 text-center text-xs text-zinc-500">No device data in window</div>
         ) : (
-          <div className="overflow-x-auto -mx-4">
+          <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="text-[10px] uppercase tracking-wider text-zinc-500">
                 <tr className="border-b border-zinc-800">
-                  <th className="px-4 py-2 text-left font-medium">Device</th>
-                  <th className="px-4 py-2 text-right font-medium">Visitors</th>
-                  <th className="px-4 py-2 text-right font-medium">Events</th>
-                  <th className="px-4 py-2 text-right font-medium">Client</th>
-                  <th className="px-4 py-2 text-right font-medium">Server</th>
-                  <th className="px-4 py-2 text-right font-medium">Server share</th>
+                  <th className="px-2 py-2 text-left font-medium">Device</th>
+                  <th className="px-2 py-2 text-right font-medium">Visitors</th>
+                  <th className="px-2 py-2 text-right font-medium">Events</th>
+                  <th className="px-2 py-2 text-right font-medium">Client</th>
+                  <th className="px-2 py-2 text-right font-medium">Server</th>
+                  <th className="px-2 py-2 text-right font-medium">Server share</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900/80">
                 {devices.map((d) => {
                   const serverShare = d.events > 0 ? (d.server_events / d.events) * 100 : 0
                   return (
-                    <tr key={d.device_type} className="hover:bg-zinc-900/30">
-                      <td className="px-4 py-2 text-zinc-200">{d.device_type}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{fmt(d.visitors)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{fmt(d.events)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums text-zinc-400">{fmt(d.client_events)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums text-zinc-400">{fmt(d.server_events)}</td>
-                      <td className={`px-4 py-2 text-right font-mono tabular-nums ${serverShare > 30 ? 'text-amber-400' : 'text-zinc-300'}`}>
+                    <tr key={d.device_type} className="hover:bg-zinc-900/40">
+                      <td className="px-2 py-2 capitalize text-zinc-200">{d.device_type}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums">{fmt(d.visitors)}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums">{fmt(d.events)}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-zinc-400">{fmt(d.client_events)}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-zinc-400">{fmt(d.server_events)}</td>
+                      <td className={`px-2 py-2 text-right font-mono tabular-nums ${serverShare > 30 ? 'text-amber-400' : 'text-zinc-300'}`}>
                         {serverShare.toFixed(1)}%
                       </td>
                     </tr>
@@ -187,43 +225,10 @@ export default async function DevicesPage({ searchParams }: { searchParams: Prom
           </div>
         )}
         <p className="mt-3 text-[11px] text-zinc-500">
-          Note: ad-blockers strip client events but server-mirrored revenue events still fire. A bucket with high server share
-          is likely seeing more blocking. Don&apos;t read this as exact — it&apos;s a directional signal.
+          Note: ad-blockers strip client events but server-mirrored revenue events still fire. A bucket with high
+          server share is likely seeing more blocking. Don&apos;t read this as exact — it&apos;s a directional signal.
         </p>
-      </Card>
+      </div>
     </div>
-  )
-}
-
-function BarList({
-  rows, colour,
-}: {
-  rows: { label: string; value: number; sub?: string }[]
-  colour: 'emerald' | 'sky' | 'violet'
-}) {
-  if (rows.length === 0) return <EmptyState title="No data" />
-  const max = Math.max(...rows.map((r) => r.value), 1)
-  const colourClass = {
-    emerald: 'bg-emerald-900/40',
-    sky: 'bg-sky-900/40',
-    violet: 'bg-violet-900/40',
-  }[colour]
-  return (
-    <ul className="space-y-1.5">
-      {rows.map((r) => {
-        const widthPct = (r.value / max) * 100
-        return (
-          <li key={r.label} className="relative overflow-hidden rounded">
-            <div className={`absolute inset-y-0 left-0 ${colourClass}`} style={{ width: `${widthPct}%` }} />
-            <div className="relative flex items-center justify-between px-2 py-1.5 text-xs">
-              <span className="text-zinc-200 capitalize">{r.label}</span>
-              <span className="font-mono text-zinc-200 tabular-nums shrink-0 ml-2">
-                {fmt(r.value)} {r.sub && <span className="text-[10px] text-zinc-500 ml-1">{r.sub}</span>}
-              </span>
-            </div>
-          </li>
-        )
-      })}
-    </ul>
   )
 }
