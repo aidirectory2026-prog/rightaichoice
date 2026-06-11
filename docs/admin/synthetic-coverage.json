@@ -1,0 +1,532 @@
+{
+  "generated_at": "2026-06-11T19:08:30.279Z",
+  "runid": "e2e-mq9vd05a",
+  "base_url": "http://localhost:3000",
+  "mode": "all",
+  "partial": false,
+  "summary": {
+    "total_fired_events": 79,
+    "verified": 79,
+    "failed": 0,
+    "browser": 22,
+    "payload": 57,
+    "dedup": "3/3",
+    "negative_test": "pass",
+    "duration_ms": 89026
+  },
+  "events": [
+    {
+      "event": "page_viewed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 250
+    },
+    {
+      "event": "plan_cta_impression",
+      "mode": "browser",
+      "pass": true,
+      "ms": 182,
+      "note": "piggyback: fires on homepage GoalInput mount (surface=homepage)"
+    },
+    {
+      "event": "plan_goal_typed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "hero_cta_clicked",
+      "mode": "browser",
+      "pass": true,
+      "ms": 182
+    },
+    {
+      "event": "plan_cta_clicked",
+      "mode": "browser",
+      "pass": true,
+      "ms": 181,
+      "note": "piggyback: same \"Plan My Stack\" click (surface=homepage)"
+    },
+    {
+      "event": "plan_signup_modal_shown",
+      "mode": "browser",
+      "pass": true,
+      "ms": 181,
+      "note": "modal opens for anon users on CTA click; closed without OAuth/skip"
+    },
+    {
+      "event": "scroll_depth_reached",
+      "mode": "browser",
+      "pass": true,
+      "ms": 186
+    },
+    {
+      "event": "context_menu_opened",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "copy_text_event",
+      "mode": "browser",
+      "pass": true,
+      "ms": 210
+    },
+    {
+      "event": "paste_text_event",
+      "mode": "browser",
+      "pass": true,
+      "ms": 204
+    },
+    {
+      "event": "tab_visibility_changed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "time_on_page",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180,
+      "note": "piggyback: EngagementCapture emits on the same visibility→hidden transition"
+    },
+    {
+      "event": "search_typing",
+      "mode": "browser",
+      "pass": true,
+      "ms": 236
+    },
+    {
+      "event": "search_query_submitted",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180,
+      "note": "piggyback: fires on the settled (debounced) navbar query"
+    },
+    {
+      "event": "search_query_typed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180,
+      "note": "piggyback: 1s-idle commit from the same typing"
+    },
+    {
+      "event": "tool_page_viewed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 178
+    },
+    {
+      "event": "tool_visit_clicked",
+      "mode": "browser",
+      "pass": true,
+      "ms": 182,
+      "note": "navigation prevented so no affiliate redirect / click_logs pollution"
+    },
+    {
+      "event": "compare_tool_added",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "sentiment_card_viewed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 181
+    },
+    {
+      "event": "category_viewed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 187
+    },
+    {
+      "event": "comparison_viewed",
+      "mode": "browser",
+      "pass": true,
+      "ms": 182
+    },
+    {
+      "event": "navigation_back",
+      "mode": "browser",
+      "pass": true,
+      "ms": 180,
+      "note": "same-document pushState + history.back() → real popstate"
+    },
+    {
+      "event": "nav_cta_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 187
+    },
+    {
+      "event": "tool_saved",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181
+    },
+    {
+      "event": "tool_unsaved",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "tool_visit_redirected",
+      "mode": "payload",
+      "pass": true,
+      "ms": 186,
+      "note": "server-only emitter (lib/mixpanel-server.ts) — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "tool_faq_opened",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "viability_badge_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 182
+    },
+    {
+      "event": "viability_page_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181
+    },
+    {
+      "event": "sentiment_scan_started",
+      "mode": "payload",
+      "pass": true,
+      "ms": 193,
+      "note": "requires signed-in user with scan quota"
+    },
+    {
+      "event": "sentiment_result_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 199,
+      "note": "requires a completed scan"
+    },
+    {
+      "event": "sentiment_pay_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 183,
+      "note": "requires paywall state (payments sandboxed)"
+    },
+    {
+      "event": "sentiment_scan_requested",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180,
+      "note": "server-only emitter — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_scan_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "server-only emitter — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_scan_failed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "server-only emitter — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_paywall_shown",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "server-only emitter — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_payment_initiated",
+      "mode": "payload",
+      "pass": true,
+      "ms": 182,
+      "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_payment_succeeded",
+      "mode": "payload",
+      "pass": true,
+      "ms": 184,
+      "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "sentiment_payment_failed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180,
+      "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
+    },
+    {
+      "event": "compare_tool_removed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 178
+    },
+    {
+      "event": "compare_share_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 191
+    },
+    {
+      "event": "compare_tray_opened",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "plan_started",
+      "mode": "payload",
+      "pass": true,
+      "ms": 188,
+      "note": "real trigger runs paid AI plan generation"
+    },
+    {
+      "event": "plan_intake_submitted",
+      "mode": "payload",
+      "pass": true,
+      "ms": 182,
+      "note": "real trigger runs paid AI plan generation"
+    },
+    {
+      "event": "plan_chip_selected",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "plan_existing_tool_added",
+      "mode": "payload",
+      "pass": true,
+      "ms": 188
+    },
+    {
+      "event": "plan_existing_tool_removed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 178
+    },
+    {
+      "event": "plan_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 178,
+      "note": "real trigger runs paid AI plan generation"
+    },
+    {
+      "event": "plan_match_tier",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "plan_perf",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "plan_results_displayed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "real trigger runs paid AI plan generation"
+    },
+    {
+      "event": "plan_results_tool_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 183
+    },
+    {
+      "event": "plan_cta_dismissed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180,
+      "note": "sticky bar needs scroll-state + dismissal timing — payload-driven"
+    },
+    {
+      "event": "plan_signup_modal_oauth_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 183,
+      "note": "OAuth flow — not browser-drivable headlessly"
+    },
+    {
+      "event": "plan_signup_modal_skipped",
+      "mode": "payload",
+      "pass": true,
+      "ms": 186,
+      "note": "skip navigates to /plan and runs paid AI generation"
+    },
+    {
+      "event": "plan_signup_modal_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "OAuth flow — not browser-drivable headlessly"
+    },
+    {
+      "event": "recommendation_requested",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181
+    },
+    {
+      "event": "search_result_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "autocomplete dropdown click is timing-flaky headlessly — payload-driven"
+    },
+    {
+      "event": "filter_applied",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "collection_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 189
+    },
+    {
+      "event": "ai_chat_message",
+      "mode": "payload",
+      "pass": true,
+      "ms": 183,
+      "note": "real trigger hits paid LLM API"
+    },
+    {
+      "event": "ai_chat_response_received",
+      "mode": "payload",
+      "pass": true,
+      "ms": 184,
+      "note": "real trigger hits paid LLM API"
+    },
+    {
+      "event": "ai_chat_tool_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181,
+      "note": "real trigger hits paid LLM API"
+    },
+    {
+      "event": "review_form_opened",
+      "mode": "payload",
+      "pass": true,
+      "ms": 182
+    },
+    {
+      "event": "review_rating_set",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "review_text_changed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 182
+    },
+    {
+      "event": "review_submitted",
+      "mode": "payload",
+      "pass": true,
+      "ms": 187,
+      "note": "requires authenticated user"
+    },
+    {
+      "event": "signup_started",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180,
+      "note": "auth flow"
+    },
+    {
+      "event": "signup_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181,
+      "note": "auth flow (server-authoritative shape)"
+    },
+    {
+      "event": "login_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 181,
+      "note": "auth flow (server-authoritative shape)"
+    },
+    {
+      "event": "password_reset_completed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "auth flow"
+    },
+    {
+      "event": "blog_internal_link_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180
+    },
+    {
+      "event": "share_clicked",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "newsletter_subscribed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179
+    },
+    {
+      "event": "activation_milestone",
+      "mode": "payload",
+      "pass": true,
+      "ms": 178
+    },
+    {
+      "event": "dashboard_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 183,
+      "note": "requires authenticated user"
+    },
+    {
+      "event": "saved_list_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 180,
+      "note": "requires authenticated user"
+    },
+    {
+      "event": "profile_viewed",
+      "mode": "payload",
+      "pass": true,
+      "ms": 184
+    },
+    {
+      "event": "stack_saved",
+      "mode": "payload",
+      "pass": true,
+      "ms": 179,
+      "note": "requires authenticated user + plan flow"
+    }
+  ]
+}

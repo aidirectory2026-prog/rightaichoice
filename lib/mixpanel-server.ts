@@ -12,6 +12,7 @@
 
 import crypto from 'node:crypto'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { validateEvent } from '@/lib/analytics-schema'
 
 const TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
 const UPSTREAM = process.env.MIXPANEL_DATA_API_HOST || 'https://api-eu.mixpanel.com'
@@ -82,6 +83,14 @@ type TrackArgs = {
  * hot path or let it throw.
  */
 export async function trackServer(args: TrackArgs): Promise<boolean> {
+  // Phase 10.3.2 — schema validation at the single server emit path (every
+  // serverAnalytics method funnels through here). Dev/test only — loud in
+  // local/CI, free in production. Validates the caller payload BEFORE the
+  // token/distinct_id/source_kind envelope is merged in.
+  if (process.env.NODE_ENV !== 'production') {
+    const r = validateEvent(args.event, args.properties)
+    if (!r.ok) console.error('[analytics-schema]', args.event, r.issues)
+  }
   if (!TOKEN) return false
 
   const payload = {

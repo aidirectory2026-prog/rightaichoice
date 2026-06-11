@@ -10,10 +10,12 @@ import { useRouter } from 'next/navigation'
 export function SaveToolButton({
   toolId,
   toolName,
+  toolSlug,
   initialSaved,
 }: {
   toolId: string
   toolName?: string
+  toolSlug?: string
   initialSaved: boolean
 }) {
   const { user } = useAuth()
@@ -40,8 +42,8 @@ export function SaveToolButton({
         setSaved(prevSaved) // revert on error
       } else {
         setSaved(result.saved)
-        if (result.saved) analytics.toolSaved(toolId, toolName ?? toolId)
-        else analytics.toolUnsaved(toolId, toolName ?? toolId)
+        if (result.saved) analytics.toolSaved(toolId, toolName ?? toolId, toolSlug)
+        else analytics.toolUnsaved(toolId, toolName ?? toolId, toolSlug)
       }
     })
   }

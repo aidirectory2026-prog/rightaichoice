@@ -75,7 +75,7 @@ export function AuthProvider({
         const pending = readPendingIntent()
         if (pending) {
           const provider = (sessionStorage.getItem('plan_signup_provider') as 'google' | 'linkedin' | null) ?? 'google'
-          analytics.planSignupModalCompleted({ provider, was_anon_to_known: true })
+          analytics.planSignupModalCompleted({ provider, was_anon_to_known: true, source_surface: pending.source_surface })
           void persistPlanIntent({
             typed_goal: pending.typed_goal,
             source_surface: pending.source_surface,

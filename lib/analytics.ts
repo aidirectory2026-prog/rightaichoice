@@ -282,7 +282,12 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
     distinct_id: distinctId,
     auth_state: (propsSnapshot.auth_state as 'anon' | 'known' | undefined) ?? 'anon',
     device_type: propsSnapshot.device_type as 'mobile' | 'tablet' | 'desktop' | undefined,
-    page_path: propsSnapshot.page_path as string | undefined,
+    // 10.3.5 — mount-time events (e.g. plan_cta_impression on homepage
+    // GoalInput mount) can fire BEFORE MixpanelProvider registers the
+    // page_path super-prop on first render, landing rows with page_path
+    // NULL (caught by the synthetic suite). The live pathname at event
+    // time is always available and at least as accurate — fall back to it.
+    page_path: (propsSnapshot.page_path as string | undefined) ?? window.location.pathname,
     utm_source: utm.utm_source,
     utm_medium: utm.utm_medium,
     utm_campaign: utm.utm_campaign,
@@ -302,6 +307,16 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
 function capture(event: string, properties?: EventProperties) {
   if (typeof window === 'undefined') return
   if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  // Phase 10.3.2 — schema validation at the single choke point every event
+  // method funnels through. Dev/test only (the branch is compiled away in
+  // production builds): zero prod cost, zero call-site changes. Production
+  // drift is tagged server-side in /api/track-mirror instead.
+  if (process.env.NODE_ENV !== 'production') {
+    void import('./analytics-schema').then(({ validateEvent }) => {
+      const r = validateEvent(event, properties)
+      if (!r.ok) console.error('[analytics-schema]', event, r.issues)
+    })
+  }
   import('mixpanel-browser').then(({ default: mixpanel }) => {
     mixpanel.track(event, properties)
   })
@@ -454,11 +469,14 @@ export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Tool interactions (core decision actions)
   // ──────────────────────────────────────────────────────────────
-  toolSaved(toolId: string, toolName: string) {
-    capture('tool_saved', { tool_id: toolId, tool_name: toolName })
+  // 10.3.3 — optional toolSlug added: /admin "Top saved tools" breaks down by
+  // properties->>tool_slug, but the client payload only carried tool_id +
+  // tool_name (CI guard check 5 caught the drift — the panel read 0 forever).
+  toolSaved(toolId: string, toolName: string, toolSlug?: string) {
+    capture('tool_saved', { tool_id: toolId, tool_name: toolName, tool_slug: toolSlug })
   },
-  toolUnsaved(toolId: string, toolName: string) {
-    capture('tool_unsaved', { tool_id: toolId, tool_name: toolName })
+  toolUnsaved(toolId: string, toolName: string, toolSlug?: string) {
+    capture('tool_unsaved', { tool_id: toolId, tool_name: toolName, tool_slug: toolSlug })
   },
   toolPageViewed(toolId: string, toolSlug: string) {
     capture('tool_page_viewed', { tool_id: toolId, tool_slug: toolSlug })
@@ -645,10 +663,14 @@ export const analytics = {
     capture('plan_signup_modal_skipped', { typed_goal_char_count: props.typed_goal_char_count })
   },
   /** Fires when the post-OAuth identify call completes (was_anon_to_known). */
-  planSignupModalCompleted(props: { provider: 'google' | 'linkedin'; was_anon_to_known: boolean }) {
+  // 10.3.3 — optional source_surface added: /admin plan-conversion breaks
+  // signups down by properties->>source_surface, but this event never carried
+  // it (CI guard check 5 caught the drift — per-surface signups read 0).
+  planSignupModalCompleted(props: { provider: 'google' | 'linkedin'; was_anon_to_known: boolean; source_surface?: string }) {
     capture('plan_signup_modal_completed', {
       provider: props.provider,
       was_anon_to_known: props.was_anon_to_known,
+      source_surface: props.source_surface,
     })
   },
   /** Server-side mirror — fires after a POST /api/plan/intent insert succeeds. */
