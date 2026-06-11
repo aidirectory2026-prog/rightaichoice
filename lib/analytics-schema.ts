@@ -62,19 +62,22 @@ export const BASE_CONTEXT_SCHEMA = z
   })
   .partial()
 
-/** Properties-level base-context keys stripped before the strict check. */
+/**
+ * Properties-level base-context keys stripped before the strict check.
+ * EXACTLY the keys that ride inside `properties` (verified against live
+ * user_events rows 2026-06-11): mirrorContext() folds in session_id,
+ * webdriver, clarity_session_id; /api/track-mirror folds in
+ * first_touch_referrer/landing and (10.3.2) schema_valid/schema_issues.
+ * NOTE: `referrer` / utm_* are NOT here — they travel as top-level
+ * MirrorEvent envelope fields, and `referrer` is a real payload prop of
+ * page_viewed.
+ */
 export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'session_id',
   'webdriver',
   'clarity_session_id',
   'first_touch_referrer',
   'first_touch_landing',
-  'first_touch_utm_source',
-  'utm_source',
-  'utm_medium',
-  'utm_campaign',
-  'referrer',
-  'page_path_context',
   'schema_valid',
   'schema_issues',
 ])

@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { isLikelyBotUA } from '@/lib/bot-detection'
+import { validateEvent } from '@/lib/analytics-schema'
 
 // Phase 9 follow-up (2026-05-28) — short retry for transient Supabase 5xx /
 // network blips. Three attempts, exponential backoff capped at 600ms total,
@@ -219,6 +220,16 @@ export async function POST(req: NextRequest) {
     // row as bot even when the UA regex misses — stealth-headless browsers
     // ship stock Chrome UAs.
     const rowBotLikely = botLikely || props.webdriver === true
+    // Phase 10.3.2 — production schema validation. Rows that drift from
+    // lib/analytics-schema.ts are TAGGED (schema_valid=false + first issues),
+    // NEVER dropped — capture at any cost; flag, don't lose. Cost: one zod
+    // parse per event, batches are capped at 100. Keys are only written when
+    // invalid so conforming rows stay byte-identical.
+    const validation = validateEvent(e.event_name, props)
+    if (!validation.ok) {
+      props.schema_valid = false
+      props.schema_issues = validation.issues.slice(0, 3)
+    }
     // user_id is STRICTLY server-resolved from the auth cookie. Never
     // trust whatever the client put in the payload — otherwise a hostile
     // client could spoof events as any user and inflate the unique-users

@@ -302,6 +302,16 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
 function capture(event: string, properties?: EventProperties) {
   if (typeof window === 'undefined') return
   if (!process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) return
+  // Phase 10.3.2 — schema validation at the single choke point every event
+  // method funnels through. Dev/test only (the branch is compiled away in
+  // production builds): zero prod cost, zero call-site changes. Production
+  // drift is tagged server-side in /api/track-mirror instead.
+  if (process.env.NODE_ENV !== 'production') {
+    void import('./analytics-schema').then(({ validateEvent }) => {
+      const r = validateEvent(event, properties)
+      if (!r.ok) console.error('[analytics-schema]', event, r.issues)
+    })
+  }
   import('mixpanel-browser').then(({ default: mixpanel }) => {
     mixpanel.track(event, properties)
   })
