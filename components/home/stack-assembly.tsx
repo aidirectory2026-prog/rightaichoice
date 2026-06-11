@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { PlanCTALink } from '@/components/cta/plan-cta-link'
 import {
   Sparkles,
   FileText,
@@ -61,10 +61,10 @@ export function StackAssembly() {
         })}
       </div>
 
-      <Link href="/plan" className="stack-assembly-cta">
+      <PlanCTALink surface="homepage" pagePath="/" className="stack-assembly-cta">
         <span>Build your own stack</span>
         <ArrowRight className="h-4 w-4" />
-      </Link>
+      </PlanCTALink>
     </div>
   )
 }
