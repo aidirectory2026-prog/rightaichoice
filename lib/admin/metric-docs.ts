@@ -262,6 +262,40 @@ const docs = {
       'The data path (window + bot + filter predicates) is the verifier-covered direct-select path; the classifier is deliberately coarse and labeled heuristic — buckets, not versions.',
     caveats: ['Heuristic UA parsing: rare browsers land in "other"; sampled at the 10k most recent in-window rows on very large windows.'],
   },
+  // ── Behavior — events explorer (Phase 10.5b) ─────────────────────────
+  events_volume_list: {
+    key: 'events_volume_list',
+    title: 'Event volume list',
+    whatItCounts:
+      'Every event type seen in the window: count per the bots toggle, the always-visible bot share, distinct visitors who fired it, last fire time, and a per-day trend.',
+    howComputed:
+      "RPC insights_event_volume_list (migration 157): one pass over user_events in window >= start AND < end with the shared filter predicate; `events`/`visitors`/`last fired`/spark respect the bots toggle, `bot_events` always counts bot_likely rows so the split never hides; spark buckets are IST calendar days; deterministic ordering (events desc, bot events desc, name asc). A global event filter is deliberately dropped — this list IS the picker.",
+    whyTrusted:
+      'Same shared predicate the filter-matrix verifier proves against raw SQL on every run; per-event totals are reconcilable with the audited Top-events RPC for the same window; an event can only be listed with a name — names without a registry entry surface in the "unregistered" group instead of disappearing.',
+    caveats: [EPOCHS.mirror, EPOCHS.botRecall, 'Bot-only events stay visible with a 0 human count when bots are excluded — by design.'],
+  },
+  event_property_breakdown: {
+    key: 'event_property_breakdown',
+    title: 'Property breakdown',
+    whatItCounts:
+      'For the selected event: the most frequent values of one of its schema-declared payload properties, with event and distinct-visitor counts per value.',
+    howComputed:
+      "RPC insights_event_property_breakdown (migration 157): count(*) + count(distinct distinct_id) grouped by properties->>prop for event_name = the selected event, window >= start AND < end, bots per toggle, optional filters via the shared predicate, deterministic ordering (events desc, value asc). Empty/missing values bucket as '(missing)'. The property name is allowlisted in TS against the event's EVENT_SCHEMAS entry before the RPC is ever called.",
+    whyTrusted:
+      'Two breakdown combos are asserted equal to independent hand-written raw SQL by the filter-matrix verifier (Phase 5b extension); the key-allowlist means the panel can only query properties the schema registry declares (CI-guarded), so a renamed property fails loudly instead of charting an empty column.',
+    caveats: [EPOCHS.mirror, 'Counts events, not visitors, in the bar; the visitors column de-duplicates per value.'],
+  },
+  event_raw_stream: {
+    key: 'event_raw_stream',
+    title: 'Raw event stream',
+    whatItCounts: 'The most recent raw rows for the selected event in the window — actual payloads, exactly as stored.',
+    howComputed:
+      'Direct PostgREST select on user_events (newest first, id tie-break) pinned to the selected event, window >= start AND < end, bots per toggle, optional filters via the applyFilters() TS mirror. No aggregation — what you see is the stored row.',
+    whyTrusted:
+      'The direct-select + applyFilters path is one of the two live paths the filter-matrix verifier proves against raw SQL; rows carry schema_valid tagging from /api/track-mirror, so payload drift is visible per row.',
+    caveats: ['A raw stream shows rows, not truth-about-people: one human can be several distinct_ids (devices, cookie clears).'],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

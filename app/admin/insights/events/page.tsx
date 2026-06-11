@@ -1,30 +1,463 @@
-// Phase 8.g.8 (2026-05-21) — raw event viewer at /admin/insights/events.
+// Phase 10.5b.2 (2026-06-12) — Events explorer, rebuilt ON the schema
+// registry (replaces the Phase 8.g.8 raw viewer; /admin/insights/raw now
+// redirects here).
 //
-// What the aggregate dashboard can't answer: "show me the actual event
-// rows" / "what was the exact payload" / "what did distinct_id X do."
-// This page paginates user_events with event_name + distinct_id filters,
-// click any row to expand its JSON properties.
+// One surface to answer "what events do we have, what do they mean, are
+// they alive, and what's inside them":
+//   - event picker GROUPED by EVENT_SCHEMAS category, plain-English
+//     tooltips straight from the registry (can never drift from reality)
+//   - per-event volume list: window count, always-visible humans/bots
+//     split, distinct visitors, last fire, per-IST-day spark (RPC
+//     insights_event_volume_list, migration 157)
+//   - selecting an event (?event=) adds: registry/lifecycle card,
+//     synthetic-recipe status (docs/admin/synthetic-coverage.json), the
+//     daily trend, a schema-allowlisted property breakdown (?prop=), and
+//     the last 50 raw rows (getRawEvents + the full smart filters).
 
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
-import { type DayWindow, getDistinctEventNames, getRawEvents, type RawEventRow } from '../queries'
+import { Activity, ChevronLeft } from 'lucide-react'
+import { FilterBar } from '@/components/admin/filter-bar'
+import { MetricInfo } from '@/components/admin/metric-info'
+import { DailyChart, fmt } from '@/components/admin/charts'
+import { parseAdminFilters } from '@/lib/admin/filters'
+import {
+  EVENT_SCHEMAS,
+  SCHEMA_EVENT_NAMES,
+  type EventCategory,
+  type EventSchemaEntry,
+} from '@/lib/analytics-schema'
+import { eventLifecycle, schemaPropKeys, type EventLifecycleStatus } from '@/lib/admin/event-props'
+import {
+  getCountryFilterOptions,
+  getEventPropertyBreakdown,
+  getEventVolumeList,
+  getRawEvents,
+  type EventPropertyBreakdownRow,
+  type EventVolumeRow,
+  type RawEventRow,
+} from '../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-export const metadata = { title: 'Raw events — Admin' }
+export const metadata = { title: 'Events explorer — Admin' }
 
-const PAGE_SIZE = 50
+const RAW_LIMIT = 50
 
-function fmtAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime()
-  const s = Math.floor(ms / 1000)
+/** Display order for the registry categories. */
+const CATEGORY_ORDER: EventCategory[] = [
+  'navigation', 'discovery', 'search', 'tools', 'compare', 'plan',
+  'chat', 'reviews', 'sentiment', 'auth', 'engagement', 'content', 'system',
+]
+
+const LIFECYCLE_BADGE: Record<EventLifecycleStatus, { label: string; cls: string }> = {
+  fired: { label: 'FIRED', cls: 'border-emerald-800 bg-emerald-950/40 text-emerald-300' },
+  planned: { label: 'PLANNED', cls: 'border-sky-800 bg-sky-950/40 text-sky-300' },
+  deprecated: { label: 'DEPRECATED', cls: 'border-zinc-700 bg-zinc-900 text-zinc-400' },
+  unregistered: { label: 'UNREGISTERED', cls: 'border-rose-800 bg-rose-950/40 text-rose-300' },
+}
+
+type SyntheticEntry = { event: string; mode: string; pass: boolean; ms?: number; note?: string }
+type SyntheticCoverage = { generated_at: string; summary?: { verified?: number; total_fired_events?: number }; events: SyntheticEntry[] }
+
+/** Synthetic-recipe status, read at server time from the committed report
+ *  (written by scripts/audit/e2e-tracking-verification.ts). */
+function readSyntheticCoverage(): SyntheticCoverage | null {
+  try {
+    const raw = readFileSync(join(process.cwd(), 'docs', 'admin', 'synthetic-coverage.json'), 'utf8')
+    return JSON.parse(raw) as SyntheticCoverage
+  } catch {
+    return null
+  }
+}
+
+function fmtAgo(iso: string | null): string {
+  if (!iso) return '—'
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (s < 60) return `${s}s ago`
   const m = Math.floor(s / 60)
   if (m < 60) return `${m}m ago`
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  return `${d}d ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+/** Tiny server-rendered spark bars (one bar per IST day in the window). */
+function Spark({ points }: { points: Array<{ date: string; value: number }> }) {
+  if (points.length === 0) return <span className="text-zinc-700">—</span>
+  const max = Math.max(...points.map((p) => p.value), 1)
+  return (
+    <div className="flex h-5 items-end gap-px" aria-hidden>
+      {points.map((p) => (
+        <div
+          key={p.date}
+          className="w-1.5 rounded-sm bg-emerald-700/70"
+          style={{ height: `${Math.max(8, (p.value / max) * 100)}%` }}
+          title={`${p.date}: ${p.value}`}
+        />
+      ))}
+    </div>
+  )
+}
+
+export default async function EventsExplorerPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
+  const filters = parseAdminFilters(sp)
+  // The global event filter IS the selection (?event=).
+  const selected = filters.event
+
+  const propKeys = selected ? schemaPropKeys(selected) : []
+  const prop = selected && propKeys.includes(sp.prop ?? '') ? sp.prop! : propKeys[0]
+
+  const [volume, countryOptions, breakdown, raw] = await Promise.all([
+    getEventVolumeList(filters),
+    getCountryFilterOptions(),
+    selected && prop
+      ? getEventPropertyBreakdown(selected, prop, filters)
+      : Promise.resolve<EventPropertyBreakdownRow[]>([]),
+    selected
+      ? getRawEvents({ filters, eventName: selected, page: 0, pageSize: RAW_LIMIT })
+      : Promise.resolve({ rows: [] as RawEventRow[], total: 0 }),
+  ])
+
+  const volumeByName = new Map(volume.map((r) => [r.event_name, r]))
+  const totalEvents = volume.reduce((s, r) => s + r.events, 0)
+
+  /** Rebuild the current URL with overrides — keeps every filter param. */
+  const qs = (overrides: Record<string, string | null>) => {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(sp)) if (v) params.set(k, v)
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === null) params.delete(k)
+      else params.set(k, v)
+    }
+    const s = params.toString()
+    return s ? `/admin/insights/events?${s}` : '/admin/insights/events'
+  }
+
+  // Picker groups: every schema'd event, grouped by category; plus any
+  // in-window names the registry doesn't know (shown, never hidden).
+  const schemas = EVENT_SCHEMAS as Record<string, EventSchemaEntry>
+  const groups = CATEGORY_ORDER.map((cat) => ({
+    cat,
+    names: SCHEMA_EVENT_NAMES.filter((n) => schemas[n].category === cat),
+  })).filter((g) => g.names.length > 0)
+  const unregistered = volume
+    .map((r) => r.event_name)
+    .filter((n) => !(n in schemas))
+
+  const selectedEntry = selected ? schemas[selected] : undefined
+  const selectedRow = selected ? volumeByName.get(selected) : undefined
+  const lifecycle = selected ? eventLifecycle(selected) : null
+  const coverage = readSyntheticCoverage()
+  const syntheticEntry = selected
+    ? coverage?.events.find((e) => e.event === selected) ?? null
+    : null
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+        <h1 className="flex items-center gap-2 text-lg font-semibold text-white">
+          <Activity className="h-5 w-5 text-emerald-500" />
+          Events explorer
+        </h1>
+        <FilterBar
+          activeRange={filters.range.key}
+          countries={countryOptions}
+          eventNames={[...SCHEMA_EVENT_NAMES]}
+        />
+      </div>
+
+      <p className="mb-4 text-xs text-zinc-500">
+        {fmt(totalEvents)} events across {volume.length} event types in {filters.range.label.toLowerCase()}
+        {filters.includeBots ? ' (bots included)' : ' (humans only)'}.
+        Every event name, meaning and property below comes from the schema registry
+        (<span className="font-mono">lib/analytics-schema.ts</span>) — the same source the CI guard and the synthetic suite verify.
+      </p>
+
+      {/* ── Event picker, grouped by registry category ───────────────── */}
+      <details className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900/40" open={!selected}>
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-300 hover:text-white">
+          Event picker <span className="text-zinc-600">— {SCHEMA_EVENT_NAMES.length} registered events, grouped by category; hover for plain English</span>
+        </summary>
+        <div className="space-y-3 border-t border-zinc-800 px-4 py-3">
+          {groups.map(({ cat, names }) => (
+            <div key={cat}>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{cat}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {names.map((n) => {
+                  const row = volumeByName.get(n)
+                  const active = n === selected
+                  return (
+                    <Link
+                      key={n}
+                      href={qs({ event: active ? null : n, prop: null })}
+                      title={schemas[n].plainEnglish}
+                      className={`rounded-full border px-2.5 py-1 text-[11px] font-mono transition-colors ${
+                        active
+                          ? 'border-emerald-600 bg-emerald-950/50 text-emerald-200'
+                          : row && row.events > 0
+                            ? 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-emerald-700'
+                            : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {n}
+                      {row && row.events > 0 ? <span className="ml-1 text-emerald-500/80">{fmt(row.events)}</span> : null}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          {unregistered.length > 0 && (
+            <div>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-rose-400">
+                unregistered (rows exist, no schema — invariant I11 material)
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {unregistered.map((n) => (
+                  <Link
+                    key={n}
+                    href={qs({ event: n === selected ? null : n, prop: null })}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-mono ${
+                      n === selected
+                        ? 'border-rose-600 bg-rose-950/50 text-rose-200'
+                        : 'border-rose-900/60 text-rose-300/80 hover:text-rose-200'
+                    }`}
+                  >
+                    {n}
+                    <span className="ml-1 opacity-70">{fmt(volumeByName.get(n)?.events ?? 0)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </details>
+
+      {/* ── Selected event detail ────────────────────────────────────── */}
+      {selected && lifecycle && (
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link href={qs({ event: null, prop: null })} className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+              <ChevronLeft className="h-3 w-3" />
+              All events
+            </Link>
+            <h2 className="font-mono text-base font-semibold text-emerald-300">{selected}</h2>
+            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wider ${LIFECYCLE_BADGE[lifecycle.status].cls}`}>
+              {LIFECYCLE_BADGE[lifecycle.status].label}
+            </span>
+            {lifecycle.adminConsumed && (
+              <span className="rounded-full border border-violet-800 bg-violet-950/40 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-violet-300">
+                ADMIN-CONSUMED
+              </span>
+            )}
+          </div>
+
+          {/* registry + synthetic status card */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 text-xs">
+            {selectedEntry ? (
+              <>
+                <p className="text-sm text-zinc-200">{selectedEntry.plainEnglish}</p>
+                <p className="mt-1.5 text-zinc-500">{selectedEntry.description}</p>
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-[11px]">
+                  <span className="text-zinc-500">category <span className="font-mono text-zinc-300">{selectedEntry.category}</span></span>
+                  <span className="text-zinc-500">emitter <span className="font-mono text-zinc-300">{selectedEntry.source}</span></span>
+                  <span className="text-zinc-500">
+                    schema props{' '}
+                    <span className="font-mono text-zinc-300">{propKeys.length > 0 ? propKeys.join(', ') : '(none)'}</span>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-rose-300">
+                No EVENT_SCHEMAS entry for this name — rows exist in user_events but the registry doesn&apos;t govern it
+                ({lifecycle.status === 'deprecated' ? 'kept for historical rows; emitter removed' : 'should be caught by invariant I11'}).
+              </p>
+            )}
+            <div className="mt-3 border-t border-zinc-800 pt-3 text-[11px]">
+              <span className="text-zinc-500">Synthetic recipe: </span>
+              {syntheticEntry ? (
+                <span className={syntheticEntry.pass ? 'text-emerald-400' : 'text-rose-400'}>
+                  {syntheticEntry.pass ? 'verified' : 'FAILING'} ({syntheticEntry.mode}
+                  {syntheticEntry.ms != null ? `, ${syntheticEntry.ms}ms` : ''})
+                  {syntheticEntry.note ? <span className="text-zinc-500"> — {syntheticEntry.note}</span> : null}
+                </span>
+              ) : (
+                <span className="text-amber-400">no recipe in the last suite run</span>
+              )}
+              {coverage && (
+                <span className="text-zinc-600">
+                  {' '}· suite run {new Date(coverage.generated_at).toISOString().slice(0, 10)}
+                  {coverage.summary ? ` (${coverage.summary.verified}/${coverage.summary.total_fired_events} verified)` : ''}
+                  {' '}·{' '}
+                  <Link href="/admin/tracking-health" className="text-emerald-500 hover:text-emerald-300">tracking health →</Link>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* window stats + trend */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label={filters.includeBots ? 'Events (incl. bots)' : 'Events (humans)'} value={fmt(selectedRow?.events ?? 0)} />
+            <Stat label="Bot events in window" value={fmt(selectedRow?.bot_events ?? 0)} tone="amber" />
+            <Stat label="Unique visitors" value={fmt(selectedRow?.visitors ?? 0)} />
+            <Stat label="Last fired" value={fmtAgo(selectedRow?.last_fired ?? null)} />
+          </div>
+
+          <DailyChart
+            title={`${selected} per IST day`}
+            points={selectedRow?.spark ?? []}
+            info={<MetricInfo docKey="events_volume_list" />}
+          />
+
+          {/* property breakdown (schema-allowlisted) */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1">
+                <div className="text-sm font-medium text-zinc-300">Top property values</div>
+                <MetricInfo docKey="event_property_breakdown" />
+              </div>
+              {propKeys.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {propKeys.map((k) => (
+                    <Link
+                      key={k}
+                      href={qs({ prop: k })}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-mono ${
+                        k === prop
+                          ? 'border-emerald-600 bg-emerald-950/50 text-emerald-200'
+                          : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {k}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            {propKeys.length === 0 ? (
+              <div className="py-4 text-center text-xs text-zinc-500">
+                No schema-declared payload properties to break down{selectedEntry ? '' : ' (event has no schema entry)'}.
+              </div>
+            ) : breakdown.length === 0 ? (
+              <div className="py-4 text-center text-xs text-zinc-500">No values for {prop} in this window.</div>
+            ) : (
+              <BreakdownTable rows={breakdown} />
+            )}
+          </div>
+
+          {/* last 50 raw rows */}
+          <div>
+            <div className="mb-2 flex items-center gap-1">
+              <h3 className="text-sm font-medium text-zinc-300">
+                Last {Math.min(RAW_LIMIT, raw.total)} raw rows
+                <span className="ml-2 text-xs text-zinc-600">({fmt(raw.total)} total in window)</span>
+              </h3>
+              <MetricInfo docKey="event_raw_stream" />
+            </div>
+            <RawTable rows={raw.rows} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Per-event volume list ────────────────────────────────────── */}
+      <div className="rounded-lg border border-zinc-800 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-zinc-900/50">
+            <tr className="border-b border-zinc-800 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+              <th className="px-3 py-2">
+                <span className="inline-flex items-center gap-1">
+                  Event <MetricInfo docKey="events_volume_list" align="left" />
+                </span>
+              </th>
+              <th className="px-3 py-2">Trend</th>
+              <th className="px-3 py-2 text-right">{filters.includeBots ? 'Events (incl. bots)' : 'Events (humans)'}</th>
+              <th className="px-3 py-2 text-right">Bot events</th>
+              <th className="px-3 py-2 text-right">Visitors</th>
+              <th className="px-3 py-2 text-right">Last fired</th>
+            </tr>
+          </thead>
+          <tbody>
+            {volume.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center text-zinc-500">No events in this window.</td>
+              </tr>
+            )}
+            {volume.map((r) => {
+              const lc = eventLifecycle(r.event_name)
+              return (
+                <tr key={r.event_name} className={`border-b border-zinc-900 hover:bg-zinc-900/30 ${r.event_name === selected ? 'bg-emerald-950/20' : ''}`}>
+                  <td className="px-3 py-2">
+                    <Link
+                      href={qs({ event: r.event_name === selected ? null : r.event_name, prop: null })}
+                      className="font-mono text-emerald-300 hover:text-emerald-200"
+                      title={schemas[r.event_name]?.plainEnglish ?? 'No schema entry'}
+                    >
+                      {r.event_name}
+                    </Link>
+                    {lc.status !== 'fired' && (
+                      <span className={`ml-2 rounded-full border px-1.5 py-px text-[9px] font-semibold ${LIFECYCLE_BADGE[lc.status].cls}`}>
+                        {LIFECYCLE_BADGE[lc.status].label}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2"><Spark points={r.spark} /></td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-200">{fmt(r.events)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums text-amber-500/90">{fmt(r.bot_events)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-400">{fmt(r.visitors)}</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap text-zinc-500" title={r.last_fired ?? ''}>
+                    {fmtAgo(r.last_fired)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone?: 'amber' }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-zinc-500">{label}</div>
+      <div className={`mt-1 text-lg font-semibold ${tone === 'amber' ? 'text-amber-300' : 'text-white'}`}>{value}</div>
+    </div>
+  )
+}
+
+function BreakdownTable({ rows }: { rows: EventPropertyBreakdownRow[] }) {
+  const max = Math.max(...rows.map((r) => r.events), 1)
+  return (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="text-left text-[10px] uppercase tracking-wider text-zinc-500">
+          <th className="pb-1.5">Value</th>
+          <th className="pb-1.5 text-right">Events</th>
+          <th className="pb-1.5 text-right">Visitors</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={`${r.value}-${i}`}>
+            <td className="relative py-1 pr-3">
+              <div className="absolute inset-y-0.5 left-0 rounded bg-emerald-900/30" style={{ width: `${(r.events / max) * 100}%` }} aria-hidden />
+              <span className="relative z-10 px-1.5 font-mono text-zinc-200 break-all">{r.value}</span>
+            </td>
+            <td className="py-1 text-right font-mono tabular-nums text-zinc-300">{fmt(r.events)}</td>
+            <td className="py-1 text-right font-mono tabular-nums text-zinc-500">{fmt(r.visitors)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
 }
 
 function fmtDevice(d: string | null): string {
@@ -35,216 +468,65 @@ function fmtDevice(d: string | null): string {
   return d
 }
 
-export default async function RawEventsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    days?: string
-    include_bots?: string
-    event_name?: string
-    /** Phase 10.5a.2 — alias used by the dashboard drill-down links. */
-    event?: string
-    distinct_id?: string
-    page?: string
-  }>
-}) {
-  const sp = await searchParams
-  const requested = Number(sp.days ?? '7') as DayWindow
-  const days: DayWindow = ([1, 7, 30, 90] as DayWindow[]).includes(requested) ? requested : 7
-  const includeBots = sp.include_bots === '1'
-  const eventName = sp.event_name || sp.event || undefined
-  const distinctId = sp.distinct_id || undefined
-  const page = Math.max(0, Number(sp.page ?? '0'))
-
-  const [{ rows, total }, eventNames] = await Promise.all([
-    getRawEvents({ days, includeBots, eventName, distinctId, page, pageSize: PAGE_SIZE }),
-    getDistinctEventNames(),
-  ])
-
-  const totalPages = Math.ceil(total / PAGE_SIZE)
-  const buildQs = (overrides: Record<string, string | undefined>) => {
-    const merged: Record<string, string> = {
-      days: String(days),
-      ...(includeBots ? { include_bots: '1' } : {}),
-      ...(eventName ? { event_name: eventName } : {}),
-      ...(distinctId ? { distinct_id: distinctId } : {}),
-      page: String(page),
-    }
-    for (const [k, v] of Object.entries(overrides)) {
-      if (v === undefined || v === '') delete merged[k]
-      else merged[k] = v
-    }
-    const qs = new URLSearchParams(merged).toString()
-    return qs ? `?${qs}` : ''
-  }
-
+function RawTable({ rows }: { rows: RawEventRow[] }) {
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/admin/insights?days=${days}${includeBots ? '&include_bots=1' : ''}`}
-            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300"
-          >
-            <ChevronLeft className="h-3 w-3" />
-            Insights
-          </Link>
-          <span className="text-zinc-700">/</span>
-          <h1 className="text-lg font-semibold text-white">Raw events</h1>
-        </div>
-        <div className="text-xs text-zinc-500">
-          {total.toLocaleString()} rows in last {days}d
-          {!includeBots && ' (bots excluded)'}
-        </div>
-      </div>
-
-      {/* ── Filters ─────────────────────────────────────────── */}
-      <form className="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 lg:grid-cols-5">
-        <div>
-          <label className="block text-[10px] uppercase tracking-wider text-zinc-500">Event name</label>
-          <select
-            name="event_name"
-            defaultValue={eventName ?? ''}
-            className="mt-1 w-full rounded border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200"
-          >
-            <option value="">All events</option>
-            {eventNames.map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-        </div>
-        <div className="lg:col-span-2">
-          <label className="block text-[10px] uppercase tracking-wider text-zinc-500">Distinct ID</label>
-          <input
-            name="distinct_id"
-            defaultValue={distinctId ?? ''}
-            placeholder="paste a distinct_id (eg $device:abc-123…)"
-            className="mt-1 w-full rounded border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 placeholder-zinc-600"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] uppercase tracking-wider text-zinc-500">Window</label>
-          <select
-            name="days"
-            defaultValue={String(days)}
-            className="mt-1 w-full rounded border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200"
-          >
-            <option value="1">last 24h</option>
-            <option value="7">last 7d</option>
-            <option value="30">last 30d</option>
-            <option value="90">last 90d</option>
-          </select>
-        </div>
-        <div className="flex items-end gap-2">
-          <label className="flex items-center gap-1.5 text-xs text-zinc-300">
-            <input
-              type="checkbox"
-              name="include_bots"
-              value="1"
-              defaultChecked={includeBots}
-              className="rounded border-zinc-700 bg-zinc-950"
-            />
-            Include bots
-          </label>
-          <button
-            type="submit"
-            className="rounded bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
-          >
-            Filter
-          </button>
-        </div>
-      </form>
-
-      {/* ── Events table ───────────────────────────────────── */}
-      <div className="overflow-x-auto rounded-lg border border-zinc-800">
-        <table className="w-full text-xs">
-          <thead className="bg-zinc-900/50">
-            <tr className="border-b border-zinc-800 text-left text-[10px] uppercase tracking-wider text-zinc-500">
-              <th className="px-3 py-2">Time</th>
-              <th className="px-3 py-2">Event</th>
-              <th className="px-3 py-2">distinct_id</th>
-              <th className="px-3 py-2">Path</th>
-              <th className="px-3 py-2">Device</th>
-              <th className="px-3 py-2">Auth</th>
-              <th className="px-3 py-2">Src</th>
-              <th className="px-3 py-2">Bot</th>
-              <th className="px-3 py-2">Properties</th>
+    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+      <table className="w-full text-xs">
+        <thead className="bg-zinc-900/50">
+          <tr className="border-b border-zinc-800 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+            <th className="px-3 py-2">Time</th>
+            <th className="px-3 py-2">distinct_id</th>
+            <th className="px-3 py-2">Path</th>
+            <th className="px-3 py-2">Device</th>
+            <th className="px-3 py-2">Auth</th>
+            <th className="px-3 py-2">Src</th>
+            <th className="px-3 py-2">Bot</th>
+            <th className="px-3 py-2">Properties</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={8} className="px-3 py-8 text-center text-zinc-500">No rows match the filters.</td>
             </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-zinc-500">
-                  No events match the filters.
-                </td>
-              </tr>
-            )}
-            {rows.map((r: RawEventRow) => (
-              <tr key={r.id} className="border-b border-zinc-900 hover:bg-zinc-900/30">
-                <td className="px-3 py-2 align-top whitespace-nowrap text-zinc-400" title={r.created_at}>
-                  {fmtAgo(r.created_at)}
-                </td>
-                <td className="px-3 py-2 align-top font-mono text-emerald-300">{r.event_name}</td>
-                <td className="px-3 py-2 align-top">
-                  <Link
-                    href={`/admin/insights/user/${encodeURIComponent(r.distinct_id)}`}
-                    className="font-mono text-zinc-400 hover:text-emerald-400"
-                    title={r.distinct_id}
-                  >
-                    {r.distinct_id.length > 24 ? r.distinct_id.slice(0, 24) + '…' : r.distinct_id}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 align-top text-zinc-400 max-w-[200px] truncate" title={r.page_path ?? ''}>
-                  {r.page_path ?? '—'}
-                </td>
-                <td className="px-3 py-2 align-top text-center">{fmtDevice(r.device_type)}</td>
-                <td className="px-3 py-2 align-top text-zinc-400">{r.auth_state ?? '—'}</td>
-                <td className="px-3 py-2 align-top text-zinc-500">{r.source_kind}</td>
-                <td className="px-3 py-2 align-top text-center">
-                  {r.bot_likely ? <span className="text-amber-400">🤖</span> : ''}
-                </td>
-                <td className="px-3 py-2 align-top max-w-[400px]">
-                  <details>
-                    <summary className="cursor-pointer text-zinc-400 hover:text-zinc-200">
-                      {Object.keys(r.properties ?? {}).length} keys
-                    </summary>
-                    <pre className="mt-2 overflow-x-auto rounded bg-zinc-950 p-2 text-[10px] text-zinc-300">
-                      {JSON.stringify(r.properties ?? {}, null, 2)}
-                    </pre>
-                  </details>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Pagination ───────────────────────────────────── */}
-      {totalPages > 1 && (
-        <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
-          <div>
-            Page {page + 1} of {totalPages}
-          </div>
-          <div className="flex gap-2">
-            {page > 0 && (
-              <Link
-                href={`/admin/insights/events${buildQs({ page: String(page - 1) })}`}
-                className="rounded border border-zinc-800 px-2.5 py-1 hover:text-zinc-200"
-              >
-                ← Prev
-              </Link>
-            )}
-            {page < totalPages - 1 && (
-              <Link
-                href={`/admin/insights/events${buildQs({ page: String(page + 1) })}`}
-                className="rounded border border-zinc-800 px-2.5 py-1 hover:text-zinc-200"
-              >
-                Next →
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+          )}
+          {rows.map((r) => (
+            <tr key={r.id} className="border-b border-zinc-900 hover:bg-zinc-900/30">
+              <td className="px-3 py-2 align-top whitespace-nowrap text-zinc-400" title={r.created_at}>
+                {fmtAgo(r.created_at)}
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Link
+                  href={`/admin/insights/user/${encodeURIComponent(r.distinct_id)}`}
+                  className="font-mono text-zinc-400 hover:text-emerald-400"
+                  title={r.distinct_id}
+                >
+                  {r.distinct_id.length > 24 ? r.distinct_id.slice(0, 24) + '…' : r.distinct_id}
+                </Link>
+              </td>
+              <td className="px-3 py-2 align-top text-zinc-400 max-w-[200px] truncate" title={r.page_path ?? ''}>
+                {r.page_path ?? '—'}
+              </td>
+              <td className="px-3 py-2 align-top text-center">{fmtDevice(r.device_type)}</td>
+              <td className="px-3 py-2 align-top text-zinc-400">{r.auth_state ?? '—'}</td>
+              <td className="px-3 py-2 align-top text-zinc-500">{r.source_kind}</td>
+              <td className="px-3 py-2 align-top text-center">
+                {r.bot_likely ? <span className="text-amber-400">🤖</span> : ''}
+              </td>
+              <td className="px-3 py-2 align-top max-w-[400px]">
+                <details>
+                  <summary className="cursor-pointer text-zinc-400 hover:text-zinc-200">
+                    {Object.keys(r.properties ?? {}).length} keys
+                  </summary>
+                  <pre className="mt-2 overflow-x-auto rounded bg-zinc-950 p-2 text-[10px] text-zinc-300">
+                    {JSON.stringify(r.properties ?? {}, null, 2)}
+                  </pre>
+                </details>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

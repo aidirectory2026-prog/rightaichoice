@@ -22,6 +22,7 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import type { RangeSelection } from '@/lib/admin/range'
 import { applyFilters, filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
+import { schemaPropKeys } from '@/lib/admin/event-props'
 
 // The 12 RPCs in migrations 096+098 aren't in the generated Supabase
 // types yet, so wrap rpc() in a loosely-typed helper.
@@ -535,27 +536,38 @@ export interface RawEventRow {
   bot_likely: boolean
 }
 
-export interface RawEventsFilter {
+// Phase 10.5b.2 — getRawEvents now takes the full AdminFilters (range +
+// bots + every optional smart filter via the applyFilters() mirror) instead
+// of the old (days, includeBots) pair; an explicit eventName pin drops a
+// global event filter (same value anyway when set from the explorer URL).
+export interface RawEventsQuery {
+  filters: AdminFilters
   eventName?: string
   distinctId?: string
-  days: DayWindow
-  includeBots: boolean
   page: number
   pageSize: number
 }
 
-export async function getRawEvents(f: RawEventsFilter): Promise<{ rows: RawEventRow[]; total: number }> {
+export async function getRawEvents(f: RawEventsQuery): Promise<{ rows: RawEventRow[]; total: number }> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(f.days)
-  let q = db.from('user_events')
-    .select('id,created_at,event_name,distinct_id,user_id,auth_state,source_kind,device_type,page_path,referrer,properties,ip,user_agent,bot_likely', { count: 'exact' })
-    .gte('created_at', cutoff)
+  const sel = f.filters.range
+  let q = applyFilters(
+    maybeFilterBots(
+      db.from('user_events')
+        .select('id,created_at,event_name,distinct_id,user_id,auth_state,source_kind,device_type,page_path,referrer,properties,ip,user_agent,bot_likely', { count: 'exact' })
+        .gte('created_at', sel.cutoffISO)
+        .lt('created_at', sel.endCutoffISO),
+      f.filters.includeBots,
+    ),
+    f.filters,
+    { dropEvent: !!f.eventName },
+  )
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false }) // deterministic within equal timestamps
     .range(f.page * f.pageSize, f.page * f.pageSize + f.pageSize - 1)
 
   if (f.eventName) q = q.eq('event_name', f.eventName)
   if (f.distinctId) q = q.eq('distinct_id', f.distinctId)
-  if (!f.includeBots) q = q.eq('bot_likely', false)
 
   const { data, count } = await q
   return {
@@ -564,11 +576,84 @@ export async function getRawEvents(f: RawEventsFilter): Promise<{ rows: RawEvent
   }
 }
 
-// Used to populate the event-name dropdown in /admin/insights/events
-export async function getDistinctEventNames(): Promise<string[]> {
+// ── Events explorer (Phase 10.5b.2) ────────────────────────────────
+// Per-event window volume with the always-visible bot split + per-IST-day
+// spark series (RPC insights_event_volume_list, migration 157), and the
+// schema-allowlisted property breakdown (insights_event_property_breakdown).
+
+export interface EventVolumeRow {
+  event_name: string
+  events: number
+  bot_events: number
+  visitors: number
+  last_fired: string | null
+  spark: LinePoint[]
+}
+
+export async function getEventVolumeList(f: AdminFilters): Promise<EventVolumeRow[]> {
   const db = getAdminClient()
-  const { data } = await rpc(db, 'insights_top_events', { p_days: 30, p_limit: 200, p_include_bots: true })
-  return ((data as Array<{ event_name: string }>) ?? []).map((r) => r.event_name)
+  const sel = f.range
+  const { data, error } = await rpc(db, 'insights_event_volume_list', {
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_include_bots: f.includeBots,
+    // The list IS the event picker — a global event filter must not
+    // collapse it to one row, so it is deliberately dropped here.
+    p_filters: filtersToJsonb(f, { dropEvent: true }),
+  })
+  if (error) throw new Error(`insights_event_volume_list failed: ${error.message}`)
+  return ((data as Array<{
+    event_name: string
+    events: number | string
+    bot_events: number | string
+    visitors: number | string
+    last_fired: string | null
+    spark: Array<{ date: string; value: number }> | null
+  }>) ?? []).map((r) => ({
+    event_name: r.event_name,
+    events: Number(r.events),
+    bot_events: Number(r.bot_events),
+    visitors: Number(r.visitors),
+    last_fired: r.last_fired,
+    spark: (r.spark ?? []).map((p) => ({ date: p.date, value: Number(p.value) })),
+  }))
+}
+
+export interface EventPropertyBreakdownRow {
+  value: string
+  events: number
+  visitors: number
+}
+
+export async function getEventPropertyBreakdown(
+  event: string,
+  prop: string,
+  f: AdminFilters,
+  limit = 12,
+): Promise<EventPropertyBreakdownRow[]> {
+  // THE allowlist: only properties the event's schema declares may be
+  // queried (lib/admin/event-props.ts derives them from EVENT_SCHEMAS).
+  const allowed = schemaPropKeys(event)
+  if (!allowed.includes(prop)) {
+    throw new Error(`property "${prop}" is not in the ${event} schema — breakdown refused`)
+  }
+  const db = getAdminClient()
+  const sel = f.range
+  const { data, error } = await rpc(db, 'insights_event_property_breakdown', {
+    p_event: event,
+    p_prop: prop,
+    p_filters: filtersToJsonb(f, { dropEvent: true }), // pinned to p_event
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_limit: limit,
+    p_include_bots: f.includeBots,
+  })
+  if (error) throw new Error(`insights_event_property_breakdown failed: ${error.message}`)
+  return ((data as Array<{ value: string; events: number | string; visitors: number | string }>) ?? []).map((r) => ({
+    value: r.value,
+    events: Number(r.events),
+    visitors: Number(r.visitors),
+  }))
 }
 
 export async function getEventsForDistinctId(distinctId: string, limit = 200): Promise<RawEventRow[]> {

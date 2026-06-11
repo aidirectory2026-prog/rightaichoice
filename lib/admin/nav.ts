@@ -75,7 +75,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'Behavior',
     items: [
-      { href: '/admin/insights/events', label: 'Events explorer', filterCapabilities: ['range', 'bots', 'event'] },
+      {
+        href: '/admin/insights/events',
+        label: 'Events explorer',
+        description: 'Every event, grouped by schema category — volume, bot split, properties, raw rows.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
       { href: '/admin/insights/tools', label: 'Tool engagement', filterCapabilities: ['range', 'bots'] },
       { href: '/admin/insights/funnel', label: 'Funnels', filterCapabilities: ['range', 'bots'] },
     ],
