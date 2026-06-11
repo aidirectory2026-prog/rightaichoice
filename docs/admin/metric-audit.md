@@ -174,3 +174,14 @@ Special checks: webdriver=true ⇒ bot_likely=true holds (16/16, zero violations
 - **Fix direction:** add range + bot filter when payments go live. Low priority.
 
 ## Also verified PASS (agent, full tables in transcript): Knowledge Room stat tiles + catalog counts + stalest-tool + cascade backlog; health per-pipeline runs/failures (exact RPC match) + 24h KPI + freshness SLA banner; sentiment funnel/revenue/status-mix (limit currently lossless); seo-pulse WoW totals + action counts; niche-tracker exact recompute from GSC snapshot JSONB; ai-citations (trivially — table empty); getVolumeProjection; getEventHealth(30).
+
+---
+
+# Phase 2 gate (2026-06-11): PASSED ✅
+
+Post-fix baseline `docs/admin/baselines/post-phase2.json` vs pre-fix baseline, pinned week:
+- **25/39 snapshots byte-identical** (no collateral change).
+- **All 14 changed keys map 1:1 to documented fixes:** every `.humans` variant → F7 backfill (history corrected; e.g. unique visitors 637 → 214); `.withBots` overview totals byte-identical (1012/1080) proving the backfill only reclassified, never dropped rows; returning summary now exactly equals overview visitors (214 = 214 — F2 fixed, old 633≠637 inconsistency gone); top referrers → visitor counts + "(unknown)" bucket (F4); reconciliation bot split (F7); plan-conversion (F6 humans-only).
+- 0 errors, 0 nondeterministic across both runs.
+- F9 RPCs verified exact vs raw GROUP BY (top searches 10/10 rows, top tools 8/8, refresh mix 6701=6701 / 715=715); old caps proven lossy (search_logs 5,552 > 2,000 cap).
+- Fix-status ledger: F1 ✓ wired · F2 ✓ · F3 ✓ (navbar+homepage; ~10 plain /plan content links flagged for surface-enum follow-up) · F4 ✓ · F5 → Phase 4 (by design) · F6 ✓ · F7 ✓ (backfill + nightly classifier) · F8 ✓ honest display (full instrumentation deferred — zero recordTokens call sites exist) · F9 ✓ · F10 ✓ · F11 ✓ · F12 ✓ · F13 → when payments go live. Bonus root-causes: search_result_clicked already wired (low traffic is real); tool_saved zero is TRUE data (no saves since mirror began 2026-05-20).
