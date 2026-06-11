@@ -5,16 +5,33 @@
 // IA can never drift between surfaces. Pure data — no React, importable from
 // server and client components alike.
 //
-// `filterCapabilities` is declared per item but left empty for now — Phase 4
-// chunk B (global smart filter bar) populates it so each page can declare
-// which URL filters apply to it.
+// `filterCapabilities` (Phase 10.4.7) declares which global smart filters a
+// page actually honors today — the full set on /admin/insights (the global
+// filter bar + AdminFilters-threaded queries), 'range'/'bots' on pages that
+// still run their own RangePicker, empty where no time filtering applies.
+// Phase 5 migrates the remaining pages to the full bar and extends these.
+
+export type FilterCapability =
+  | 'range'
+  | 'bots'
+  | 'device'
+  | 'country'
+  | 'auth'
+  | 'event'
+  | 'source'
+  | 'utm'
+
+/** The full capability set — what the global filter bar supports. */
+export const ALL_FILTER_CAPABILITIES: FilterCapability[] = [
+  'range', 'bots', 'device', 'country', 'auth', 'event', 'source', 'utm',
+]
 
 export interface AdminNavItem {
   href: string
   label: string
   description?: string
-  /** Filter keys this page supports — populated in Phase 4 chunk B. */
-  filterCapabilities?: string[]
+  /** Filter keys this page supports (see FilterCapability). */
+  filterCapabilities?: FilterCapability[]
 }
 
 export interface AdminNavSection {
@@ -43,18 +60,18 @@ export const ADMIN_NAV: AdminNavSection[] = [
         href: '/admin/insights',
         label: 'Insights (audience+behavior)',
         description: 'Current main analytics page until Phase 5 splits it.',
-        filterCapabilities: [],
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
-      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: [] },
-      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: [] },
+      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: ['range', 'bots'] },
+      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: ['range', 'bots'] },
     ],
   },
   {
     title: 'Behavior',
     items: [
-      { href: '/admin/insights/events', label: 'Events explorer', filterCapabilities: [] },
-      { href: '/admin/insights/tools', label: 'Tool engagement', filterCapabilities: [] },
-      { href: '/admin/insights/funnel', label: 'Funnels', filterCapabilities: [] },
+      { href: '/admin/insights/events', label: 'Events explorer', filterCapabilities: ['range', 'bots', 'event'] },
+      { href: '/admin/insights/tools', label: 'Tool engagement', filterCapabilities: ['range', 'bots'] },
+      { href: '/admin/insights/funnel', label: 'Funnels', filterCapabilities: ['range', 'bots'] },
     ],
   },
   {
@@ -102,7 +119,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { href: '/admin/tracking-health', label: 'Tracking health', filterCapabilities: [] },
       { href: '/admin/data-audit', label: 'Data audit', filterCapabilities: [] },
-      { href: '/admin/insights/reconciliation', label: 'Reconciliation', filterCapabilities: [] },
+      { href: '/admin/insights/reconciliation', label: 'Reconciliation', filterCapabilities: ['range'] },
     ],
   },
   {

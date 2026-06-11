@@ -29,6 +29,7 @@ export {}
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { RangeSelection } from '@/lib/admin/range'
+import { baseFilters } from '@/lib/admin/filters'
 import * as insights from '@/app/admin/insights/queries'
 import * as planConv from '@/lib/admin/plan-conversion'
 
@@ -88,24 +89,28 @@ async function main() {
     process.stdout.write('.')
   }
 
-  await one('insights.getBotShare', () => insights.getBotShare(SEL))
-  await both('insights.getOverviewMetrics', (b) => insights.getOverviewMetrics(SEL, b))
-  await both('insights.getDailyActiveUsers', (b) => insights.getDailyActiveUsers(SEL, b))
-  await both('insights.getPageViewsByDevice', (b) => insights.getPageViewsByDevice(SEL, b))
-  await both('insights.getTopReferrers', (b) => insights.getTopReferrers(SEL, b))
-  await both('insights.getPlanFunnel', (b) => insights.getPlanFunnel(SEL, b))
+  // Phase 10.4.7 — the main-page query functions now take AdminFilters;
+  // baseFilters(SEL, b) carries range+bots only (filtersToJsonb → null →
+  // the RPC null fast-path), so pinned values stay comparable across the
+  // signature change.
+  await one('insights.getBotShare', () => insights.getBotShare(baseFilters(SEL, false)))
+  await both('insights.getOverviewMetrics', (b) => insights.getOverviewMetrics(baseFilters(SEL, b)))
+  await both('insights.getDailyActiveUsers', (b) => insights.getDailyActiveUsers(baseFilters(SEL, b)))
+  await both('insights.getPageViewsByDevice', (b) => insights.getPageViewsByDevice(baseFilters(SEL, b)))
+  await both('insights.getTopReferrers', (b) => insights.getTopReferrers(baseFilters(SEL, b)))
+  await both('insights.getPlanFunnel', (b) => insights.getPlanFunnel(baseFilters(SEL, b)))
   await both('insights.getTopExistingTools', (b) => insights.getTopExistingTools(SEL, b))
   await both('insights.getTopUseCases', (b) => insights.getTopUseCases(SEL, b))
-  await both('insights.getTopEvents', (b) => insights.getTopEvents(SEL, b))
-  await both('insights.getSearchMetrics', (b) => insights.getSearchMetrics(SEL, b))
+  await both('insights.getTopEvents', (b) => insights.getTopEvents(baseFilters(SEL, b)))
+  await both('insights.getSearchMetrics', (b) => insights.getSearchMetrics(baseFilters(SEL, b)))
   await both('insights.getTopSearches', (b) => insights.getTopSearches(SEL, b))
-  await both('insights.getChatMetrics', (b) => insights.getChatMetrics(SEL, b))
+  await both('insights.getChatMetrics', (b) => insights.getChatMetrics(baseFilters(SEL, b)))
   await both('insights.getTopChatTools', (b) => insights.getTopChatTools(SEL, b))
-  await both('insights.getTopViewedTools', (b) => insights.getTopViewedTools(SEL, b))
-  await both('insights.getTopClickedTools', (b) => insights.getTopClickedTools(SEL, b))
-  await both('insights.getTopSavedTools', (b) => insights.getTopSavedTools(SEL, b))
-  await both('insights.getTopComparedTools', (b) => insights.getTopComparedTools(SEL, b))
-  await both('insights.getReturningSummary', (b) => insights.getReturningSummary(SEL, b))
+  await both('insights.getTopViewedTools', (b) => insights.getTopViewedTools(baseFilters(SEL, b)))
+  await both('insights.getTopClickedTools', (b) => insights.getTopClickedTools(baseFilters(SEL, b)))
+  await both('insights.getTopSavedTools', (b) => insights.getTopSavedTools(baseFilters(SEL, b)))
+  await both('insights.getTopComparedTools', (b) => insights.getTopComparedTools(baseFilters(SEL, b)))
+  await both('insights.getReturningSummary', (b) => insights.getReturningSummary(baseFilters(SEL, b)))
   await one('insights.getReconciliationStats', () => insights.getReconciliationStats(SEL))
   await one('planConversion.getPlanFunnel', () => planConv.getPlanFunnel(SEL))
   await one('planConversion.getSurfaceBreakdown', () => planConv.getSurfaceBreakdown(SEL))

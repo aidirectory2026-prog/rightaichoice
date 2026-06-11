@@ -3,8 +3,8 @@
 // uses straight HTML cards for every section. Same data path as before.
 
 import Link from 'next/link'
-import { BarChart3, Bot, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
-import { RangePicker as UnifiedRangePicker } from '@/components/admin/range-picker'
+import { BarChart3, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
+import { FilterBar } from '@/components/admin/filter-bar'
 import {
   BarList,
   DailyChart,
@@ -14,9 +14,11 @@ import {
   SectionHeading,
   fmt,
 } from '@/components/admin/charts'
-import { parseRange } from '@/lib/admin/range'
+import { parseAdminFilters } from '@/lib/admin/filters'
+import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import {
   getBotShare,
+  getCountryFilterOptions,
   getChatMetrics,
   getDailyActiveUsers,
   getEngagementMetrics,
@@ -62,40 +64,44 @@ function relativeTime(iso: string): string {
 export default async function InsightsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; range?: string; from?: string; to?: string; include_bots?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const sel = parseRange(sp)
+  // Global smart filters (Phase 10.4.7): range + bots + the optional
+  // dimension filters, all URL-state. Legacy ?include_bots=1 still parses.
+  const filters = parseAdminFilters(sp)
+  const sel = filters.range
   const days = sel.days
-  const includeBots = sp.include_bots === '1'
+  const includeBots = filters.includeBots
 
   const [
     botShare, overview, dailyActive, deviceBreakdown, referrers,
     planFunnel, topExistingTools, topUseCases, engagement, topEvents,
     searchMetrics, topSearches, chatMetrics, topChatTools,
     topViewedTools, topClickedTools, topSavedTools, topComparedTools,
-    returningSummary, recentVisitors,
+    returningSummary, recentVisitors, countryOptions,
   ] = await Promise.all([
-    getBotShare(sel),
-    getOverviewMetrics(sel, includeBots),
-    getDailyActiveUsers(sel, includeBots),
-    getPageViewsByDevice(sel, includeBots),
-    getTopReferrers(sel, includeBots),
-    getPlanFunnel(sel, includeBots),
+    getBotShare(filters),
+    getOverviewMetrics(filters),
+    getDailyActiveUsers(filters),
+    getPageViewsByDevice(filters),
+    getTopReferrers(filters),
+    getPlanFunnel(filters),
     getTopExistingTools(sel, includeBots),
     getTopUseCases(sel, includeBots),
     getEngagementMetrics(sel, includeBots),
-    getTopEvents(sel, includeBots),
-    getSearchMetrics(sel, includeBots),
+    getTopEvents(filters),
+    getSearchMetrics(filters),
     getTopSearches(sel, includeBots),
-    getChatMetrics(sel, includeBots),
+    getChatMetrics(filters),
     getTopChatTools(sel, includeBots),
-    getTopViewedTools(sel, includeBots),
-    getTopClickedTools(sel, includeBots),
-    getTopSavedTools(sel, includeBots),
-    getTopComparedTools(sel, includeBots),
-    getReturningSummary(sel, includeBots),
-    getRecentVisitors(50, includeBots, sel),
+    getTopViewedTools(filters),
+    getTopClickedTools(filters),
+    getTopSavedTools(filters),
+    getTopComparedTools(filters),
+    getReturningSummary(filters),
+    getRecentVisitors(50, filters),
+    getCountryFilterOptions(),
   ])
 
   const qs = (opts: { days?: number; include_bots?: boolean }) => {
@@ -133,16 +139,11 @@ export default async function InsightsPage({
               <GitCompareArrows className="h-3 w-3" />vs Mixpanel
             </Link>
           </div>
-          <Link
-            href={`/admin/insights${qs({ days, include_bots: !includeBots })}`}
-            className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium border ${
-              includeBots ? 'bg-amber-950/40 text-amber-300 border-amber-800' : 'text-zinc-400 hover:text-zinc-200 border-zinc-800'
-            }`}
-          >
-            <Bot className="h-3 w-3" />
-            {includeBots ? 'Including bots' : 'Humans only'}
-          </Link>
-          <UnifiedRangePicker active={sel.key} />
+          <FilterBar
+            activeRange={sel.key}
+            countries={countryOptions}
+            eventNames={[...SCHEMA_EVENT_NAMES]}
+          />
         </div>
       </div>
 
