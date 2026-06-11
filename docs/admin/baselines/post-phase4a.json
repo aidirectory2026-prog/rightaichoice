@@ -1,0 +1,2029 @@
+{
+  "meta": {
+    "label": "post-phase4a",
+    "window": {
+      "from": "2026-05-31T18:30:00.000Z",
+      "to": "2026-06-07T18:30:00.000Z"
+    },
+    "generated_at": "2026-06-11T19:27:57.730Z",
+    "pinned_count": 39,
+    "error_count": 0,
+    "nondeterministic_count": 0
+  },
+  "pinned": {
+    "insights.getBotShare": {
+      "value": {
+        "total_events": 6240,
+        "bot_events": 3883,
+        "bot_pct": 62.2,
+        "total_visitors": 1080,
+        "bot_visitors": 870,
+        "bot_visitor_pct": 80.6
+      },
+      "deterministic": true
+    },
+    "insights.getOverviewMetrics.humans": {
+      "value": [
+        {
+          "label": "Page views",
+          "value": 427
+        },
+        {
+          "label": "Unique visitors",
+          "value": 214
+        },
+        {
+          "label": "Signed-in accounts",
+          "value": 3
+        },
+        {
+          "label": "Signups",
+          "value": 0
+        },
+        {
+          "label": "Newsletter subs",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getOverviewMetrics.withBots": {
+      "value": [
+        {
+          "label": "Page views",
+          "value": 1012
+        },
+        {
+          "label": "Unique visitors",
+          "value": 1080
+        },
+        {
+          "label": "Signed-in accounts",
+          "value": 3
+        },
+        {
+          "label": "Signups",
+          "value": 0
+        },
+        {
+          "label": "Newsletter subs",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getDailyActiveUsers.humans": {
+      "value": [
+        {
+          "date": "2026-06-01",
+          "value": 47
+        },
+        {
+          "date": "2026-06-02",
+          "value": 31
+        },
+        {
+          "date": "2026-06-03",
+          "value": 39
+        },
+        {
+          "date": "2026-06-04",
+          "value": 39
+        },
+        {
+          "date": "2026-06-05",
+          "value": 32
+        },
+        {
+          "date": "2026-06-06",
+          "value": 20
+        },
+        {
+          "date": "2026-06-07",
+          "value": 24
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getDailyActiveUsers.withBots": {
+      "value": [
+        {
+          "date": "2026-06-01",
+          "value": 95
+        },
+        {
+          "date": "2026-06-02",
+          "value": 139
+        },
+        {
+          "date": "2026-06-03",
+          "value": 153
+        },
+        {
+          "date": "2026-06-04",
+          "value": 196
+        },
+        {
+          "date": "2026-06-05",
+          "value": 151
+        },
+        {
+          "date": "2026-06-06",
+          "value": 193
+        },
+        {
+          "date": "2026-06-07",
+          "value": 220
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getPageViewsByDevice.humans": {
+      "value": [
+        {
+          "label": "desktop",
+          "value": 361
+        },
+        {
+          "label": "mobile",
+          "value": 56
+        },
+        {
+          "label": "unknown",
+          "value": 10
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getPageViewsByDevice.withBots": {
+      "value": [
+        {
+          "label": "desktop",
+          "value": 940
+        },
+        {
+          "label": "mobile",
+          "value": 56
+        },
+        {
+          "label": "unknown",
+          "value": 10
+        },
+        {
+          "label": "tablet",
+          "value": 6
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopReferrers.humans": {
+      "value": [
+        {
+          "label": "(unknown)",
+          "value": 177
+        },
+        {
+          "label": "direct",
+          "value": 25
+        },
+        {
+          "label": "https://www.google.com/",
+          "value": 11
+        },
+        {
+          "label": "https://chatgpt.com/",
+          "value": 1
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopReferrers.withBots": {
+      "value": [
+        {
+          "label": "(unknown)",
+          "value": 856
+        },
+        {
+          "label": "direct",
+          "value": 212
+        },
+        {
+          "label": "https://www.google.com/",
+          "value": 11
+        },
+        {
+          "label": "https://chatgpt.com/",
+          "value": 1
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getPlanFunnel.humans": {
+      "value": [
+        {
+          "label": "plan started",
+          "value": 4
+        },
+        {
+          "label": "plan intake submitted",
+          "value": 0
+        },
+        {
+          "label": "plan completed",
+          "value": 0
+        },
+        {
+          "label": "plan results tool clicked",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getPlanFunnel.withBots": {
+      "value": [
+        {
+          "label": "plan started",
+          "value": 4
+        },
+        {
+          "label": "plan intake submitted",
+          "value": 0
+        },
+        {
+          "label": "plan completed",
+          "value": 0
+        },
+        {
+          "label": "plan results tool clicked",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopExistingTools.humans": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopExistingTools.withBots": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopUseCases.humans": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopUseCases.withBots": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopEvents.humans": {
+      "value": [
+        {
+          "label": "scroll_depth_reached",
+          "value": 574
+        },
+        {
+          "label": "page_viewed",
+          "value": 427
+        },
+        {
+          "label": "tab_visibility_changed",
+          "value": 364
+        },
+        {
+          "label": "time_on_page",
+          "value": 357
+        },
+        {
+          "label": "plan_cta_impression",
+          "value": 288
+        },
+        {
+          "label": "tool_page_viewed",
+          "value": 117
+        },
+        {
+          "label": "tool_visit_redirected",
+          "value": 44
+        },
+        {
+          "label": "sentiment_card_viewed",
+          "value": 43
+        },
+        {
+          "label": "comparison_viewed",
+          "value": 35
+        },
+        {
+          "label": "sentiment_scan_started",
+          "value": 17
+        },
+        {
+          "label": "sentiment_result_viewed",
+          "value": 10
+        },
+        {
+          "label": "sentiment_scan_requested",
+          "value": 10
+        },
+        {
+          "label": "sentiment_paywall_shown",
+          "value": 8
+        },
+        {
+          "label": "sentiment_pay_clicked",
+          "value": 8
+        },
+        {
+          "label": "sentiment_scan_completed",
+          "value": 8
+        },
+        {
+          "label": "plan_goal_typed",
+          "value": 7
+        },
+        {
+          "label": "search_typing",
+          "value": 6
+        },
+        {
+          "label": "tool_faq_opened",
+          "value": 6
+        },
+        {
+          "label": "plan_started",
+          "value": 4
+        },
+        {
+          "label": "plan_signup_modal_shown",
+          "value": 4
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopEvents.withBots": {
+      "value": [
+        {
+          "label": "scroll_depth_reached",
+          "value": 2242
+        },
+        {
+          "label": "page_viewed",
+          "value": 1012
+        },
+        {
+          "label": "plan_cta_impression",
+          "value": 852
+        },
+        {
+          "label": "time_on_page",
+          "value": 510
+        },
+        {
+          "label": "tool_visit_redirected",
+          "value": 495
+        },
+        {
+          "label": "tool_page_viewed",
+          "value": 380
+        },
+        {
+          "label": "tab_visibility_changed",
+          "value": 371
+        },
+        {
+          "label": "comparison_viewed",
+          "value": 221
+        },
+        {
+          "label": "sentiment_card_viewed",
+          "value": 49
+        },
+        {
+          "label": "sentiment_scan_started",
+          "value": 17
+        },
+        {
+          "label": "sentiment_scan_requested",
+          "value": 10
+        },
+        {
+          "label": "sentiment_result_viewed",
+          "value": 10
+        },
+        {
+          "label": "sentiment_scan_completed",
+          "value": 8
+        },
+        {
+          "label": "sentiment_pay_clicked",
+          "value": 8
+        },
+        {
+          "label": "sentiment_paywall_shown",
+          "value": 8
+        },
+        {
+          "label": "plan_goal_typed",
+          "value": 7
+        },
+        {
+          "label": "tool_faq_opened",
+          "value": 6
+        },
+        {
+          "label": "search_typing",
+          "value": 6
+        },
+        {
+          "label": "login_completed",
+          "value": 4
+        },
+        {
+          "label": "plan_started",
+          "value": 4
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getSearchMetrics.humans": {
+      "value": [
+        {
+          "label": "Searches",
+          "value": 0
+        },
+        {
+          "label": "Zero-result rate",
+          "value": 0
+        },
+        {
+          "label": "Clicks on results",
+          "value": 0
+        },
+        {
+          "label": "CTR %",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getSearchMetrics.withBots": {
+      "value": [
+        {
+          "label": "Searches",
+          "value": 0
+        },
+        {
+          "label": "Zero-result rate",
+          "value": 0
+        },
+        {
+          "label": "Clicks on results",
+          "value": 0
+        },
+        {
+          "label": "CTR %",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopSearches.humans": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopSearches.withBots": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getChatMetrics.humans": {
+      "value": [
+        {
+          "label": "Messages",
+          "value": 0
+        },
+        {
+          "label": "Unique chatters",
+          "value": 0
+        },
+        {
+          "label": "Tool clicks",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getChatMetrics.withBots": {
+      "value": [
+        {
+          "label": "Messages",
+          "value": 0
+        },
+        {
+          "label": "Unique chatters",
+          "value": 0
+        },
+        {
+          "label": "Tool clicks",
+          "value": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopChatTools.humans": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopChatTools.withBots": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopViewedTools.humans": {
+      "value": [
+        {
+          "label": "screenplayiq",
+          "value": 8
+        },
+        {
+          "label": "vercel",
+          "value": 7
+        },
+        {
+          "label": "magnific-ai",
+          "value": 4
+        },
+        {
+          "label": "cerebras",
+          "value": 3
+        },
+        {
+          "label": "zenity",
+          "value": 2
+        },
+        {
+          "label": "pixelmotion",
+          "value": 2
+        },
+        {
+          "label": "sudowrite",
+          "value": 2
+        },
+        {
+          "label": "rask-ai",
+          "value": 2
+        },
+        {
+          "label": "endel",
+          "value": 2
+        },
+        {
+          "label": "cartesia",
+          "value": 2
+        },
+        {
+          "label": "greptile",
+          "value": 2
+        },
+        {
+          "label": "exa",
+          "value": 2
+        },
+        {
+          "label": "vercel-ai-sdk",
+          "value": 2
+        },
+        {
+          "label": "pictory",
+          "value": 2
+        },
+        {
+          "label": "coze-studio",
+          "value": 1
+        },
+        {
+          "label": "context7",
+          "value": 1
+        },
+        {
+          "label": "axiom-ai",
+          "value": 1
+        },
+        {
+          "label": "consensus",
+          "value": 1
+        },
+        {
+          "label": "audioeye",
+          "value": 1
+        },
+        {
+          "label": "ambience",
+          "value": 1
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopViewedTools.withBots": {
+      "value": [
+        {
+          "label": "screenplayiq",
+          "value": 8
+        },
+        {
+          "label": "vercel",
+          "value": 7
+        },
+        {
+          "label": "devin",
+          "value": 6
+        },
+        {
+          "label": "cerebras",
+          "value": 5
+        },
+        {
+          "label": "vercel-ai-sdk",
+          "value": 5
+        },
+        {
+          "label": "paperpal",
+          "value": 4
+        },
+        {
+          "label": "magnific-ai",
+          "value": 4
+        },
+        {
+          "label": "recruitee",
+          "value": 4
+        },
+        {
+          "label": "kagi",
+          "value": 4
+        },
+        {
+          "label": "shopify",
+          "value": 4
+        },
+        {
+          "label": "diamond-by-graphite",
+          "value": 4
+        },
+        {
+          "label": "altindex",
+          "value": 3
+        },
+        {
+          "label": "procurement-sciences-ai",
+          "value": 3
+        },
+        {
+          "label": "motiff",
+          "value": 3
+        },
+        {
+          "label": "context7",
+          "value": 3
+        },
+        {
+          "label": "ollama",
+          "value": 3
+        },
+        {
+          "label": "rask-ai",
+          "value": 3
+        },
+        {
+          "label": "claude",
+          "value": 3
+        },
+        {
+          "label": "klavisai",
+          "value": 3
+        },
+        {
+          "label": "komo-search",
+          "value": 3
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopClickedTools.humans": {
+      "value": [
+        {
+          "label": "udio",
+          "value": 3
+        },
+        {
+          "label": "neuronwriter",
+          "value": 3
+        },
+        {
+          "label": "windsurf",
+          "value": 2
+        },
+        {
+          "label": "appgyver",
+          "value": 2
+        },
+        {
+          "label": "cherry-studio",
+          "value": 2
+        },
+        {
+          "label": "coze-studio",
+          "value": 2
+        },
+        {
+          "label": "deepagents",
+          "value": 2
+        },
+        {
+          "label": "litmaps",
+          "value": 2
+        },
+        {
+          "label": "modal",
+          "value": 2
+        },
+        {
+          "label": "photoai",
+          "value": 2
+        },
+        {
+          "label": "push-security",
+          "value": 2
+        },
+        {
+          "label": "rapidsos",
+          "value": 2
+        },
+        {
+          "label": "anyscale",
+          "value": 2
+        },
+        {
+          "label": "grok",
+          "value": 1
+        },
+        {
+          "label": "anything-llm",
+          "value": 1
+        },
+        {
+          "label": "maxai",
+          "value": 1
+        },
+        {
+          "label": "metagpt",
+          "value": 1
+        },
+        {
+          "label": "replo",
+          "value": 1
+        },
+        {
+          "label": "arena-ai",
+          "value": 1
+        },
+        {
+          "label": "otter-ai",
+          "value": 1
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopClickedTools.withBots": {
+      "value": [
+        {
+          "label": "coze-studio",
+          "value": 8
+        },
+        {
+          "label": "sybill-ai",
+          "value": 6
+        },
+        {
+          "label": "cherry-studio",
+          "value": 6
+        },
+        {
+          "label": "udio",
+          "value": 6
+        },
+        {
+          "label": "epidemic-sound",
+          "value": 5
+        },
+        {
+          "label": "cline",
+          "value": 5
+        },
+        {
+          "label": "anything-llm",
+          "value": 5
+        },
+        {
+          "label": "visily",
+          "value": 4
+        },
+        {
+          "label": "document360",
+          "value": 4
+        },
+        {
+          "label": "wix",
+          "value": 4
+        },
+        {
+          "label": "photoai",
+          "value": 4
+        },
+        {
+          "label": "musicfy",
+          "value": 4
+        },
+        {
+          "label": "deci",
+          "value": 4
+        },
+        {
+          "label": "db-gpt",
+          "value": 4
+        },
+        {
+          "label": "shopify",
+          "value": 4
+        },
+        {
+          "label": "consensus",
+          "value": 4
+        },
+        {
+          "label": "01-ai-yi",
+          "value": 4
+        },
+        {
+          "label": "izotope-rx",
+          "value": 4
+        },
+        {
+          "label": "langgraph",
+          "value": 4
+        },
+        {
+          "label": "dash0",
+          "value": 3
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopSavedTools.humans": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopSavedTools.withBots": {
+      "value": [],
+      "deterministic": true
+    },
+    "insights.getTopComparedTools.humans": {
+      "value": [
+        {
+          "label": "canva-vs-envato",
+          "value": 2
+        },
+        {
+          "label": "claude-vs-jetbrains-ai",
+          "value": 2
+        },
+        {
+          "label": "autogen-vs-autogpt",
+          "value": 1
+        },
+        {
+          "label": "autogpt-vs-langchain",
+          "value": 1
+        },
+        {
+          "label": "brandmark-vs-looka",
+          "value": 1
+        },
+        {
+          "label": "bubble-vs-lovable",
+          "value": 1
+        },
+        {
+          "label": "chatgpt-vs-deepseek",
+          "value": 1
+        },
+        {
+          "label": "autogen-vs-langgraph",
+          "value": 1
+        },
+        {
+          "label": "aider-vs-cline",
+          "value": 1
+        },
+        {
+          "label": "copilotkit-vs-langgraph",
+          "value": 1
+        },
+        {
+          "label": "cursor-vs-windsurf-editor",
+          "value": 1
+        },
+        {
+          "label": "deepagents-vs-langgraph",
+          "value": 1
+        },
+        {
+          "label": "deepseek-vs-zhipu-ai",
+          "value": 1
+        },
+        {
+          "label": "duolingo-vs-talkpal",
+          "value": 1
+        },
+        {
+          "label": "abridge-vs-deepscribe",
+          "value": 1
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getTopComparedTools.withBots": {
+      "value": [
+        {
+          "label": "autogen-vs-crewai",
+          "value": 5
+        },
+        {
+          "label": "deepseek-vs-gemini",
+          "value": 5
+        },
+        {
+          "label": "chatgpt-vs-gemini",
+          "value": 5
+        },
+        {
+          "label": "claude-vs-claude-code",
+          "value": 5
+        },
+        {
+          "label": "chatgpt-vs-deepseek",
+          "value": 4
+        },
+        {
+          "label": "hailuo-ai-vs-kling-ai",
+          "value": 4
+        },
+        {
+          "label": "claude-vs-github-copilot",
+          "value": 4
+        },
+        {
+          "label": "claude-vs-cursor",
+          "value": 4
+        },
+        {
+          "label": "deepagents-vs-langgraph",
+          "value": 4
+        },
+        {
+          "label": "deepseek-vs-zhipu-ai",
+          "value": 3
+        },
+        {
+          "label": "exa-vs-tavily",
+          "value": 3
+        },
+        {
+          "label": "claude-vs-deepseek",
+          "value": 3
+        },
+        {
+          "label": "autogen-vs-langgraph",
+          "value": 3
+        },
+        {
+          "label": "chatgpt-vs-zhipu-ai",
+          "value": 3
+        },
+        {
+          "label": "deepagents-vs-langchain",
+          "value": 3
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getReturningSummary.humans": {
+      "value": {
+        "total": 214,
+        "new_count": 211,
+        "returning_count": 3,
+        "returning_pct": 1.4,
+        "avg_days_between": 12.3
+      },
+      "deterministic": true
+    },
+    "insights.getReturningSummary.withBots": {
+      "value": {
+        "total": 1080,
+        "new_count": 1055,
+        "returning_count": 25,
+        "returning_pct": 2.3,
+        "avg_days_between": 9.4
+      },
+      "deterministic": true
+    },
+    "insights.getReconciliationStats": {
+      "value": {
+        "days": 7,
+        "client_events": 5711,
+        "server_events": 529,
+        "bot_events": 3883,
+        "unique_distinct_ids": 1080,
+        "unique_distinct_ids_no_bots": 214,
+        "ad_block_ratio_estimate": 0.3
+      },
+      "deterministic": true
+    },
+    "planConversion.getPlanFunnel": {
+      "value": [
+        {
+          "step": "plan_cta_impression",
+          "label": "1. CTA shown",
+          "count": 288
+        },
+        {
+          "step": "plan_cta_clicked",
+          "label": "2. CTA clicked",
+          "count": 0
+        },
+        {
+          "step": "plan_signup_modal_shown",
+          "label": "3. Signup modal shown",
+          "count": 4
+        },
+        {
+          "step": "plan_signup_modal_oauth_clicked",
+          "label": "4a. OAuth clicked",
+          "count": 0
+        },
+        {
+          "step": "plan_signup_modal_skipped",
+          "label": "4b. Skipped (alt path)",
+          "count": 0
+        },
+        {
+          "step": "plan_signup_modal_completed",
+          "label": "5. Signup completed",
+          "count": 0
+        },
+        {
+          "step": "plan_started",
+          "label": "6. /plan loaded",
+          "count": 4
+        },
+        {
+          "step": "plan_completed",
+          "label": "7. Plan finalized",
+          "count": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "planConversion.getSurfaceBreakdown": {
+      "value": [
+        {
+          "surface": "sticky_bar",
+          "impressions": 196,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        },
+        {
+          "surface": "inline_card",
+          "impressions": 27,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        },
+        {
+          "surface": "navbar",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        },
+        {
+          "surface": "homepage",
+          "impressions": 65,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        },
+        {
+          "surface": "plan_page",
+          "impressions": 0,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        },
+        {
+          "surface": "ALL (parity check)",
+          "impressions": 288,
+          "clicks": 0,
+          "ctr": 0,
+          "signups": 0,
+          "signup_rate": 0
+        }
+      ],
+      "deterministic": true
+    },
+    "planConversion.getLinkRate": {
+      "value": {
+        "total_anon_intents": 0,
+        "linked_to_user": 0,
+        "link_rate_pct": 0
+      },
+      "deterministic": true
+    }
+  },
+  "volatile": {
+    "insights.getEngagementMetrics.humans": {
+      "value": [
+        {
+          "label": "DAU (today)",
+          "value": 2
+        },
+        {
+          "label": "WAU (7d)",
+          "value": 261
+        },
+        {
+          "label": "MAU (30d)",
+          "value": 767
+        },
+        {
+          "label": "Signed-in accounts (today)",
+          "value": 1
+        },
+        {
+          "label": "Signed-in accounts (7d)",
+          "value": 2
+        },
+        {
+          "label": "Signed-in accounts (30d)",
+          "value": 3
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getKpiRows": {
+      "value": [
+        {
+          "kpi_key": "acq_dau",
+          "display_name": "Daily active users",
+          "category": "acq",
+          "goal_value": 200,
+          "unit": "users",
+          "description": "Unique distinct_ids with any event today.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 2,
+          "pct_of_goal": 1
+        },
+        {
+          "kpi_key": "acq_plan_to_visit_pct",
+          "display_name": "Plan → tool visit (clicked / completed)",
+          "category": "acq",
+          "goal_value": 60,
+          "unit": "percent",
+          "description": "plan_results_tool_clicked / plan_completed. High intent users follow through.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0,
+          "pct_of_goal": 0
+        },
+        {
+          "kpi_key": "acq_plan_completion_pct",
+          "display_name": "Plan completion rate (completed / started)",
+          "category": "acq",
+          "goal_value": 30,
+          "unit": "percent",
+          "description": "plan_completed / plan_started over 7d.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 20,
+          "pct_of_goal": 66.7
+        },
+        {
+          "kpi_key": "acq_signup_rate_pct",
+          "display_name": "Signup conversion (signups / unique visitors)",
+          "category": "acq",
+          "goal_value": 3,
+          "unit": "percent",
+          "description": "Industry baseline 2-5% for tool directories.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0.4,
+          "pct_of_goal": 13.3
+        },
+        {
+          "kpi_key": "data_super_prop_coverage_pct",
+          "display_name": "Rows with all super-props attached",
+          "category": "data",
+          "goal_value": 95,
+          "unit": "percent",
+          "description": "% of rows with device_type+page_path+auth_state non-NULL.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 80.5,
+          "pct_of_goal": 84.7
+        },
+        {
+          "kpi_key": "data_event_freshness_pct",
+          "display_name": "Catalog events fired in last 7d",
+          "category": "data",
+          "goal_value": 70,
+          "unit": "percent",
+          "description": "% of 73 catalog events with ≥1 fire in last 7d. Lower = dead instrumentation.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0,
+          "pct_of_goal": 0
+        },
+        {
+          "kpi_key": "eng_sessions_per_user_7d",
+          "display_name": "Avg sessions per user (7d)",
+          "category": "eng",
+          "goal_value": 2.5,
+          "unit": "count",
+          "description": "Total events / unique users / 7. Higher = stickier.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0.33,
+          "pct_of_goal": 13.2
+        },
+        {
+          "kpi_key": "eng_wau",
+          "display_name": "Weekly active users",
+          "category": "eng",
+          "goal_value": 700,
+          "unit": "users",
+          "description": "Unique distinct_ids with any event in last 7d.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 261,
+          "pct_of_goal": 37.3
+        },
+        {
+          "kpi_key": "eng_mau",
+          "display_name": "Monthly active users",
+          "category": "eng",
+          "goal_value": 2000,
+          "unit": "users",
+          "description": "Unique distinct_ids with any event in last 30d.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 767,
+          "pct_of_goal": 38.4
+        },
+        {
+          "kpi_key": "vendor_active_tools_7d",
+          "display_name": "Tools with any vendor signal in 7d",
+          "category": "vendor",
+          "goal_value": 30,
+          "unit": "tools",
+          "description": "Tools that appear in any of: top viewed / top saved / top clicked-out in last 7d.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 106,
+          "pct_of_goal": 353.3
+        },
+        {
+          "kpi_key": "vendor_salable_tools_30d",
+          "display_name": "Tools with ≥50 unique high-intent users in 30d",
+          "category": "vendor",
+          "goal_value": 10,
+          "unit": "tools",
+          "description": "Per tool, count unique distinct_ids that viewed/saved/click-out. Tools above 50 are vendor-pitchable.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0,
+          "pct_of_goal": 0
+        },
+        {
+          "kpi_key": "vendor_save_rate_tools",
+          "display_name": "Tools with save rate >5% in 30d",
+          "category": "vendor",
+          "goal_value": 10,
+          "unit": "tools",
+          "description": "Per tool, count of (tool_saved / tool_page_viewed) >5%. High save rate = vendor pitch leverage.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 0,
+          "pct_of_goal": 0
+        },
+        {
+          "kpi_key": "vendor_compared_pairs_3plus",
+          "display_name": "Compared pairs with ≥3 occurrences",
+          "category": "vendor",
+          "goal_value": 20,
+          "unit": "count",
+          "description": "Distinct slug-vs-slug pairs in tools_compared_with that appear in ≥3 user profiles.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 58,
+          "pct_of_goal": 290
+        },
+        {
+          "kpi_key": "vendor_affiliate_ctr_pct",
+          "display_name": "Affiliate CTR (click-outs / page-views)",
+          "category": "vendor",
+          "goal_value": 8,
+          "unit": "percent",
+          "description": "Per-tool ratio of tool_visit_redirected to tool_page_viewed. Industry baseline 5-10%.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 131.3,
+          "pct_of_goal": 1641.3
+        },
+        {
+          "kpi_key": "vendor_click_outs_7d",
+          "display_name": "Total affiliate click-outs in 7d",
+          "category": "vendor",
+          "goal_value": 500,
+          "unit": "count",
+          "description": "Sum of tool_visit_redirected events in last 7d. Direct revenue proxy.",
+          "updated_at": "2026-05-21T12:36:05.701164+00:00",
+          "updated_by": null,
+          "current_value": 88,
+          "pct_of_goal": 17.6
+        }
+      ],
+      "deterministic": true
+    },
+    "insights.getVolumeProjection": {
+      "value": {
+        "today_events": 1136,
+        "mtd_events": 11983,
+        "rolling_30d_avg": 690.9,
+        "days_in_month": 30,
+        "day_of_month": 11,
+        "projected_month_end": 25111,
+        "free_tier_cap": 20000000,
+        "pct_of_cap": 0.1256
+      },
+      "deterministic": true
+    },
+    "insights.getEventHealth.30": {
+      "value": {
+        "fired": [
+          {
+            "event_name": "tab_visibility_changed",
+            "last_fire": "2026-06-11T19:24:53.463+00:00",
+            "fires_24h": 74,
+            "fires_7d": 312,
+            "fires_30d": 1094,
+            "total_in_window": 1094,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "time_on_page",
+            "last_fire": "2026-06-11T19:24:10.451+00:00",
+            "fires_24h": 85,
+            "fires_7d": 590,
+            "fires_30d": 2273,
+            "total_in_window": 2273,
+            "pct_device_type": 98.7,
+            "pct_page_path": 99.2,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "page_viewed",
+            "last_fire": "2026-06-11T19:23:33.712+00:00",
+            "fires_24h": 217,
+            "fires_7d": 1397,
+            "fires_30d": 2794,
+            "total_in_window": 2794,
+            "pct_device_type": 99.5,
+            "pct_page_path": 99.9,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_cta_impression",
+            "last_fire": "2026-06-11T19:14:10.133+00:00",
+            "fires_24h": 178,
+            "fires_7d": 1121,
+            "fires_30d": 1936,
+            "total_in_window": 1936,
+            "pct_device_type": 99.5,
+            "pct_page_path": 88,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "tool_page_viewed",
+            "last_fire": "2026-06-11T19:14:10.092+00:00",
+            "fires_24h": 46,
+            "fires_7d": 432,
+            "fires_30d": 881,
+            "total_in_window": 881,
+            "pct_device_type": 99.7,
+            "pct_page_path": 94.8,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "scroll_depth_reached",
+            "last_fire": "2026-06-11T19:05:17.279+00:00",
+            "fires_24h": 559,
+            "fires_7d": 3545,
+            "fires_30d": 8602,
+            "total_in_window": 8602,
+            "pct_device_type": 99.8,
+            "pct_page_path": 91.1,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "comparison_viewed",
+            "last_fire": "2026-06-11T18:39:01.78+00:00",
+            "fires_24h": 54,
+            "fires_7d": 282,
+            "fires_30d": 434,
+            "total_in_window": 434,
+            "pct_device_type": 100,
+            "pct_page_path": 82.7,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_card_viewed",
+            "last_fire": "2026-06-11T16:43:38.716+00:00",
+            "fires_24h": 15,
+            "fires_7d": 69,
+            "fires_30d": 100,
+            "total_in_window": 100,
+            "pct_device_type": 97,
+            "pct_page_path": 78,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_goal_typed",
+            "last_fire": "2026-06-11T13:45:52.082+00:00",
+            "fires_24h": 6,
+            "fires_7d": 10,
+            "fires_30d": 40,
+            "total_in_window": 40,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_started",
+            "last_fire": "2026-06-11T13:37:08.925+00:00",
+            "fires_24h": 4,
+            "fires_7d": 11,
+            "fires_30d": 26,
+            "total_in_window": 26,
+            "pct_device_type": 96.2,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_signup_modal_shown",
+            "last_fire": "2026-06-11T13:37:08.925+00:00",
+            "fires_24h": 4,
+            "fires_7d": 9,
+            "fires_30d": 18,
+            "total_in_window": 18,
+            "pct_device_type": 94.4,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "context_menu_opened",
+            "last_fire": "2026-06-11T09:55:07.837+00:00",
+            "fires_24h": 2,
+            "fires_7d": 5,
+            "fires_30d": 12,
+            "total_in_window": 12,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "tool_visit_redirected",
+            "last_fire": "2026-06-11T09:47:18.075+00:00",
+            "fires_24h": 20,
+            "fires_7d": 571,
+            "fires_30d": 2204,
+            "total_in_window": 2204,
+            "pct_device_type": 0,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "copy_text_event",
+            "last_fire": "2026-06-11T06:36:21.119+00:00",
+            "fires_24h": 2,
+            "fires_7d": 48,
+            "fires_30d": 52,
+            "total_in_window": 52,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "signup_completed",
+            "last_fire": "2026-06-10T17:39:35.984+00:00",
+            "fires_24h": 0,
+            "fires_7d": 1,
+            "fires_30d": 1,
+            "total_in_window": 1,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_cta_dismissed",
+            "last_fire": "2026-06-08T23:07:21.261+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 3,
+            "total_in_window": 3,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "login_completed",
+            "last_fire": "2026-06-08T14:38:15.106+00:00",
+            "fires_24h": 0,
+            "fires_7d": 3,
+            "fires_30d": 9,
+            "total_in_window": 9,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_match_tier",
+            "last_fire": "2026-06-08T11:51:54.447+00:00",
+            "fires_24h": 0,
+            "fires_7d": 8,
+            "fires_30d": 19,
+            "total_in_window": 19,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_perf",
+            "last_fire": "2026-06-08T11:51:54.447+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 6,
+            "total_in_window": 6,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_completed",
+            "last_fire": "2026-06-08T11:51:54.446+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 6,
+            "total_in_window": 6,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_results_displayed",
+            "last_fire": "2026-06-08T11:51:54.446+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 6,
+            "total_in_window": 6,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_intake_submitted",
+            "last_fire": "2026-06-08T11:51:40.168+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 7,
+            "total_in_window": 7,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "nav_cta_clicked",
+            "last_fire": "2026-06-08T11:51:24.803+00:00",
+            "fires_24h": 0,
+            "fires_7d": 1,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "ai_chat_message",
+            "last_fire": "2026-06-08T11:51:13.491+00:00",
+            "fires_24h": 0,
+            "fires_7d": 1,
+            "fires_30d": 1,
+            "total_in_window": 1,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "search_typing",
+            "last_fire": "2026-06-06T21:39:09.064+00:00",
+            "fires_24h": 0,
+            "fires_7d": 6,
+            "fires_30d": 20,
+            "total_in_window": 20,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "search_query_typed",
+            "last_fire": "2026-06-06T21:39:08.067+00:00",
+            "fires_24h": 0,
+            "fires_7d": 3,
+            "fires_30d": 9,
+            "total_in_window": 9,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_payment_initiated",
+            "last_fire": "2026-06-06T11:14:20.046+00:00",
+            "fires_24h": 0,
+            "fires_7d": 3,
+            "fires_30d": 4,
+            "total_in_window": 4,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_pay_clicked",
+            "last_fire": "2026-06-06T11:14:17.776+00:00",
+            "fires_24h": 0,
+            "fires_7d": 4,
+            "fires_30d": 8,
+            "total_in_window": 8,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_paywall_shown",
+            "last_fire": "2026-06-06T11:14:15.46+00:00",
+            "fires_24h": 0,
+            "fires_7d": 4,
+            "fires_30d": 8,
+            "total_in_window": 8,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_scan_started",
+            "last_fire": "2026-06-06T11:14:13.906+00:00",
+            "fires_24h": 0,
+            "fires_7d": 5,
+            "fires_30d": 17,
+            "total_in_window": 17,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_result_viewed",
+            "last_fire": "2026-06-06T11:10:32.283+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 10,
+            "total_in_window": 10,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_scan_requested",
+            "last_fire": "2026-06-06T11:10:13.366+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 10,
+            "total_in_window": 10,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "compare_tray_opened",
+            "last_fire": "2026-06-06T11:10:03.24+00:00",
+            "fires_24h": 0,
+            "fires_7d": 2,
+            "fires_30d": 19,
+            "total_in_window": 19,
+            "pct_device_type": 78.9,
+            "pct_page_path": 78.9,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_scan_completed",
+            "last_fire": "2026-06-05T08:18:09.254+00:00",
+            "fires_24h": 0,
+            "fires_7d": 1,
+            "fires_30d": 8,
+            "total_in_window": 8,
+            "pct_device_type": 0,
+            "pct_page_path": 0,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "tool_faq_opened",
+            "last_fire": "2026-06-04T18:16:23.481+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 22,
+            "total_in_window": 22,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "sentiment_modal_opened",
+            "last_fire": "2026-06-01T10:11:56.408+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 1,
+            "total_in_window": 1,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "category_viewed",
+            "last_fire": "2026-05-28T21:33:21.431+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 15,
+            "total_in_window": 15,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_signup_modal_completed",
+            "last_fire": "2026-05-28T10:59:04.192+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 1,
+            "total_in_window": 1,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_signup_modal_oauth_clicked",
+            "last_fire": "2026-05-28T10:58:46.439+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 80,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_cta_clicked",
+            "last_fire": "2026-05-28T10:58:44.763+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 80,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "hero_cta_clicked",
+            "last_fire": "2026-05-28T10:58:44.762+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "search_query_submitted",
+            "last_fire": "2026-05-28T10:58:44.762+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "tool_visit_clicked",
+            "last_fire": "2026-05-27T16:51:04.317+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 4,
+            "total_in_window": 4,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "filter_applied",
+            "last_fire": "2026-05-27T13:21:15.845+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 4,
+            "total_in_window": 4,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "paste_text_event",
+            "last_fire": "2026-05-27T13:18:19.151+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 2,
+            "total_in_window": 2,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_existing_tool_removed",
+            "last_fire": "2026-05-27T09:13:59.207+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 4,
+            "total_in_window": 4,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "navigation_back",
+            "last_fire": "2026-05-25T18:54:29.899+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 2,
+            "total_in_window": 2,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "compare_share_clicked",
+            "last_fire": "2026-05-20T20:21:58.737+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 2,
+            "total_in_window": 2,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_existing_tool_added",
+            "last_fire": "2026-05-20T20:17:11.532+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 2,
+            "total_in_window": 2,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "plan_chip_selected",
+            "last_fire": "2026-05-20T20:16:45.581+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 5,
+            "total_in_window": 5,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          },
+          {
+            "event_name": "compare_tool_added",
+            "last_fire": "2026-05-20T20:09:44.173+00:00",
+            "fires_24h": 0,
+            "fires_7d": 0,
+            "fires_30d": 2,
+            "total_in_window": 2,
+            "pct_device_type": 100,
+            "pct_page_path": 100,
+            "pct_auth_state": 100
+          }
+        ],
+        "deadEventNames": [
+          "identify",
+          "reset",
+          "tool_saved",
+          "tool_unsaved",
+          "tool_visit_clicked",
+          "compare_tool_added",
+          "compare_tool_removed",
+          "compare_share_clicked",
+          "plan_step_completed",
+          "plan_abandoned",
+          "recommendation_requested",
+          "workflow_generated",
+          "workflow_saved",
+          "workflow_shared",
+          "workflow_voted",
+          "stack_viewed",
+          "stack_saved",
+          "stack_exported",
+          "ai_chat_tool_suggested",
+          "ai_chat_tool_clicked",
+          "review_submitted",
+          "question_asked",
+          "question_answered",
+          "discussion_replied",
+          "signup_started",
+          "hero_cta_clicked",
+          "plan_cta_clicked",
+          "plan_signup_modal_oauth_clicked",
+          "plan_signup_modal_skipped",
+          "plan_signup_modal_completed",
+          "plan_intent_persisted",
+          "plan_intent_linked_to_user",
+          "blog_post_viewed",
+          "blog_internal_link_clicked",
+          "best_page_viewed",
+          "role_page_viewed",
+          "search_query_submitted",
+          "search_result_clicked",
+          "search_no_results",
+          "empty_search",
+          "filter_applied",
+          "filter_no_results",
+          "category_viewed",
+          "collection_viewed",
+          "activation_milestone",
+          "onboarding_step_completed",
+          "onboarding_completed",
+          "pricing_viewed",
+          "upgrade_clicked",
+          "newsletter_subscribed",
+          "external_link_clicked",
+          "share_clicked",
+          "perf_mark",
+          "error_encountered",
+          "plan_chip_selected",
+          "plan_existing_tool_added",
+          "plan_existing_tool_removed",
+          "plan_results_tool_clicked",
+          "plan_free_text_typed",
+          "profile_field_typed",
+          "newsletter_email_typed",
+          "compare_search_typed",
+          "paste_text_event",
+          "navigation_back",
+          "form_validation_failed",
+          "element_dwell",
+          "tool_faq_opened",
+          "ai_chat_response_received",
+          "review_form_opened",
+          "review_rating_set",
+          "form_field_changed"
+        ],
+        "freshnessPct": 35.8
+      },
+      "deterministic": true
+    }
+  }
+}
