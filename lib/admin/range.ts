@@ -219,3 +219,24 @@ export function parseRange(sp: { range?: string; from?: string; to?: string; day
 export function rangeToDays(sel: RangeSelection): number {
   return sel.days
 }
+
+/**
+ * Phase 10.5a.2 — the immediately-preceding window of equal length, for
+ * period-over-period deltas: [start − span, start). Pure arithmetic on the
+ * selection's own cutoffs, so it works identically for presets, custom
+ * ranges and partial calendar windows ("today" compares against the same
+ * number of elapsed hours of yesterday — honest, not yesterday's full day).
+ */
+export function previousRange(sel: RangeSelection): RangeSelection {
+  const start = new Date(sel.cutoffISO).getTime()
+  const end = new Date(sel.endCutoffISO).getTime()
+  const span = Math.max(1, end - start)
+  return {
+    key: 'custom',
+    cutoffISO: new Date(start - span).toISOString(),
+    endCutoffISO: sel.cutoffISO,
+    label: `previous period (${sel.label})`,
+    calendarAnchored: sel.calendarAnchored,
+    days: sel.days,
+  }
+}

@@ -46,8 +46,8 @@ export const ADMIN_NAV: AdminNavSection[] = [
       {
         href: '/admin',
         label: 'Dashboard',
-        description: 'Aliases Insights for now — the real dashboard rebuild is Phase 5.',
-        filterCapabilities: [],
+        description: 'KPIs with period-over-period deltas, live pulse, drill-down panels.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
       { href: '/admin/insights/live', label: 'Live', filterCapabilities: [] },
       { href: '/admin/insights/goals', label: 'Goals & KPIs', filterCapabilities: [] },
