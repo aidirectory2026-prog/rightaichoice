@@ -854,6 +854,65 @@ export async function getRecentVisitors(limit: number, f: AdminFilters): Promise
   }))
 }
 
+// ── Users directory (Phase 10.5a.3) ────────────────────────────────
+// One row per visitor active in the window, via insights_user_directory
+// (migration 155): window-scoped stats + lifetime-based New/Returning
+// split, server-side sort (allowlisted) + pagination with an exact total.
+
+export type UserDirectorySort = 'last_seen' | 'events' | 'first_seen'
+
+export const USER_DIRECTORY_SORTS: readonly UserDirectorySort[] = [
+  'last_seen',
+  'events',
+  'first_seen',
+] as const
+
+export interface UserDirectoryRow {
+  distinct_id: string
+  user_id: string | null
+  first_seen: string
+  last_seen: string
+  events_in_window: number
+  active_days: number
+  top_country: string | null
+  top_device: string | null
+  is_returning: boolean
+}
+
+export async function getUserDirectory(
+  f: AdminFilters,
+  opts: { sort: UserDirectorySort; page: number; pageSize?: number },
+): Promise<{ rows: UserDirectoryRow[]; total: number }> {
+  const db = getAdminClient()
+  const sel = f.range
+  const pageSize = opts.pageSize ?? 50
+  const { data, error } = await rpc(db, 'insights_user_directory', {
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_include_bots: f.includeBots,
+    p_filters: filtersToJsonb(f),
+    p_sort: opts.sort,
+    p_limit: pageSize,
+    p_offset: Math.max(0, opts.page) * pageSize,
+  })
+  if (error) throw new Error(`insights_user_directory failed: ${error.message}`)
+  const rows = ((data as Array<UserDirectoryRow & { total_rows: number | string }>) ?? [])
+  return {
+    rows: rows.map((r) => ({
+      distinct_id: r.distinct_id,
+      user_id: r.user_id,
+      first_seen: r.first_seen,
+      last_seen: r.last_seen,
+      events_in_window: Number(r.events_in_window),
+      active_days: Number(r.active_days),
+      top_country: r.top_country,
+      top_device: r.top_device,
+      is_returning: !!r.is_returning,
+    })),
+    total: Number(rows[0]?.total_rows ?? 0),
+  }
+}
+
 // ── Filter-bar options (Phase 10.4.7) ──────────────────────────────
 // Country dropdown options for the global filter bar — distinct countries
 // seen in the last 90 days, busiest first. Event options come from the

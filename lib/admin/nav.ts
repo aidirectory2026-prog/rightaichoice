@@ -46,8 +46,8 @@ export const ADMIN_NAV: AdminNavSection[] = [
       {
         href: '/admin',
         label: 'Dashboard',
-        description: 'Aliases Insights for now — the real dashboard rebuild is Phase 5.',
-        filterCapabilities: [],
+        description: 'KPIs with period-over-period deltas, live pulse, drill-down panels.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
       { href: '/admin/insights/live', label: 'Live', filterCapabilities: [] },
       { href: '/admin/insights/goals', label: 'Goals & KPIs', filterCapabilities: [] },
@@ -62,8 +62,14 @@ export const ADMIN_NAV: AdminNavSection[] = [
         description: 'Current main analytics page until Phase 5 splits it.',
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
-      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: ['range', 'bots'] },
-      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: ['range', 'bots'] },
+      {
+        href: '/admin/insights/users',
+        label: 'Users',
+        description: 'Every visitor in the window — sortable, filterable, drill-down to the full timeline.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
+      { href: '/admin/insights/geo', label: 'Geography', filterCapabilities: ALL_FILTER_CAPABILITIES },
+      { href: '/admin/insights/devices', label: 'Devices', filterCapabilities: ALL_FILTER_CAPABILITIES },
     ],
   },
   {

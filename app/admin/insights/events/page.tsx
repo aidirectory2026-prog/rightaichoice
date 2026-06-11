@@ -42,6 +42,8 @@ export default async function RawEventsPage({
     days?: string
     include_bots?: string
     event_name?: string
+    /** Phase 10.5a.2 — alias used by the dashboard drill-down links. */
+    event?: string
     distinct_id?: string
     page?: string
   }>
@@ -50,7 +52,7 @@ export default async function RawEventsPage({
   const requested = Number(sp.days ?? '7') as DayWindow
   const days: DayWindow = ([1, 7, 30, 90] as DayWindow[]).includes(requested) ? requested : 7
   const includeBots = sp.include_bots === '1'
-  const eventName = sp.event_name || undefined
+  const eventName = sp.event_name || sp.event || undefined
   const distinctId = sp.distinct_id || undefined
   const page = Math.max(0, Number(sp.page ?? '0'))
 
