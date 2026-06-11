@@ -219,6 +219,19 @@ export default async function PipelineHealthPage() {
   const healthyCount = rows.length - failingCount - staleCount
   const cost7d = rows.reduce((s, r) => s + (Number(r.cost_7d) || 0), 0)
 
+  // F8 (metric-audit.md) — no pipeline_runs row has EVER logged a nonzero
+  // estimated_cost_usd (handlers never call ctx.recordTokens/recordApifyUsd).
+  // "$0.00" on a money KPI is misleading green; show the honest state until
+  // cost instrumentation exists. Exact check against the whole table — it's
+  // a single indexed count.
+  const { data: costEverData } = await (db as unknown as {
+    rpc: (fn: string, args: { p_sql: string }) => Promise<{ data: unknown }>
+  }).rpc('_admin_audit_exec', {
+    p_sql: `SELECT count(*)::int AS n FROM pipeline_runs WHERE coalesce(estimated_cost_usd, 0) > 0`,
+  })
+  const costEverRow = (Array.isArray(costEverData) ? costEverData[0] : costEverData) as { n?: number } | undefined
+  const costInstrumented = Number(costEverRow?.n ?? 0) > 0
+
   return (
     <div className="space-y-8">
       <div>
@@ -238,7 +251,11 @@ export default async function PipelineHealthPage() {
         <Kpi label="Failing" value={String(failingCount)} tone={failingCount ? 'bad' : 'ok'} />
         <Kpi label="Stale" value={String(staleCount)} tone={staleCount ? 'warn' : 'ok'} />
         <Kpi label="Fails / 24h" value={String(failures24h.length)} tone={failures24h.length ? 'bad' : 'ok'} />
-        <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} />
+        {costInstrumented ? (
+          <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} />
+        ) : (
+          <Kpi label="7d est cost" value="Not instrumented (F8)" tone="warn" />
+        )}
       </div>
 
       {/* Catalog freshness SLA (A1) */}

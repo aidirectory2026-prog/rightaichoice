@@ -402,6 +402,21 @@ export default async function KnowledgeRoom({
   const costAggList = Array.from(costByPipeline.values()).sort((a, b) => b.total - a.total)
   const costTotal = costAggList.reduce((sum, a) => sum + a.total, 0)
 
+  // F8 (metric-audit.md) — cost instrumentation is dead: every pipeline_runs
+  // row has estimated_cost_usd / tokens / apify_usd = 0 or NULL because no
+  // handler calls ctx.recordTokens/recordApifyUsd. A hard "$0.00" reads as
+  // "we spent nothing" when the truth is "we don't measure" — render the
+  // not-instrumented state honestly instead.
+  const costInstrumented = costRows.some(
+    (r) =>
+      Number(r.estimated_cost_usd) > 0 ||
+      Number(r.apify_usd) > 0 ||
+      Number(r.deepseek_tokens_in) > 0 ||
+      Number(r.deepseek_tokens_out) > 0 ||
+      Number(r.anthropic_tokens_in) > 0 ||
+      Number(r.anthropic_tokens_out) > 0,
+  )
+
   const cost24hByPipeline = new Map<string, number>()
   for (const row of cost24hRows) {
     cost24hByPipeline.set(row.pipeline_key, (cost24hByPipeline.get(row.pipeline_key) ?? 0) + (Number(row.estimated_cost_usd) || 0))
@@ -813,6 +828,23 @@ export default async function KnowledgeRoom({
         title={`Cost · ${RANGE_LABELS[range]}`}
         icon={<TrendingUp className="h-4 w-4 text-yellow-400" />}
       >
+        {!costInstrumented ? (
+          <Panel title="">
+            <div className="text-sm">
+              <span className="inline-block rounded border border-amber-700/60 bg-amber-950/40 px-2 py-1 text-amber-200 font-semibold">
+                Not instrumented (F8)
+              </span>
+              <p className="mt-2 text-xs text-zinc-500">
+                {costRows.length} run{costRows.length === 1 ? '' : 's'} in window, none with a nonzero cost — pipeline
+                handlers never call <code className="text-zinc-400">ctx.recordTokens</code> /{' '}
+                <code className="text-zinc-400">ctx.recordApifyUsd</code>, so DeepSeek/Anthropic/Apify spend is not
+                measured and the $5/day over-budget flag cannot fire. A &ldquo;$0.00&rdquo; here would be a lie, not a
+                number.
+              </p>
+            </div>
+          </Panel>
+        ) : (
+          <>
         <div className="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
           <div>
             <span className="text-2xl font-bold text-white tabular-nums">${costTotal.toFixed(2)}</span>
@@ -866,6 +898,8 @@ export default async function KnowledgeRoom({
               </tbody>
             </table>
           </Panel>
+        )}
+          </>
         )}
       </Section>
 
