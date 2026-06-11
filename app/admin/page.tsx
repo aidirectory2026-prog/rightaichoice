@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
-// Phase 8.e — Knowledge Room is the operator's first stop: real-time
-// pipeline + activity status. /admin/tools is one click away in the nav.
+// Phase 10.4.2 — Dashboard aliases Insights for now; the real dashboard
+// rebuild (period-over-period deltas, provenance popovers) is Phase 5.
 export default function AdminPage() {
-  redirect('/admin/updates')
+  redirect('/admin/insights')
 }
