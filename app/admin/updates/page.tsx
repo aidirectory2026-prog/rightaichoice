@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import Link from 'next/link'
 import {
   TrendingUp,
@@ -70,6 +71,16 @@ export default async function KnowledgeRoom({
   const range: RangeKey = sel.key
   const cutoff = sel.cutoffISO
   const supabase = await createClient()
+  // F9 (metric-audit.md) — the kr_* aggregate RPCs are service-role-only
+  // (SECURITY DEFINER, like pipeline_health). Page access is already gated
+  // by the /admin layout's is_admin check.
+  const admin = getAdminClient()
+  // Generated DB types don't know the kr_* functions; same cast pattern as
+  // /admin/health uses for _admin_audit_exec.
+  const adminRpc = (fn: string, args: Record<string, unknown>) =>
+    (admin as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown }>
+    }).rpc(fn, args)
 
   // ── Parallel-fan-out all queries; every one is small + indexed ───
   const [
@@ -122,25 +133,17 @@ export default async function KnowledgeRoom({
       .gte('created_at', cutoff)
       .then((r) => ({ total: r.count ?? 0 })),
 
-    // Top viewed tools (period) — group by tool_id then resolve
-    supabase
-      .from('page_views')
-      .select('tool_id')
-      .gte('created_at', cutoff)
-      .not('tool_id', 'is', null)
-      .limit(2000)
-      .then(async (r) => {
-        const counts: Record<string, number> = {}
-        for (const row of (r.data ?? []) as { tool_id: string }[]) {
-          counts[row.tool_id] = (counts[row.tool_id] ?? 0) + 1
-        }
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8)
-        const ids = top.map((t) => t[0])
-        const tools = ids.length
-          ? await supabase.from('tools').select('id, slug, name').in('id', ids).then((rr) => rr.data ?? [])
-          : []
-        const lookup = new Map((tools as { id: string; slug: string; name: string }[]).map((t) => [t.id, t]))
-        return top.map(([id, count]) => ({ id, count, tool: lookup.get(id) ?? null }))
+    // Top viewed tools (period) — F9 (metric-audit.md): SQL-side GROUP BY
+    // via kr_top_tools. The old fetch+group capped at 2,000 un-ordered rows,
+    // which silently undercounted at 14d/30d/90d (30d ≈ 3,400+ rows).
+    adminRpc('kr_top_tools', { p_cutoff: cutoff, p_limit: 8 })
+      .then((r) => {
+        const rows = (r.data ?? []) as Array<{ tool_id: string; tool_name: string | null; tool_slug: string | null; views: number }>
+        return rows.map((x) => ({
+          id: x.tool_id,
+          count: Number(x.views),
+          tool: x.tool_slug && x.tool_name ? { id: x.tool_id, slug: x.tool_slug, name: x.tool_name } : null,
+        }))
       }),
 
     // Search total
@@ -150,25 +153,14 @@ export default async function KnowledgeRoom({
       .gte('created_at', cutoff)
       .then((r) => ({ total: r.count ?? 0 })),
 
-    // Top search queries
-    supabase
-      .from('search_logs')
-      .select('query, result_count')
-      .gte('created_at', cutoff)
-      .limit(2000)
+    // Top search queries — F9 (metric-audit.md): SQL-side GROUP BY via
+    // kr_top_searches. The old fetch+group capped at 2,000 un-ordered rows
+    // vs ~5,500 in a 30d window, so top queries + zero-result badges were
+    // arbitrary undercounts at longer ranges.
+    adminRpc('kr_top_searches', { p_cutoff: cutoff, p_limit: 10 })
       .then((r) => {
-        const counts: Record<string, { count: number; zeroResult: number }> = {}
-        for (const row of (r.data ?? []) as { query: string; result_count: number }[]) {
-          const q = (row.query ?? '').trim().toLowerCase()
-          if (!q) continue
-          if (!counts[q]) counts[q] = { count: 0, zeroResult: 0 }
-          counts[q].count++
-          if (!row.result_count || row.result_count === 0) counts[q].zeroResult++
-        }
-        return Object.entries(counts)
-          .sort((a, b) => b[1].count - a[1].count)
-          .slice(0, 10)
-          .map(([q, v]) => ({ query: q, count: v.count, zeroResult: v.zeroResult }))
+        const rows = (r.data ?? []) as Array<{ query: string; total: number; zero_count: number }>
+        return rows.map((x) => ({ query: x.query, count: Number(x.total), zeroResult: Number(x.zero_count) }))
       }),
 
     // Saves — user_saved_tools is a composite-PK join table (user_id, tool_id),
@@ -215,16 +207,15 @@ export default async function KnowledgeRoom({
         }
       }),
 
-    // Refresh logs grouped by status
-    supabase
-      .from('refresh_logs')
-      .select('status')
-      .gte('created_at', cutoff)
-      .limit(5000)
+    // Refresh logs grouped by status — F9 (metric-audit.md): SQL-side
+    // GROUP BY via kr_refresh_mix. The old fetch+group capped at 5,000
+    // un-ordered rows vs ~6,800-7,400 in a 30d window (~26% of the ok/failed
+    // badge silently dropped).
+    adminRpc('kr_refresh_mix', { p_cutoff: cutoff })
       .then((r) => {
         const counts: Record<string, number> = {}
-        for (const row of (r.data ?? []) as { status: string }[]) {
-          counts[row.status] = (counts[row.status] ?? 0) + 1
+        for (const row of (r.data ?? []) as Array<{ status: string; total: number }>) {
+          counts[row.status] = Number(row.total)
         }
         return counts
       }),
