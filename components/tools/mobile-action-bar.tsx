@@ -32,7 +32,7 @@ export function MobileActionBar({ tool, initialSaved }: Props) {
         <div className="flex-1 min-w-0">
           <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page_mobile_bar" />
         </div>
-        <SaveToolButton toolId={tool.id} toolName={tool.name} initialSaved={initialSaved} />
+        <SaveToolButton toolId={tool.id} toolName={tool.name} toolSlug={tool.slug} initialSaved={initialSaved} />
         <AddToCompareButton
           tool={{
             id: tool.id,

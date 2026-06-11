@@ -70,7 +70,21 @@ export const PLANNED_EVENTS = new Set<string>([
   'workflow_shared', 'workflow_voted',
   // NOTE: search_no_results is superseded by insights_zero_result_rate (counts
   // result_count='0' on search_query_submitted); kept as a stub, not wired.
+  // 10.3.3 — typed-field event names defined in the fieldTextChanged() union
+  // (lib/analytics.ts) but with no call site yet. search_query_typed and
+  // plan_goal_typed ARE wired (search-bar.tsx, goal-input.tsx); these four
+  // are reserved surfaces. Wire one → remove it here + add an EVENT_SCHEMAS
+  // entry (the CI guard enforces both).
+  'plan_free_text_typed', 'profile_field_typed', 'newsletter_email_typed',
+  'compare_search_typed',
 ])
 
 /** Events kept for historical rows but no longer emitted. */
-export const DEPRECATED_EVENTS = new Set<string>([])
+export const DEPRECATED_EVENTS = new Set<string>([
+  // 10.3.1 reality check — rows exist in user_events (last fired 2026-06-04)
+  // but no emitter remains in the codebase (removed sentiment modal). Kept
+  // here so the name's history is documented; it is intentionally NOT in
+  // EVENT_SCHEMAS and NOT in the DB invariant I11 known set — if it ever
+  // flows again, I11 flags it as an unknown event.
+  'sentiment_modal_opened',
+])

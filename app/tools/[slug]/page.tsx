@@ -419,7 +419,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 }}
                 size="md"
               />
-              <SaveToolButton toolId={tool.id} toolName={tool.name} initialSaved={saved} />
+              <SaveToolButton toolId={tool.id} toolName={tool.name} toolSlug={tool.slug} initialSaved={saved} />
               <ShareButton
                 url={`/tools/${tool.slug}`}
                 title={`${tool.name} — ${tool.tagline}`}

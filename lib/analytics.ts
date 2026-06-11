@@ -464,11 +464,14 @@ export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Tool interactions (core decision actions)
   // ──────────────────────────────────────────────────────────────
-  toolSaved(toolId: string, toolName: string) {
-    capture('tool_saved', { tool_id: toolId, tool_name: toolName })
+  // 10.3.3 — optional toolSlug added: /admin "Top saved tools" breaks down by
+  // properties->>tool_slug, but the client payload only carried tool_id +
+  // tool_name (CI guard check 5 caught the drift — the panel read 0 forever).
+  toolSaved(toolId: string, toolName: string, toolSlug?: string) {
+    capture('tool_saved', { tool_id: toolId, tool_name: toolName, tool_slug: toolSlug })
   },
-  toolUnsaved(toolId: string, toolName: string) {
-    capture('tool_unsaved', { tool_id: toolId, tool_name: toolName })
+  toolUnsaved(toolId: string, toolName: string, toolSlug?: string) {
+    capture('tool_unsaved', { tool_id: toolId, tool_name: toolName, tool_slug: toolSlug })
   },
   toolPageViewed(toolId: string, toolSlug: string) {
     capture('tool_page_viewed', { tool_id: toolId, tool_slug: toolSlug })
@@ -655,10 +658,14 @@ export const analytics = {
     capture('plan_signup_modal_skipped', { typed_goal_char_count: props.typed_goal_char_count })
   },
   /** Fires when the post-OAuth identify call completes (was_anon_to_known). */
-  planSignupModalCompleted(props: { provider: 'google' | 'linkedin'; was_anon_to_known: boolean }) {
+  // 10.3.3 — optional source_surface added: /admin plan-conversion breaks
+  // signups down by properties->>source_surface, but this event never carried
+  // it (CI guard check 5 caught the drift — per-surface signups read 0).
+  planSignupModalCompleted(props: { provider: 'google' | 'linkedin'; was_anon_to_known: boolean; source_surface?: string }) {
     capture('plan_signup_modal_completed', {
       provider: props.provider,
       was_anon_to_known: props.was_anon_to_known,
+      source_surface: props.source_surface,
     })
   },
   /** Server-side mirror — fires after a POST /api/plan/intent insert succeeds. */
