@@ -238,6 +238,134 @@ async function main() {
     })
   }
 
+  // ── Phase 10.5a extension: insights_user_directory + geo breakdown ─────
+  // Same discipline as the main matrix: the LIVE path (RPC with p_filters →
+  // the shared SQL predicate) vs independent hand-written WHERE clauses.
+
+  type ExtraRow = { name: string; live: string; raw: string; ok: boolean }
+  const extra: ExtraRow[] = []
+  const addExtra = (name: string, live: unknown, raw: unknown) => {
+    const l = JSON.stringify(live)
+    const r = JSON.stringify(raw)
+    extra.push({ name, live: l, raw: r, ok: l === r })
+  }
+
+  // U1. Users directory — no optional filters, humans, sort=events:
+  //     exact total + the full top row vs hand SQL.
+  {
+    const res = await anyDb.rpc('insights_user_directory', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: null, p_sort: 'events', p_limit: 1, p_offset: 0,
+    })
+    if (res.error) throw new Error(`insights_user_directory failed [U1]: ${res.error.message}`)
+    const top = (res.data as Array<Record<string, unknown>>)[0] ?? {}
+    const live = {
+      total: Number(top.total_rows ?? 0),
+      id: top.distinct_id,
+      events: Number(top.events_in_window ?? 0),
+      days: Number(top.active_days ?? 0),
+      returning: !!top.is_returning,
+    }
+    const raw = await runSql(
+      `with iw as (
+         select distinct_id,
+                count(*)::bigint as ev,
+                count(distinct date_trunc('day', created_at at time zone 'Asia/Kolkata'))::int as days,
+                max(created_at) as w_last
+         from user_events
+         where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+         group by 1
+       ),
+       lt as (
+         select ue.distinct_id, min(ue.created_at) as first_ever
+         from user_events ue join iw on iw.distinct_id = ue.distinct_id
+         where not ue.bot_likely and ue.created_at < ${lit(TO_ISO)}
+         group by 1
+       )
+       select (select count(*) from iw) as total,
+              iw.distinct_id as id, iw.ev as events, iw.days,
+              (lt.first_ever < ${lit(FROM_ISO)}) as returning
+       from iw join lt on lt.distinct_id = iw.distinct_id
+       order by iw.ev desc, iw.w_last desc, iw.distinct_id asc
+       limit 1`,
+    )
+    addExtra('user_directory none (total+top row, sort=events)', live, {
+      total: Number(raw?.total ?? -1),
+      id: raw?.id,
+      events: Number(raw?.events ?? -1),
+      days: Number(raw?.days ?? -1),
+      returning: !!raw?.returning,
+    })
+  }
+
+  // U2. Users directory — device+country stack, humans: total must equal
+  //     BOTH the hand SQL count AND distinct_visitors_in_window with the
+  //     same filters (the cross-tile invariant the Users page relies on).
+  {
+    const f = toAdminFilters({ name: 'u2', includeBots: false, device: 'desktop', country: topCountry })
+    const res = await anyDb.rpc('insights_user_directory', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: filtersToJsonb(f), p_sort: 'last_seen', p_limit: 1, p_offset: 0,
+    })
+    if (res.error) throw new Error(`insights_user_directory failed [U2]: ${res.error.message}`)
+    const total = Number((res.data as Array<{ total_rows?: number }>)[0]?.total_rows ?? 0)
+    const raw = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and device_type = 'desktop' and country = ${lit(topCountry)}`,
+    )
+    const tile = await anyDb
+      .rpc('distinct_visitors_in_window', {
+        p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: filtersToJsonb(f),
+      })
+      .maybeSingle()
+    if (tile.error) throw new Error(`distinct_visitors_in_window failed [U2]: ${tile.error.message}`)
+    addExtra(
+      `user_directory device=desktop+country=${topCountry} (total = raw = visitors tile)`,
+      { total, tile: Number((tile.data as { count?: number } | null)?.count ?? -1) },
+      { total: Number(raw?.n ?? -1), tile: Number(raw?.n ?? -1) },
+    )
+  }
+
+  // G1. Geo breakdown — device=desktop through p_filters (migration 156):
+  //     country count + the top country's visitors/events vs hand SQL.
+  {
+    const res = await anyDb.rpc('insights_geo_breakdown', {
+      p_days: 7, p_include_bots: false, p_cutoff: FROM_ISO, p_end: TO_ISO,
+      p_filters: { device: 'desktop' },
+    })
+    if (res.error) throw new Error(`insights_geo_breakdown failed [G1]: ${res.error.message}`)
+    const rows = (res.data as Array<{ country: string; visitors: number; events: number }>) ?? []
+    const top = rows[0]
+    const live = {
+      countries: rows.length,
+      topCountry: top?.country ?? null,
+      topVisitors: Number(top?.visitors ?? -1),
+      topEvents: Number(top?.events ?? -1),
+    }
+    const raw = await runSql(
+      `with base as (
+         select distinct_id, country from user_events
+         where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+           and not bot_likely and device_type = 'desktop'
+           and country is not null and country <> ''
+       ),
+       per_country as (
+         select country, count(distinct distinct_id)::int as visitors, count(*)::int as events
+         from base group by 1
+       )
+       select (select count(*) from per_country) as countries,
+              country as top_country, visitors as top_visitors, events as top_events
+       from per_country order by visitors desc, country asc limit 1`,
+    )
+    addExtra('geo_breakdown device=desktop (countries + top country row)', live, {
+      countries: Number(raw?.countries ?? -1),
+      topCountry: raw?.top_country ?? null,
+      topVisitors: Number(raw?.top_visitors ?? -1),
+      topEvents: Number(raw?.top_events ?? -1),
+    })
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [
@@ -259,9 +387,20 @@ async function main() {
   console.log(widths.map((w) => '-'.repeat(w)).join('  '))
   for (const row of table) console.log(fmtRow(row))
 
+  console.log('\nPhase 10.5a extension — users directory + geo breakdown:')
+  for (const e of extra) {
+    console.log(`  ${e.ok ? 'OK      ' : 'MISMATCH'} ${e.name}`)
+    if (!e.ok) console.log(`           live=${e.live}\n           raw =${e.raw}`)
+  }
+
   const failures = rows.filter((r) => !r.visitorsOk || !r.pageViewsOk)
+  const extraFailures = extra.filter((e) => !e.ok)
   console.log(
-    `\n${rows.length} combos × 2 assertions = ${rows.length * 2} checks; ${failures.length === 0 ? 'ALL GREEN' : `${failures.length} combo(s) FAILED`}`,
+    `\n${rows.length} combos × 2 assertions + ${extra.length} extended checks = ${rows.length * 2 + extra.length} checks; ${
+      failures.length === 0 && extraFailures.length === 0
+        ? 'ALL GREEN'
+        : `${failures.length + extraFailures.length} FAILED`
+    }`,
   )
 
   if (process.argv.includes('--write-doc')) {
@@ -288,6 +427,16 @@ async function main() {
       '',
       `Result: ${rows.length} combos × 2 assertions — ${failures.length === 0 ? 'ALL GREEN' : `${failures.length} FAILED`}.`,
       '',
+      '## Phase 10.5a extension — users directory + geo breakdown',
+      '',
+      'Two combos through `insights_user_directory` (migration 155) and one',
+      'filtered path through `insights_geo_breakdown` (migration 156), each',
+      'asserted against independent hand-written raw SQL:',
+      '',
+      '| check | live | raw | ✓ |',
+      '| --- | --- | --- | --- |',
+      ...extra.map((e) => `| ${e.name} | \`${e.live}\` | \`${e.raw}\` | ${e.ok ? 'OK' : 'MISMATCH'} |`),
+      '',
       'Notes:',
       '- `page_views` columns assert the combo predicates ANDed with the',
       '  `event_name = page_viewed` pin (so the `event` combo is the pin twice,',
@@ -304,7 +453,7 @@ async function main() {
     console.log(`wrote ${file}`)
   }
 
-  if (failures.length > 0) process.exit(1)
+  if (failures.length > 0 || extraFailures.length > 0) process.exit(1)
 }
 
 main().catch((err) => {
