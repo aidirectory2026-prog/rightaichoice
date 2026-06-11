@@ -920,14 +920,25 @@ export async function getUserDirectory(
 // from the FIRED set.
 
 export async function getCountryFilterOptions(): Promise<string[]> {
-  const db = getAdminClient()
-  const { data } = await rpc(db, '_admin_audit_exec', {
-    p_sql: `select country from user_events
-            where country is not null and country <> ''
-              and created_at >= now() - interval '90 days'
-            group by 1 order by count(*) desc limit 40`,
-  })
-  return ((data as Array<{ country: string }>) ?? []).map((r) => r.country)
+  // P0 hotfix (2026-06-12): _admin_audit_exec returns a single jsonb value,
+  // NOT an array of rows — the old `.map` threw and 500'd every page that
+  // renders the filter bar. Aggregate to a real JSON array in SQL, and never
+  // let a dropdown-options helper take a page down: degrade to [].
+  try {
+    const db = getAdminClient()
+    const { data } = await rpc(db, '_admin_audit_exec', {
+      p_sql: `select coalesce(json_agg(country), '[]'::json) from (
+                select country from user_events
+                where country is not null and country <> ''
+                  and created_at >= now() - interval '90 days'
+                group by 1 order by count(*) desc limit 40
+              ) t`,
+    })
+    if (!Array.isArray(data)) return []
+    return data.filter((c): c is string => typeof c === 'string' && c.length > 0)
+  } catch {
+    return []
+  }
 }
 
 export async function getReconciliationStats(sel: RangeSelection): Promise<ReconciliationStats> {
