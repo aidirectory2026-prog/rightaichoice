@@ -866,6 +866,15 @@ const RECIPES: Recipe[] = [
   },
   { event: 'activation_milestone', mode: 'payload', run: noop, props: () => ({ milestone: 'first_tool_saved', value: 1 }) },
 
+  // Engagement depth (real heartbeat needs 30s wall time — payload-driven)
+  {
+    event: 'engaged_time_heartbeat',
+    mode: 'payload',
+    note: 'real beat needs 30s of wall time — payload-driven',
+    run: noop,
+    props: () => ({ path: '/tools', heartbeat_n: 1, engaged_seconds_delta: 22, engaged_seconds_total: 22 }),
+  },
+
   // System / performance (browser flush is hide/route-change-timed —
   // canonical payload keeps the suite deterministic; the tracker itself is
   // dev-validated at the capture() choke point)

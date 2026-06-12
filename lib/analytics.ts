@@ -924,17 +924,37 @@ export const analytics = {
   emptySearch(query: string, source: string) {
     capture('empty_search', { query: query.slice(0, 100), source })
   },
-  scrollDepthReached(path: string, depth: 25 | 50 | 75 | 100) {
+  // 10.7c — marks widened 25/50/75/100 → 10/25/50/75/90/100.
+  scrollDepthReached(path: string, depth: 10 | 25 | 50 | 75 | 90 | 100) {
     capture('scroll_depth_reached', { path, depth })
   },
   /**
    * Time-on-page beacon. Fire once on unmount/pagehide with bucketed seconds.
    * Useful for content-quality grading alongside scroll_depth_reached.
+   * 10.7c — optional maxScrollPct (deepest scroll on the page, 0-100).
+   * Additive: the nightly bot classifier keeps reading path/seconds/bucket.
    */
-  timeOnPage(path: string, seconds: number) {
+  timeOnPage(path: string, seconds: number, maxScrollPct?: number) {
     const bucket =
       seconds < 5 ? '<5s' : seconds < 15 ? '5-15s' : seconds < 30 ? '15-30s' : seconds < 60 ? '30-60s' : seconds < 180 ? '1-3min' : '>3min'
-    capture('time_on_page', { path, seconds: Math.floor(seconds), bucket })
+    capture('time_on_page', {
+      path,
+      seconds: Math.floor(seconds),
+      bucket,
+      ...(maxScrollPct !== undefined ? { max_scroll_pct: Math.round(maxScrollPct) } : {}),
+    })
+  },
+  /**
+   * 10.7c — real-attention heartbeat (~30s cadence, visibility+input-aware,
+   * delta>0 only, capped per page). Emitted by EngagementCapture.
+   */
+  engagedTimeHeartbeat(props: {
+    path: string
+    heartbeat_n: number
+    engaged_seconds_delta: number
+    engaged_seconds_total: number
+  }) {
+    capture('engaged_time_heartbeat', { ...props })
   },
   newsletterSubscribed(source: string) {
     capture('newsletter_subscribed', { source })

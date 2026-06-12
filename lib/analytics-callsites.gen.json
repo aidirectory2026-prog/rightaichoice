@@ -102,6 +102,13 @@
       "method": "analytics.dashboardViewed"
     }
   ],
+  "engaged_time_heartbeat": [
+    {
+      "file": "components/providers/mixpanel-provider.tsx",
+      "line": 279,
+      "method": "analytics.engagedTimeHeartbeat"
+    }
+  ],
   "filter_applied": [
     {
       "file": "components/tools/tool-filters.tsx",
@@ -383,7 +390,7 @@
   "scroll_depth_reached": [
     {
       "file": "components/providers/mixpanel-provider.tsx",
-      "line": 222,
+      "line": 248,
       "method": "analytics.scrollDepthReached"
     }
   ],
@@ -585,7 +592,7 @@
   "time_on_page": [
     {
       "file": "components/providers/mixpanel-provider.tsx",
-      "line": 232,
+      "line": 258,
       "method": "analytics.timeOnPage"
     }
   ],

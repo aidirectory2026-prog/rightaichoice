@@ -189,9 +189,19 @@ function PageViewCapture() {
   return null
 }
 
-// Scroll depth + time-on-page beacon. Resets on each pathname change so each
-// page gets its own depth/time measurement. Fires at 25/50/75/100% depth
-// exactly once per page, and a single `time_on_page` on unload.
+// Scroll depth + time-on-page beacon + engaged-time heartbeat. Resets on
+// each pathname change so each page gets its own measurements. Fires at
+// 10/25/50/75/90/100% depth exactly once per page (10.7c widened from
+// 25/50/75/100), a single `time_on_page` on unload (UNCHANGED semantics —
+// the nightly behavioral bot classifier reads it; 10.7c only adds the
+// optional max_scroll_pct property), and an `engaged_time_heartbeat`
+// every 30s of wall time carrying REAL attention seconds (tab visible +
+// input/scroll within the previous 15s), skipped when zero, capped at 40
+// beats (~20 min) per page.
+const ENGAGED_IDLE_MS = 15_000 // input within this window = attentive
+const HEARTBEAT_EVERY_TICKS = 30 // 1s ticks per heartbeat
+const HEARTBEAT_MAX_PER_PAGE = 40
+
 function EngagementCapture() {
   const pathname = usePathname()
   const firedDepthsRef = useRef<Set<number>>(new Set())
@@ -200,11 +210,25 @@ function EngagementCapture() {
   // pagehide AND visibilitychange→hidden AND unmount, so a tab-switch-then-
   // navigate counted 2–3× and inflated time_on_page volume.
   const timeFiredRef = useRef<boolean>(false)
+  // 10.7c — deepest scroll position reached on this page (0-100).
+  const maxScrollPctRef = useRef<number>(0)
+  // 10.7c — engaged-time accounting (1s tick, see interval below).
+  const lastActivityRef = useRef<number>(Date.now())
+  const engagedTotalRef = useRef<number>(0)
+  const engagedDeltaRef = useRef<number>(0)
+  const heartbeatsSentRef = useRef<number>(0)
+  const tickCountRef = useRef<number>(0)
 
   useEffect(() => {
     firedDepthsRef.current = new Set()
     mountedAtRef.current = Date.now()
     timeFiredRef.current = false
+    maxScrollPctRef.current = 0
+    lastActivityRef.current = Date.now()
+    engagedTotalRef.current = 0
+    engagedDeltaRef.current = 0
+    heartbeatsSentRef.current = 0
+    tickCountRef.current = 0
 
     function computeDepth(): number {
       const doc = document.documentElement
@@ -215,8 +239,10 @@ function EngagementCapture() {
     }
 
     function onScroll() {
+      lastActivityRef.current = Date.now()
       const pct = computeDepth()
-      for (const threshold of [25, 50, 75, 100] as const) {
+      if (pct > maxScrollPctRef.current) maxScrollPctRef.current = pct
+      for (const threshold of [10, 25, 50, 75, 90, 100] as const) {
         if (pct >= threshold && !firedDepthsRef.current.has(threshold)) {
           firedDepthsRef.current.add(threshold)
           analytics.scrollDepthReached(pathname, threshold)
@@ -229,11 +255,44 @@ function EngagementCapture() {
       const seconds = Math.floor((Date.now() - mountedAtRef.current) / 1000)
       if (seconds < 1) return
       timeFiredRef.current = true
-      analytics.timeOnPage(pathname, seconds)
+      analytics.timeOnPage(pathname, seconds, maxScrollPctRef.current)
     }
 
-    // Passive listener — never blocks scroll performance.
+    // 10.7c — attention markers. Passive + cheap: a timestamp write.
+    const markActivity = () => {
+      lastActivityRef.current = Date.now()
+    }
+
+    // 1s engaged-time tick: a second counts when the tab is visible AND
+    // there was input/scroll within the previous 15s. Every 30 ticks, flush
+    // a heartbeat if any engaged seconds accrued.
+    const interval = setInterval(() => {
+      const now = Date.now()
+      if (document.visibilityState === 'visible' && now - lastActivityRef.current < ENGAGED_IDLE_MS) {
+        engagedTotalRef.current += 1
+        engagedDeltaRef.current += 1
+      }
+      tickCountRef.current += 1
+      if (tickCountRef.current % HEARTBEAT_EVERY_TICKS === 0) {
+        if (engagedDeltaRef.current > 0 && heartbeatsSentRef.current < HEARTBEAT_MAX_PER_PAGE) {
+          heartbeatsSentRef.current += 1
+          analytics.engagedTimeHeartbeat({
+            path: pathname,
+            heartbeat_n: heartbeatsSentRef.current,
+            engaged_seconds_delta: engagedDeltaRef.current,
+            engaged_seconds_total: engagedTotalRef.current,
+          })
+        }
+        engagedDeltaRef.current = 0
+      }
+    }, 1000)
+
+    // Passive listeners — never block scroll/input performance.
     window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('pointerdown', markActivity, { passive: true })
+    window.addEventListener('keydown', markActivity, { passive: true })
+    window.addEventListener('pointermove', markActivity, { passive: true })
+    window.addEventListener('touchstart', markActivity, { passive: true })
     // pagehide is more reliable than beforeunload on mobile Safari.
     window.addEventListener('pagehide', emitTimeOnPage)
     // visibilitychange hidden → tab-switch / minimize counts as session exit.
@@ -246,7 +305,12 @@ function EngagementCapture() {
     onScroll()
 
     return () => {
+      clearInterval(interval)
       window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('pointerdown', markActivity)
+      window.removeEventListener('keydown', markActivity)
+      window.removeEventListener('pointermove', markActivity)
+      window.removeEventListener('touchstart', markActivity)
       window.removeEventListener('pagehide', emitTimeOnPage)
       document.removeEventListener('visibilitychange', onVisibility)
       // Emit on unmount (route change) so SPA navigation still records time.

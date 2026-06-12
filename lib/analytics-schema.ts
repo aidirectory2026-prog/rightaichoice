@@ -983,20 +983,29 @@ export const EVENT_SCHEMAS = {
 
   // ── Engagement / passive capture ──────────────────────────────────
   scroll_depth_reached: {
-    description: 'Scroll depth marks (25/50/75/100) — analytics.scrollDepthReached from the scroll tracker.',
+    description:
+      'Scroll depth marks — analytics.scrollDepthReached from EngagementCapture. 10.7c widened the marks from 25/50/75/100 to 10/25/50/75/90/100 (finer reading-depth resolution; old rows simply lack the 10/90 marks).',
     plainEnglish: 'How far down a page someone scrolled.',
     category: 'engagement',
     source: 'client',
     props: z
       .object({
         path: z.string(),
-        depth: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]),
+        depth: z.union([
+          z.literal(10),
+          z.literal(25),
+          z.literal(50),
+          z.literal(75),
+          z.literal(90),
+          z.literal(100),
+        ]),
       })
       .strict(),
   },
   time_on_page: {
-    description: 'Fire-once time-on-page beacon on unmount/pagehide — analytics.timeOnPage (bucketed).',
-    plainEnglish: 'How long someone stayed on a page.',
+    description:
+      'Fire-once time-on-page beacon on unmount/pagehide — analytics.timeOnPage (bucketed). 10.7c adds optional max_scroll_pct (deepest scroll position reached on the page, 0-100) — additive only, the nightly behavioral bot classifier keeps reading path/seconds/bucket unchanged.',
+    plainEnglish: 'How long someone stayed on a page (and how deep they got).',
     category: 'engagement',
     source: 'client',
     props: z
@@ -1004,6 +1013,22 @@ export const EVENT_SCHEMAS = {
         path: z.string(),
         seconds: z.number(),
         bucket: z.enum(['<5s', '5-15s', '15-30s', '30-60s', '1-3min', '>3min']),
+        max_scroll_pct: z.number().optional(),
+      })
+      .strict(),
+  },
+  engaged_time_heartbeat: {
+    description:
+      'Every ~30s of wall time while a page is open — EngagementCapture (mixpanel-provider.tsx). engaged_seconds_delta = seconds within the interval the visitor was actually attentive (tab visible AND input/scroll within the previous 15s); engaged_seconds_total = cumulative for the page. Skipped when delta=0; capped at 40 beats/page (~20 min). Complements — does NOT replace — the fire-once time_on_page the nightly bot classifier reads.',
+    plainEnglish: 'Proof someone was actively reading or interacting, in 30-second slices.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        heartbeat_n: z.number(),
+        engaged_seconds_delta: z.number(),
+        engaged_seconds_total: z.number(),
       })
       .strict(),
   },
