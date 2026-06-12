@@ -95,6 +95,24 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
             )
 
           const scrapeResults = await scrapeAllSources(tool.name, { website: (tool as { website_url?: string | null }).website_url })
+
+          // Fable-5 review (2026-06-13) — honesty gate. 11 of the last 30
+          // cached "sentiment reports" were synthesized from ZERO community
+          // posts (the LLM invented community_buzz from the tool's own
+          // metadata). If no source returned anything, store a failed row
+          // (retried next run) instead of fabricating a report.
+          if (scrapeResults.totalPosts === 0) {
+            await admin
+              .from('tool_sentiment_cache')
+              .upsert(
+                { tool_id: tool.id, status: 'failed', scraped_at: new Date().toISOString() },
+                { onConflict: 'tool_id' }
+              )
+            failed++
+            errors.push(`${tool.name}: no community data from any source — skipped synthesis`)
+            return
+          }
+
           const report = await synthesizeReport(
             {
               name: tool.name,
