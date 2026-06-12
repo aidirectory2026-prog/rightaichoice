@@ -100,19 +100,21 @@ async function main() {
   await both('insights.getPageViewsByDevice', (b) => insights.getPageViewsByDevice(baseFilters(SEL, b)))
   await both('insights.getTopReferrers', (b) => insights.getTopReferrers(baseFilters(SEL, b)))
   await both('insights.getPlanFunnel', (b) => insights.getPlanFunnel(baseFilters(SEL, b)))
-  await both('insights.getTopExistingTools', (b) => insights.getTopExistingTools(SEL, b))
-  await both('insights.getTopUseCases', (b) => insights.getTopUseCases(SEL, b))
+  // Phase 10.5b — these four converted to AdminFilters; baseFilters keeps
+  // keys + values byte-identical via the RPC null fast-path.
+  await both('insights.getTopExistingTools', (b) => insights.getTopExistingTools(baseFilters(SEL, b)))
+  await both('insights.getTopUseCases', (b) => insights.getTopUseCases(baseFilters(SEL, b)))
   await both('insights.getTopEvents', (b) => insights.getTopEvents(baseFilters(SEL, b)))
   await both('insights.getSearchMetrics', (b) => insights.getSearchMetrics(baseFilters(SEL, b)))
-  await both('insights.getTopSearches', (b) => insights.getTopSearches(SEL, b))
+  await both('insights.getTopSearches', (b) => insights.getTopSearches(baseFilters(SEL, b)))
   await both('insights.getChatMetrics', (b) => insights.getChatMetrics(baseFilters(SEL, b)))
-  await both('insights.getTopChatTools', (b) => insights.getTopChatTools(SEL, b))
+  await both('insights.getTopChatTools', (b) => insights.getTopChatTools(baseFilters(SEL, b)))
   await both('insights.getTopViewedTools', (b) => insights.getTopViewedTools(baseFilters(SEL, b)))
   await both('insights.getTopClickedTools', (b) => insights.getTopClickedTools(baseFilters(SEL, b)))
   await both('insights.getTopSavedTools', (b) => insights.getTopSavedTools(baseFilters(SEL, b)))
   await both('insights.getTopComparedTools', (b) => insights.getTopComparedTools(baseFilters(SEL, b)))
   await both('insights.getReturningSummary', (b) => insights.getReturningSummary(baseFilters(SEL, b)))
-  await one('insights.getReconciliationStats', () => insights.getReconciliationStats(SEL))
+  await one('insights.getReconciliationStats', () => insights.getReconciliationStats(baseFilters(SEL, false)))
   // Phase 10.5b — plan-conversion fns converted to AdminFilters; baseFilters
   // keeps the keys' shape and (via the null fast-path + humans-only default)
   // their pinned values byte-identical.
@@ -128,6 +130,9 @@ async function main() {
   await both('insights.getEventVolumeList', (b) => insights.getEventVolumeList(baseFilters(SEL, b)))
   await one('insights.getEventPropertyBreakdown(page_viewed,path)', () =>
     insights.getEventPropertyBreakdown('page_viewed', 'path', baseFilters(SEL, false)))
+  await both('insights.getToolHeatmap', (b) => insights.getToolHeatmap(baseFilters(SEL, b)))
+  await both('insights.getToolAudienceDetail(screenplayiq)', (b) =>
+    insights.getToolAudienceDetail('screenplayiq', baseFilters(SEL, b)))
 
   // Now-anchored functions — recorded for reference, excluded from strict diff.
   const volatile: Record<string, Snap> = {}

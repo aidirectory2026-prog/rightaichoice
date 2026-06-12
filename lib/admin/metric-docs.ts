@@ -389,6 +389,30 @@ const docs = {
     caveats: ['Latency percentiles are computed over completed scans that recorded a duration; failed-fast scans without duration_ms are excluded.', 'On windows with > 500 scans the aggregates cover the most recent 500.'],
   },
 
+  // ── Behavior — tool engagement (Phase 10.5b) ─────────────────────────
+  tools_heatmap: {
+    key: 'tools_heatmap',
+    title: 'Tool engagement heatmap',
+    whatItCounts:
+      'Every tool that got traffic in the window: page views, unique visitors, vendor click-outs and the resulting CTR, plus last visit.',
+    howComputed:
+      "RPC insights_tool_heatmap: one pass over user_events in window >= start AND < end (explicit cutoffs since the 5b rebuild — calendar ranges are exact, not approximated by a rolling day count), humans-only unless toggled, optional filters via the shared predicate (migration 157). Tool attribution = properties->>tool_slug, falling back to the /tools/<slug> path segment; CTR = clicks ÷ views per tool; deterministic ordering (views desc, visitors desc, slug asc).",
+    whyTrusted:
+      'Reads the same audited event set as the Most-viewed / Most-clicked dashboard panels (hand-SQL verified in Phase 1) through the verifier-covered shared predicate; click_logs triangulates the click column server-side.',
+    caveats: ['Views count events, not visitors.', EPOCHS.botBackfill, EPOCHS.botRecall],
+  },
+  tool_audience: {
+    key: 'tool_audience',
+    title: 'Tool audience detail',
+    whatItCounts:
+      'One tool\'s window audience: unique visitors who touched it, page views, affiliate click-outs, saves, and which alternatives those users compared it against.',
+    howComputed:
+      "Counts: direct selects on user_events pinned to tool_page_viewed / tool_visit_redirected / tool_saved with properties->>tool_slug = this tool, window + bots + optional filters via the applyFilters() mirror. Unique users: RPC distinct_visitors_for_tool (any event carrying the slug). Compared-with: RPC insights_tool_compared_with over user_intent_profile pair arrays — optional filters restrict to visitors with ≥1 matching event (154 §11 semantics, both RPCs filter-aware since migration 157).",
+    whyTrusted:
+      'Same event substrate as the audited dashboard tool panels; the null fast-path of the 157 RPC extensions was probe-verified against raw SQL on the pinned week; tool_slug is a schema-required property (CI-guarded).',
+    caveats: ['Compared-with reflects profile aggregates (per-visitor lifetime arrays scoped by last-active) — it answers "who", not "how many times".', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

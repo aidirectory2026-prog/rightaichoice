@@ -1,77 +1,76 @@
 // Phase 8.g.7 — per-tool audience snapshot.
-// Phase 8.g.8 — bot filter propagated from caller.
+// Phase 10.5b.5 (2026-06-12) — re-skinned onto the shared kit: global smart
+// filter bar (getToolAudienceDetail converted to AdminFilters; the
+// compared-with / unique-visitors RPCs honor p_filters since migration 157),
+// shared MetricCard/BarList, ⓘ provenance.
 
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
-import { type DayWindow, getToolAudienceDetail } from '../../queries'
-import { parseRange } from '@/lib/admin/range'
-import { BarList, MetricCard } from '../../charts'
+import { FilterBar } from '@/components/admin/filter-bar'
+import { MetricInfo } from '@/components/admin/metric-info'
+import { BarList, MetricCard } from '@/components/admin/charts'
+import { parseAdminFilters } from '@/lib/admin/filters'
+import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
+import { getCountryFilterOptions, getToolAudienceDetail } from '../../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-const WINDOWS: { value: DayWindow; label: string }[] = [
-  { value: 7, label: '7d' },
-  { value: 30, label: '30d' },
-  { value: 90, label: '90d' },
-]
+export const metadata = { title: 'Tool audience — Admin' }
 
 export default async function ToolAudiencePage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ days?: string; include_bots?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }) {
   const { slug } = await params
   const sp = await searchParams
-  const requested = Number(sp.days ?? '30') as DayWindow
-  const days: DayWindow = ([7, 30, 90] as DayWindow[]).includes(requested) ? requested : 30
-  const includeBots = sp.include_bots === '1'
+  const filters = parseAdminFilters(sp)
 
-  const detail = await getToolAudienceDetail(slug, parseRange({ days: String(days) }), includeBots)
-  const qs = (d: DayWindow) => `?days=${d}${includeBots ? '&include_bots=1' : ''}`
+  const [detail, countryOptions] = await Promise.all([
+    getToolAudienceDetail(slug, filters),
+    getCountryFilterOptions(),
+  ])
+
+  // Keep the smart filters on sibling-tool drill-down links.
+  const siblingQs = (() => {
+    const qsParams = new URLSearchParams()
+    for (const [k, v] of Object.entries(sp)) if (v) qsParams.set(k, v)
+    const s = qsParams.toString()
+    return s ? `?${s}` : ''
+  })()
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <Link
-            href={`/admin/insights${qs(days)}`}
+            href={`/admin/insights/tools${siblingQs}`}
             className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <ChevronLeft className="h-3 w-3" />
-            Insights
+            Tool engagement
           </Link>
           <span className="text-zinc-700">/</span>
           <h1 className="text-lg font-semibold text-white">
             Tool audience · <span className="text-emerald-400">{slug}</span>
           </h1>
         </div>
-        <div className="flex gap-1">
-          {WINDOWS.map((w) => (
-            <Link
-              key={w.value}
-              href={`/admin/insights/tool/${encodeURIComponent(slug)}${qs(w.value)}`}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                w.value === days
-                  ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800'
-                  : 'text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-              }`}
-            >
-              {w.label}
-            </Link>
-          ))}
-        </div>
+        <FilterBar
+          activeRange={filters.range.key}
+          countries={countryOptions}
+          eventNames={[...SCHEMA_EVENT_NAMES]}
+        />
       </div>
 
       <p className="mb-4 text-xs text-zinc-500">
-        Vendor pitch in one screen: usage, intent-to-purchase signal, brand-adjacency.
-        {includeBots ? ' Bots included.' : ' Bots excluded.'}
+        Vendor pitch in one screen: usage, intent-to-purchase signal, brand-adjacency —
+        over {filters.range.label.toLowerCase()}, {filters.includeBots ? 'bots included' : 'humans only'}.
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricCard label="Unique users" value={detail.unique_users} />
+        <MetricCard label="Unique users" value={detail.unique_users} info={<MetricInfo docKey="tool_audience" />} />
         <MetricCard label="Page views" value={detail.views} />
         <MetricCard label="Click-outs (affiliate)" value={detail.click_outs} />
         <MetricCard label="Saves" value={detail.saves} />
@@ -82,14 +81,15 @@ export default async function ToolAudiencePage({
           title="Most-compared against this tool"
           rows={detail.compared_with}
           emptyHint="No comparisons including this tool yet"
-          rowHrefBuilder={(s) => `/admin/insights/tool/${encodeURIComponent(s)}${qs(days)}`}
+          rowHrefBuilder={(s) => `/admin/insights/tool/${encodeURIComponent(s)}${siblingQs}`}
+          info={<MetricInfo docKey="tool_audience" />}
         />
       </div>
 
       <div className="mt-8 rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-4 text-xs">
         <div className="mb-1 font-medium text-emerald-300">Vendor pitch snippet</div>
         <p className="text-zinc-300">
-          In the last {days} days, <span className="font-mono text-emerald-200">{slug}</span> reached{' '}
+          In the last {filters.range.days} days, <span className="font-mono text-emerald-200">{slug}</span> reached{' '}
           <span className="font-semibold text-white">{detail.unique_users.toLocaleString()}</span> unique high-intent
           users on RightAIChoice, with{' '}
           <span className="font-semibold text-white">{detail.views.toLocaleString()}</span> page views,{' '}

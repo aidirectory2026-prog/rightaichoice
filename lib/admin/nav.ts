@@ -81,7 +81,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
         description: 'Every event, grouped by schema category — volume, bot split, properties, raw rows.',
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
-      { href: '/admin/insights/tools', label: 'Tool engagement', filterCapabilities: ['range', 'bots'] },
+      {
+        href: '/admin/insights/tools',
+        label: 'Tool engagement',
+        description: 'Per-tool views/visitors/click-outs heatmap with drill-down audiences.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
       {
         href: '/admin/insights/funnel',
         label: 'Funnels',
