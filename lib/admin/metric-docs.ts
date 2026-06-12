@@ -13,6 +13,8 @@
 // filter-matrix verifier, the synthetic suite, the baseline snapshot oracle,
 // or a nightly invariant).
 
+import { PRE_CHANNEL_EPOCH_BUCKET, TRACKING_EPOCHS } from './constants'
+
 /** Shared caveat strings — the epochs every attribution metric inherits. */
 export const EPOCHS = {
   mirror:
@@ -139,6 +141,21 @@ const docs = {
     whyTrusted:
       'F4 fix hand-verified against raw SQL (direct 208 / google 11 visitors in the audit week); the RPC participates in the shared-predicate filter matrix; ordering made deterministic with an explicit tie-breaker (Phase 5a).',
     caveats: [EPOCHS.attribution, 'First-touch is per-visitor and sticky — a returning Google visitor stays "google" forever, whatever brings them back later.'],
+  },
+  top_channels: {
+    key: 'top_channels',
+    title: 'Channels',
+    whatItCounts:
+      'Distinct visitors in the window, grouped by the marketing channel of the traffic they arrived on. Taxonomy: search (Google/Bing/DDG/Yandex/…), ai (ChatGPT/Perplexity/Claude/Gemini/…), social (LinkedIn/X/Facebook/Instagram/YouTube/…), community (Reddit/Hacker News/Product Hunt/forums — deliberately separate from social), email (mail clients or utm_medium=email), paid (any ad click-id gclid/fbclid/msclkid/ttclid, or paid utm_medium like cpc), referral (any other external site), direct (no referrer at all), internal (our own pages, localhost/previews, and the accounts.google.com OAuth bounce — NOT acquisition).',
+    howComputed:
+      "RPC insights_top_property('channel') — migration 160: count(DISTINCT distinct_id) grouped by properties->>'channel', the classification lib/analytics/channels.ts stamps on every event at capture time (precedence: click-ids → paid, utm_medium=email → email, paid utm_medium → paid, then the referrer-host map). Same window/bot/filter semantics as Top sources. A visitor whose traffic spans two channels in the window counts once in each.",
+    whyTrusted:
+      'Classifier hand-label-validated against ALL 18 distinct referrer hosts in the live 90-day window (18/18 sensible — table in docs/admin/phase7a-gate.md); the synthetic suite carries dedicated channel probes (a real browser navigation with a paid click-id asserting channel=paid, and an AI-referrer payload asserting channel=ai); the RPC shares the audited filter predicate with every other panel.',
+    caveats: [
+      `Channel is only stamped on events captured since ${TRACKING_EPOCHS.channel} (the 10.7a deploy). Older rows surface as "${PRE_CHANNEL_EPOCH_BUCKET}" — shown, never hidden.`,
+      'This is per-EVENT channel (what the traffic in the window arrived on), not first-touch: the sticky original source lives in Top sources. In-app navigation classifies as internal, so internal dominating is expected — acquisition reads come from the non-internal buckets.',
+      EPOCHS.botRecall,
+    ],
   },
   top_pages: {
     key: 'top_pages',

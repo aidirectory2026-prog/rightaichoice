@@ -19,6 +19,7 @@ import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { countryFlag } from '../_ui/primitives'
 import {
   getCountryFilterOptions,
+  getFirstTouchChannels,
   getUserDirectory,
   USER_DIRECTORY_SORTS,
   type UserDirectorySort,
@@ -87,6 +88,10 @@ export default async function UsersDirectoryPage({
     getUserDirectory(filters, { sort, page: page - 1, pageSize: PAGE_SIZE }),
     getCountryFilterOptions(),
   ])
+  // 10.7a — first-touch channel per visitor on this page: one cheap
+  // PostgREST select on user_intent_profile (≤50 ids), classified in TS.
+  // Visitors without a profile row / attribution show '—'.
+  const channelByVisitor = await getFirstTouchChannels(rows.map((r) => r.distinct_id))
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const returningOnPage = rows.filter((r) => r.is_returning).length
@@ -162,12 +167,13 @@ export default async function UsersDirectoryPage({
               <th className="px-3 py-2 text-right font-medium">Active days</th>
               <th className="px-3 py-2 text-left font-medium">Country</th>
               <th className="px-3 py-2 text-left font-medium">Device</th>
+              <th className="px-3 py-2 text-left font-medium">Channel</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900/80">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-zinc-500">
+                <td colSpan={9} className="px-3 py-10 text-center text-zinc-500">
                   No visitors match the selected window + filters.
                 </td>
               </tr>
@@ -231,6 +237,18 @@ export default async function UsersDirectoryPage({
                     {r.top_device ? (
                       <span className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[10px] capitalize text-zinc-300">
                         {r.top_device}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-600">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {channelByVisitor.has(r.distinct_id) ? (
+                      <span
+                        className="rounded border border-indigo-900/60 bg-indigo-950/30 px-1.5 py-0.5 text-[10px] text-indigo-300"
+                        title={`First-touch source: ${channelByVisitor.get(r.distinct_id)!.source}`}
+                      >
+                        {channelByVisitor.get(r.distinct_id)!.channel}
                       </span>
                     ) : (
                       <span className="text-zinc-600">—</span>

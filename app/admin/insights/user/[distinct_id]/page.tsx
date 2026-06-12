@@ -41,6 +41,7 @@ import {
   type UserSessionV2,
 } from '../../queries'
 import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
+import { classifyChannel, hostFromReferrer } from '@/lib/analytics/channels'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -108,6 +109,18 @@ function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId
         p.first_touch_utm_source && `utm ${[p.first_touch_utm_source, p.first_touch_utm_medium, p.first_touch_utm_campaign].filter(Boolean).join('/')}`,
       ].filter(Boolean).join(' · ')
     : ''
+  // 10.7a — first-touch channel chip: classify the sticky first-touch
+  // attribution through the same lib/analytics/channels.ts taxonomy the
+  // capture path stamps on events. Null when no attribution was captured
+  // (visitor predates the 2026-06-10 attribution epoch).
+  const ftChannel =
+    p && (p.first_touch_referrer || p.first_touch_utm_source || p.first_touch_utm_medium)
+      ? classifyChannel(
+          hostFromReferrer(p.first_touch_referrer),
+          p.first_touch_utm_medium,
+          p.first_touch_utm_source,
+        )
+      : null
 
   return (
     <div className="mb-6 space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
@@ -125,6 +138,14 @@ function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId
         {p?.is_returning && (
           <span className="rounded-full border border-sky-800 bg-sky-950/40 px-2 py-0.5 text-[10px] font-semibold text-sky-300">
             RETURNING
+          </span>
+        )}
+        {ftChannel && (
+          <span
+            className="rounded-full border border-indigo-800 bg-indigo-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-300"
+            title={`First-touch channel — sticky attribution classified via lib/analytics/channels.ts (source: ${ftChannel.source})`}
+          >
+            {ftChannel.channel} · {ftChannel.source}
           </span>
         )}
         {p && p.bot_events > 0 && (

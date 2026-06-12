@@ -134,6 +134,11 @@ async function main() {
   await both('insights.getToolAudienceDetail(screenplayiq)', (b) =>
     insights.getToolAudienceDetail('screenplayiq', baseFilters(SEL, b)))
 
+  // ── Phase 10.7a addition (NEW key — noted in phase7a-gate.md) ────────────
+  // Pinned week predates the channel epoch (2026-06-12), so this key snapshots
+  // as the single '(unknown — pre-channel epoch)' bucket — by design.
+  await both('insights.getTopChannels', (b) => insights.getTopChannels(baseFilters(SEL, b)))
+
   // Now-anchored functions — recorded for reference, excluded from strict diff.
   const volatile: Record<string, Snap> = {}
   const vol = async (name: string, fn: () => Promise<unknown>) => {

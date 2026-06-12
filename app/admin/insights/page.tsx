@@ -5,6 +5,7 @@
 import Link from 'next/link'
 import { BarChart3, ChevronLeft, Eye, GitCompareArrows, ShieldCheck, Target } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
+import { MetricInfo } from '@/components/admin/metric-info'
 import {
   BarList,
   DailyChart,
@@ -21,6 +22,7 @@ import {
   getCountryFilterOptions,
   getChatMetrics,
   getDailyActiveUsers,
+  getTopChannels,
   getEngagementMetrics,
   getOverviewMetrics,
   getPageViewsByDevice,
@@ -75,7 +77,7 @@ export default async function InsightsPage({
   const includeBots = filters.includeBots
 
   const [
-    botShare, overview, dailyActive, deviceBreakdown, referrers,
+    botShare, overview, dailyActive, deviceBreakdown, referrers, channels,
     planFunnel, topExistingTools, topUseCases, engagement, topEvents,
     searchMetrics, topSearches, chatMetrics, topChatTools,
     topViewedTools, topClickedTools, topSavedTools, topComparedTools,
@@ -86,6 +88,7 @@ export default async function InsightsPage({
     getDailyActiveUsers(filters),
     getPageViewsByDevice(filters),
     getTopReferrers(filters),
+    getTopChannels(filters),
     getPlanFunnel(filters),
     getTopExistingTools(filters),
     getTopUseCases(filters),
@@ -169,8 +172,15 @@ export default async function InsightsPage({
         <DailyChart title={`Daily active users · ${days}d`} points={dailyActive} />
         <BarList title="Page views by device" rows={deviceBreakdown} />
       </div>
-      <div className="mt-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <BarList title="Top first-touch referrers" rows={referrers} emptyHint="No referrer data yet" />
+        {/* 10.7a — per-event channel taxonomy (classifier epoch 2026-06-12) */}
+        <BarList
+          title="Channels · visitors"
+          rows={channels}
+          emptyHint="No channel data yet (channel capture began 2026-06-12)"
+          info={<MetricInfo docKey="top_channels" />}
+        />
       </div>
 
       <SectionHeading title="Plan Funnel" subtitle="Highest-intent vendor signal — where users drop off" />
