@@ -191,6 +191,31 @@ Every shipped change re-checked against the LIVE site and database after PR #14 
 
 ---
 
+## 2026-06-13 — Sentiment 2.0: real community data, zero new cost (commit `841493f`, awaiting merge)
+
+Founder mandate: reports must be outstanding, accurate, extremely valuable — without Apify (no active subscription, costly) and without waiting weeks for Reddit's API approval.
+
+**Found and fixed (all verified against live APIs):**
+| Source | Was | Now |
+|---|---|---|
+| Product Hunt | **Never worked once** — query requested a `reviews` field that doesn't exist in PH's schema; every call silently returned nothing | Pulls launch comments + aggregate rating/review-count. Live test: Lovable 16 posts (4.68★/189 reviews), Midjourney 14 |
+| App Store | Crashed whenever an app had exactly one review (Apple returns an object, not a list) | Normalized; Cursor now returns instead of erroring |
+| Twitter (Apify) | The actor it called **doesn't exist on Apify** — never returned a post | Retired; replaced by Bluesky |
+| Bluesky | — | NEW free source; anonymous search is IP-blocked so it supports an optional free-account login (no approval process), public fallback otherwise |
+| HackerNews / YouTube | Working (verified 30 + ~25 posts per tool locally) | Unchanged; YouTube needs its key present in Vercel |
+| Reddit | Blocked pending API approval | OAuth-ready; revives automatically when creds land |
+| **Honesty gate** | 11 of the last 30 cached "sentiment reports" were synthesized from **zero** community posts — the AI invented community buzz from the tool's own description | `totalPosts=0` → no synthesis, row marked failed and retried later. A report now always sits on real posts |
+
+**Verified mix (local run, real APIs):** Cursor 59 posts, Lovable 66, Midjourney 83 — vs the old reality of mostly 0–9.
+
+**Founder checklist to get full strength in production:**
+1. Merge the branch (includes this + the ingest degraded-mode fix).
+2. Vercel → Settings → Environment Variables: confirm `YOUTUBE_API_KEY` and `PRODUCTHUNT_TOKEN` exist there (they exist locally; production runs mostly miss YouTube/PH, which points to absent Vercel env).
+3. Optional, 2 minutes, no approval: create a free Bluesky account → Settings → App Passwords → add `BLUESKY_IDENTIFIER` + `BLUESKY_APP_PASSWORD` to Vercel + GitHub secrets.
+4. Already in flight: Reddit API application (weeks); plugs back in automatically.
+
+---
+
 ## Phase summary — everything done and verified (in plain words)
 
 This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
