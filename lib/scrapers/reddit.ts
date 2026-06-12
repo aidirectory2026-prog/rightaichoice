@@ -22,6 +22,15 @@ const TARGET_SUBREDDITS = [
 // requests on a warm serverless instance.
 let cachedToken: { value: string; expiresAt: number } | null = null
 
+// Exported for lib/cron/traction-probe.ts (fable-5 review): the ingest
+// traction gate was left on the tokenless endpoint when this module migrated
+// to OAuth on 2026-06-01, so every candidate probed reddit=0 and the catalog
+// admitted zero new tools for 11 days. Never throws — null when unconfigured
+// or the token grant fails.
+export async function getRedditAppToken(): Promise<string | null> {
+  return getAppToken().catch(() => null)
+}
+
 async function getAppToken(): Promise<string | null> {
   const id = process.env.REDDIT_CLIENT_ID
   const secret = process.env.REDDIT_CLIENT_SECRET
