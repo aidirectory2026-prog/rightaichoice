@@ -366,6 +366,97 @@ async function main() {
     })
   }
 
+  // ── Phase 10.5b extension: event property breakdown + sentiment window ──
+  // Same discipline: the LIVE path (RPC p_filters → shared predicate, or the
+  // applyFilters PostgREST mirror) vs independent hand-written WHERE clauses.
+
+  /** Normalize a jsonb_agg row list to the same {v,e,u} field order as the
+   *  live mapping (jsonb_build_object returns keys alphabetically). */
+  const normRows = (rows: unknown): Array<{ v: unknown; e: number; u: number }> =>
+    ((rows as Array<{ v: unknown; e: number | string; u: number | string }>) ?? []).map((r) => ({
+      v: r.v,
+      e: Number(r.e),
+      u: Number(r.u),
+    }))
+
+  // E1. insights_event_property_breakdown — page_viewed × path, device=desktop,
+  //     humans: full top-5 rows (value/events/visitors) vs hand SQL.
+  {
+    const res = await anyDb.rpc('insights_event_property_breakdown', {
+      p_event: 'page_viewed', p_prop: 'path',
+      p_filters: { device: 'desktop' },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_limit: 5, p_include_bots: false,
+    })
+    if (res.error) throw new Error(`insights_event_property_breakdown failed [E1]: ${res.error.message}`)
+    const live = (res.data as Array<{ value: string; events: number | string; visitors: number | string }>).map(
+      (r) => ({ v: r.value, e: Number(r.events), u: Number(r.visitors) }),
+    )
+    const raw = await runSql(
+      `with rows as (
+         select coalesce(nullif(properties->>'path',''), '(missing)') as v,
+                count(*)::int as e, count(distinct distinct_id)::int as u
+         from user_events
+         where event_name = 'page_viewed'
+           and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+           and not bot_likely and device_type = 'desktop'
+         group by 1 order by 2 desc, 1 asc limit 5
+       )
+       select jsonb_agg(jsonb_build_object('v', v, 'e', e, 'u', u)) as rows from rows`,
+    )
+    addExtra('event_property_breakdown page_viewed×path device=desktop (top-5 rows)', live, normRows(raw?.rows))
+  }
+
+  // E2. insights_event_property_breakdown — tool_page_viewed × tool_slug,
+  //     country + auth=anon stack, humans: top-3 rows vs hand SQL.
+  {
+    const res = await anyDb.rpc('insights_event_property_breakdown', {
+      p_event: 'tool_page_viewed', p_prop: 'tool_slug',
+      p_filters: { country: topCountry, auth: 'anon' },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_limit: 3, p_include_bots: false,
+    })
+    if (res.error) throw new Error(`insights_event_property_breakdown failed [E2]: ${res.error.message}`)
+    const live = (res.data as Array<{ value: string; events: number | string; visitors: number | string }>).map(
+      (r) => ({ v: r.value, e: Number(r.events), u: Number(r.visitors) }),
+    )
+    const raw = await runSql(
+      `with rows as (
+         select coalesce(nullif(properties->>'tool_slug',''), '(missing)') as v,
+                count(*)::int as e, count(distinct distinct_id)::int as u
+         from user_events
+         where event_name = 'tool_page_viewed'
+           and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+           and not bot_likely and country = ${lit(topCountry)} and user_id is null
+         group by 1 order by 2 desc, 1 asc limit 3
+       )
+       select jsonb_agg(jsonb_build_object('v', v, 'e', e, 'u', u)) as rows from rows`,
+    )
+    addExtra(`event_property_breakdown tool_page_viewed×tool_slug country=${topCountry}+auth=anon (top-3)`, live, normRows(raw?.rows))
+  }
+
+  // S1. Sentiment funnel leg (Phase 5b F13 fix) — the LIVE path is a direct
+  //     PostgREST count through the applyFilters mirror exactly as
+  //     lib/admin/sentiment.ts getSentimentFunnel builds it; vs hand SQL.
+  {
+    const f = toAdminFilters({ name: 's1', includeBots: false })
+    let q = db
+      .from('user_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_name', 'sentiment_card_viewed')
+      .gte('created_at', FROM_ISO)
+      .lt('created_at', TO_ISO)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    q = (q as any).eq('bot_likely', false)
+    q = applyFilters(q, f, { dropEvent: true })
+    const mirror = await q
+    if (mirror.error) throw new Error(`sentiment mirror select failed [S1]: ${mirror.error.message}`)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events
+        where event_name = 'sentiment_card_viewed' and not bot_likely
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}`,
+    )
+    addExtra('sentiment_card_viewed windowed humans (F13 leg = raw SQL)', mirror.count ?? -1, Number(raw?.n ?? -2))
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [
@@ -387,7 +478,7 @@ async function main() {
   console.log(widths.map((w) => '-'.repeat(w)).join('  '))
   for (const row of table) console.log(fmtRow(row))
 
-  console.log('\nPhase 10.5a extension — users directory + geo breakdown:')
+  console.log('\nPhase 10.5a + 10.5b extensions — users directory, geo, event breakdown, sentiment window:')
   for (const e of extra) {
     console.log(`  ${e.ok ? 'OK      ' : 'MISMATCH'} ${e.name}`)
     if (!e.ok) console.log(`           live=${e.live}\n           raw =${e.raw}`)
@@ -427,11 +518,14 @@ async function main() {
       '',
       `Result: ${rows.length} combos × 2 assertions — ${failures.length === 0 ? 'ALL GREEN' : `${failures.length} FAILED`}.`,
       '',
-      '## Phase 10.5a extension — users directory + geo breakdown',
+      '## Phase 10.5a + 10.5b extensions',
       '',
-      'Two combos through `insights_user_directory` (migration 155) and one',
-      'filtered path through `insights_geo_breakdown` (migration 156), each',
-      'asserted against independent hand-written raw SQL:',
+      '5a: two combos through `insights_user_directory` (migration 155) and one',
+      'filtered path through `insights_geo_breakdown` (migration 156).',
+      '5b: two combos through `insights_event_property_breakdown` (migration 157)',
+      'and one windowed sentiment funnel leg (the F13 fix) through the',
+      'applyFilters PostgREST mirror. Each asserted against independent',
+      'hand-written raw SQL:',
       '',
       '| check | live | raw | ✓ |',
       '| --- | --- | --- | --- |',
