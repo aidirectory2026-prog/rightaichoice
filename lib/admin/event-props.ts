@@ -47,6 +47,86 @@ export function schemaPropKeys(eventName: string): string[] {
   return zodObjectKeys(entry.props)
 }
 
+// ── Phase 10.6.4 — per-prop TYPES for the event-detail schema card ──
+// zod v4 introspection (same defensive style as the CI guard): def.type
+// names the node; optional/nullable unwrap; enums surface their values.
+
+export interface SchemaPropType {
+  key: string
+  /** Human-readable type: string, number, boolean, enum(a|b), string[], … */
+  type: string
+  optional: boolean
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function describeZodType(t: any): { type: string; optional: boolean } {
+  const def = t?.def ?? t?._def
+  const typeName: string | undefined = def?.type ?? def?.typeName
+  if (!typeName) return { type: 'unknown', optional: false }
+  if (typeName === 'optional') {
+    const inner = describeZodType(def.innerType)
+    return { type: inner.type, optional: true }
+  }
+  if (typeName === 'nullable') {
+    const inner = describeZodType(def.innerType)
+    return { type: `${inner.type} | null`, optional: inner.optional }
+  }
+  if (typeName === 'array') {
+    const inner = describeZodType(def.element)
+    return { type: `${inner.type}[]`, optional: false }
+  }
+  if (typeName === 'enum') {
+    const entries = def.entries ?? def.values
+    const values = Array.isArray(entries) ? entries : entries ? Object.keys(entries) : []
+    return { type: values.length > 0 ? `enum(${values.join('|')})` : 'enum', optional: false }
+  }
+  if (typeName === 'literal') {
+    const values = def.values ?? (def.value !== undefined ? [def.value] : [])
+    return { type: `literal(${[...values].map(String).join('|')})`, optional: false }
+  }
+  if (typeName === 'union') {
+    const opts = (def.options ?? []) as unknown[]
+    const parts = [...new Set(opts.map((o) => describeZodType(o).type))]
+    return { type: parts.join(' | ') || 'union', optional: false }
+  }
+  if (typeName === 'record') return { type: 'record', optional: false }
+  return { type: String(typeName), optional: false }
+}
+
+/** All object shapes under the event's props schema (1 for plain objects,
+ *  n for the legacy/rich unions). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function collectShapes(t: z.ZodType): Array<Record<string, any>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyT = t as any
+  if (anyT?.shape && typeof anyT.shape === 'object') return [anyT.shape]
+  const options = anyT?.options ?? anyT?._def?.options
+  if (Array.isArray(options)) return options.flatMap((o) => collectShapes(o))
+  return []
+}
+
+/** Per-prop type descriptions for the event's schema, declaration order.
+ *  A key missing from some union branch is reported optional. */
+export function schemaPropTypes(eventName: string): SchemaPropType[] {
+  const entry = (EVENT_SCHEMAS as Record<string, EventSchemaEntry>)[eventName]
+  if (!entry) return []
+  const shapes = collectShapes(entry.props)
+  if (shapes.length === 0) return []
+  const keys: string[] = []
+  for (const shape of shapes) {
+    for (const k of Object.keys(shape)) if (!keys.includes(k)) keys.push(k)
+  }
+  return keys.map((key) => {
+    const present = shapes.filter((s) => key in s)
+    const d = describeZodType(present[0][key])
+    return {
+      key,
+      type: d.type,
+      optional: d.optional || present.length < shapes.length,
+    }
+  })
+}
+
 export type EventLifecycleStatus = 'fired' | 'planned' | 'deprecated' | 'unregistered'
 
 export interface EventLifecycle {
