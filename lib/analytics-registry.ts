@@ -60,8 +60,16 @@ export const PLANNED_EVENTS = new Set<string>([
   // form_submitted + form_validation_failed promoted to FIRED
   // (FormAnalyticsTracker generic <form> instrumentation, 10.7c.3).
   'filter_no_results', 'onboarding_completed', 'onboarding_step_completed',
-  'password_reset_requested', 'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
-  'plan_goal_text_submitted', 'plan_intent_linked_to_user', 'plan_intent_persisted',
+  'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
+  'plan_goal_text_submitted',
+  // 10.7c.5 — PROMOTED out of here: password_reset_requested
+  // (forgot-password success state), plan_intent_persisted +
+  // plan_intent_linked_to_user (real callers in lib/cta/persist-intent.ts —
+  // the registry scanner now walks lib/ + actions/ too). DEMOTED into here
+  // in the same pass: activation_milestone + recommendation_requested had
+  // ZERO call sites (client or server) — the old "server emitters always
+  // fire" rule hid that; emitters kept for future wiring.
+  'activation_milestone', 'recommendation_requested',
   'plan_results_shared', 'plan_results_tool_saved', 'plan_step_back', 'plan_step_completed',
   'pricing_viewed', 'profile_tool_clicked', 'question_answered', 'question_asked',
   'recommendation_result_clicked', 'recommendation_step_completed', 'role_page_viewed',

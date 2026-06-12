@@ -661,25 +661,28 @@ export const EVENT_SCHEMAS = {
   },
 
   // ── Recommend wizard ──────────────────────────────────────────────
-  recommendation_requested: {
+  // 10.7c.5 — recommendation_requested schema REMOVED: zero call sites for
+  // either the client or server emitter (the loose "server emitters always
+  // fire" registry rule had been hiding this). Demoted to PLANNED; the
+  // emitters remain in lib/analytics.ts + lib/mixpanel-server.ts for when
+  // the recommend wizard ships.
+
+  // ── Plan intent persistence (10.7c.5 — promoted from PLANNED) ─────
+  plan_intent_persisted: {
     description:
-      'Recommendation request. Client: analytics.recommendationRequested (use_case/budget/level). Server: recommendationRequestedServer adds result slugs (Mixpanel only).',
-    plainEnglish: 'Someone asked for tool recommendations.',
+      'A typed plan goal was durably saved to plan_intents via POST /api/plan/intent — lib/cta/persist-intent.ts persistPlanIntent() (called from the plan signup modal + auth provider pending-intent replay). Fires only after the fetch succeeds.',
+    plainEnglish: 'A visitor’s typed goal was saved so it survives signup.',
     category: 'plan',
-    source: 'both',
-    props: z.union([
-      z.object({ use_case: z.string(), budget: z.string(), level: z.string() }).strict(),
-      z
-        .object({
-          use_case: z.string(),
-          budget: z.string(),
-          skill_level: z.string(),
-          result_count: z.number(),
-          result_tool_slugs: z.array(z.string()),
-          source: z.literal('server'),
-        })
-        .strict(),
-    ]),
+    source: 'client',
+    props: z.object({ source_surface: z.string(), char_count: z.number() }).strict(),
+  },
+  plan_intent_linked_to_user: {
+    description:
+      'Pre-auth plan_intents rows were stitched to the authenticated user via POST /api/plan/intent/link — lib/cta/persist-intent.ts linkPlanIntentsToUser() after identify() on anon→known. user_id is deliberately empty (server already knows; client must not leak it). Fires only when count_linked > 0.',
+    plainEnglish: 'A new signup’s earlier anonymous plan goals were connected to their account.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ user_id: z.string(), count_linked: z.number() }).strict(),
   },
 
   // ── Search ────────────────────────────────────────────────────────
@@ -895,9 +898,17 @@ export const EVENT_SCHEMAS = {
       z.object({ method: z.string() }).strict(),
     ]),
   },
+  password_reset_requested: {
+    description:
+      'Reset-link request succeeded on /forgot-password — analytics.passwordResetRequested fired from the success state of the forgot-password page (10.7c.5).',
+    plainEnglish: 'Someone asked for a password-reset email.',
+    category: 'auth',
+    source: 'client',
+    props: z.object({ method: z.literal('email') }).strict(),
+  },
   password_reset_completed: {
     description:
-      'Password reset finished. Client method + serverAnalytics.passwordResetCompletedServer (Mixpanel only).',
+      'Password reset finished. Server-authoritative: actions/auth.ts updatePassword → serverAnalytics.passwordResetCompletedServer (Mixpanel only). A client method with the same shape exists but is unwired.',
     plainEnglish: 'Someone reset their password.',
     category: 'auth',
     source: 'both',
@@ -948,17 +959,10 @@ export const EVENT_SCHEMAS = {
       z.object({ source: z.string() }).strict(),
     ]),
   },
-  activation_milestone: {
-    description:
-      'North-star activation signal (first_tool_saved, first_plan_completed, …). Client analytics.activationMilestone + server activationMilestoneServer (Mixpanel only).',
-    plainEnglish: 'Someone hit a meaningful "first" on the site.',
-    category: 'engagement',
-    source: 'both',
-    props: z.union([
-      z.object({ milestone: z.string(), value: z.number().optional() }).strict(),
-      z.object({ milestone: z.string(), source: z.literal('server') }).strict(),
-    ]),
-  },
+  // 10.7c.5 — activation_milestone schema REMOVED: zero call sites for
+  // either the client or server emitter (hidden by the loose server-emitter
+  // registry rule). Demoted to PLANNED; emitters kept for a future genuine
+  // first-save/first-plan wiring that knows the "first" server-side.
 
   // ── Frustration / behavior-depth signals (10.7c) ──────────────────
   rage_click: {

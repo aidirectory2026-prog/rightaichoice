@@ -234,6 +234,20 @@
       "method": "analytics.pageViewed"
     }
   ],
+  "password_reset_completed": [
+    {
+      "file": "actions/auth.ts",
+      "line": 147,
+      "method": "serverAnalytics.passwordResetCompletedServer"
+    }
+  ],
+  "password_reset_requested": [
+    {
+      "file": "app/(auth)/forgot-password/page.tsx",
+      "line": 16,
+      "method": "analytics.passwordResetRequested"
+    }
+  ],
   "paste_text_event": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
@@ -684,6 +698,11 @@
     }
   ],
   "tool_saved": [
+    {
+      "file": "actions/tools.ts",
+      "line": 333,
+      "method": "serverAnalytics.toolSavedServer"
+    },
     {
       "file": "components/tools/save-tool-button.tsx",
       "line": 45,

@@ -1,12 +1,21 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { forgotPassword } from '@/actions/auth'
 import { Logo } from '@/components/shared/logo'
+import { analytics } from '@/lib/analytics'
 
 export default function ForgotPasswordPage() {
   const [state, action, pending] = useActionState(forgotPassword, null)
+  // 10.7c.5 — record the successful reset-link request exactly once.
+  const requestTrackedRef = useRef(false)
+  useEffect(() => {
+    if (state?.success && !requestTrackedRef.current) {
+      requestTrackedRef.current = true
+      analytics.passwordResetRequested('email')
+    }
+  }, [state?.success])
 
   if (state?.success) {
     return (

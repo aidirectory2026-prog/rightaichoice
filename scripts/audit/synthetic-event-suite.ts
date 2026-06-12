@@ -785,7 +785,8 @@ const RECIPES: Recipe[] = [
   { event: 'plan_signup_modal_oauth_clicked', mode: 'payload', note: 'OAuth flow — not browser-drivable headlessly', run: noop, props: () => ({ provider: 'google' }) },
   { event: 'plan_signup_modal_skipped', mode: 'payload', note: 'skip navigates to /plan and runs paid AI generation', run: noop, props: () => ({ typed_goal_char_count: 54 }) },
   { event: 'plan_signup_modal_completed', mode: 'payload', note: 'OAuth flow — not browser-drivable headlessly', run: noop, props: () => ({ provider: 'google', was_anon_to_known: true, source_surface: 'homepage' }) },
-  { event: 'recommendation_requested', mode: 'payload', run: noop, props: () => ({ use_case: 'video editing', budget: 'free', level: 'beginner' }) },
+  // 10.7c.5 — recommendation_requested recipe removed (event demoted to
+  // PLANNED: zero call sites for either emitter).
 
   // Search extra
   {
@@ -853,7 +854,13 @@ const RECIPES: Recipe[] = [
   { event: 'signup_started', mode: 'payload', note: 'auth flow', run: noop, props: () => ({ source: 'navbar' }) },
   { event: 'signup_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
   { event: 'login_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
+  { event: 'password_reset_requested', mode: 'payload', note: 'auth flow (forgot-password success state)', run: noop, props: () => ({ method: 'email' }) },
   { event: 'password_reset_completed', mode: 'payload', note: 'auth flow', run: noop, props: () => ({ method: 'email' }) },
+
+  // Plan-intent persistence (10.7c.5 — real triggers need the signup modal
+  // + an anon→known auth transition — payload-driven)
+  { event: 'plan_intent_persisted', mode: 'payload', note: 'fires after POST /api/plan/intent succeeds', run: noop, props: () => ({ source_surface: 'plan_signup_modal', char_count: 64 }) },
+  { event: 'plan_intent_linked_to_user', mode: 'payload', note: 'fires after anon→known stitch with count_linked > 0', run: noop, props: () => ({ user_id: '', count_linked: 2 }) },
 
   // Content / growth
   { event: 'blog_internal_link_clicked', mode: 'payload', run: noop, props: (s) => ({ from_slug: 'best-ai-video-tools', to_path: `/tools/${s.tool}` }) },
@@ -864,7 +871,8 @@ const RECIPES: Recipe[] = [
     run: noop,
     props: () => ({ source: 'footer', email_domain: 'gmail.com', page_path_at_subscribe: '/blog/best-ai-video-tools', tool_slug_context: '' }),
   },
-  { event: 'activation_milestone', mode: 'payload', run: noop, props: () => ({ milestone: 'first_tool_saved', value: 1 }) },
+  // 10.7c.5 — activation_milestone recipe removed (event demoted to
+  // PLANNED: zero call sites for either emitter).
 
   // Engagement depth (real heartbeat needs 30s wall time — payload-driven)
   {
