@@ -240,6 +240,100 @@ function getFirstTouchFallback(): FirstTouch | null {
   }
 }
 
+// ── 10.7b — device / environment envelope ────────────────────────────
+// Computed ONCE per page load (module-level cache) and stamped into the
+// properties of every mirrored event by mirrorContext(). All keys are
+// namespaced env_* (declared in BASE_CONTEXT_SCHEMA, lib/analytics-schema.ts)
+// so they can never collide with real payload properties. Near-zero cost:
+// a handful of synchronous navigator/screen reads, once.
+type EnvContext = Record<string, string | number | boolean>
+
+let envContextCache: EnvContext | null = null
+
+function getEnvContext(): EnvContext {
+  if (envContextCache) return envContextCache
+  const env: EnvContext = {}
+  try {
+    if (typeof navigator !== 'undefined') {
+      if (navigator.language) env.env_locale = navigator.language
+      if (typeof navigator.hardwareConcurrency === 'number') env.env_cpu_cores = navigator.hardwareConcurrency
+      env.env_touch = (navigator.maxTouchPoints ?? 0) > 0
+      env.env_cookie_enabled = navigator.cookieEnabled === true
+      // deviceMemory + connection are Chromium-only — stamp when present.
+      const nav = navigator as Navigator & {
+        deviceMemory?: number
+        doNotTrack?: string | null
+        connection?: { effectiveType?: string; downlink?: number; rtt?: number }
+      }
+      if (typeof nav.deviceMemory === 'number') env.env_device_memory = nav.deviceMemory
+      if (nav.connection) {
+        if (nav.connection.effectiveType) env.env_connection_type = nav.connection.effectiveType
+        if (typeof nav.connection.downlink === 'number') env.env_downlink = nav.connection.downlink
+        if (typeof nav.connection.rtt === 'number') env.env_rtt = nav.connection.rtt
+      }
+      // Do-not-track: only stamped when actively requested (true), so the
+      // common null/unset case adds no payload weight.
+      if (nav.doNotTrack === '1' || (window as Window & { doNotTrack?: string | null }).doNotTrack === '1') env.env_dnt = true
+    }
+    if (typeof window !== 'undefined') {
+      env.env_viewport_w = window.innerWidth
+      env.env_viewport_h = window.innerHeight
+      env.env_dpr = window.devicePixelRatio || 1
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (tz) env.env_timezone = tz
+      } catch { /* very old engines */ }
+      try {
+        env.env_color_scheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'no-preference'
+      } catch { /* matchMedia unavailable */ }
+    }
+    if (typeof screen !== 'undefined') {
+      env.env_screen_w = screen.width
+      env.env_screen_h = screen.height
+    }
+  } catch {
+    /* never let env capture break tracking */
+  }
+  envContextCache = env
+  scheduleAdBlockerProbe()
+  return envContextCache
+}
+
+// Ad-blocker signal — "Mixpanel blocked but our mirror alive". One no-cors
+// probe against the public Mixpanel API host, scheduled 3s after the first
+// event so it never competes with page load. Result cached per-session
+// (sessionStorage) and merged into the env cache; events sent before the
+// probe resolves simply lack env_ad_blocker (schema-optional).
+const ADBLOCK_KEY = 'rac_adblock_v1'
+let adBlockerProbeScheduled = false
+
+function scheduleAdBlockerProbe(): void {
+  if (adBlockerProbeScheduled || typeof window === 'undefined') return
+  adBlockerProbeScheduled = true
+  try {
+    const cached = sessionStorage.getItem(ADBLOCK_KEY)
+    if (cached === 'true' || cached === 'false') {
+      if (envContextCache) envContextCache.env_ad_blocker = cached === 'true'
+      return
+    }
+  } catch { /* storage blocked — probe anyway */ }
+  setTimeout(() => {
+    // no-cors: resolves opaquely when the host is reachable, rejects
+    // (TypeError) when a client-side blocker kills the request.
+    fetch('https://api-eu.mixpanel.com/track/?ip=1', { method: 'HEAD', mode: 'no-cors' })
+      .then(() => false)
+      .catch(() => true)
+      .then((blocked) => {
+        if (envContextCache) envContextCache.env_ad_blocker = blocked
+        try { sessionStorage.setItem(ADBLOCK_KEY, String(blocked)) } catch { /* ignore */ }
+      })
+  }, 3000)
+}
+
 // Current-URL UTM params, read at event time so every mirrored event carries
 // last-touch campaign attribution (user_events.utm_* columns were always null
 // because the client never sent these fields).
@@ -329,6 +423,11 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
       if (clickIds[k]) mergedProps[k] = clickIds[k]
     }
   } catch { /* classification must never block the send */ }
+  // 10.7b — device/environment envelope (computed once per page load,
+  // reused on every event; keys namespaced env_* in BASE_CONTEXT_SCHEMA).
+  try {
+    Object.assign(mergedProps, getEnvContext())
+  } catch { /* env capture must never block the send */ }
   return {
     event_name: eventName,
     distinct_id: distinctId,

@@ -72,6 +72,32 @@ export const BASE_CONTEXT_SCHEMA = z
     fbclid: z.string(),
     msclkid: z.string(),
     ttclid: z.string(),
+    // 10.7b — device / environment / performance envelope, computed ONCE per
+    // page load by getEnvContext() (lib/analytics.ts) and stamped into
+    // properties on every mirrored event. Namespaced env_* so they can never
+    // collide with real payload properties (the share_clicked `channel`
+    // lesson from 10.7a). All optional: older clients / payload recipes /
+    // server emitters simply don't carry them.
+    env_locale: z.string(), // navigator.language, e.g. 'en-US'
+    env_timezone: z.string(), // IANA zone from Intl, e.g. 'Asia/Kolkata'
+    env_viewport_w: z.number(), // window.innerWidth at first event
+    env_viewport_h: z.number(), // window.innerHeight at first event
+    env_screen_w: z.number(), // screen.width (CSS px)
+    env_screen_h: z.number(), // screen.height (CSS px)
+    env_dpr: z.number(), // devicePixelRatio (retina = 2, …)
+    env_connection_type: z.string(), // navigator.connection.effectiveType ('4g', …)
+    env_downlink: z.number(), // Mbps estimate (navigator.connection.downlink)
+    env_rtt: z.number(), // round-trip ms estimate (navigator.connection.rtt)
+    env_device_memory: z.number(), // GB bucket (navigator.deviceMemory: 0.25–8)
+    env_cpu_cores: z.number(), // navigator.hardwareConcurrency
+    env_touch: z.boolean(), // touch-capable device (maxTouchPoints > 0)
+    env_cookie_enabled: z.boolean(), // navigator.cookieEnabled
+    env_dnt: z.boolean(), // do-not-track requested (only stamped when true)
+    env_color_scheme: z.enum(['dark', 'light', 'no-preference']), // prefers-color-scheme
+    // Async signal — true when the Mixpanel API host is unreachable from this
+    // browser (ad-blocker) while our own mirror is clearly alive (the event
+    // carrying this flag arrived). Absent until the one-time probe resolves.
+    env_ad_blocker: z.boolean(),
   })
   .partial()
 
@@ -103,6 +129,25 @@ export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'fbclid',
   'msclkid',
   'ttclid',
+  // 10.7b — device/environment envelope (getEnvContext in lib/analytics.ts
+  // folds these into properties on every client event; all optional).
+  'env_locale',
+  'env_timezone',
+  'env_viewport_w',
+  'env_viewport_h',
+  'env_screen_w',
+  'env_screen_h',
+  'env_dpr',
+  'env_connection_type',
+  'env_downlink',
+  'env_rtt',
+  'env_device_memory',
+  'env_cpu_cores',
+  'env_touch',
+  'env_cookie_enabled',
+  'env_dnt',
+  'env_color_scheme',
+  'env_ad_blocker',
 ])
 
 export type EventCategory =

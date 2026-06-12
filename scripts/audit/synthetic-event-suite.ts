@@ -214,6 +214,22 @@ async function assertEvent(
     }
     if (!row.device_type) issues.push('device_type column null')
     if (!row.page_path) issues.push('page_path column null')
+    // (3b) 10.7b — environment envelope: every event captured by a REAL
+    // browser must carry the env_* keys getEnvContext() stamps (payload
+    // recipes POST raw MirrorEvents and legitimately lack them). Async /
+    // Chromium-optional keys (env_ad_blocker, env_connection_*, env_dnt,
+    // env_device_memory) are deliberately not asserted.
+    if (mode === 'browser') {
+      for (const k of ['env_locale', 'env_timezone', 'env_color_scheme']) {
+        if (typeof props[k] !== 'string' || (props[k] as string).length === 0) issues.push(`properties.${k} missing`)
+      }
+      for (const k of ['env_viewport_w', 'env_viewport_h', 'env_screen_w', 'env_screen_h', 'env_dpr', 'env_cpu_cores']) {
+        if (typeof props[k] !== 'number') issues.push(`properties.${k} missing`)
+      }
+      for (const k of ['env_touch', 'env_cookie_enabled']) {
+        if (typeof props[k] !== 'boolean') issues.push(`properties.${k} missing`)
+      }
+    }
     // (4) not tagged schema-invalid
     if (props.schema_valid === false) {
       issues.push(`row tagged schema_valid=false: ${JSON.stringify(props.schema_issues ?? [])}`)
