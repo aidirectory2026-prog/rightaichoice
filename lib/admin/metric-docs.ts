@@ -296,6 +296,62 @@ const docs = {
     caveats: ['A raw stream shows rows, not truth-about-people: one human can be several distinct_ids (devices, cookie clears).'],
   },
 
+  // ── Funnels & conversion (Phase 10.5b) ───────────────────────────────
+  funnel_plan_journey: {
+    key: 'funnel_plan_journey',
+    title: 'Plan journey funnel',
+    whatItCounts:
+      'How far visitors get INSIDE the plan flow: started → intake submitted → plan completed → clicked a recommended tool. Event counts per step.',
+    howComputed:
+      'Four direct PostgREST counts on user_events (plan_started / plan_intake_submitted / plan_completed / plan_results_tool_clicked), window >= start AND < end, humans-only unless toggled, optional filters via the applyFilters() mirror. Step-over-step % = step ÷ previous step.',
+    whyTrusted:
+      'Same getPlanFunnel the audited insights page has always used — pinned-week values frozen in the baseline snapshot oracle; the direct-select path is verifier-covered; every step event has a schema + synthetic recipe (plan_results_tool_clicked permanently at 0 was exactly the class of bug the registry CI guard now prevents).',
+    caveats: ['Counts events, not unique users — one person restarting the flow counts twice.', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+  funnel_plan_acquisition: {
+    key: 'funnel_plan_acquisition',
+    title: 'Plan acquisition funnel (CTA → signup → plan)',
+    whatItCounts:
+      'The full path INTO the plan flow: CTA shown → CTA clicked → signup modal shown → (4a OAuth / 4b skipped branches) → signup completed → /plan loaded → plan finalized.',
+    howComputed:
+      'Eight direct counts on user_events (lib/admin/plan-conversion.ts), window >= start AND < end, humans-only by default (audit F6: conversion metrics exclude bots), optional filters via the shared mirror. 4a/4b are BRANCHES off step 3 — they are excluded from the main-path step-over-step % and shown with their % of the modal step instead.',
+    whyTrusted:
+      'F6 (humans-only conversions) was a documented Phase 2 fix; pinned-week funnel frozen in the snapshot oracle; each step event is schema-registered with a synthetic recipe (modal steps browser-verified, OAuth steps payload-verified and labeled as such).',
+    caveats: ['Steps count events, not deduped users; a modal re-open counts again.', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+  plan_surface_breakdown: {
+    key: 'plan_surface_breakdown',
+    title: 'Per-surface conversion',
+    whatItCounts:
+      'Which CTA placement (sticky bar / inline card / navbar / homepage / plan page) pulls impressions, clicks and signups.',
+    howComputed:
+      "Per surface: counts of plan_cta_impression / plan_cta_clicked filtered on properties->>surface (signups on properties->>source_surface), window + humans-only default + optional filters via the shared mirror. The final ALL row is computed WITHOUT the surface property filter — a built-in parity check: if per-surface rows don't roughly sum to it, events are firing without a surface prop.",
+    whyTrusted:
+      'The parity row is the trust mechanism — a silent JSONB-filter failure becomes a visible discrepancy instead of fake zeros; surface is a schema-required property of both CTA events (CI-guarded); pinned-week values in the snapshot oracle.',
+    caveats: ['ALL row > sum of rows means some events carry no/unknown surface value — investigate before trusting per-surface CTR.'],
+  },
+  plan_intent_stream: {
+    key: 'plan_intent_stream',
+    title: 'Intent stream (typed goals)',
+    whatItCounts:
+      'Every goal a visitor actually typed into the plan CTA in the window — including people who bounced at the signup gate. The rawest demand signal we have.',
+    howComputed:
+      'Direct select on the plan_intents table (written durably at type-time, before any auth), newest first, window >= start AND < end. plan_intents has NO bot flag and no device/geo columns — the bots toggle and optional filters DO NOT apply to this panel (only the date range does).',
+    whyTrusted:
+      'plan_intents is a ground-truth capture table (server-written), not derived from the analytics mirror — it survives ad-blockers; rows link to the visitor timeline for replay.',
+    caveats: ['Unfiltered by bots — a scripted visitor typing into the box would appear here.', 'One visitor can produce several intents (retypes).'],
+  },
+  plan_link_rate: {
+    key: 'plan_link_rate',
+    title: 'Anon → known link rate',
+    whatItCounts: 'Share of typed goals that were later tied to an authenticated account (same-session OAuth or later reconciliation).',
+    howComputed:
+      'Two counts on plan_intents in the window: total rows vs rows with user_id IS NOT NULL; rate = linked ÷ total. Range-only (see Intent stream — the table has no filter dimensions).',
+    whyTrusted:
+      'Pinned-week value frozen in the snapshot oracle; linkage itself is exercised by the plan_intent_linked_to_user reconciliation path and verifiable per row in the stream below.',
+    caveats: ['A goal typed today can become "linked" tomorrow — the rate for a recent window keeps improving as reconciliation catches up.'],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

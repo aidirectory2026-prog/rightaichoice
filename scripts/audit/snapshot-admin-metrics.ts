@@ -112,9 +112,12 @@ async function main() {
   await both('insights.getTopComparedTools', (b) => insights.getTopComparedTools(baseFilters(SEL, b)))
   await both('insights.getReturningSummary', (b) => insights.getReturningSummary(baseFilters(SEL, b)))
   await one('insights.getReconciliationStats', () => insights.getReconciliationStats(SEL))
-  await one('planConversion.getPlanFunnel', () => planConv.getPlanFunnel(SEL))
-  await one('planConversion.getSurfaceBreakdown', () => planConv.getSurfaceBreakdown(SEL))
-  await one('planConversion.getLinkRate', () => planConv.getLinkRate(SEL))
+  // Phase 10.5b — plan-conversion fns converted to AdminFilters; baseFilters
+  // keeps the keys' shape and (via the null fast-path + humans-only default)
+  // their pinned values byte-identical.
+  await one('planConversion.getPlanFunnel', () => planConv.getPlanFunnel(baseFilters(SEL, false)))
+  await one('planConversion.getSurfaceBreakdown', () => planConv.getSurfaceBreakdown(baseFilters(SEL, false)))
+  await one('planConversion.getLinkRate', () => planConv.getLinkRate(baseFilters(SEL, false)))
 
   // Now-anchored functions — recorded for reference, excluded from strict diff.
   const volatile: Record<string, Snap> = {}
