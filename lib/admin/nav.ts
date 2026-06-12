@@ -121,11 +121,26 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'SEO & Growth',
     items: [
-      { href: '/admin/seo-pulse', label: 'SEO Pulse', filterCapabilities: [] },
+      {
+        href: '/admin/seo-pulse',
+        label: 'SEO Pulse',
+        description: 'Weekly GSC triage queue; WoW card pairs the latest two snapshots (not date-ranged).',
+        filterCapabilities: [],
+      },
       { href: '/admin/seo-impact', label: 'SEO Impact', filterCapabilities: [] },
       { href: '/admin/niche-tracker', label: 'Niche Tracker', filterCapabilities: [] },
-      { href: '/admin/ai-citations', label: 'AI Citations', filterCapabilities: [] },
-      { href: '/admin/authority', label: 'Authority', filterCapabilities: [] },
+      {
+        href: '/admin/ai-citations',
+        label: 'AI Citations',
+        description: 'Manual answer-engine citation log; KPIs use a fixed rolling 30d window (doc 11).',
+        filterCapabilities: [],
+      },
+      {
+        href: '/admin/authority',
+        label: 'Authority',
+        description: 'Referring-domain ledger — the "New" tile honors the date range.',
+        filterCapabilities: ['range'],
+      },
       { href: '/admin/tier1-review', label: 'Tier-1 Review', filterCapabilities: [] },
     ],
   },

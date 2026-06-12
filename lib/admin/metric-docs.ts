@@ -413,6 +413,103 @@ const docs = {
     caveats: ['Compared-with reflects profile aggregates (per-visitor lifetime arrays scoped by last-active) — it answers "who", not "how many times".', EPOCHS.mirror, EPOCHS.botRecall],
   },
 
+  // ── SEO & Growth (Phase 10.5c) ───────────────────────────────────────
+  seo_pulse_wow: {
+    key: 'seo_pulse_wow',
+    title: 'Site-wide GSC totals (WoW)',
+    whatItCounts:
+      'Google Search Console clicks / impressions / CTR / average position for the whole site over the trailing 7-day and 28-day scopes, with the delta against the PREVIOUS weekly snapshot of the same scope.',
+    howComputed:
+      'The latest two rows per scope from gsc_snapshots (snapshot_date desc, totals jsonb written verbatim from the GSC API by the weekly snapshot-gsc cron, Mon). Delta = current − prior. This is snapshot pairing, NOT the global date filter — the page deliberately keeps this custom control.',
+    whyTrusted:
+      'Phase 1 agent audit verified the WoW totals exactly against the stored gsc_snapshots rows (PASS, metric-audit.md "Also verified PASS"); the numbers are Google\'s own — we store and difference them, we never recompute them.',
+    caveats: [
+      'GSC data lags ~2 days and Google revises recent days — two snapshots taken a week apart are comparable, but neither matches the live GSC UI for the same window.',
+      'No snapshot row → "No snapshot yet": the weekly cron has not run for that scope.',
+    ],
+  },
+  seo_pulse_queue: {
+    key: 'seo_pulse_queue',
+    title: 'Triage queue counts',
+    whatItCounts:
+      'Open weekly-loop actions by status: proposed (awaiting a decision), accepted (awaiting execution), executed (measuring for 4 weeks), plus the critical/high priority split of the proposed queue.',
+    howComputed:
+      "One select on weekly_loop_actions with status IN ('proposed','accepted','rejected'-excluded …) — exactly the rows rendered in the cards below, counted in app code after the fetch. Accept / Reject / Mark-executed are server actions that update the same table.",
+    whyTrusted:
+      'Phase 1 agent audit verified the action counts exactly (PASS); the counts and the visible card lists come from the SAME fetched rows, so the tiles can never disagree with the queue you see.',
+    caveats: ['Not date-ranged — the queue is a live worklist, not a windowed metric.'],
+  },
+  seo_impact_summary: {
+    key: 'seo_impact_summary',
+    title: 'Title-change impact summary',
+    whatItCounts:
+      'For approved title overrides: how many have a +28-day outcome measurement, how many are still waiting, the average CTR lift and the average position gain across measured pages that had impressions in BOTH windows.',
+    howComputed:
+      'title_overrides rows with a baseline captured and reverted_at IS NULL; measured = measured_at set (outcome_* columns written by the weekly seo-impact cron 28 days after approval against the latest GSC snapshot); avg lift = mean(outcome_ctr − baseline_ctr); position gain = mean(baseline_position − outcome_position), so positive = moved UP the SERP.',
+    whyTrusted:
+      'Source-traced in the Phase 1 audit sweep; baseline and outcome are both stored GSC numbers (never recomputed), and the comparable-pages rule (impressions in both windows) is applied in page code you can read at app/admin/seo-impact/page.tsx.',
+    caveats: [
+      'Before/after is NOT a controlled experiment — seasonality and ranking shifts land in the same delta.',
+      'Pages with zero impressions in either window are excluded from the averages but still listed.',
+    ],
+  },
+  niche_tracker_summary: {
+    key: 'niche_tracker_summary',
+    title: 'Niche page tracker summary',
+    whatItCounts:
+      'The /best niche pages being tracked: how many have ANY impressions in the latest 28-day GSC snapshot, how many gained impressions vs the prior snapshot, and total impressions/clicks across all tracked pages.',
+    howComputed:
+      'Single select on the service-role niche_page_latest view (seeded from lib/data/best-pages.ts joined to the latest two gsc_snapshots), summed in app code. Refreshes weekly when the Mon snapshot cron lands — not affected by the global date filter.',
+    whyTrusted:
+      'Phase 1 agent audit recomputed the view exactly from the GSC snapshot JSONB (PASS — 64 tracked / 398 impressions at audit time); totals are sums over the same rows the table below displays.',
+    caveats: [
+      'Pages built recently read 0 until Google reports them (~2–4 weeks).',
+      'Clicks stay near 0 while positions sit on page 4+ — authority-gated, not a page-quality signal.',
+    ],
+  },
+  ai_citations_kpis: {
+    key: 'ai_citations_kpis',
+    title: 'AI citation KPIs (30d)',
+    whatItCounts:
+      'Manually logged answer-engine checks over the last 30 days: how many times RightAIChoice was cited, across how many distinct engines, and the citation rate (cited ÷ checked). Target: 10 citations / 30d (doc 11).',
+    howComputed:
+      "SQL on ai_citations via _admin_audit_exec with checked_on >= current_date − 30 days — a true rolling DB window computed at query time, deliberately FIXED at 30 days (the doc-11 KPI definition) rather than following the global date filter.",
+    whyTrusted:
+      'The table is a manual log — every row was typed in by the operator, so the KPI is exactly as trustworthy as the logging discipline; the SQL is a 3-aggregate one-liner you can re-run verbatim from the page source (Phase 1: verified trivially).',
+    caveats: [
+      'Manual-first tracking: weeks with no checking discipline read as zero citations even if engines cite us.',
+      'A "not cited" row is signal too — log misses, or the rate is meaningless.',
+    ],
+  },
+  authority_summary: {
+    key: 'authority_summary',
+    title: 'Referring-domain tracker',
+    whatItCounts:
+      'Unique referring domains ever logged, how many were first seen inside the selected window, the average DA estimate over rows that have one, and the top acquisition channel all-time.',
+    howComputed:
+      'One select over referring_domains (manually curated via the add-form + 7O outreach workflows); the window count filters first_seen_at >= range start in app code; channel totals and avg DA are computed over the same fetched rows the tables below render.',
+    whyTrusted:
+      'Source-traced in Phase 1; the tiles aggregate exactly the rows listed on this page — recount the table and you have re-verified the tile.',
+    caveats: [
+      'Manually curated — a backlink nobody logged does not exist here (Ahrefs/Moz are the discovery tools, this is the ledger).',
+      'DA estimates are whatever was typed at log time; they are not refreshed automatically.',
+    ],
+  },
+  tier1_queue: {
+    key: 'tier1_queue',
+    title: 'Tier-1 title rewrite queue',
+    whatItCounts:
+      'AI-suggested title rewrites awaiting review, bucketed by current GSC position (1A pos≤10 / 1B 11–20 / 1C 21–30) and by binding constraint (title-bound / mixed / rank-bound), plus how many overrides are currently active.',
+    howComputed:
+      'Reads candidates/tier1-rewrites.json (generated by npm run tier1:rewrite from GSC candidates + DeepSeek suggestions, priority = impressions × title-leverage) and joins active title_overrides (reverted_at IS NULL) from the DB. File-based by design — the queue is a build artifact, not a live metric.',
+    whyTrusted:
+      'Counts are client-visible filters over the same JSON file rendered below; the active-override count is a direct DB select. Approvals write through the audited title_overrides path that /admin/seo-impact measures 28 days later.',
+    caveats: [
+      'The JSON is as fresh as its last generation run (date shown in the header) — regenerate before a review session.',
+      'Priority is a heuristic for ROI ordering, not a measurement.',
+    ],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

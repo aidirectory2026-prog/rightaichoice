@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Niche Tracker' }
@@ -8,6 +10,12 @@ export const metadata = { title: 'Niche Tracker' }
 // niche_page_metrics) seeded from lib/data/best-pages.ts + gsc_snapshots.
 // GSC snapshots refresh weekly (Mon cron), so this table moves weekly; pages
 // built recently show 0 until Google reports impressions for them (~weeks).
+//
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled summary cards with ⓘ provenance;
+// dropped the page-local max-w wrapper that double-padded inside the shell).
+// Data + query semantics unchanged. Not date-ranged: the view always shows
+// the latest weekly 28-day GSC snapshot, so the global filter does not apply.
 
 type LatestRow = {
   slug: string
@@ -48,31 +56,34 @@ export default async function NicheTrackerPage() {
   const gainers = withData.filter((r) => (r.impr_delta_vs_prior ?? 0) > 0).length
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-baseline justify-between flex-wrap gap-2">
-        <h1 className="text-xl font-semibold text-white">Niche page tracker</h1>
+    <div>
+      <PageHeader>
         <p className="text-xs text-zinc-500">
           {rows.length} tracked · 28-day GSC window · snapshot {snapshotDate ?? '—'}
         </p>
-      </div>
-      <p className="mt-1 text-sm text-zinc-500">
+      </PageHeader>
+      <p className="-mt-2 max-w-3xl text-xs text-zinc-500">
         Impressions for the niche <code className="text-zinc-400">/best</code> pages. Data refreshes
-        weekly; pages built recently read 0 until Google reports them (~2–4 weeks). Clicks stay near
-        0 until positions move off page 4+ — that is authority-gated (doc 20), not a page problem.
+        weekly (latest GSC snapshot — the global range filter does not apply); pages built recently
+        read 0 until Google reports them (~2–4 weeks). Clicks stay near 0 until positions move off
+        page 4+ — that is authority-gated (doc 20), not a page problem.
       </p>
 
-      {/* Summary */}
+      {/* Summary — kit-styled cards (exact values kept; counts unchanged) */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: 'Tracked pages', value: rows.length },
-          { label: 'With impressions', value: withData.length },
-          { label: 'Gaining vs prior', value: gainers },
+          { label: 'Tracked pages', value: rows.length.toLocaleString() },
+          { label: 'With impressions', value: withData.length.toLocaleString() },
+          { label: 'Gaining vs prior', value: gainers.toLocaleString() },
           { label: 'Total impressions', value: totalImpr.toLocaleString() },
           { label: 'Total clicks', value: totalClicks.toLocaleString() },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-            <div className="text-2xl font-semibold text-white">{s.value}</div>
-            <div className="text-xs text-zinc-500">{s.label}</div>
+          <div key={s.label} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="flex items-center justify-between gap-1">
+              <div className="text-xs uppercase tracking-wider text-zinc-500">{s.label}</div>
+              <MetricInfo docKey="niche_tracker_summary" />
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-white">{s.value}</div>
           </div>
         ))}
       </div>

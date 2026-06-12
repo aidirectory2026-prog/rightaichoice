@@ -1,4 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
+
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled KPI cards with ⓘ provenance). Data +
+// query semantics unchanged. Not date-ranged by design: measurement is
+// pinned at +28 days after approval, so the global filter bar does not
+// apply — stated below.
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'SEO Impact' }
@@ -68,27 +76,31 @@ export default async function SeoImpactPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">SEO Impact</h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <PageHeader />
+        <p className="-mt-3 max-w-3xl text-xs text-zinc-500">
           Before/after lift on title changes, measured {MEASURE_AFTER_DAYS} days after approval
           against the latest GSC snapshot. CTR lift compares pages with impressions in both windows.
+          Not date-ranged: the +{MEASURE_AFTER_DAYS}d measurement window is fixed by design, so the
+          global range filter does not apply here.
         </p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Measured" value={String(measured.length)} />
-        <Kpi label="Awaiting +28d" value={String(pending.length)} />
+        <Kpi label="Measured" value={String(measured.length)} info={<MetricInfo docKey="seo_impact_summary" />} />
+        <Kpi label="Awaiting +28d" value={String(pending.length)} info={<MetricInfo docKey="seo_impact_summary" />} />
         <Kpi
           label="Avg CTR lift"
           value={avgCtrLift == null ? '—' : `${avgCtrLift >= 0 ? '+' : ''}${(avgCtrLift * 100).toFixed(2)}%`}
           good={avgCtrLift != null && avgCtrLift > 0}
           bad={avgCtrLift != null && avgCtrLift < 0}
+          info={<MetricInfo docKey="seo_impact_summary" />}
         />
         <Kpi
           label="Avg position gain"
           value={avgPosGain == null ? '—' : `${avgPosGain >= 0 ? '+' : ''}${avgPosGain.toFixed(1)}`}
           good={avgPosGain != null && avgPosGain > 0}
           bad={avgPosGain != null && avgPosGain < 0}
+          info={<MetricInfo docKey="seo_impact_summary" />}
         />
       </div>
       {comparable.length > 0 && (
@@ -151,12 +163,17 @@ export default async function SeoImpactPage() {
   )
 }
 
-function Kpi({ label, value, good, bad }: { label: string; value: string; good?: boolean; bad?: boolean }) {
+// Kit-styled KPI card (string values — kit MetricCard is number-only) with
+// the shared ⓘ provenance slot, mirroring components/admin/charts MetricCard.
+function Kpi({ label, value, good, bad, info }: { label: string; value: string; good?: boolean; bad?: boolean; info?: React.ReactNode }) {
   const color = good ? 'text-emerald-400' : bad ? 'text-rose-400' : 'text-white'
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className={`text-xl font-bold mt-1 ${color}`}>{value}</div>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+        {info ?? null}
+      </div>
+      <div className={`mt-2 text-2xl font-semibold ${color}`}>{value}</div>
     </div>
   )
 }

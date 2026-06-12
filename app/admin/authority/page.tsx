@@ -1,9 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { Link as LinkIcon, TrendingUp, Globe } from 'lucide-react'
 import { AddReferringDomainForm } from '@/components/admin/add-referring-domain-form'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { RangePicker } from '@/components/admin/range-picker'
 import { parseRange } from '@/lib/admin/range'
 import Link from 'next/link'
+
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb with the range picker in the header slot, kit-styled
+// stat cards with ⓘ provenance). Data + query semantics unchanged: genuinely
+// date-ranged via the existing RangePicker (`range` capability in nav.ts) —
+// referring_domains has no bot/device/event dimensions, so the full smart
+// filter bar would be dead controls here.
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -81,15 +90,13 @@ export default async function AuthorityPage({
 
   return (
     <div>
-      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Authority</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Referring-domain tracker · window: {sel.label}. Powers weekly 7O outreach review.
-          </p>
-        </div>
+      <PageHeader>
         <RangePicker active={sel.key} />
-      </div>
+      </PageHeader>
+      <p className="mb-8 -mt-2 max-w-3xl text-xs text-zinc-500">
+        Referring-domain tracker · window: {sel.label}. Powers weekly 7O outreach review.
+        Date range applies to the &ldquo;New&rdquo; tile; the domain/channel tables are all-time.
+      </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <StatCard
@@ -97,24 +104,28 @@ export default async function AuthorityPage({
           label="Referring domains"
           value={rows.length.toLocaleString()}
           sub="all-time, unique"
+          info={<MetricInfo docKey="authority_summary" />}
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
           label={`New · ${sel.label}`}
           value={inWindow.length.toLocaleString()}
           sub={inWindow.length >= 5 ? 'on pace' : 'below target (5+/window)'}
+          info={<MetricInfo docKey="authority_summary" />}
         />
         <StatCard
           icon={<Globe className="h-4 w-4" />}
           label="Avg DA"
           value={avgDa === null ? '—' : String(avgDa)}
           sub="Moz/Ahrefs estimate"
+          info={<MetricInfo docKey="authority_summary" />}
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Top channel"
           value={channels[0]?.[0] ? CHANNEL_LABEL[channels[0][0]] : '—'}
           sub={channels[0] ? `${channels[0][1]} domains` : 'no data yet'}
+          info={<MetricInfo docKey="authority_summary" />}
         />
       </div>
 
@@ -213,24 +224,31 @@ export default async function AuthorityPage({
   )
 }
 
+// Kit-styled stat card (string values + icon + sub line) with the shared
+// ⓘ provenance slot, mirroring components/admin/charts MetricCard.
 function StatCard({
   icon,
   label,
   value,
   sub,
+  info,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   sub: string
+  info?: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
-      <div className="flex items-center gap-2 text-zinc-400 mb-1">
-        {icon}
-        <span className="text-xs font-medium">{label}</span>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <div className="flex items-center gap-2 text-zinc-400">
+          {icon}
+          <span className="text-xs font-medium">{label}</span>
+        </div>
+        {info ?? null}
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
+      <div className="text-2xl font-semibold text-white">{value}</div>
       <div className="text-xs text-zinc-500 mt-1">{sub}</div>
     </div>
   )

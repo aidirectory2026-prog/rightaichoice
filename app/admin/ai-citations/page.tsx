@@ -5,7 +5,15 @@
 // was cited, by which engine, and where. KPIs surface the 30-day target (10
 // citations) + citation rate. Server-rendered via getAdminClient; admin-gated
 // by app/admin/layout.tsx. Writes go through ./actions.ts.
+//
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled KPI cards with ⓘ provenance). Data +
+// query semantics unchanged: the KPI window stays a FIXED rolling 30 days
+// (the doc-11 target definition — custom control kept), so the global
+// range filter does not apply here.
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { addCitation, deleteCitation } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -93,12 +101,13 @@ export default async function AiCitationsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">AI Citations</h1>
-        <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+        <PageHeader />
+        <p className="-mt-3 max-w-3xl text-xs text-zinc-500">
           Manual log of when RightAIChoice is cited by an answer engine (doc 08 AEO/GEO).
           Run ~20–30 representative queries weekly through ChatGPT, Claude, Perplexity, and
-          Google AI Overview; log each hit (and notable misses). The 30-day KPI target is{' '}
-          <span className="text-zinc-200">{KPI_TARGET} citations</span>.
+          Google AI Overview; log each hit (and notable misses). The KPI window is a fixed
+          rolling 30 days (doc-11 target: <span className="text-zinc-300">{KPI_TARGET} citations</span>)
+          — the global range filter does not apply here.
         </p>
       </div>
 
@@ -109,10 +118,11 @@ export default async function AiCitationsPage() {
           value={`${cited30}`}
           sub={`target ${KPI_TARGET}`}
           tone={cited30 >= KPI_TARGET ? 'ok' : cited30 > 0 ? 'warn' : 'bad'}
+          info={<MetricInfo docKey="ai_citations_kpis" />}
         />
-        <Kpi label="Distinct engines (30d)" value={`${engines30}`} />
-        <Kpi label="Citation rate (30d)" value={`${rate30}%`} sub={`${cited30}/${checked30} checked`} />
-        <Kpi label="Total logged" value={`${totalAll ?? rows.length}`} />
+        <Kpi label="Distinct engines (30d)" value={`${engines30}`} info={<MetricInfo docKey="ai_citations_kpis" />} />
+        <Kpi label="Citation rate (30d)" value={`${rate30}%`} sub={`${cited30}/${checked30} checked`} info={<MetricInfo docKey="ai_citations_kpis" />} />
+        <Kpi label="Total logged" value={`${totalAll ?? rows.length}`} info={<MetricInfo docKey="ai_citations_kpis" />} />
       </div>
 
       {byEngine.length > 0 && (
@@ -264,13 +274,18 @@ function Field({ label, className = '', children }: { label: string; className?:
   )
 }
 
-function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'ok' | 'bad' | 'warn' }) {
+// Kit-styled KPI card (tone coloring + sub line — kit MetricCard is
+// plain-number-only) with the shared ⓘ provenance slot.
+function Kpi({ label, value, sub, tone, info }: { label: string; value: string; sub?: string; tone?: 'ok' | 'bad' | 'warn'; info?: React.ReactNode }) {
   const color =
     tone === 'bad' ? 'text-rose-400' : tone === 'warn' ? 'text-amber-400' : tone === 'ok' ? 'text-emerald-400' : 'text-white'
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className={`mt-1 text-xl font-bold ${color}`}>{value}</div>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+        {info ?? null}
+      </div>
+      <div className={`mt-2 text-2xl font-semibold ${color}`}>{value}</div>
       {sub && <div className="mt-0.5 text-[10px] text-zinc-600">{sub}</div>}
     </div>
   )

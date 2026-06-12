@@ -1,8 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
+import { MetricCard } from '@/components/admin/charts'
 import { acceptAction, rejectAction, markExecuted } from './actions'
 
 // Phase 9 Day-4 Part 2 (2026-05-29) — Weekly SEO triage review page.
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit MetricCards, ⓘ provenance popovers).
+// Data + query semantics unchanged: the WoW card keeps its custom GSC
+// snapshot pairing (latest two weekly snapshots per scope) — this page is
+// snapshot-paired, NOT date-ranged, so the global filter bar does not apply.
 //
 // Reads weekly_loop_actions (status IN proposed/accepted) plus the latest
 // gsc_diffs and gsc_snapshots for the WoW summary card at the top.
@@ -166,21 +174,24 @@ export default async function SeoPulsePage() {
 
   return (
     <div className="text-zinc-300">
-      <div className="flex items-baseline justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">SEO Pulse</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Weekly triage queue · {latestSnapshotDate ? `snapshot ${latestSnapshotDate}` : 'no snapshot yet'}
-          </p>
-        </div>
+      <PageHeader>
         <div className="text-xs text-zinc-500">
           Crons: triage-gsc (Mon 07:00 UTC) · email-weekly-digest (Mon 08:00 UTC)
         </div>
-      </div>
+      </PageHeader>
 
-      {/* WoW summary card */}
+      <p className="mb-6 -mt-2 max-w-3xl text-xs text-zinc-500">
+        Weekly triage queue · {latestSnapshotDate ? `snapshot ${latestSnapshotDate}` : 'no snapshot yet'}.
+        Snapshot-paired, not date-ranged: the WoW card compares the latest two weekly GSC snapshots
+        per scope (custom control kept — the global range filter does not apply here).
+      </p>
+
+      {/* WoW summary card — custom GSC snapshot pairing, kept as-is */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
-        <h2 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">Site-wide totals</h2>
+        <h2 className="mb-3 flex items-center gap-1 text-xs uppercase tracking-wider text-zinc-500">
+          Site-wide totals
+          <MetricInfo docKey="seo_pulse_wow" align="left" />
+        </h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-zinc-500 uppercase tracking-wider">
@@ -220,28 +231,13 @@ export default async function SeoPulsePage() {
         </table>
       </div>
 
-      {/* Counts strip */}
-      <div className="flex gap-3 mb-6 text-sm">
-        <div className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2">
-          <span className="text-zinc-500 text-xs">Proposed</span>{' '}
-          <span className="text-white font-semibold ml-1">{proposed.length}</span>
-        </div>
-        <div className="bg-emerald-950 border border-emerald-900 rounded px-3 py-2">
-          <span className="text-emerald-500 text-xs">Accepted</span>{' '}
-          <span className="text-emerald-300 font-semibold ml-1">{accepted.length}</span>
-        </div>
-        <div className="bg-blue-950 border border-blue-900 rounded px-3 py-2">
-          <span className="text-blue-500 text-xs">Executed</span>{' '}
-          <span className="text-blue-300 font-semibold ml-1">{executed.length}</span>
-        </div>
-        <div className="bg-rose-950 border border-rose-900 rounded px-3 py-2">
-          <span className="text-rose-500 text-xs">Critical</span>{' '}
-          <span className="text-rose-300 font-semibold ml-1">{byPriority.critical}</span>
-        </div>
-        <div className="bg-amber-950 border border-amber-900 rounded px-3 py-2">
-          <span className="text-amber-500 text-xs">High</span>{' '}
-          <span className="text-amber-300 font-semibold ml-1">{byPriority.high}</span>
-        </div>
+      {/* Counts strip — kit MetricCards (same counts, new presentation) */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <MetricCard label="Proposed" value={proposed.length} info={<MetricInfo docKey="seo_pulse_queue" />} />
+        <MetricCard label="Accepted" value={accepted.length} info={<MetricInfo docKey="seo_pulse_queue" />} />
+        <MetricCard label="Executed" value={executed.length} info={<MetricInfo docKey="seo_pulse_queue" />} />
+        <MetricCard label="Critical (proposed)" value={byPriority.critical} info={<MetricInfo docKey="seo_pulse_queue" />} />
+        <MetricCard label="High (proposed)" value={byPriority.high} info={<MetricInfo docKey="seo_pulse_queue" />} />
       </div>
 
       {/* Proposed queue */}
