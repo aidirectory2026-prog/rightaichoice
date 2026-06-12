@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { type DayWindow, getReconciliationStats } from '../queries'
 import { parseRange } from '@/lib/admin/range'
+import { baseFilters } from '@/lib/admin/filters'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -29,7 +30,9 @@ export default async function ReconciliationPage({
   const requested = Number(sp.days ?? '7') as DayWindow
   const days: DayWindow = ([1, 7, 30] as DayWindow[]).includes(requested) ? requested : 7
 
-  const stats = await getReconciliationStats(parseRange({ days: String(days) }))
+  // Range-only on this page (includeBots is irrelevant — the bot split IS
+  // the metric; see the queries.ts note).
+  const stats = await getReconciliationStats(baseFilters(parseRange({ days: String(days) }), false))
 
   const humanEvents = stats.client_events - stats.bot_events
   const humanVisitors = stats.unique_distinct_ids_no_bots

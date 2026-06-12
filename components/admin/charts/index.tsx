@@ -145,31 +145,58 @@ export function BarList({
   )
 }
 
-export function FunnelStrip({ title, steps }: { title: string; steps: ChartDatum[] }) {
+/**
+ * Phase 10.5b.3 — additive, optional props only (existing call sites are
+ * untouched): `info` slot (ⓘ provenance popover) and per-step `branch`.
+ * A branch step (e.g. the plan modal's 4a OAuth / 4b skip alternatives) is
+ * rendered indented in sky and shows its % AGAINST THE LAST MAIN STEP —
+ * and is EXCLUDED from the main path, so step-over-step conversion % always
+ * compares true sequential steps.
+ */
+export type FunnelStepDatum = ChartDatum & { branch?: boolean }
+
+export function FunnelStrip({
+  title, steps, info,
+}: {
+  title: string
+  steps: FunnelStepDatum[]
+  /** Optional ⓘ slot (MetricInfo) rendered next to the title. */
+  info?: ReactNode
+}) {
   const max = steps.reduce((m, s) => Math.max(m, s.value), 1)
+  let prevMain: number | null = null // value of the last NON-branch step seen
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="mb-3 text-sm font-medium text-zinc-300">{title}</div>
+      <div className="mb-3 flex items-center gap-1">
+        <div className="text-sm font-medium text-zinc-300">{title}</div>
+        {info ?? null}
+      </div>
       <div className="space-y-2">
         {steps.map((s, i) => {
           const pctOfMax = max > 0 ? (s.value / max) * 100 : 0
-          const prev = i === 0 ? 0 : steps[i - 1].value
-          const pctOfPrev = i === 0 ? 100 : prev > 0 ? (s.value / prev) * 100 : 0
+          const ref = prevMain // % reference: the last main step before this one
+          if (!s.branch) prevMain = s.value
+          const pctOfPrev = ref === null ? null : ref > 0 ? (s.value / ref) * 100 : 0
           return (
-            <div key={`${s.label}-${i}`}>
+            <div key={`${s.label}-${i}`} className={s.branch ? 'pl-4' : undefined}>
               <div className="flex items-baseline justify-between text-xs">
-                <span className="capitalize text-zinc-200">{s.label}</span>
+                <span className={s.branch ? 'text-sky-300/90' : 'capitalize text-zinc-200'}>
+                  {s.branch ? '↳ ' : ''}{s.label}
+                </span>
                 <span className="font-mono text-zinc-400">
                   {fmt(s.value)}
-                  {i > 0 ? (
-                    <span className={`ml-2 ${pctOfPrev >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {pctOfPrev !== null ? (
+                    <span
+                      className={`ml-2 ${s.branch ? 'text-sky-500' : pctOfPrev >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}
+                      title={s.branch ? 'Branch — % of the last main step (not part of the main path)' : '% of the previous main step'}
+                    >
                       {pctOfPrev.toFixed(0)}%
                     </span>
                   ) : null}
                 </span>
               </div>
               <div className="mt-0.5 h-2 overflow-hidden rounded bg-zinc-950">
-                <div className="h-full bg-emerald-700" style={{ width: `${pctOfMax}%` }} />
+                <div className={`h-full ${s.branch ? 'bg-sky-800/70' : 'bg-emerald-700'}`} style={{ width: `${pctOfMax}%` }} />
               </div>
             </div>
           )

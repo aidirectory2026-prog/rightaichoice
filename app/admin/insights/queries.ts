@@ -22,6 +22,7 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import type { RangeSelection } from '@/lib/admin/range'
 import { applyFilters, filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
+import { schemaPropKeys } from '@/lib/admin/event-props'
 
 // The 12 RPCs in migrations 096+098 aren't in the generated Supabase
 // types yet, so wrap rpc() in a loosely-typed helper.
@@ -220,16 +221,18 @@ export async function getPlanFunnel(f: AdminFilters): Promise<MetricResult[]> {
   }))
 }
 
-export async function getTopExistingTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopExistingTools(f: AdminFilters): Promise<BarRow[]> {
   const db = getAdminClient()
+  const sel = f.range
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'plan_existing_tool_added',
     p_property: 'tool_name',
     p_days: sel.days,
     p_limit: 15,
-    p_include_bots: includeBots,
+    p_include_bots: f.includeBots,
     p_cutoff: sel.cutoffISO,
     p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f, { dropEvent: true }), // event-pinned
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -237,15 +240,19 @@ export async function getTopExistingTools(sel: RangeSelection, includeBots: bool
   }))
 }
 
-export async function getTopUseCases(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopUseCases(f: AdminFilters): Promise<BarRow[]> {
   const db = getAdminClient()
+  const sel = f.range
+  // user_intent_profile aggregate — p_filters restricts to visitors with at
+  // least one matching user_events row (migration 154 §11 semantics).
   const { data } = await rpc(db, 'insights_unnest_intent_array', {
     p_column: 'plan_use_cases_submitted',
     p_days: sel.days,
     p_limit: 10,
-    p_include_bots: includeBots,
+    p_include_bots: f.includeBots,
     p_cutoff: sel.cutoffISO,
     p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f),
   })
   return ((data as Array<{ value: string; users: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -326,16 +333,18 @@ export async function getSearchMetrics(f: AdminFilters): Promise<MetricResult[]>
   ]
 }
 
-export async function getTopSearches(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopSearches(f: AdminFilters): Promise<BarRow[]> {
   const db = getAdminClient()
+  const sel = f.range
   const { data } = await rpc(db, 'insights_top_jsonb_property', {
     p_event_name: 'search_query_submitted',
     p_property: 'query',
     p_days: sel.days,
     p_limit: 15,
-    p_include_bots: includeBots,
+    p_include_bots: f.includeBots,
     p_cutoff: sel.cutoffISO,
     p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f, { dropEvent: true }), // event-pinned
   })
   return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -371,15 +380,18 @@ export async function getChatMetrics(f: AdminFilters): Promise<MetricResult[]> {
   ]
 }
 
-export async function getTopChatTools(sel: RangeSelection, includeBots: boolean): Promise<BarRow[]> {
+export async function getTopChatTools(f: AdminFilters): Promise<BarRow[]> {
   const db = getAdminClient()
+  const sel = f.range
+  // user_intent_profile aggregate — p_filters per migration 154 §11.
   const { data } = await rpc(db, 'insights_unnest_intent_array', {
     p_column: 'ai_chat_tools_mentioned',
     p_days: sel.days,
     p_limit: 15,
-    p_include_bots: includeBots,
+    p_include_bots: f.includeBots,
     p_cutoff: sel.cutoffISO,
     p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f),
   })
   return ((data as Array<{ value: string; users: number }>) ?? []).map((r) => ({
     label: r.value,
@@ -466,6 +478,44 @@ export async function getTopComparedTools(f: AdminFilters): Promise<BarRow[]> {
   }))
 }
 
+// ── Tool engagement heatmap (Phase 10.5b — extracted from the page) ──
+
+export interface ToolHeatmapRow {
+  tool_slug: string
+  tool_name: string | null
+  views: number
+  unique_visitors: number
+  visit_clicks: number
+  ctr_pct: number
+  last_visit_at: string
+}
+
+export async function getToolHeatmap(f: AdminFilters, limit = 500): Promise<ToolHeatmapRow[]> {
+  const db = getAdminClient()
+  const sel = f.range
+  const { data, error } = await rpc(db, 'insights_tool_heatmap', {
+    p_days: sel.days,
+    p_include_bots: f.includeBots,
+    p_limit: limit,
+    // Window-pure since 149; the page previously passed p_days only —
+    // explicit cutoffs make calendar-anchored ranges (today/mtd/custom)
+    // honest instead of approximated by a rolling day count.
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f), // migration 157
+  })
+  if (error) throw new Error(`insights_tool_heatmap failed: ${error.message}`)
+  return ((data as Array<ToolHeatmapRow & { views: number | string; unique_visitors: number | string; visit_clicks: number | string; ctr_pct: number | string }>) ?? []).map((r) => ({
+    tool_slug: r.tool_slug,
+    tool_name: r.tool_name,
+    views: Number(r.views),
+    unique_visitors: Number(r.unique_visitors),
+    visit_clicks: Number(r.visit_clicks),
+    ctr_pct: Number(r.ctr_pct),
+    last_visit_at: r.last_visit_at,
+  }))
+}
+
 // ── Per-tool drill-down ─────────────────────────────────────────────
 
 export interface ToolAudienceDetail {
@@ -477,31 +527,37 @@ export interface ToolAudienceDetail {
   unique_users: number
 }
 
-export async function getToolAudienceDetail(slug: string, sel: RangeSelection, includeBots: boolean): Promise<ToolAudienceDetail> {
+export async function getToolAudienceDetail(slug: string, f: AdminFilters): Promise<ToolAudienceDetail> {
   const db = getAdminClient()
+  const sel = f.range
+  const includeBots = f.includeBots
   const cutoff = sel.cutoffISO
+  const pinned = { dropEvent: true } // every count leg is event-pinned
   const [views, clicks, saves, comparedWith, uniqUsers] = await Promise.all([
-    maybeFilterBots(
+    applyFilters(maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
         .eq('event_name', 'tool_page_viewed').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
-    ),
-    maybeFilterBots(
+    ), f, pinned),
+    applyFilters(maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
         .eq('event_name', 'tool_visit_redirected').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
-    ),
-    maybeFilterBots(
+    ), f, pinned),
+    applyFilters(maybeFilterBots(
       db.from('user_events').select('*', { count: 'exact', head: true })
         .eq('event_name', 'tool_saved').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO)
         .filter('properties->>tool_slug', 'eq', slug),
       includeBots,
-    ),
+    ), f, pinned),
+    // Profile aggregate — p_filters per migration 154 §11 (added in 157).
     rpc(db, 'insights_tool_compared_with', { p_slug: slug, p_days: sel.days, p_limit: 10,
-      p_include_bots: includeBots, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO }),
-    rpc(db, 'distinct_visitors_for_tool', { p_slug: slug, p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: includeBots }).maybeSingle(),
+      p_include_bots: includeBots, p_cutoff: sel.cutoffISO, p_end: sel.endCutoffISO,
+      p_filters: filtersToJsonb(f) }),
+    rpc(db, 'distinct_visitors_for_tool', { p_slug: slug, p_cutoff: cutoff, p_end: sel.endCutoffISO,
+      p_include_bots: includeBots, p_filters: filtersToJsonb(f) }).maybeSingle(),
   ])
   return {
     slug,
@@ -535,27 +591,38 @@ export interface RawEventRow {
   bot_likely: boolean
 }
 
-export interface RawEventsFilter {
+// Phase 10.5b.2 — getRawEvents now takes the full AdminFilters (range +
+// bots + every optional smart filter via the applyFilters() mirror) instead
+// of the old (days, includeBots) pair; an explicit eventName pin drops a
+// global event filter (same value anyway when set from the explorer URL).
+export interface RawEventsQuery {
+  filters: AdminFilters
   eventName?: string
   distinctId?: string
-  days: DayWindow
-  includeBots: boolean
   page: number
   pageSize: number
 }
 
-export async function getRawEvents(f: RawEventsFilter): Promise<{ rows: RawEventRow[]; total: number }> {
+export async function getRawEvents(f: RawEventsQuery): Promise<{ rows: RawEventRow[]; total: number }> {
   const db = getAdminClient()
-  const cutoff = cutoffIso(f.days)
-  let q = db.from('user_events')
-    .select('id,created_at,event_name,distinct_id,user_id,auth_state,source_kind,device_type,page_path,referrer,properties,ip,user_agent,bot_likely', { count: 'exact' })
-    .gte('created_at', cutoff)
+  const sel = f.filters.range
+  let q = applyFilters(
+    maybeFilterBots(
+      db.from('user_events')
+        .select('id,created_at,event_name,distinct_id,user_id,auth_state,source_kind,device_type,page_path,referrer,properties,ip,user_agent,bot_likely', { count: 'exact' })
+        .gte('created_at', sel.cutoffISO)
+        .lt('created_at', sel.endCutoffISO),
+      f.filters.includeBots,
+    ),
+    f.filters,
+    { dropEvent: !!f.eventName },
+  )
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false }) // deterministic within equal timestamps
     .range(f.page * f.pageSize, f.page * f.pageSize + f.pageSize - 1)
 
   if (f.eventName) q = q.eq('event_name', f.eventName)
   if (f.distinctId) q = q.eq('distinct_id', f.distinctId)
-  if (!f.includeBots) q = q.eq('bot_likely', false)
 
   const { data, count } = await q
   return {
@@ -564,11 +631,84 @@ export async function getRawEvents(f: RawEventsFilter): Promise<{ rows: RawEvent
   }
 }
 
-// Used to populate the event-name dropdown in /admin/insights/events
-export async function getDistinctEventNames(): Promise<string[]> {
+// ── Events explorer (Phase 10.5b.2) ────────────────────────────────
+// Per-event window volume with the always-visible bot split + per-IST-day
+// spark series (RPC insights_event_volume_list, migration 157), and the
+// schema-allowlisted property breakdown (insights_event_property_breakdown).
+
+export interface EventVolumeRow {
+  event_name: string
+  events: number
+  bot_events: number
+  visitors: number
+  last_fired: string | null
+  spark: LinePoint[]
+}
+
+export async function getEventVolumeList(f: AdminFilters): Promise<EventVolumeRow[]> {
   const db = getAdminClient()
-  const { data } = await rpc(db, 'insights_top_events', { p_days: 30, p_limit: 200, p_include_bots: true })
-  return ((data as Array<{ event_name: string }>) ?? []).map((r) => r.event_name)
+  const sel = f.range
+  const { data, error } = await rpc(db, 'insights_event_volume_list', {
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_include_bots: f.includeBots,
+    // The list IS the event picker — a global event filter must not
+    // collapse it to one row, so it is deliberately dropped here.
+    p_filters: filtersToJsonb(f, { dropEvent: true }),
+  })
+  if (error) throw new Error(`insights_event_volume_list failed: ${error.message}`)
+  return ((data as Array<{
+    event_name: string
+    events: number | string
+    bot_events: number | string
+    visitors: number | string
+    last_fired: string | null
+    spark: Array<{ date: string; value: number }> | null
+  }>) ?? []).map((r) => ({
+    event_name: r.event_name,
+    events: Number(r.events),
+    bot_events: Number(r.bot_events),
+    visitors: Number(r.visitors),
+    last_fired: r.last_fired,
+    spark: (r.spark ?? []).map((p) => ({ date: p.date, value: Number(p.value) })),
+  }))
+}
+
+export interface EventPropertyBreakdownRow {
+  value: string
+  events: number
+  visitors: number
+}
+
+export async function getEventPropertyBreakdown(
+  event: string,
+  prop: string,
+  f: AdminFilters,
+  limit = 12,
+): Promise<EventPropertyBreakdownRow[]> {
+  // THE allowlist: only properties the event's schema declares may be
+  // queried (lib/admin/event-props.ts derives them from EVENT_SCHEMAS).
+  const allowed = schemaPropKeys(event)
+  if (!allowed.includes(prop)) {
+    throw new Error(`property "${prop}" is not in the ${event} schema — breakdown refused`)
+  }
+  const db = getAdminClient()
+  const sel = f.range
+  const { data, error } = await rpc(db, 'insights_event_property_breakdown', {
+    p_event: event,
+    p_prop: prop,
+    p_filters: filtersToJsonb(f, { dropEvent: true }), // pinned to p_event
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_limit: limit,
+    p_include_bots: f.includeBots,
+  })
+  if (error) throw new Error(`insights_event_property_breakdown failed: ${error.message}`)
+  return ((data as Array<{ value: string; events: number | string; visitors: number | string }>) ?? []).map((r) => ({
+    value: r.value,
+    events: Number(r.events),
+    visitors: Number(r.visitors),
+  }))
 }
 
 export async function getEventsForDistinctId(distinctId: string, limit = 200): Promise<RawEventRow[]> {
@@ -941,18 +1081,22 @@ export async function getCountryFilterOptions(): Promise<string[]> {
   }
 }
 
-export async function getReconciliationStats(sel: RangeSelection): Promise<ReconciliationStats> {
+// Phase 10.5b — AdminFilters conversion. NOTE: the bot semantics here are
+// the METRIC (client/server/bot splits + with/without-bot visitor counts),
+// so f.includeBots is deliberately ignored; optional filters + range apply.
+export async function getReconciliationStats(f: AdminFilters): Promise<ReconciliationStats> {
   const db = getAdminClient()
+  const sel = f.range
   const cutoff = sel.cutoffISO
   const [client, server, bots, allUniq, humanUniq] = await Promise.all([
-    db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('source_kind', 'client').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
-    db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('source_kind', 'server').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
-    db.from('user_events').select('*', { count: 'exact', head: true })
-      .eq('bot_likely', true).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: true }).maybeSingle(),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: false }).maybeSingle(),
+    applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
+      .eq('source_kind', 'client').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
+    applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
+      .eq('source_kind', 'server').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
+    applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
+      .eq('bot_likely', true).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: true, p_filters: filtersToJsonb(f) }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: false, p_filters: filtersToJsonb(f) }).maybeSingle(),
   ])
   return {
     days: sel.days,

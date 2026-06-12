@@ -262,6 +262,157 @@ const docs = {
       'The data path (window + bot + filter predicates) is the verifier-covered direct-select path; the classifier is deliberately coarse and labeled heuristic — buckets, not versions.',
     caveats: ['Heuristic UA parsing: rare browsers land in "other"; sampled at the 10k most recent in-window rows on very large windows.'],
   },
+  // ── Behavior — events explorer (Phase 10.5b) ─────────────────────────
+  events_volume_list: {
+    key: 'events_volume_list',
+    title: 'Event volume list',
+    whatItCounts:
+      'Every event type seen in the window: count per the bots toggle, the always-visible bot share, distinct visitors who fired it, last fire time, and a per-day trend.',
+    howComputed:
+      "RPC insights_event_volume_list (migration 157): one pass over user_events in window >= start AND < end with the shared filter predicate; `events`/`visitors`/`last fired`/spark respect the bots toggle, `bot_events` always counts bot_likely rows so the split never hides; spark buckets are IST calendar days; deterministic ordering (events desc, bot events desc, name asc). A global event filter is deliberately dropped — this list IS the picker.",
+    whyTrusted:
+      'Same shared predicate the filter-matrix verifier proves against raw SQL on every run; per-event totals are reconcilable with the audited Top-events RPC for the same window; an event can only be listed with a name — names without a registry entry surface in the "unregistered" group instead of disappearing.',
+    caveats: [EPOCHS.mirror, EPOCHS.botRecall, 'Bot-only events stay visible with a 0 human count when bots are excluded — by design.'],
+  },
+  event_property_breakdown: {
+    key: 'event_property_breakdown',
+    title: 'Property breakdown',
+    whatItCounts:
+      'For the selected event: the most frequent values of one of its schema-declared payload properties, with event and distinct-visitor counts per value.',
+    howComputed:
+      "RPC insights_event_property_breakdown (migration 157): count(*) + count(distinct distinct_id) grouped by properties->>prop for event_name = the selected event, window >= start AND < end, bots per toggle, optional filters via the shared predicate, deterministic ordering (events desc, value asc). Empty/missing values bucket as '(missing)'. The property name is allowlisted in TS against the event's EVENT_SCHEMAS entry before the RPC is ever called.",
+    whyTrusted:
+      'Two breakdown combos are asserted equal to independent hand-written raw SQL by the filter-matrix verifier (Phase 5b extension); the key-allowlist means the panel can only query properties the schema registry declares (CI-guarded), so a renamed property fails loudly instead of charting an empty column.',
+    caveats: [EPOCHS.mirror, 'Counts events, not visitors, in the bar; the visitors column de-duplicates per value.'],
+  },
+  event_raw_stream: {
+    key: 'event_raw_stream',
+    title: 'Raw event stream',
+    whatItCounts: 'The most recent raw rows for the selected event in the window — actual payloads, exactly as stored.',
+    howComputed:
+      'Direct PostgREST select on user_events (newest first, id tie-break) pinned to the selected event, window >= start AND < end, bots per toggle, optional filters via the applyFilters() TS mirror. No aggregation — what you see is the stored row.',
+    whyTrusted:
+      'The direct-select + applyFilters path is one of the two live paths the filter-matrix verifier proves against raw SQL; rows carry schema_valid tagging from /api/track-mirror, so payload drift is visible per row.',
+    caveats: ['A raw stream shows rows, not truth-about-people: one human can be several distinct_ids (devices, cookie clears).'],
+  },
+
+  // ── Funnels & conversion (Phase 10.5b) ───────────────────────────────
+  funnel_plan_journey: {
+    key: 'funnel_plan_journey',
+    title: 'Plan journey funnel',
+    whatItCounts:
+      'How far visitors get INSIDE the plan flow: started → intake submitted → plan completed → clicked a recommended tool. Event counts per step.',
+    howComputed:
+      'Four direct PostgREST counts on user_events (plan_started / plan_intake_submitted / plan_completed / plan_results_tool_clicked), window >= start AND < end, humans-only unless toggled, optional filters via the applyFilters() mirror. Step-over-step % = step ÷ previous step.',
+    whyTrusted:
+      'Same getPlanFunnel the audited insights page has always used — pinned-week values frozen in the baseline snapshot oracle; the direct-select path is verifier-covered; every step event has a schema + synthetic recipe (plan_results_tool_clicked permanently at 0 was exactly the class of bug the registry CI guard now prevents).',
+    caveats: ['Counts events, not unique users — one person restarting the flow counts twice.', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+  funnel_plan_acquisition: {
+    key: 'funnel_plan_acquisition',
+    title: 'Plan acquisition funnel (CTA → signup → plan)',
+    whatItCounts:
+      'The full path INTO the plan flow: CTA shown → CTA clicked → signup modal shown → (4a OAuth / 4b skipped branches) → signup completed → /plan loaded → plan finalized.',
+    howComputed:
+      'Eight direct counts on user_events (lib/admin/plan-conversion.ts), window >= start AND < end, humans-only by default (audit F6: conversion metrics exclude bots), optional filters via the shared mirror. 4a/4b are BRANCHES off step 3 — they are excluded from the main-path step-over-step % and shown with their % of the modal step instead.',
+    whyTrusted:
+      'F6 (humans-only conversions) was a documented Phase 2 fix; pinned-week funnel frozen in the snapshot oracle; each step event is schema-registered with a synthetic recipe (modal steps browser-verified, OAuth steps payload-verified and labeled as such).',
+    caveats: ['Steps count events, not deduped users; a modal re-open counts again.', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+  plan_surface_breakdown: {
+    key: 'plan_surface_breakdown',
+    title: 'Per-surface conversion',
+    whatItCounts:
+      'Which CTA placement (sticky bar / inline card / navbar / homepage / plan page) pulls impressions, clicks and signups.',
+    howComputed:
+      "Per surface: counts of plan_cta_impression / plan_cta_clicked filtered on properties->>surface (signups on properties->>source_surface), window + humans-only default + optional filters via the shared mirror. The final ALL row is computed WITHOUT the surface property filter — a built-in parity check: if per-surface rows don't roughly sum to it, events are firing without a surface prop.",
+    whyTrusted:
+      'The parity row is the trust mechanism — a silent JSONB-filter failure becomes a visible discrepancy instead of fake zeros; surface is a schema-required property of both CTA events (CI-guarded); pinned-week values in the snapshot oracle.',
+    caveats: ['ALL row > sum of rows means some events carry no/unknown surface value — investigate before trusting per-surface CTR.'],
+  },
+  plan_intent_stream: {
+    key: 'plan_intent_stream',
+    title: 'Intent stream (typed goals)',
+    whatItCounts:
+      'Every goal a visitor actually typed into the plan CTA in the window — including people who bounced at the signup gate. The rawest demand signal we have.',
+    howComputed:
+      'Direct select on the plan_intents table (written durably at type-time, before any auth), newest first, window >= start AND < end. plan_intents has NO bot flag and no device/geo columns — the bots toggle and optional filters DO NOT apply to this panel (only the date range does).',
+    whyTrusted:
+      'plan_intents is a ground-truth capture table (server-written), not derived from the analytics mirror — it survives ad-blockers; rows link to the visitor timeline for replay.',
+    caveats: ['Unfiltered by bots — a scripted visitor typing into the box would appear here.', 'One visitor can produce several intents (retypes).'],
+  },
+  plan_link_rate: {
+    key: 'plan_link_rate',
+    title: 'Anon → known link rate',
+    whatItCounts: 'Share of typed goals that were later tied to an authenticated account (same-session OAuth or later reconciliation).',
+    howComputed:
+      'Two counts on plan_intents in the window: total rows vs rows with user_id IS NOT NULL; rate = linked ÷ total. Range-only (see Intent stream — the table has no filter dimensions).',
+    whyTrusted:
+      'Pinned-week value frozen in the snapshot oracle; linkage itself is exercised by the plan_intent_linked_to_user reconciliation path and verifiable per row in the stream below.',
+    caveats: ['A goal typed today can become "linked" tomorrow — the rate for a recent window keeps improving as reconciliation catches up.'],
+  },
+
+  // ── Revenue — sentiment checker (Phase 10.5b, F13 fix) ───────────────
+  sentiment_funnel: {
+    key: 'sentiment_funnel',
+    title: 'Sentiment acquisition → revenue funnel',
+    whatItCounts:
+      'How visitors move through the paid Sentiment Checker: card viewed → scan requested → scan completed → paywall shown → payment succeeded. Event counts per leg.',
+    howComputed:
+      'Five direct counts on user_events, window >= start AND < end, humans-only unless "Including bots", optional smart filters via the applyFilters() mirror. Before the Phase 5b rebuild (audit F13) these were ALL-TIME counts with no window and no bot filter — bots inflated "card viewed" almost 2× (101 all-time-any vs 52 humans on 2026-06-12).',
+    whyTrusted:
+      'A windowed humans-only leg is asserted equal to independent raw SQL by the filter-matrix verifier (Phase 5b extension); every leg event is schema-registered (server legs payload-verified by the synthetic suite, labeled as such); pinned-week funnel frozen in the snapshot oracle.',
+    caveats: [
+      'Legs mix client events (card viewed) with server events (scan/paywall/payment) — ad-blockers can suppress the client leg but never the server legs, so leg-over-leg % can exceed reality.',
+      EPOCHS.botRecall,
+    ],
+  },
+  sentiment_revenue: {
+    key: 'sentiment_revenue',
+    title: 'Revenue by currency',
+    whatItCounts: 'Money actually collected for sentiment scans in the window, split by currency, plus the paid-payment count.',
+    howComputed:
+      "Direct select on sentiment_payments where status = 'paid', window >= start AND < end, summed per currency (amounts stored in minor units; ÷100 for display). The payments table has NO bot column — only the date range applies here, stated on the page.",
+    whyTrusted:
+      'sentiment_payments is the gateway-webhook ground truth (server-written rows, not analytics events); each row is reconcilable against the PayPal/Razorpay dashboard by gateway id; a windowed count is asserted vs raw SQL by the Phase 5b verifier extension.',
+    caveats: ['PayPal is still in SANDBOX mode at the time of writing — sandbox payments look identical here; check the gateway column.', 'No currency conversion — each currency sums separately.'],
+  },
+  sentiment_scan_health: {
+    key: 'sentiment_scan_health',
+    title: 'Scan health (status, sources, latency)',
+    whatItCounts:
+      'Operational health of scans in the window: ready/partial/failed mix, free vs paid, which sources contributed posts, and p50/p95 scan latency.',
+    howComputed:
+      'Aggregated in app code over the windowed sentiment_searches rows (capped at the 500 most recent in-window): status/charge_type tallies, per-source frequency from the sources array, and percentile latency over non-null duration_ms. Range only — the scans table has no bot column.',
+    whyTrusted:
+      'sentiment_searches is written by the scan pipeline itself (one row per scan, status updated in place) — this panel reads the operational ground truth, not a mirror of it.',
+    caveats: ['Latency percentiles are computed over completed scans that recorded a duration; failed-fast scans without duration_ms are excluded.', 'On windows with > 500 scans the aggregates cover the most recent 500.'],
+  },
+
+  // ── Behavior — tool engagement (Phase 10.5b) ─────────────────────────
+  tools_heatmap: {
+    key: 'tools_heatmap',
+    title: 'Tool engagement heatmap',
+    whatItCounts:
+      'Every tool that got traffic in the window: page views, unique visitors, vendor click-outs and the resulting CTR, plus last visit.',
+    howComputed:
+      "RPC insights_tool_heatmap: one pass over user_events in window >= start AND < end (explicit cutoffs since the 5b rebuild — calendar ranges are exact, not approximated by a rolling day count), humans-only unless toggled, optional filters via the shared predicate (migration 157). Tool attribution = properties->>tool_slug, falling back to the /tools/<slug> path segment; CTR = clicks ÷ views per tool; deterministic ordering (views desc, visitors desc, slug asc).",
+    whyTrusted:
+      'Reads the same audited event set as the Most-viewed / Most-clicked dashboard panels (hand-SQL verified in Phase 1) through the verifier-covered shared predicate; click_logs triangulates the click column server-side.',
+    caveats: ['Views count events, not visitors.', EPOCHS.botBackfill, EPOCHS.botRecall],
+  },
+  tool_audience: {
+    key: 'tool_audience',
+    title: 'Tool audience detail',
+    whatItCounts:
+      'One tool\'s window audience: unique visitors who touched it, page views, affiliate click-outs, saves, and which alternatives those users compared it against.',
+    howComputed:
+      "Counts: direct selects on user_events pinned to tool_page_viewed / tool_visit_redirected / tool_saved with properties->>tool_slug = this tool, window + bots + optional filters via the applyFilters() mirror. Unique users: RPC distinct_visitors_for_tool (any event carrying the slug). Compared-with: RPC insights_tool_compared_with over user_intent_profile pair arrays — optional filters restrict to visitors with ≥1 matching event (154 §11 semantics, both RPCs filter-aware since migration 157).",
+    whyTrusted:
+      'Same event substrate as the audited dashboard tool panels; the null fast-path of the 157 RPC extensions was probe-verified against raw SQL on the pinned week; tool_slug is a schema-required property (CI-guarded).',
+    caveats: ['Compared-with reflects profile aggregates (per-visitor lifetime arrays scoped by last-active) — it answers "who", not "how many times".', EPOCHS.mirror, EPOCHS.botRecall],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

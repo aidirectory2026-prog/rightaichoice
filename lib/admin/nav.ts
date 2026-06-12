@@ -75,22 +75,47 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'Behavior',
     items: [
-      { href: '/admin/insights/events', label: 'Events explorer', filterCapabilities: ['range', 'bots', 'event'] },
-      { href: '/admin/insights/tools', label: 'Tool engagement', filterCapabilities: ['range', 'bots'] },
-      { href: '/admin/insights/funnel', label: 'Funnels', filterCapabilities: ['range', 'bots'] },
+      {
+        href: '/admin/insights/events',
+        label: 'Events explorer',
+        description: 'Every event, grouped by schema category — volume, bot split, properties, raw rows.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
+      {
+        href: '/admin/insights/tools',
+        label: 'Tool engagement',
+        description: 'Per-tool views/visitors/click-outs heatmap with drill-down audiences.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
+      {
+        href: '/admin/insights/funnel',
+        label: 'Funnels',
+        description: 'Plan acquisition + plan journey funnels, fully windowed and filterable.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
     ],
   },
   {
     title: 'Funnels & Conversion',
     items: [
-      { href: '/admin/plan-conversion', label: 'Plan funnel', filterCapabilities: [] },
+      {
+        href: '/admin/plan-conversion',
+        label: 'Plan funnel',
+        description: 'CTA funnel + surfaces + typed-goal stream (intents honor range only).',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
       { href: '/admin/onboarding', label: 'Onboarding', filterCapabilities: [] },
     ],
   },
   {
     title: 'Revenue',
     items: [
-      { href: '/admin/sentiment', label: 'Sentiment & payments', filterCapabilities: [] },
+      {
+        href: '/admin/sentiment',
+        label: 'Sentiment & payments',
+        description: 'Windowed funnel + revenue (F13 fix); scans/payments tables honor range only.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
     ],
   },
   {
