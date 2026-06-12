@@ -312,7 +312,9 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
   // 10.7a — channel classification at event time: referrer host as the
   // browser sees it NOW + current-URL utm + ad click-ids. Click-ids ride in
   // properties (and are frozen into the first-touch cache above when they
-  // arrive on the landing URL).
+  // arrive on the landing URL). Keys are namespaced traffic_* because
+  // `channel` is a real payload property of share_clicked — a bare key
+  // would clobber it.
   try {
     const clickIds = clickIdsFromSearch(window.location.search)
     const classified = classifyChannel(
@@ -321,8 +323,8 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
       utm.utm_source ?? null,
       clickIds,
     )
-    mergedProps.channel = classified.channel
-    mergedProps.channel_source = classified.source
+    mergedProps.traffic_channel = classified.channel
+    mergedProps.traffic_source = classified.source
     for (const k of ['gclid', 'fbclid', 'msclkid', 'ttclid'] as const) {
       if (clickIds[k]) mergedProps[k] = clickIds[k]
     }

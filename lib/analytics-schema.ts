@@ -61,9 +61,12 @@ export const BASE_CONTEXT_SCHEMA = z
     schema_issues: z.array(z.string()),
     // 10.7a — channel classification (lib/analytics/channels.ts), stamped by
     // mirrorContext() on every event from (referrer host at event time,
-    // current utm, click-ids in the URL).
-    channel: z.enum(['search', 'ai', 'social', 'community', 'email', 'paid', 'referral', 'direct', 'internal']),
-    channel_source: z.string(),
+    // current utm, click-ids in the URL). Named traffic_* because `channel`
+    // is ALREADY a payload property of share_clicked (share destination) —
+    // a bare `channel` envelope key would be stripped from / clobber that
+    // payload (caught by the synthetic suite on first full run).
+    traffic_channel: z.enum(['search', 'ai', 'social', 'community', 'email', 'paid', 'referral', 'direct', 'internal']),
+    traffic_source: z.string(),
     // 10.7a — ad click-ids, captured into properties when present in the URL.
     gclid: z.string(),
     fbclid: z.string(),
@@ -92,8 +95,10 @@ export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'schema_issues',
   // 10.7a — channel classification + ad click-ids (mirrorContext folds these
   // into properties on every event; click-ids only when present in the URL).
-  'channel',
-  'channel_source',
+  // NOTE: deliberately NOT 'channel' — that is a real payload property of
+  // share_clicked; the envelope keys are namespaced traffic_*.
+  'traffic_channel',
+  'traffic_source',
   'gclid',
   'fbclid',
   'msclkid',

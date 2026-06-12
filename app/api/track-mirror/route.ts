@@ -160,18 +160,18 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
 
 // ── Multi-touch attribution (10.7a) ─────────────────────────────
 // Build the candidate touch_history entry from an event that carries the
-// client-stamped channel classification (lib/analytics.ts mirrorContext →
-// lib/analytics/channels.ts). One touch is sent per distinct_id per batch
+// client-stamped channel classification properties.traffic_channel
+// (lib/analytics.ts mirrorContext → lib/analytics/channels.ts). One touch is sent per distinct_id per batch
 // (a batch is a single tab's ≤8s flush window, so it can't span the
 // 30-minute session gap); the upsert_user_intent RPC (migration 159) owns
 // the dedupe-consecutive / 30-min-gap / cap-50 semantics.
 function touchFor(e: MirrorEvent): Record<string, unknown> | null {
   const props = (e.properties ?? {}) as Record<string, unknown>
-  if (typeof props.channel !== 'string' || props.channel.length === 0) return null
+  if (typeof props.traffic_channel !== 'string' || props.traffic_channel.length === 0) return null
   return {
     ts: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
-    channel: props.channel,
-    source: typeof props.channel_source === 'string' ? props.channel_source.slice(0, 200) : null,
+    channel: props.traffic_channel,
+    source: typeof props.traffic_source === 'string' ? props.traffic_source.slice(0, 200) : null,
     medium: e.utm_medium ? e.utm_medium.slice(0, 200) : null,
     campaign: e.utm_campaign ? e.utm_campaign.slice(0, 200) : null,
     landing: e.page_path ? e.page_path.slice(0, 400) : null,

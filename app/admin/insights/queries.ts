@@ -201,15 +201,16 @@ export async function getTopReferrers(f: AdminFilters): Promise<BarRow[]> {
 }
 
 // ── Channels (10.7a) ────────────────────────────────────────────────
-// Visitors by per-event channel classification (migration 160 branch of
-// insights_top_property reading properties->>'channel'). Epoch-aware: rows
-// before TRACKING_EPOCHS.channel have no channel key and come back as the
-// '(unknown — pre-channel epoch)' bucket — shown, never hidden.
+// Visitors by per-event channel classification (migrations 160+161 branch of
+// insights_top_property reading properties->>'traffic_channel' — namespaced
+// because `channel` is a real payload prop of share_clicked). Epoch-aware:
+// rows before TRACKING_EPOCHS.channel have no traffic_channel key and come
+// back as the '(unknown — pre-channel epoch)' bucket — shown, never hidden.
 export async function getTopChannels(f: AdminFilters): Promise<BarRow[]> {
   const db = getAdminClient()
   const sel = f.range
   const { data } = await rpc(db, 'insights_top_property', {
-    p_property: 'channel',
+    p_property: 'traffic_channel',
     p_days: sel.days,
     p_limit: 10, // taxonomy has 9 channels + the epoch bucket
     p_include_bots: f.includeBots,
