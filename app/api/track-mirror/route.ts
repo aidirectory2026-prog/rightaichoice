@@ -178,6 +178,53 @@ function touchFor(e: MirrorEvent): Record<string, unknown> | null {
   }
 }
 
+// ── Per-session rollups (10.7c.4) ───────────────────────────────
+// One fragment per distinct_id per batch, folded into
+// user_intent_profile.session_history by the upsert_user_intent RPC
+// (migration 162 owns the 30-min-gap merge/append + cap-30 semantics).
+// A batch is a single tab's ≤8s flush window, so per-batch min/max client
+// timestamps are correct session-extension increments.
+function sessionFragmentFor(events: MirrorEvent[]): Record<string, unknown> {
+  const sorted = [...events].sort((a, b) => (a.client_time_ms ?? 0) - (b.client_time_ms ?? 0))
+  let tsMin: number | null = null
+  let tsMax: number | null = null
+  let landing: string | null = null
+  let exit: string | null = null
+  let pages = 0
+  let engaged = 0
+  let channel: string | null = null
+  for (const e of sorted) {
+    const t = e.client_time_ms
+    if (typeof t === 'number' && Number.isFinite(t)) {
+      if (tsMin === null || t < tsMin) tsMin = t
+      if (tsMax === null || t > tsMax) tsMax = t
+    }
+    const props = (e.properties ?? {}) as Record<string, unknown>
+    if (e.event_name === 'page_viewed') {
+      pages += 1
+      if (!landing && e.page_path) landing = e.page_path.slice(0, 400)
+    }
+    if (e.page_path) exit = e.page_path.slice(0, 400)
+    if (e.event_name === 'engaged_time_heartbeat') {
+      const d = Number(props.engaged_seconds_delta)
+      if (Number.isFinite(d) && d > 0) engaged += Math.min(d, 60)
+    }
+    if (!channel && typeof props.traffic_channel === 'string' && props.traffic_channel.length > 0) {
+      channel = props.traffic_channel
+    }
+  }
+  const now = Date.now()
+  return {
+    ts_start: new Date(tsMin ?? now).toISOString(),
+    ts_end: new Date(tsMax ?? now).toISOString(),
+    landing,
+    exit,
+    pages,
+    engaged_seconds: engaged,
+    channel,
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: { events?: MirrorEvent[] }
   try {
@@ -307,15 +354,31 @@ export async function POST(req: NextRequest) {
   // channel-bearing event carries it; the RPC dedupes consecutive
   // identical touches and enforces the 30-min-gap + cap-50 semantics.
   const touchSent = new Set<string>()
+  // 10.7c.4 — one session fragment per distinct_id per batch, attached to
+  // that distinct_id's first RPC call below (same pattern as touches).
+  const sessionByDistinct = new Map<string, Record<string, unknown>>()
+  for (const e of events) {
+    if (!sessionByDistinct.has(e.distinct_id)) {
+      sessionByDistinct.set(
+        e.distinct_id,
+        sessionFragmentFor(events.filter((x) => x.distinct_id === e.distinct_id)),
+      )
+    }
+  }
+  const sessionSent = new Set<string>()
   for (const e of events) {
     const updates = profileUpdatesFor(e)
     const touch = touchSent.has(e.distinct_id) ? null : touchFor(e)
-    if (Object.keys(updates).length === 0 && !serverUserId && !touch) {
+    const session = sessionSent.has(e.distinct_id)
+      ? null
+      : (sessionByDistinct.get(e.distinct_id) ?? null)
+    if (Object.keys(updates).length === 0 && !serverUserId && !touch && !session) {
       // Even with no profile updates, still upsert the bare distinct_id row
       // so we count this user as "seen" — but skip if no value to add.
       continue
     }
     if (touch) touchSent.add(e.distinct_id)
+    if (session) sessionSent.add(e.distinct_id)
     const args: Record<string, unknown> = {
       p_distinct_id: e.distinct_id,
       p_user_id: serverUserId,
@@ -326,6 +389,7 @@ export async function POST(req: NextRequest) {
       p_first_touch_referrer: e.first_touch_referrer ?? null,
       p_first_touch_landing: e.first_touch_landing ?? null,
       p_touch: touch,
+      p_session: session,
       ...updates,
     }
     // Pull email_domain from newsletter_subscribed payload.
