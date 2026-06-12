@@ -105,7 +105,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'Revenue',
     items: [
-      { href: '/admin/sentiment', label: 'Sentiment & payments', filterCapabilities: [] },
+      {
+        href: '/admin/sentiment',
+        label: 'Sentiment & payments',
+        description: 'Windowed funnel + revenue (F13 fix); scans/payments tables honor range only.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
     ],
   },
   {

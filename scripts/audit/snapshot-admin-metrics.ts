@@ -32,6 +32,7 @@ import type { RangeSelection } from '@/lib/admin/range'
 import { baseFilters } from '@/lib/admin/filters'
 import * as insights from '@/app/admin/insights/queries'
 import * as planConv from '@/lib/admin/plan-conversion'
+import * as sentiment from '@/lib/admin/sentiment'
 
 // ── Pinned window: 2026-06-01 .. 2026-06-07 IST (end-exclusive) ────────────
 // Past data is immutable, so every run over this window must be identical.
@@ -118,6 +119,15 @@ async function main() {
   await one('planConversion.getPlanFunnel', () => planConv.getPlanFunnel(baseFilters(SEL, false)))
   await one('planConversion.getSurfaceBreakdown', () => planConv.getSurfaceBreakdown(baseFilters(SEL, false)))
   await one('planConversion.getLinkRate', () => planConv.getLinkRate(baseFilters(SEL, false)))
+
+  // ── Phase 10.5b additions (NEW keys — noted in phase5b-gate.md) ──────────
+  await one('planConversion.getIntentStream', () => planConv.getIntentStream(baseFilters(SEL, false), 50))
+  await both('sentiment.getSentimentFunnel', (b) => sentiment.getSentimentFunnel(baseFilters(SEL, b)))
+  await one('sentiment.getSentimentRevenue', () => sentiment.getSentimentRevenue(baseFilters(SEL, false)))
+  await one('sentiment.getSentimentScans', () => sentiment.getSentimentScans(baseFilters(SEL, false)))
+  await both('insights.getEventVolumeList', (b) => insights.getEventVolumeList(baseFilters(SEL, b)))
+  await one('insights.getEventPropertyBreakdown(page_viewed,path)', () =>
+    insights.getEventPropertyBreakdown('page_viewed', 'path', baseFilters(SEL, false)))
 
   // Now-anchored functions — recorded for reference, excluded from strict diff.
   const volatile: Record<string, Snap> = {}

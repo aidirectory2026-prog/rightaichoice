@@ -352,6 +352,43 @@ const docs = {
     caveats: ['A goal typed today can become "linked" tomorrow — the rate for a recent window keeps improving as reconciliation catches up.'],
   },
 
+  // ── Revenue — sentiment checker (Phase 10.5b, F13 fix) ───────────────
+  sentiment_funnel: {
+    key: 'sentiment_funnel',
+    title: 'Sentiment acquisition → revenue funnel',
+    whatItCounts:
+      'How visitors move through the paid Sentiment Checker: card viewed → scan requested → scan completed → paywall shown → payment succeeded. Event counts per leg.',
+    howComputed:
+      'Five direct counts on user_events, window >= start AND < end, humans-only unless "Including bots", optional smart filters via the applyFilters() mirror. Before the Phase 5b rebuild (audit F13) these were ALL-TIME counts with no window and no bot filter — bots inflated "card viewed" almost 2× (101 all-time-any vs 52 humans on 2026-06-12).',
+    whyTrusted:
+      'A windowed humans-only leg is asserted equal to independent raw SQL by the filter-matrix verifier (Phase 5b extension); every leg event is schema-registered (server legs payload-verified by the synthetic suite, labeled as such); pinned-week funnel frozen in the snapshot oracle.',
+    caveats: [
+      'Legs mix client events (card viewed) with server events (scan/paywall/payment) — ad-blockers can suppress the client leg but never the server legs, so leg-over-leg % can exceed reality.',
+      EPOCHS.botRecall,
+    ],
+  },
+  sentiment_revenue: {
+    key: 'sentiment_revenue',
+    title: 'Revenue by currency',
+    whatItCounts: 'Money actually collected for sentiment scans in the window, split by currency, plus the paid-payment count.',
+    howComputed:
+      "Direct select on sentiment_payments where status = 'paid', window >= start AND < end, summed per currency (amounts stored in minor units; ÷100 for display). The payments table has NO bot column — only the date range applies here, stated on the page.",
+    whyTrusted:
+      'sentiment_payments is the gateway-webhook ground truth (server-written rows, not analytics events); each row is reconcilable against the PayPal/Razorpay dashboard by gateway id; a windowed count is asserted vs raw SQL by the Phase 5b verifier extension.',
+    caveats: ['PayPal is still in SANDBOX mode at the time of writing — sandbox payments look identical here; check the gateway column.', 'No currency conversion — each currency sums separately.'],
+  },
+  sentiment_scan_health: {
+    key: 'sentiment_scan_health',
+    title: 'Scan health (status, sources, latency)',
+    whatItCounts:
+      'Operational health of scans in the window: ready/partial/failed mix, free vs paid, which sources contributed posts, and p50/p95 scan latency.',
+    howComputed:
+      'Aggregated in app code over the windowed sentiment_searches rows (capped at the 500 most recent in-window): status/charge_type tallies, per-source frequency from the sources array, and percentile latency over non-null duration_ms. Range only — the scans table has no bot column.',
+    whyTrusted:
+      'sentiment_searches is written by the scan pipeline itself (one row per scan, status updated in place) — this panel reads the operational ground truth, not a mirror of it.',
+    caveats: ['Latency percentiles are computed over completed scans that recorded a duration; failed-fast scans without duration_ms are excluded.', 'On windows with > 500 scans the aggregates cover the most recent 500.'],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',
