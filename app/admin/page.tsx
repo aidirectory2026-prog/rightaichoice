@@ -23,6 +23,7 @@ import {
   getCountryFilterOptions,
   getDailyActiveUsers,
   getEngagementMetrics,
+  getTopChannels,
   getTopClickedTools,
   getTopEvents,
   getTopReferrers,
@@ -68,7 +69,7 @@ export default async function AdminDashboardPage({
   const includeBots = filters.includeBots
 
   const [
-    kpis, dailyActive, engagement, referrers, topPages,
+    kpis, dailyActive, engagement, referrers, channels, topPages,
     topEvents, topViewedTools, topClickedTools, countryOptions,
   ] = await Promise.all([
     getDashboardKpis(filters),
@@ -77,6 +78,7 @@ export default async function AdminDashboardPage({
     // "Right now" strip below (audit F5 resolution).
     getEngagementMetrics(sel, includeBots),
     getTopReferrers(filters),
+    getTopChannels(filters),
     getTopPages(filters),
     getTopEvents(filters),
     getTopViewedTools(filters),
@@ -169,6 +171,13 @@ export default async function AdminDashboardPage({
             const host = sourceHostOf(label)
             return host ? `/admin/insights?source=${encodeURIComponent(host)}` : null
           }}
+        />
+        {/* 10.7a — per-event channel taxonomy (classifier epoch 2026-06-12) */}
+        <BarList
+          title="Channels · visitors"
+          rows={channels}
+          emptyHint="No channel data yet (channel capture began 2026-06-12)"
+          info={<MetricInfo docKey="top_channels" />}
         />
       </div>
 

@@ -158,6 +158,26 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
   return updates
 }
 
+// ── Multi-touch attribution (10.7a) ─────────────────────────────
+// Build the candidate touch_history entry from an event that carries the
+// client-stamped channel classification properties.traffic_channel
+// (lib/analytics.ts mirrorContext → lib/analytics/channels.ts). One touch is sent per distinct_id per batch
+// (a batch is a single tab's ≤8s flush window, so it can't span the
+// 30-minute session gap); the upsert_user_intent RPC (migration 159) owns
+// the dedupe-consecutive / 30-min-gap / cap-50 semantics.
+function touchFor(e: MirrorEvent): Record<string, unknown> | null {
+  const props = (e.properties ?? {}) as Record<string, unknown>
+  if (typeof props.traffic_channel !== 'string' || props.traffic_channel.length === 0) return null
+  return {
+    ts: e.client_time_ms ? new Date(e.client_time_ms).toISOString() : new Date().toISOString(),
+    channel: props.traffic_channel,
+    source: typeof props.traffic_source === 'string' ? props.traffic_source.slice(0, 200) : null,
+    medium: e.utm_medium ? e.utm_medium.slice(0, 200) : null,
+    campaign: e.utm_campaign ? e.utm_campaign.slice(0, 200) : null,
+    landing: e.page_path ? e.page_path.slice(0, 400) : null,
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: { events?: MirrorEvent[] }
   try {
@@ -283,13 +303,19 @@ export async function POST(req: NextRequest) {
   // ── Update user_intent_profile per event ─────────────────────
   // Sequential because each event may union arrays into the same row.
   // Volume is small (max 100 per batch), so the round-trip cost is fine.
+  // 10.7a — one attribution touch per distinct_id per batch: the first
+  // channel-bearing event carries it; the RPC dedupes consecutive
+  // identical touches and enforces the 30-min-gap + cap-50 semantics.
+  const touchSent = new Set<string>()
   for (const e of events) {
     const updates = profileUpdatesFor(e)
-    if (Object.keys(updates).length === 0 && !serverUserId) {
+    const touch = touchSent.has(e.distinct_id) ? null : touchFor(e)
+    if (Object.keys(updates).length === 0 && !serverUserId && !touch) {
       // Even with no profile updates, still upsert the bare distinct_id row
       // so we count this user as "seen" — but skip if no value to add.
       continue
     }
+    if (touch) touchSent.add(e.distinct_id)
     const args: Record<string, unknown> = {
       p_distinct_id: e.distinct_id,
       p_user_id: serverUserId,
@@ -299,6 +325,7 @@ export async function POST(req: NextRequest) {
       p_first_touch_utm_campaign: null,
       p_first_touch_referrer: e.first_touch_referrer ?? null,
       p_first_touch_landing: e.first_touch_landing ?? null,
+      p_touch: touch,
       ...updates,
     }
     // Pull email_domain from newsletter_subscribed payload.

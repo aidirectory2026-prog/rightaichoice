@@ -23,6 +23,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import type { RangeSelection } from '@/lib/admin/range'
 import { applyFilters, filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
 import { schemaPropKeys } from '@/lib/admin/event-props'
+import { classifyChannel, hostFromReferrer } from '@/lib/analytics/channels'
 
 // The 12 RPCs in migrations 096+098 aren't in the generated Supabase
 // types yet, so wrap rpc() in a loosely-typed helper.
@@ -197,6 +198,70 @@ export async function getTopReferrers(f: AdminFilters): Promise<BarRow[]> {
     label: r.value ?? '(direct)',
     value: Number(r.events),
   }))
+}
+
+// ── Channels (10.7a) ────────────────────────────────────────────────
+// Visitors by per-event channel classification (migrations 160+161 branch of
+// insights_top_property reading properties->>'traffic_channel' — namespaced
+// because `channel` is a real payload prop of share_clicked). Epoch-aware:
+// rows before TRACKING_EPOCHS.channel have no traffic_channel key and come
+// back as the '(unknown — pre-channel epoch)' bucket — shown, never hidden.
+export async function getTopChannels(f: AdminFilters): Promise<BarRow[]> {
+  const db = getAdminClient()
+  const sel = f.range
+  const { data } = await rpc(db, 'insights_top_property', {
+    p_property: 'traffic_channel',
+    p_days: sel.days,
+    p_limit: 10, // taxonomy has 9 channels + the epoch bucket
+    p_include_bots: f.includeBots,
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_filters: filtersToJsonb(f),
+  })
+  return ((data as Array<{ value: string; events: number }>) ?? []).map((r) => ({
+    label: r.value,
+    value: Number(r.events),
+  }))
+}
+
+/** First-touch channel per visitor for a page of directory rows: one
+ *  PostgREST select on user_intent_profile (≤50 ids), classified in TS via
+ *  the same lib/analytics/channels.ts classifier the capture path uses.
+ *  Prefers touch_history[0] (the recorded first touch) and falls back to
+ *  classifying the first_touch_* columns; visitors with no profile row are
+ *  simply absent from the map. */
+export async function getFirstTouchChannels(
+  distinctIds: string[],
+): Promise<Map<string, { channel: string; source: string }>> {
+  const out = new Map<string, { channel: string; source: string }>()
+  if (distinctIds.length === 0) return out
+  const db = getAdminClient()
+  const { data } = await db
+    .from('user_intent_profile')
+    .select('distinct_id, first_touch_referrer, first_touch_utm_source, first_touch_utm_medium, touch_history')
+    .in('distinct_id', distinctIds.slice(0, 100))
+  for (const row of (data ?? []) as Array<{
+    distinct_id: string
+    first_touch_referrer: string | null
+    first_touch_utm_source: string | null
+    first_touch_utm_medium: string | null
+    touch_history: Array<{ channel?: string; source?: string }> | null
+  }>) {
+    const first = Array.isArray(row.touch_history) ? row.touch_history[0] : undefined
+    if (first && typeof first.channel === 'string' && first.channel) {
+      out.set(row.distinct_id, { channel: first.channel, source: first.source ?? '' })
+      continue
+    }
+    if (row.first_touch_referrer || row.first_touch_utm_source || row.first_touch_utm_medium) {
+      const r = classifyChannel(
+        hostFromReferrer(row.first_touch_referrer),
+        row.first_touch_utm_medium,
+        row.first_touch_utm_source,
+      )
+      out.set(row.distinct_id, { channel: r.channel, source: r.source })
+    }
+  }
+  return out
 }
 
 // ── Plan Funnel ─────────────────────────────────────────────────────

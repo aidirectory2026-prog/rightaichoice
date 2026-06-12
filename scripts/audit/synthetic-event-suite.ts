@@ -59,6 +59,7 @@ import {
   validateEvent,
   type KnownEventName,
 } from '../../lib/analytics-schema'
+import { classifyChannel } from '../../lib/analytics/channels'
 import { getAdminClient } from '../../lib/cron/supabase-admin'
 
 // ── Flags ────────────────────────────────────────────────────────────
@@ -108,6 +109,9 @@ const results: EventResult[] = []
 let dedupPassed = 0
 let dedupTotal = 0
 let negativePassed: boolean | null = null
+// 10.7a — channel-classification probes (browser paid + payload ai).
+let channelBrowserPassed: boolean | null = null
+let channelPayloadPassed: boolean | null = null
 
 // ── Dev-server management ────────────────────────────────────────────
 let devServer: ChildProcess | null = null
@@ -897,6 +901,106 @@ async function runDedupProbe(slugs: Slugs): Promise<void> {
   }
 }
 
+// ── Channel probes (10.7a) ───────────────────────────────────────────
+// Prove the channel classification lands end-to-end, both halves:
+//   browser — a REAL navigation to /?utm_source=test&utm_medium=cpc&
+//     gclid=test123 arriving from a fake facebook.com referrer (puppeteer
+//     referer). mirrorContext must stamp traffic_channel='paid' (gclid wins
+//     the precedence) + traffic_source='google_ads' + the gclid itself, and
+//     the top-level utm columns must land.
+//   payload — a canonical page_viewed posted with the traffic_* keys a
+//     client arriving from chatgpt.com would carry (computed via the SAME
+//     classifier), proving ingest stores envelope channel keys untagged.
+// (The keys are namespaced traffic_* because `channel` is a real payload
+// property of share_clicked — the very first full run of these probes
+// caught the collision.)
+async function runChannelBrowserProbe(browser: Browser): Promise<void> {
+  console.log('\nChannel probe (browser) — paid click-id from a fake facebook referrer:')
+  const distinctId = `${RUNID}-ch`
+  const page = await newJourneyPage(browser, distinctId)
+  try {
+    await page.goto(`${BASE_URL}/?utm_source=test&utm_medium=cpc&gclid=test123`, {
+      waitUntil: 'domcontentloaded',
+      referer: 'https://www.facebook.com/',
+    })
+    await page.waitForSelector('body')
+    await sleep(2500)
+    await verifySeededDistinctId(page, distinctId)
+  } finally {
+    await flushJourney(page)
+  }
+  const deadline = Date.now() + 21_000
+  let rows: UserEventRow[] = []
+  while (Date.now() < deadline) {
+    rows = await fetchRows(distinctId, 'page_viewed')
+    if (rows.length > 0) break
+    await sleep(1500)
+  }
+  const issues: string[] = []
+  if (rows.length === 0) {
+    issues.push(`no page_viewed row for ${distinctId}`)
+  } else {
+    const props = (rows[0].properties ?? {}) as Record<string, unknown>
+    if (props.traffic_channel !== 'paid') issues.push(`traffic_channel=${JSON.stringify(props.traffic_channel)} (expected 'paid')`)
+    if (props.traffic_source !== 'google_ads') issues.push(`traffic_source=${JSON.stringify(props.traffic_source)} (expected 'google_ads' — gclid wins precedence)`)
+    if (props.gclid !== 'test123') issues.push(`gclid=${JSON.stringify(props.gclid)} (expected 'test123')`)
+    if (props.schema_valid === false) issues.push(`row tagged schema_valid=false: ${JSON.stringify(props.schema_issues ?? [])}`)
+  }
+  // Top-level utm columns must land too (separate select — fetchRows
+  // doesn't pull them).
+  if (rows.length > 0) {
+    const { data } = await db
+      .from('user_events')
+      .select('utm_source, utm_medium, referrer')
+      .eq('distinct_id', distinctId)
+      .eq('event_name', 'page_viewed')
+      .limit(1)
+    const row = (data?.[0] ?? null) as { utm_source: string | null; utm_medium: string | null; referrer: string | null } | null
+    if (row?.utm_source !== 'test') issues.push(`utm_source column=${JSON.stringify(row?.utm_source)} (expected 'test')`)
+    if (row?.utm_medium !== 'cpc') issues.push(`utm_medium column=${JSON.stringify(row?.utm_medium)} (expected 'cpc')`)
+  }
+  channelBrowserPassed = issues.length === 0
+  console.log(`${channelBrowserPassed ? '  ✓' : '  ✗'} paid navigation${channelBrowserPassed ? ' — traffic_channel=paid, traffic_source=google_ads, gclid + utm columns landed' : ' — ' + issues.join(' | ')}`)
+}
+
+async function runChannelPayloadProbe(): Promise<void> {
+  console.log('\nChannel probe (payload) — AI referrer (chatgpt.com):')
+  const distinctId = `${RUNID}-chp`
+  const expected = classifyChannel('chatgpt.com')
+  const ev = buildMirrorEvent(
+    'page_viewed',
+    {
+      path: '/',
+      url: `${BASE_URL}/`,
+      referrer: 'https://chatgpt.com/',
+      traffic_channel: expected.channel,
+      traffic_source: expected.source,
+    },
+    distinctId,
+    { referrer: 'https://chatgpt.com/', page_path: '/' },
+  )
+  await postMirror([ev])
+  const deadline = Date.now() + 15_000
+  let rows: UserEventRow[] = []
+  while (Date.now() < deadline) {
+    rows = await fetchRows(distinctId, 'page_viewed')
+    if (rows.length > 0) break
+    await sleep(1200)
+  }
+  const issues: string[] = []
+  if (expected.channel !== 'ai') issues.push(`classifier says ${expected.channel} for chatgpt.com (expected 'ai')`)
+  if (rows.length === 0) {
+    issues.push(`no row for ${distinctId}`)
+  } else {
+    const props = (rows[0].properties ?? {}) as Record<string, unknown>
+    if (props.traffic_channel !== 'ai') issues.push(`stored traffic_channel=${JSON.stringify(props.traffic_channel)} (expected 'ai')`)
+    if (props.traffic_source !== 'chatgpt') issues.push(`stored traffic_source=${JSON.stringify(props.traffic_source)} (expected 'chatgpt')`)
+    if (props.schema_valid === false) issues.push(`row tagged schema_valid=false: ${JSON.stringify(props.schema_issues ?? [])}`)
+  }
+  channelPayloadPassed = issues.length === 0
+  console.log(`${channelPayloadPassed ? '  ✓' : '  ✗'} ai payload${channelPayloadPassed ? ' — traffic_channel=ai/chatgpt stored untagged' : ' — ' + issues.join(' | ')}`)
+}
+
 // ── Negative test (tag-don't-drop) ───────────────────────────────────
 async function runNegativeTest(): Promise<void> {
   console.log('\nNegative test — deliberately malformed payload (page_viewed with numeric path):')
@@ -998,6 +1102,8 @@ async function main(): Promise<void> {
           await assertEvent(step.event, 'browser', distinctId, pre ? `${step.note ?? ''} action-error: ${pre}`.trim() : step.note)
         }
       }
+      // 10.7a — channel browser probe (full runs only, reuses the browser).
+      if (!ONLY_EVENT && MODE === 'all') await runChannelBrowserProbe(browser)
       await browser.close()
       browser = null
     }
@@ -1020,9 +1126,10 @@ async function main(): Promise<void> {
       }
     }
 
-    // ── Dedup + negative ─────────────────────────────────────────
+    // ── Dedup + negative + channel payload probe ─────────────────
     if (!ONLY_EVENT && MODE !== 'browser') await runDedupProbe(slugs)
     if (!ONLY_EVENT && MODE === 'all') await runNegativeTest()
+    if (!ONLY_EVENT && MODE === 'all') await runChannelPayloadProbe()
   } finally {
     if (browser) await browser.close().catch(() => {})
   }
@@ -1039,6 +1146,8 @@ async function main(): Promise<void> {
   console.log(`Browser: ${browserCount}  Payload: ${payloadCount}`)
   if (dedupTotal > 0) console.log(`Dedup probe: ${dedupPassed}/${dedupTotal}`)
   if (negativePassed !== null) console.log(`Negative test (tag-don't-drop): ${negativePassed ? 'PASS' : 'FAIL'}`)
+  if (channelBrowserPassed !== null) console.log(`Channel probe (browser, paid): ${channelBrowserPassed ? 'PASS' : 'FAIL'}`)
+  if (channelPayloadPassed !== null) console.log(`Channel probe (payload, ai): ${channelPayloadPassed ? 'PASS' : 'FAIL'}`)
   console.log(`Runtime: ${(durationMs / 1000).toFixed(1)}s`)
   if (failed.length > 0) {
     console.log('\nFailures:')
@@ -1060,6 +1169,8 @@ async function main(): Promise<void> {
       payload: payloadCount,
       dedup: `${dedupPassed}/${dedupTotal}`,
       negative_test: negativePassed === null ? 'skipped' : negativePassed ? 'pass' : 'fail',
+      channel_probe_browser: channelBrowserPassed === null ? 'skipped' : channelBrowserPassed ? 'pass' : 'fail',
+      channel_probe_payload: channelPayloadPassed === null ? 'skipped' : channelPayloadPassed ? 'pass' : 'fail',
       duration_ms: durationMs,
     },
     events: results.map((r) => ({
@@ -1085,7 +1196,12 @@ async function main(): Promise<void> {
 
   const suiteGreen =
     failed.length === 0 &&
-    (!fullRun || (passed.length === SCHEMA_EVENT_NAMES.length && dedupPassed === dedupTotal && dedupTotal === 3 && negativePassed === true))
+    (!fullRun ||
+      (passed.length === SCHEMA_EVENT_NAMES.length &&
+        dedupPassed === dedupTotal && dedupTotal === 3 &&
+        negativePassed === true &&
+        channelBrowserPassed === true &&
+        channelPayloadPassed === true))
   console.log(`\n${suiteGreen ? '✓ SUITE GREEN' : '✗ SUITE FAILED'}`)
   stopServer()
   process.exit(suiteGreen ? 0 : 1)
