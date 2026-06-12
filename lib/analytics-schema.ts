@@ -59,6 +59,16 @@ export const BASE_CONTEXT_SCHEMA = z
     clarity_session_id: z.string(),
     schema_valid: z.boolean(),
     schema_issues: z.array(z.string()),
+    // 10.7a — channel classification (lib/analytics/channels.ts), stamped by
+    // mirrorContext() on every event from (referrer host at event time,
+    // current utm, click-ids in the URL).
+    channel: z.enum(['search', 'ai', 'social', 'community', 'email', 'paid', 'referral', 'direct', 'internal']),
+    channel_source: z.string(),
+    // 10.7a — ad click-ids, captured into properties when present in the URL.
+    gclid: z.string(),
+    fbclid: z.string(),
+    msclkid: z.string(),
+    ttclid: z.string(),
   })
   .partial()
 
@@ -80,6 +90,14 @@ export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'first_touch_landing',
   'schema_valid',
   'schema_issues',
+  // 10.7a — channel classification + ad click-ids (mirrorContext folds these
+  // into properties on every event; click-ids only when present in the URL).
+  'channel',
+  'channel_source',
+  'gclid',
+  'fbclid',
+  'msclkid',
+  'ttclid',
 ])
 
 export type EventCategory =

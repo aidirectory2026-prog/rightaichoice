@@ -8,6 +8,13 @@
  * schema auditable. See docs/marketing/tracking-mechanisms-and-goals.md.
  */
 
+import {
+  classifyChannel,
+  clickIdsFromSearch,
+  hostFromReferrer,
+  type ClickIds,
+} from './analytics/channels'
+
 // Phase 8.g.2 — widened to accept nested objects (Mixpanel stores them as JSON)
 // for events like `recommendation_step_completed` that ship `all_values_so_far`.
 type EventPropertyValue =
@@ -186,7 +193,20 @@ function getSessionId(): string | null {
 // the same job, but its store is wiped by mixpanel.reset() (logout) and is
 // unavailable until the SDK boots — this copy survives both.
 const FIRST_TOUCH_KEY = 'rac_first_touch_v1'
-type FirstTouch = { referrer: string; landing: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }
+// 10.7a — shape extended with channel + click_ids. Read stays
+// backward-compatible: entries persisted before 10.7a simply lack the new
+// optional fields and are returned as-is (never mutated — first touch is
+// written once and frozen).
+type FirstTouch = {
+  referrer: string
+  landing: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  channel?: string
+  channel_source?: string
+  click_ids?: ClickIds
+}
 function getFirstTouchFallback(): FirstTouch | null {
   if (typeof window === 'undefined') return null
   try {
@@ -201,6 +221,18 @@ function getFirstTouchFallback(): FirstTouch | null {
       const v = params.get(k)
       if (v) ft[k] = v.slice(0, 200)
     }
+    // 10.7a — classify + freeze the first-touch channel and any ad
+    // click-ids present on the landing URL.
+    const clickIds = clickIdsFromSearch(window.location.search)
+    const classified = classifyChannel(
+      hostFromReferrer(document.referrer || null),
+      ft.utm_medium ?? null,
+      ft.utm_source ?? null,
+      clickIds,
+    )
+    ft.channel = classified.channel
+    ft.channel_source = classified.source
+    if (Object.keys(clickIds).length > 0) ft.click_ids = clickIds
     localStorage.setItem(FIRST_TOUCH_KEY, JSON.stringify(ft))
     return ft
   } catch {
@@ -277,6 +309,24 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
   // fall back to our localStorage copy when the SDK store is empty/reset.
   const ftFallback = getFirstTouchFallback()
   const utm = getCurrentUtm()
+  // 10.7a — channel classification at event time: referrer host as the
+  // browser sees it NOW + current-URL utm + ad click-ids. Click-ids ride in
+  // properties (and are frozen into the first-touch cache above when they
+  // arrive on the landing URL).
+  try {
+    const clickIds = clickIdsFromSearch(window.location.search)
+    const classified = classifyChannel(
+      hostFromReferrer(typeof document !== 'undefined' ? document.referrer : null),
+      utm.utm_medium ?? null,
+      utm.utm_source ?? null,
+      clickIds,
+    )
+    mergedProps.channel = classified.channel
+    mergedProps.channel_source = classified.source
+    for (const k of ['gclid', 'fbclid', 'msclkid', 'ttclid'] as const) {
+      if (clickIds[k]) mergedProps[k] = clickIds[k]
+    }
+  } catch { /* classification must never block the send */ }
   return {
     event_name: eventName,
     distinct_id: distinctId,
