@@ -17,6 +17,9 @@
  * USAGE:
  *   npx tsx --env-file=.env.local scripts/audit/authed-smoke.ts                      # against http://localhost:3000
  *   npx tsx --env-file=.env.local scripts/audit/authed-smoke.ts --base-url=https://rightaichoice.com
+ *   --extra-route=/admin/insights/user/<id>?tab=journey   # repeatable; gate-specific
+ *                                                         # param'd URLs (10.6 adds
+ *                                                         # real-id journey checks)
  */
 export {}
 
@@ -25,6 +28,13 @@ import { ADMIN_NAV } from '../../lib/admin/nav'
 
 const BASE = process.argv.find((a) => a.startsWith('--base-url='))?.split('=')[1] ?? 'http://localhost:3000'
 const EMAIL = `phase10-smoke-${Date.now()}@rightaichoice.com`
+
+// 10.6 — repeatable --extra-route= for gate-specific param'd URLs (slice,
+// not split: routes carry their own query-string '='s).
+const EXTRA_ARG_ROUTES = process.argv
+  .filter((a) => a.startsWith('--extra-route='))
+  .map((a) => a.slice('--extra-route='.length))
+  .filter(Boolean)
 
 const EXTRA_ROUTES = [
   '/admin/insights/events?event=page_viewed',
@@ -79,6 +89,7 @@ async function main() {
     const routes = [
       ...ADMIN_NAV.flatMap((s) => s.items.map((i) => i.href)),
       ...EXTRA_ROUTES,
+      ...EXTRA_ARG_ROUTES,
     ]
     for (const route of routes) {
       const res = await fetch(`${BASE}${route}`, { headers: { cookie: cookies }, redirect: 'manual' })
