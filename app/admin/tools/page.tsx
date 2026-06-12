@@ -1,8 +1,15 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { ToolActions } from './tool-actions'
 
 // Phase 8.d.6 — admin tools page now force-dynamic; no more cached stale lists.
+// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled freshness tiles with ⓘ provenance).
+// Data + query semantics unchanged: the stale/aging/draft filter tabs are
+// this page's own sound custom controls (catalog management, not a windowed
+// metric) — kept; the global filter bar does not apply here.
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Manage Tools' }
@@ -74,11 +81,8 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Tools</h1>
-          <p className="text-sm text-zinc-500 mt-1">{total} tools{filter ? ` (${filter})` : ' in database'}</p>
-        </div>
+      <PageHeader>
+        <span className="text-xs text-zinc-500">{total.toLocaleString()} tools{filter ? ` (${filter})` : ' in database'}</span>
         <Link
           href="/admin/tools/new"
           className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
@@ -86,26 +90,38 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Tool
         </Link>
-      </div>
+      </PageHeader>
 
-      {/* Freshness stats (only on default view) */}
+      {/* Freshness stats (only on default view) — kit-styled drill-down tiles */}
       {!filter && (
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          <Link href="/admin/tools" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 hover:border-zinc-700 transition-colors">
-            <p className="text-xs text-zinc-500">Total Published</p>
-            <p className="text-lg font-bold text-white">{freshCount + agingCount + staleCount}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <Link href="/admin/tools" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">Total Published</p>
+              <MetricInfo docKey="tools_catalog_freshness" />
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-white">{(freshCount + agingCount + staleCount).toLocaleString()}</p>
           </Link>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-            <p className="text-xs text-zinc-500">Fresh (&lt;30d)</p>
-            <p className="text-lg font-bold text-emerald-400">{freshCount}</p>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">Fresh (&lt;30d)</p>
+              <MetricInfo docKey="tools_catalog_freshness" />
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-emerald-400">{freshCount.toLocaleString()}</p>
           </div>
-          <Link href="/admin/tools?filter=aging" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 hover:border-amber-800 transition-colors">
-            <p className="text-xs text-zinc-500">Aging (30-90d)</p>
-            <p className="text-lg font-bold text-amber-400">{agingCount}</p>
+          <Link href="/admin/tools?filter=aging" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 hover:border-amber-800 transition-colors">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">Aging (30-90d)</p>
+              <MetricInfo docKey="tools_catalog_freshness" />
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-amber-400">{agingCount.toLocaleString()}</p>
           </Link>
-          <Link href="/admin/tools?filter=stale" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 hover:border-red-800 transition-colors">
-            <p className="text-xs text-zinc-500">Stale (&gt;90d)</p>
-            <p className="text-lg font-bold text-red-400">{staleCount}</p>
+          <Link href="/admin/tools?filter=stale" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 hover:border-red-800 transition-colors">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">Stale (&gt;90d)</p>
+              <MetricInfo docKey="tools_catalog_freshness" />
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-red-400">{staleCount.toLocaleString()}</p>
           </Link>
         </div>
       )}

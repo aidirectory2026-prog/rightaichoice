@@ -16,6 +16,8 @@ import {
   Layers,
 } from 'lucide-react'
 import { PipelineRunRow } from '@/components/admin/pipeline-run-drilldown'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { RangePicker } from '@/components/admin/range-picker'
 import { parseRange, RANGE_LABELS, type RangeKey } from '@/lib/admin/range'
 
@@ -24,6 +26,16 @@ import { parseRange, RANGE_LABELS, type RangeKey } from '@/lib/admin/range'
 // over the selected period, with full drill-down on errors. Live-fetched
 // on every request (force-dynamic) — no caching. Every section uses
 // indexed Supabase queries; whole page typically renders in <1s.
+//
+// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb with the range picker in the header slot, kit-styled
+// stat cards, ⓘ provenance on every section). Data + query semantics are
+// UNCHANGED: all kr_* RPC wiring (audit F9 fixes), the honest F8
+// "Not instrumented" cost state, the now-anchored health-score windows and
+// the $5/day 24h red-flag check stay exactly as audited. This page is
+// genuinely date-ranged via its RangePicker ('range' capability in nav.ts);
+// the catalog-state and health-score sections deliberately ignore it
+// (live state / fixed windows) — stated on their headings.
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -497,23 +509,23 @@ export default async function KnowledgeRoom({
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Knowledge Room</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Real-time activity + pipeline results + errors. Live-fetched every request.
-          </p>
-          <p className="text-[11px] text-zinc-600 mt-1 font-mono">
-            data fetched at <span className="text-zinc-500">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</span>
-          </p>
-        </div>
+      <PageHeader>
         <RangePicker active={range} />
+      </PageHeader>
+      <div className="mb-6 -mt-2">
+        <p className="text-sm text-zinc-500">
+          Real-time activity + pipeline results + errors. Live-fetched every request.
+        </p>
+        <p className="text-[11px] text-zinc-600 mt-1 font-mono">
+          data fetched at <span className="text-zinc-500">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</span>
+        </p>
       </div>
 
       {/* ── 1. CATALOG STATE (always today) ─────────────────────── */}
       <Section
         title="Catalog state"
         icon={<Layers className="h-4 w-4 text-emerald-400" />}
+        info={<MetricInfo docKey="kr_catalog_state" align="left" />}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
           <Stat label="Published tools" value={catalogStats.published.toLocaleString()} />
@@ -533,6 +545,7 @@ export default async function KnowledgeRoom({
       <Section
         title={`User activity · ${RANGE_LABELS[range]}`}
         icon={<Activity className="h-4 w-4 text-cyan-400" />}
+        info={<MetricInfo docKey="kr_user_activity" align="left" />}
       >
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
           <Stat icon={<Eye className="h-4 w-4" />} label="Page views" value={pageViewsStats.total.toLocaleString()} />
@@ -606,6 +619,7 @@ export default async function KnowledgeRoom({
       <Section
         title={`Activity feed · ${RANGE_LABELS[range]}`}
         icon={<Activity className="h-4 w-4 text-fuchsia-400" />}
+        info={<MetricInfo docKey="kr_activity_feed" align="left" />}
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Panel
@@ -673,6 +687,7 @@ export default async function KnowledgeRoom({
       <Section
         title={`Pipeline results · ${RANGE_LABELS[range]}`}
         icon={<RefreshCw className="h-4 w-4 text-amber-400" />}
+        info={<MetricInfo docKey="kr_pipeline_results" align="left" />}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Panel
@@ -818,6 +833,7 @@ export default async function KnowledgeRoom({
       <Section
         title={`Cost · ${RANGE_LABELS[range]}`}
         icon={<TrendingUp className="h-4 w-4 text-yellow-400" />}
+        info={<MetricInfo docKey="kr_pipeline_cost" align="left" />}
       >
         {!costInstrumented ? (
           <Panel title="">
@@ -895,7 +911,11 @@ export default async function KnowledgeRoom({
       </Section>
 
       {/* ── 4.7 HEALTH SCORE (always 7d + 30d windows, trend) ──── */}
-      <Section title="Pipeline health (7d + 30d)" icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}>
+      <Section
+        title="Pipeline health (7d + 30d)"
+        icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+        info={<MetricInfo docKey="kr_health_score" align="left" />}
+      >
         {healthList.length === 0 ? (
           <Panel title="">
             <Empty>No pipeline runs in last 60 days. Health scores appear once pipelines start logging.</Empty>
@@ -1031,18 +1051,23 @@ export default async function KnowledgeRoom({
 
 // ── Components ──────────────────────────────────────────────────────
 
-function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+// Section header with an optional ⓘ provenance slot (shared MetricInfo) —
+// kept page-local because the kit SectionHeading has no icon support.
+function Section({ title, icon, info, children }: { title: string; icon?: React.ReactNode; info?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="mb-8">
       <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
         {icon}
         {title}
+        {info ?? null}
       </h2>
       {children}
     </section>
   )
 }
 
+// Kit-styled stat card (string values + icon + sub line — kit MetricCard is
+// plain-number-only and would abbreviate exact catalog counts).
 function Stat({
   icon,
   label,
@@ -1055,12 +1080,12 @@ function Stat({
   sub?: string
 }) {
   return (
-    <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3">
-      <div className="flex items-center gap-1.5 text-zinc-400">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center gap-1.5 text-zinc-500">
         {icon}
-        <span className="text-[11px] font-medium">{label}</span>
+        <span className="text-xs uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-xl font-bold text-white mt-1 tabular-nums">{value}</div>
+      <div className="text-2xl font-semibold text-white mt-2 tabular-nums">{value}</div>
       {sub && <div className="text-[11px] text-zinc-500 mt-0.5">{sub}</div>}
     </div>
   )

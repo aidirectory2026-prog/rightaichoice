@@ -510,6 +510,110 @@ const docs = {
     ],
   },
 
+  // ── Content Ops (Phase 10.5c) ────────────────────────────────────────
+  kr_catalog_state: {
+    key: 'kr_catalog_state',
+    title: 'Catalog state',
+    whatItCounts:
+      'The live catalog right now (always today, never windowed): published tools, the single stalest verification timestamp, the compare-pages cascade backlog, never-refreshed tools, and how many tools have a "Latest from" feed.',
+    howComputed:
+      'Five cheap exact PostgREST counts/selects on tools + the v_stale_comparisons view, fetched fresh on every request (force-dynamic, no caching).',
+    whyTrusted:
+      'Phase 1 agent audit PASS: catalog counts were twice-fetched deterministic and exact (2,003 published at audit time); the stalest-tool and cascade-backlog tiles matched hand SQL.',
+    caveats: ['These tiles ignore the date picker by design — they describe the catalog NOW.'],
+  },
+  kr_user_activity: {
+    key: 'kr_user_activity',
+    title: 'User activity (window)',
+    whatItCounts:
+      'Ground-truth user actions in the selected window: server-logged page views and searches, tool saves, saved plans, newsletter signups, and newly logged referring domains.',
+    howComputed:
+      'Exact head-counts on the server-side ground-truth tables (page_views, search_logs, user_saved_tools, saved_stacks, newsletter_subscribers, referring_domains) with created_at >= window start. Top tools / top searches come from the kr_top_tools / kr_top_searches SQL-side GROUP BY RPCs (audit F9 fix: the old client-side grouping silently undercounted past 2,000 un-ordered rows at 14d/30d/90d).',
+    whyTrusted:
+      'F9 is a documented Phase-2 fix with the kr_* RPCs verified against hand SQL; these are server-written tables, so ad-blockers cannot hide activity here — they are the triangulation source for the analytics mirror, not derived from it.',
+    caveats: [
+      'page_views/search_logs include any traffic that executes the server path — bot filtering does not apply on this page.',
+      'Window start is a rolling cutoff (>= start); presets behave exactly as the picker labels them.',
+    ],
+  },
+  kr_activity_feed: {
+    key: 'kr_activity_feed',
+    title: 'Activity feed (tools refreshed / added / latest)',
+    whatItCounts:
+      'WHICH tools changed in the window, by name: refresh-SOP completions (with the fields each run updated), newly published tools (manual vs auto-ingested), and tools whose "Latest from" feed was rebuilt.',
+    howComputed:
+      'refresh_logs (status=refreshed) and tools (created_at / latest_updates_at >= window start), newest first, 20 per panel with a "view all" drill-down to /admin/activity (full list, cap 500).',
+    whyTrusted:
+      'Reads the pipelines\' own write-ahead logs — the same rows the refresh/ingestion jobs wrote, not a derived aggregate; spot-checked in the Phase 1 sweep.',
+    caveats: ['Panels show the 20 most recent; the count next to each panel is the fetched-row count, capped at 20 — use "view all" for the real total.'],
+  },
+  kr_pipeline_results: {
+    key: 'kr_pipeline_results',
+    title: 'Pipeline results (window)',
+    whatItCounts:
+      'What the content pipelines did in the window: refresh ok/failed mix, ingestion discovered/duplicate/gated/failed mix, regenerated compare editorials, and the last 8 errors of each kind with drill-down.',
+    howComputed:
+      'kr_refresh_mix RPC (SQL-side GROUP BY — audit F9 fix: the old 5,000-row client grouping dropped ~26% of a 30d window), ingestion_logs grouped in app code (volume safely below its cap), tool_comparisons.last_reviewed_at for cascade, plus bounded error selects.',
+    whyTrusted:
+      'F9 fix verified against hand SQL in Phase 2; error lists are raw rows (no aggregation to get wrong); the ok/failed badge and the error list read the same tables.',
+    caveats: ['Ingestion mix still groups client-side under a 5,000-row cap — accurate at current volumes, revisit if ingestion ever exceeds that in one window.'],
+  },
+  kr_pipeline_cost: {
+    key: 'kr_pipeline_cost',
+    title: 'Pipeline cost (NOT INSTRUMENTED — F8)',
+    whatItCounts:
+      'It currently counts nothing real: every pipeline_runs row ever has estimated_cost_usd / DeepSeek + Anthropic tokens / apify_usd at 0 or NULL, because no handler calls ctx.recordTokens / ctx.recordApifyUsd.',
+    howComputed:
+      'The plumbing exists (per-pipeline cost aggregation + a $5/day trailing-24h red flag) and activates automatically once any run logs a nonzero cost; until then the page renders an explicit "Not instrumented (F8)" state instead of a misleading "$0.00".',
+    whyTrusted:
+      'Audit finding F8 (metric-audit.md): SELECT count(*) FILTER (WHERE coalesce(estimated_cost_usd,0)>0) FROM pipeline_runs → 0 of 1,826 rows. Honesty rule: a number we do not measure is rendered as "not measured", never as zero.',
+    caveats: ['Fix direction: populate token+cost fields in withPipelineLogging/cronRoute handlers — until then ALL cost UI on this page and /admin/health is informational only.'],
+  },
+  kr_health_score: {
+    key: 'kr_health_score',
+    title: 'Pipeline health score (7d + 30d)',
+    whatItCounts:
+      'Per pipeline: success rate over the last 7 and 30 days, the trend vs the prior equal window, run count, mean/p95 duration (7d), and error-class tallies (30d). Degrading pipelines (<90% 7d) sort first with a red edge.',
+    howComputed:
+      'pipeline_runs rows from the last 60 days (cap 10,000 — current volume ~2k), aggregated in app code with fixed now-anchored 7/14/30/60-day windows. Deliberately NOT controlled by the page date picker: a health score over an arbitrary window is noise.',
+    whyTrusted:
+      'Reads the same pipeline_runs substrate whose per-pipeline numbers the Phase 1 audit verified exactly against the pipeline_health RPC; the aggregation is plain counting you can re-run from the page source.',
+    caveats: ['Success rate counts runs, not items — one run that processed 0 items "succeeds".', 'The 10k/60d cap is monitored headroom, not a correctness guarantee at 5× current volume.'],
+  },
+  tools_catalog_freshness: {
+    key: 'tools_catalog_freshness',
+    title: 'Tools catalog freshness split',
+    whatItCounts:
+      'Published tools split by verification age: Fresh (verified <30d ago), Aging (30–90d), Stale (>90d or never verified). Tiles link to the matching filtered list.',
+    howComputed:
+      'Computed in app code over the full fetched tools list using two cutoffs (now−30d, now−90d) on last_verified_at; the stale/aging filter views re-apply the SAME cutoffs as SQL predicates, so tile counts and filtered lists agree.',
+    whyTrusted:
+      'Trivially recountable: the tiles aggregate exactly the rows in the table below; the freshness SLA versions of these numbers are independently checked nightly by /admin/data-audit (fresh-7day-sla).',
+    caveats: ['Drafts are excluded from the freshness split (unpublished tools have no freshness SLA).'],
+  },
+  freshness_field_map: {
+    key: 'freshness_field_map',
+    title: 'Field freshness map',
+    whatItCounts:
+      'Per data field (last_verified_at, latest_updates_at, viability, …) × pricing tier: how many published tools never had the field filled, how many are stale past 7d/30d, and the p50/p95 age with the single oldest tool.',
+    howComputed:
+      'Single select on the v_field_freshness MATERIALIZED view, refreshed nightly by the refresh-freshness-view cron (23:45 UTC) — numbers are as of the last refresh, not live.',
+    whyTrusted:
+      'Source-traced in the Phase 1 sweep; the view definition (migrations 091/091a) is plain percentile SQL over tools, and the nightly refresh is itself monitored on /admin/health.',
+    caveats: ['Materialized: up to ~24h stale by design. If the refresh cron fails, this page silently shows yesterday — check /admin/health if numbers look frozen.'],
+  },
+  daily_checklist: {
+    key: 'daily_checklist',
+    title: 'Daily checklist counters',
+    whatItCounts:
+      'Today\'s manual-growth-loop progress: referring domains logged today, outreach emails sent today (target 5+), HARO replies today, founder drafts in the pool, plus lifetime totals.',
+    howComputed:
+      'Exact counts on referring_domains (first_seen_at) and outreach_log (sent_at) since IST midnight — the 9.A.1 fix replaced the old UTC midnight that made "today" wrong for the first 5.5 IST hours — plus head-counts for lifetime.',
+    whyTrusted:
+      'The IST-midnight window comes from the same shared parseRange helper every audited admin page uses; counts are over manually written ledger tables (same trust model as /admin/authority).',
+    caveats: ['"Done" states are inferred from counters (e.g. outreach ≥ 5), not ticked boxes — sending 5 emails nobody logged leaves the task red.'],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

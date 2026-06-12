@@ -147,11 +147,31 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'Content Ops',
     items: [
-      { href: '/admin/updates', label: 'Knowledge Room', filterCapabilities: [] },
+      {
+        href: '/admin/updates',
+        label: 'Knowledge Room',
+        description: 'User activity + pipeline results + errors over the selected window (kr_* RPCs).',
+        filterCapabilities: ['range'],
+      },
       { href: '/admin/tools', label: 'Tools catalog', filterCapabilities: [] },
-      { href: '/admin/freshness', label: 'Freshness', filterCapabilities: [] },
-      { href: '/admin/daily', label: 'Daily log', filterCapabilities: [] },
-      { href: '/admin/activity', label: 'Activity', filterCapabilities: [] },
+      {
+        href: '/admin/freshness',
+        label: 'Freshness',
+        description: 'Field × pricing-tier freshness heatmap (nightly materialized view).',
+        filterCapabilities: [],
+      },
+      {
+        href: '/admin/daily',
+        label: 'Daily log',
+        description: 'Human growth-loop checklist, pinned to today (IST).',
+        filterCapabilities: [],
+      },
+      {
+        href: '/admin/activity',
+        label: 'Activity',
+        description: 'Pipeline activity drill-down (refresh/added/latest) — Knowledge Room "view all" target.',
+        filterCapabilities: [],
+      },
     ],
   },
   {
