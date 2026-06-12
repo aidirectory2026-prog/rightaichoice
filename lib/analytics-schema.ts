@@ -442,6 +442,14 @@ export const EVENT_SCHEMAS = {
     source: 'client',
     props: z.object({ tray_count: z.number() }).strict(),
   },
+  compare_tray_cleared: {
+    description:
+      'Compare tray "Clear" button — analytics.compareTrayCleared from CompareTray (10.7c.6). tool_count = how many selections were discarded; an abandoned-compare-intent signal (vs compare_share_clicked which is the converted path).',
+    plainEnglish: 'Someone emptied their comparison tray without comparing.',
+    category: 'compare',
+    source: 'client',
+    props: z.object({ tool_count: z.number() }).strict(),
+  },
 
   // ── Plan flow ─────────────────────────────────────────────────────
   plan_started: {
@@ -741,11 +749,43 @@ export const EVENT_SCHEMAS = {
 
   // ── Discovery / browse ────────────────────────────────────────────
   filter_applied: {
-    description: 'Catalog filter applied — analytics.filterApplied.',
+    description:
+      'Catalog filter applied — analytics.filterApplied. NOTE: changing the sort select also fires this (filter_type="sort") for historical continuity; the richer sort_changed (with from→to) fires alongside it since 10.7c.6.',
     plainEnglish: 'Someone filtered the tool catalog.',
     category: 'discovery',
     source: 'client',
     props: z.object({ filter_type: z.string(), value: z.string(), source: z.string() }).strict(),
+  },
+  filter_cleared: {
+    description:
+      'Catalog filter removed — analytics.filterCleared from ToolFilters (10.7c.6): a FilterPill ✕, clearing a select back to its placeholder, or the "Clear all" button (filter_type="all"). Previously clears were silent (only sets fired filter_applied).',
+    plainEnglish: 'Someone removed a catalog filter (or cleared them all).',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ filter_type: z.string(), page_path: z.string() }).strict(),
+  },
+  sort_changed: {
+    description:
+      'Catalog sort order changed — analytics.sortChanged from the ToolFilters sort select (10.7c.6). Carries the PREVIOUS order too (from→to), which filter_applied never captured. Fires alongside the legacy filter_applied(filter_type="sort").',
+    plainEnglish: 'Someone changed how the tool list is sorted.',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ page_path: z.string(), from: z.string(), to: z.string() }).strict(),
+  },
+  pagination_clicked: {
+    description:
+      'Listing pagination link clicked (prev/next/numbered) — analytics.paginationClicked from ToolPagination (10.7c.6; /tools, /categories/[slug], /search). Fires on click before the <Link> navigation.',
+    plainEnglish: 'Someone moved to another page of a tool listing.',
+    category: 'discovery',
+    source: 'client',
+    props: z
+      .object({
+        page_path: z.string(),
+        from_page: z.number(),
+        to_page: z.number(),
+        total_pages: z.number(),
+      })
+      .strict(),
   },
   category_viewed: {
     description: 'Category page view — analytics.categoryViewed.',
@@ -875,6 +915,30 @@ export const EVENT_SCHEMAS = {
     category: 'auth',
     source: 'client',
     props: z.object({ source: z.string() }).strict(),
+  },
+  signup_email_entered: {
+    description:
+      'Email field blurred with an @-containing value on the signup page — analytics.signupEmailEntered (10.7c.6, fire-once per page visit). PII rule: only the DOMAIN is captured, never the local part.',
+    plainEnglish: 'Someone typed their email into the signup form.',
+    category: 'auth',
+    source: 'client',
+    props: z
+      .object({
+        email_domain: z.string(),
+        method_intent: z.enum(['email', 'google', 'github']),
+        source: z.string(),
+      })
+      .strict(),
+  },
+  signup_method_selected: {
+    description:
+      'Signup method chosen on the signup page — analytics.signupMethodSelected (10.7c.6): the Google OAuth button click or the email/password form submit. The step BETWEEN signup_started and signup_completed that shows which method users attempt (vs which completes).',
+    plainEnglish: 'Someone picked how to sign up (Google or email).',
+    category: 'auth',
+    source: 'client',
+    props: z
+      .object({ method: z.enum(['email', 'google', 'github']), source: z.string() })
+      .strict(),
   },
   signup_completed: {
     description:

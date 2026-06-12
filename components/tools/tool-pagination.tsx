@@ -13,6 +13,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 export function ToolPagination({
   page,
@@ -36,6 +37,18 @@ export function ToolPagination({
     return qs ? `${pathname}?${qs}` : pathname
   }
 
+  // 10.7c.6 — pagination_clicked on every prev/next/numbered link. onClick
+  // fires before the <Link> client navigation, so nothing is lost; crawler
+  // <a href> behavior (Phase 9 Smart SEO) is untouched.
+  function trackPage(toPage: number) {
+    analytics.paginationClicked({
+      page_path: pathname,
+      from_page: page,
+      to_page: toPage,
+      total_pages: totalPages,
+    })
+  }
+
   const pages: number[] = []
   const start = Math.max(1, page - 2)
   const end = Math.min(totalPages, page + 2)
@@ -53,7 +66,13 @@ export function ToolPagination({
 
       <div className="flex items-center gap-1">
         {page > 1 ? (
-          <Link href={hrefFor(page - 1)} rel="prev" className={arrowCls} aria-label="Previous page">
+          <Link
+            href={hrefFor(page - 1)}
+            rel="prev"
+            className={arrowCls}
+            aria-label="Previous page"
+            onClick={() => trackPage(page - 1)}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Link>
         ) : (
@@ -64,24 +83,30 @@ export function ToolPagination({
 
         {start > 1 && (
           <>
-            <PageLink page={1} current={page} href={hrefFor(1)} />
+            <PageLink page={1} current={page} href={hrefFor(1)} onNavigate={trackPage} />
             {start > 2 && <span className="px-1 text-zinc-600">...</span>}
           </>
         )}
 
         {pages.map((p) => (
-          <PageLink key={p} page={p} current={page} href={hrefFor(p)} />
+          <PageLink key={p} page={p} current={page} href={hrefFor(p)} onNavigate={trackPage} />
         ))}
 
         {end < totalPages && (
           <>
             {end < totalPages - 1 && <span className="px-1 text-zinc-600">...</span>}
-            <PageLink page={totalPages} current={page} href={hrefFor(totalPages)} />
+            <PageLink page={totalPages} current={page} href={hrefFor(totalPages)} onNavigate={trackPage} />
           </>
         )}
 
         {page < totalPages ? (
-          <Link href={hrefFor(page + 1)} rel="next" className={arrowCls} aria-label="Next page">
+          <Link
+            href={hrefFor(page + 1)}
+            rel="next"
+            className={arrowCls}
+            aria-label="Next page"
+            onClick={() => trackPage(page + 1)}
+          >
             <ChevronRight className="h-4 w-4" />
           </Link>
         ) : (
@@ -94,11 +119,22 @@ export function ToolPagination({
   )
 }
 
-function PageLink({ page, current, href }: { page: number; current: number; href: string }) {
+function PageLink({
+  page,
+  current,
+  href,
+  onNavigate,
+}: {
+  page: number
+  current: number
+  href: string
+  onNavigate: (toPage: number) => void
+}) {
   const isActive = page === current
   return (
     <Link
       href={href}
+      onClick={() => onNavigate(page)}
       aria-current={isActive ? 'page' : undefined}
       className={`min-w-[36px] rounded-lg border px-2 py-1.5 text-sm font-medium transition-colors text-center ${
         isActive

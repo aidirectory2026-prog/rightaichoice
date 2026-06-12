@@ -74,7 +74,10 @@ export const PLANNED_EVENTS = new Set<string>([
   'pricing_viewed', 'profile_tool_clicked', 'question_answered', 'question_asked',
   'recommendation_result_clicked', 'recommendation_step_completed', 'role_page_viewed',
   'saved_list_filtered', 'saved_tool_removed_from_list', 'search_no_results',
-  'signup_email_entered', 'signup_method_selected', 'stack_exported', 'stack_viewed',
+  // 10.7c.6 — signup_email_entered + signup_method_selected promoted to
+  // FIRED (signup-page wiring: email blur domain-capture, Google button +
+  // email-form-submit method selection).
+  'stack_exported', 'stack_viewed',
   'tool_alternative_clicked', 'tool_integration_link_clicked', 'tool_pricing_tier_hovered',
   'tool_screenshot_opened', 'tool_share_clicked', 'tool_show_more_alternatives',
   'tool_tab_switched', 'upgrade_clicked', 'workflow_generated', 'workflow_saved',

@@ -718,6 +718,7 @@ const RECIPES: Recipe[] = [
   { event: 'compare_tool_removed', mode: 'payload', run: noop, props: (s) => ({ tool_slug: s.tool, tray_count: 1 }) },
   { event: 'compare_share_clicked', mode: 'payload', run: noop, props: (s) => ({ tools: `${s.tool},chatgpt` }) },
   { event: 'compare_tray_opened', mode: 'payload', run: noop, props: () => ({ tray_count: 2 }) },
+  { event: 'compare_tray_cleared', mode: 'payload', note: 'abandoned compare intent (10.7c.6)', run: noop, props: () => ({ tool_count: 2 }) },
 
   // Plan flow (real flow triggers paid AI generation — payload-driven)
   { event: 'plan_started', mode: 'payload', note: 'real trigger runs paid AI plan generation', run: noop, props: () => ({ source: 'plan_page' }) },
@@ -799,6 +800,9 @@ const RECIPES: Recipe[] = [
 
   // Discovery
   { event: 'filter_applied', mode: 'payload', run: noop, props: () => ({ filter_type: 'pricing', value: 'free', source: 'tools_page' }) },
+  { event: 'filter_cleared', mode: 'payload', note: '10.7c.6 — pill ✕ / select reset / clear-all (filter_type="all")', run: noop, props: () => ({ filter_type: 'pricing', page_path: '/tools' }) },
+  { event: 'sort_changed', mode: 'payload', note: '10.7c.6 — carries previous order', run: noop, props: () => ({ page_path: '/tools', from: 'trending', to: 'newest' }) },
+  { event: 'pagination_clicked', mode: 'payload', note: '10.7c.6 — listing pagination link', run: noop, props: () => ({ page_path: '/tools', from_page: 1, to_page: 2, total_pages: 58 }) },
   { event: 'collection_viewed', mode: 'payload', run: noop, props: () => ({ slug: 'best-free-ai-tools' }) },
 
   // AI chat (real chat hits paid LLM API)
@@ -852,6 +856,8 @@ const RECIPES: Recipe[] = [
 
   // Auth (OAuth flows — payload-driven)
   { event: 'signup_started', mode: 'payload', note: 'auth flow', run: noop, props: () => ({ source: 'navbar' }) },
+  { event: 'signup_email_entered', mode: 'payload', note: 'auth step (10.7c.6) — domain only, never the local part', run: noop, props: () => ({ email_domain: 'gmail.com', method_intent: 'email', source: 'signup_page' }) },
+  { event: 'signup_method_selected', mode: 'payload', note: 'auth step (10.7c.6)', run: noop, props: () => ({ method: 'google', source: 'signup_page' }) },
   { event: 'signup_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
   { event: 'login_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
   { event: 'password_reset_requested', mode: 'payload', note: 'auth flow (forgot-password success state)', run: noop, props: () => ({ method: 'email' }) },

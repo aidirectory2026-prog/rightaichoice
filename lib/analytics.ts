@@ -887,6 +887,22 @@ export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Discovery / browse
   // ──────────────────────────────────────────────────────────────
+  // 10.7c.6 — clears were silent before (only sets fired filter_applied).
+  filterCleared(filterType: string, pagePath: string) {
+    capture('filter_cleared', { filter_type: filterType, page_path: pagePath })
+  },
+  // 10.7c.6 — richer than filter_applied('sort'): carries the PREVIOUS order.
+  sortChanged(props: { page_path: string; from: string; to: string }) {
+    capture('sort_changed', { ...props })
+  },
+  // 10.7c.6 — listing pagination clicks (ToolPagination Link onClick).
+  paginationClicked(props: { page_path: string; from_page: number; to_page: number; total_pages: number }) {
+    capture('pagination_clicked', { ...props })
+  },
+  // 10.7c.6 — abandoned compare intent (tray emptied without comparing).
+  compareTrayCleared(toolCount: number) {
+    capture('compare_tray_cleared', { tool_count: toolCount })
+  },
   filterApplied(filterType: string, value: string, source: string) {
     capture('filter_applied', { filter_type: filterType, value, source })
   },

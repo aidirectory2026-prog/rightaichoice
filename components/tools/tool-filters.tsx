@@ -80,17 +80,35 @@ export function ToolFilters({
       params.delete('page')
       const qs = params.toString()
       // Phase 8.g.11.c — wire filter_applied on every chip/sort change.
-      // Fires on both set AND clear so we know which facets users explore vs
-      // back away from. Source = current path (e.g. /tools, /categories/x).
+      // 10.7c.6 — clears now fire filter_cleared (they were silent before;
+      // the old comment claimed both fired but only sets did).
+      // Source = current path (e.g. /tools, /categories/x).
       if (value) {
         analytics.filterApplied(key, value, pathname)
+      } else {
+        analytics.filterCleared(key, pathname)
       }
       router.push(qs ? `${pathname}?${qs}` : pathname)
     },
     [router, searchParams, pathname]
   )
 
+  // 10.7c.6 — explicit sort event with the PREVIOUS order (filter_applied
+  // only ever carried the new value); fires alongside the legacy
+  // filter_applied('sort', …) inside updateParam for continuity.
+  const changeSort = useCallback(
+    (value: string) => {
+      if (value !== currentSort) {
+        analytics.sortChanged({ page_path: pathname, from: currentSort, to: value })
+      }
+      updateParam('sort', value)
+    },
+    [updateParam, currentSort, pathname]
+  )
+
   const clearAll = useCallback(() => {
+    // 10.7c.6 — record the clear-all (filter_type='all').
+    analytics.filterCleared('all', pathname)
     // On /categories/[slug] keep the category route; only nuke filter params.
     // On /tools the entire route is the listing root, so plain push to /tools.
     if (hideCategoryFilter) {
@@ -121,7 +139,7 @@ export function ToolFilters({
         <select
           aria-label="Sort tools"
           value={currentSort}
-          onChange={(e) => updateParam('sort', e.target.value)}
+          onChange={(e) => changeSort(e.target.value)}
           className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 min-h-[40px] text-sm text-white focus:border-emerald-600 focus:outline-none"
         >
           {SORT_OPTIONS.map((opt) => (

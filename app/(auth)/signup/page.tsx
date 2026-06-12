@@ -1,17 +1,28 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '@/actions/auth'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { Logo } from '@/components/shared/logo'
+import { analytics } from '@/lib/analytics'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signUp, null)
   const searchParams = useSearchParams()
   const nextParam = searchParams.get('next') ?? ''
+  // 10.7c.6 — auth-step events. Email capture is DOMAIN-only (PII rule)
+  // and fires once per page visit.
+  const emailEnteredRef = useRef(false)
+  const onEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim()
+    const at = value.lastIndexOf('@')
+    if (emailEnteredRef.current || at <= 0 || at === value.length - 1) return
+    emailEnteredRef.current = true
+    analytics.signupEmailEntered(value.slice(at + 1).toLowerCase(), 'email', 'signup_page')
+  }
 
   if (state?.success) {
     return (
@@ -47,7 +58,12 @@ export default function SignupPage() {
           lib/auth/oauth-client.ts). */}
       <button
         type="button"
-        onClick={() => signInWithOAuthClient('google', nextParam || null)}
+        onClick={() => {
+          // 10.7c.6 — which method users ATTEMPT (signup_completed shows
+          // which converts).
+          analytics.signupMethodSelected('google', 'signup_page')
+          signInWithOAuthClient('google', nextParam || null)
+        }}
         className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
       >
         <GoogleIcon />
@@ -60,7 +76,12 @@ export default function SignupPage() {
         <div className="flex-1 h-px bg-zinc-800" />
       </div>
 
-      <form action={action} data-form-id="auth_signup" className="space-y-4">
+      <form
+        action={action}
+        data-form-id="auth_signup"
+        onSubmit={() => analytics.signupMethodSelected('email', 'signup_page')}
+        className="space-y-4"
+      >
         {/* Phase 7 redirect-back: thread `next` to signUp action so the
             email-confirmation link includes it and /auth/confirm redirects
             the user back to where they signed up from. */}
@@ -94,6 +115,7 @@ export default function SignupPage() {
             required
             autoComplete="email"
             defaultValue={state?.values?.email ?? ''}
+            onBlur={onEmailBlur}
             placeholder="you@example.com"
             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors"
           />

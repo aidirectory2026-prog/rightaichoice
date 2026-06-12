@@ -67,6 +67,13 @@
       "method": "analytics.compareToolRemoved"
     }
   ],
+  "compare_tray_cleared": [
+    {
+      "file": "components/compare/compare-tray.tsx",
+      "line": 91,
+      "method": "analytics.compareTrayCleared"
+    }
+  ],
   "compare_tray_opened": [
     {
       "file": "components/compare/compare-tray.tsx",
@@ -150,8 +157,20 @@
   "filter_applied": [
     {
       "file": "components/tools/tool-filters.tsx",
-      "line": 86,
+      "line": 87,
       "method": "analytics.filterApplied"
+    }
+  ],
+  "filter_cleared": [
+    {
+      "file": "components/tools/tool-filters.tsx",
+      "line": 89,
+      "method": "analytics.filterCleared"
+    },
+    {
+      "file": "components/tools/tool-filters.tsx",
+      "line": 111,
+      "method": "analytics.filterCleared"
     }
   ],
   "form_abandoned": [
@@ -232,6 +251,13 @@
       "file": "components/providers/mixpanel-provider.tsx",
       "line": 181,
       "method": "analytics.pageViewed"
+    }
+  ],
+  "pagination_clicked": [
+    {
+      "file": "components/tools/tool-pagination.tsx",
+      "line": 44,
+      "method": "analytics.paginationClicked"
     }
   ],
   "password_reset_completed": [
@@ -650,11 +676,37 @@
       "method": "serverAnalytics.signupCompleted"
     }
   ],
+  "signup_email_entered": [
+    {
+      "file": "app/(auth)/signup/page.tsx",
+      "line": 24,
+      "method": "analytics.signupEmailEntered"
+    }
+  ],
+  "signup_method_selected": [
+    {
+      "file": "app/(auth)/signup/page.tsx",
+      "line": 64,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "app/(auth)/signup/page.tsx",
+      "line": 82,
+      "method": "analytics.signupMethodSelected"
+    }
+  ],
   "signup_started": [
     {
       "file": "components/layout/navbar.tsx",
       "line": 129,
       "method": "analytics.signupStarted"
+    }
+  ],
+  "sort_changed": [
+    {
+      "file": "components/tools/tool-filters.tsx",
+      "line": 102,
+      "method": "analytics.sortChanged"
     }
   ],
   "stack_saved": [
