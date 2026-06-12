@@ -216,6 +216,12 @@ Founder mandate: reports must be outstanding, accurate, extremely valuable — w
 
 ---
 
+### 2026-06-13 (later) — Three more free sources + team playbook (commit `5fc8a8c`)
+
+- **Stack Overflow** (the free Quora substitute — dev Q&A intent; Quora has no API and hard-blocks scraping), **GitHub signals** (stars = adoption ground truth + most-commented issues; near-exact repo match so `cursor` can't grab `cursorrules`), **Lemmy** (federated Reddit-style forums; partial Reddit stand-in while approval is pending).
+- All verified against live APIs: Cursor → `cursor/cursor` 33k stars; LangChain → 139k stars + real issues + 15 SO posts; Ollama → 174k stars + its famous AMD-GPU issue (323 comments). Mix is now **9 live free sources + Reddit pending**.
+- **Playbook written for the team:** `docs/automated-workflows/10-sentiment-sources-playbook.md` — full architecture (who each source represents, costs, auth, failure modes), the data-flow diagram, env-keys checklist, verification commands, and rules for adding sources.
+
 ## Phase summary — everything done and verified (in plain words)
 
 This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
