@@ -137,7 +137,7 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <form onSubmit={handleSubmit} className="relative">
+      <form onSubmit={handleSubmit} data-form-id="site_search" className="relative">
         <Search
           className={`absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 ${
             isLarge ? 'h-5 w-5' : 'h-4 w-4'

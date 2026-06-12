@@ -1014,6 +1014,71 @@ export const EVENT_SCHEMAS = {
     props: z.object({ url: z.string(), entity: z.string(), entity_id: z.string() }).strict(),
   },
 
+  // ── Form analytics (10.7c.3 — FormAnalyticsTracker, every <form>) ──
+  form_field_changed: {
+    description:
+      'Field blur where the value changed during the focus — FormAnalyticsTracker (document focusin/focusout, every <form>; real forms carry data-form-id: auth_login, auth_signup, review, newsletter_*, site_search, home_goal, plan_intake, qa_question, profile_edit, …). focus_order = 1-based first-focus position within the form; corrections = edit cycles beyond the first (re-edits). Value text itself is NEVER captured — only its length. Password/hidden fields skipped entirely. Max 30/form per page.',
+    plainEnglish: 'Someone filled in (or re-edited) one field of a form.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        field_name: z.string(),
+        field_type: z.string(),
+        has_value: z.boolean(),
+        value_length: z.number(),
+        page_path: z.string(),
+        focus_order: z.number(),
+        corrections: z.number(),
+      })
+      .strict(),
+  },
+  form_submitted: {
+    description:
+      'Native form submit (document capture) — FormAnalyticsTracker. all_field_names_filled = named visible fields with a non-empty value at submit (names only, never values; capped 20); time_to_submit_ms measured from first field focus.',
+    plainEnglish: 'Someone submitted a form.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        all_field_names_filled: z.array(z.string()),
+        field_count_filled: z.number(),
+        field_count_skipped: z.number(),
+        time_to_submit_ms: z.number(),
+      })
+      .strict(),
+  },
+  form_validation_failed: {
+    description:
+      'Native constraint validation blocked a submit — document-level "invalid" capture listener in FormAnalyticsTracker. error_code is the ValidityState flag that fired (valueMissing, typeMismatch, patternMismatch, …). Throttled 1/2s.',
+    plainEnglish: 'A form told someone their input was invalid.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({ form_id: z.string(), field_name: z.string(), error_code: z.string() })
+      .strict(),
+  },
+  form_abandoned: {
+    description:
+      'A form that had at least one focused field was left without submitting — flushed once per form on route change / pagehide by FormAnalyticsTracker. last_field_name is the abandon point; focus_order is the first-focus order of touched fields (names only, capped 15).',
+    plainEnglish: 'Someone started filling a form but left without submitting it.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        page_path: z.string(),
+        last_field_name: z.string(),
+        fields_touched: z.number(),
+        corrections_total: z.number(),
+        seconds_on_form: z.number(),
+        focus_order: z.array(z.string()),
+      })
+      .strict(),
+  },
+
   // ── System / performance ──────────────────────────────────────────
   web_vitals: {
     description:

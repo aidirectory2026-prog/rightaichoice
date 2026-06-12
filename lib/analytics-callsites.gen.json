@@ -154,6 +154,34 @@
       "method": "analytics.filterApplied"
     }
   ],
+  "form_abandoned": [
+    {
+      "file": "components/analytics/form-analytics-tracker.tsx",
+      "line": 204,
+      "method": "analytics.formAbandoned"
+    }
+  ],
+  "form_field_changed": [
+    {
+      "file": "components/analytics/form-analytics-tracker.tsx",
+      "line": 155,
+      "method": "analytics.formFieldChanged"
+    }
+  ],
+  "form_submitted": [
+    {
+      "file": "components/analytics/form-analytics-tracker.tsx",
+      "line": 195,
+      "method": "analytics.formSubmitted"
+    }
+  ],
+  "form_validation_failed": [
+    {
+      "file": "components/analytics/form-analytics-tracker.tsx",
+      "line": 173,
+      "method": "analytics.formValidationFailed"
+    }
+  ],
   "hero_cta_clicked": [
     {
       "file": "components/home/goal-input.tsx",

@@ -1420,7 +1420,20 @@ export const analytics = {
   },
 
   // ── Catch-all form events (covers anything not specifically wired) ──
-  formFieldChanged(props: { form_id: string; field_name: string; field_type: 'text' | 'select' | 'checkbox' | 'textarea'; has_value: boolean; value_length: number; page_path: string }) {
+  // 10.7c.3 — wired generically by components/analytics/form-analytics-tracker.tsx
+  // (document-level focusin/focusout/submit/invalid listeners over every <form>).
+  // field_type widened to the real input-type space; focus_order (1-based
+  // first-focus position) + corrections (re-edit cycles) added per the plan.
+  formFieldChanged(props: {
+    form_id: string
+    field_name: string
+    field_type: string
+    has_value: boolean
+    value_length: number
+    page_path: string
+    focus_order: number
+    corrections: number
+  }) {
     capture('form_field_changed', { ...props })
   },
   formSubmitted(formId: string, allFieldNamesFilled: string[], fieldCountSkipped: number, timeToSubmitMs: number) {
@@ -1431,6 +1444,19 @@ export const analytics = {
       field_count_skipped: fieldCountSkipped,
       time_to_submit_ms: timeToSubmitMs,
     })
+  },
+  // 10.7c.3 — abandon point: a touched-but-never-submitted form, flushed
+  // once per form on route change / pagehide.
+  formAbandoned(props: {
+    form_id: string
+    page_path: string
+    last_field_name: string
+    fields_touched: number
+    corrections_total: number
+    seconds_on_form: number
+    focus_order: string[]
+  }) {
+    capture('form_abandoned', { ...props })
   },
 
   // ── Phase 8.g.11.d — passive browser-API capture ────────────────

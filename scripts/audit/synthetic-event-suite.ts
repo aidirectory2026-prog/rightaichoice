@@ -922,6 +922,60 @@ const RECIPES: Recipe[] = [
     props: () => ({ url: 'https://example.com/pricing', entity: 'anchor', entity_id: 'a.underline' }),
   },
 
+  // Form analytics (10.7c.3 — focus/blur cycles and native submits are
+  // nondeterministic headlessly — payload-driven)
+  {
+    event: 'form_field_changed',
+    mode: 'payload',
+    note: 'real trigger is a blur-with-changed-value — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'newsletter_inline',
+      field_name: 'email',
+      field_type: 'email',
+      has_value: true,
+      value_length: 19,
+      page_path: '/blog/best-ai-video-tools',
+      focus_order: 1,
+      corrections: 0,
+    }),
+  },
+  {
+    event: 'form_submitted',
+    mode: 'payload',
+    note: 'real trigger is a native form submit — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'review',
+      all_field_names_filled: ['text', 'pros', 'cons'],
+      field_count_filled: 3,
+      field_count_skipped: 1,
+      time_to_submit_ms: 48_000,
+    }),
+  },
+  {
+    event: 'form_validation_failed',
+    mode: 'payload',
+    note: 'real trigger is native constraint validation — payload-driven',
+    run: noop,
+    props: () => ({ form_id: 'auth_signup', field_name: 'email', error_code: 'typeMismatch' }),
+  },
+  {
+    event: 'form_abandoned',
+    mode: 'payload',
+    note: 'real trigger is leaving a touched form — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'auth_signup',
+      page_path: '/signup',
+      last_field_name: 'password',
+      fields_touched: 2,
+      corrections_total: 1,
+      seconds_on_form: 35,
+      focus_order: ['email', 'password'],
+    }),
+  },
+
   // System / performance (browser flush is hide/route-change-timed —
   // canonical payload keeps the suite deterministic; the tracker itself is
   // dev-validated at the capture() choke point)

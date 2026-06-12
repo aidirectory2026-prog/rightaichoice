@@ -109,7 +109,7 @@ export function GoalInput() {
 
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} data-form-id="home_goal" className="flex flex-col gap-3">
         <div className="relative">
           <textarea
             ref={textareaRef}

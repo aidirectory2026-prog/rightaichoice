@@ -97,7 +97,7 @@ export function IntakeModal({ initial, onSubmit, onSkip, onClose }: Props) {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} data-form-id="plan_intake" className="px-6 py-5 space-y-5">
           <p className="text-sm text-zinc-400 leading-relaxed">
             The right stack looks completely different depending on who's building it. A solo founder on a tight budget needs different tools than a 20-person team that can afford the premium tier. Take a moment to confirm{' '}
             <span className="text-white font-medium">your skill, budget, team, and goal</span> — these are the decisions that make our recommendation honest and useful to you, not a generic list.

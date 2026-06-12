@@ -60,7 +60,7 @@ export default function SignupPage() {
         <div className="flex-1 h-px bg-zinc-800" />
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} data-form-id="auth_signup" className="space-y-4">
         {/* Phase 7 redirect-back: thread `next` to signUp action so the
             email-confirmation link includes it and /auth/confirm redirects
             the user back to where they signed up from. */}

@@ -39,7 +39,7 @@ export function EditProfileForm({ profile }: { profile: ProfileData }) {
   const displayedAvatar = previewUrl ?? profile.avatar_url
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} data-form-id="profile_edit" className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-zinc-400 mb-2">Profile photo</label>
         <div className="flex items-center gap-4">

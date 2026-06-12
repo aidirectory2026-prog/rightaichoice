@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="flex-1 h-px bg-zinc-800" />
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} data-form-id="auth_login" className="space-y-4">
         {nextParam && <input type="hidden" name="next" value={nextParam} />}
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-medium text-zinc-300">

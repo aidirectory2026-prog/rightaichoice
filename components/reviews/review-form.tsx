@@ -96,7 +96,7 @@ export function ReviewForm({ toolId, toolSlug }: { toolId: string; toolSlug?: st
   }
 
   return (
-    <form ref={formRef} action={action} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-5">
+    <form ref={formRef} action={action} data-form-id="review" className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-5">
       <input type="hidden" name="tool_id" value={toolId} />
       <input type="hidden" name="rating" value={rating} />
 

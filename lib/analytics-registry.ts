@@ -56,9 +56,10 @@ export const PLANNED_EVENTS = new Set<string>([
   'compare_attribute_row_expanded', 'compare_csv_exported', 'dashboard_widget_clicked',
   'discussion_replied', 'element_dwell', 'empty_search',
   // 10.7c — error_encountered + external_link_clicked promoted to FIRED
-  // (GlobalInteractionTracker global listeners).
-  'filter_no_results', 'form_field_changed', 'form_submitted',
-  'form_validation_failed', 'onboarding_completed', 'onboarding_step_completed',
+  // (GlobalInteractionTracker global listeners); form_field_changed +
+  // form_submitted + form_validation_failed promoted to FIRED
+  // (FormAnalyticsTracker generic <form> instrumentation, 10.7c.3).
+  'filter_no_results', 'onboarding_completed', 'onboarding_step_completed',
   'password_reset_requested', 'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
   'plan_goal_text_submitted', 'plan_intent_linked_to_user', 'plan_intent_persisted',
   'plan_results_shared', 'plan_results_tool_saved', 'plan_step_back', 'plan_step_completed',

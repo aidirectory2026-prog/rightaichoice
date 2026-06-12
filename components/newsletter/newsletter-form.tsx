@@ -87,9 +87,10 @@ export function NewsletterForm({
           </div>
         )}
         {sub && <p className="text-xs text-zinc-400 mb-3">{sub}</p>}
-        <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={onSubmit} data-form-id="newsletter_card" className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
+            name="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -112,9 +113,10 @@ export function NewsletterForm({
 
   if (variant === 'compact') {
     return (
-      <form onSubmit={onSubmit} className="flex gap-2">
+      <form onSubmit={onSubmit} data-form-id="newsletter_compact" className="flex gap-2">
         <input
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -139,9 +141,10 @@ export function NewsletterForm({
         </div>
       )}
       {sub && <p className="text-xs text-zinc-400 mb-3">{sub}</p>}
-      <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
+      <form onSubmit={onSubmit} data-form-id="newsletter_inline" className="flex flex-col sm:flex-row gap-2">
         <input
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

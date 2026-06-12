@@ -7,6 +7,7 @@ import { CompareProvider } from "@/components/providers/compare-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
 import { ClarityProvider } from "@/components/providers/clarity-provider";
 import { GlobalInteractionTracker } from "@/components/analytics/global-interaction-tracker";
+import { FormAnalyticsTracker } from "@/components/analytics/form-analytics-tracker";
 import { WebVitalsTracker } from "@/components/analytics/web-vitals-tracker";
 import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -161,6 +162,7 @@ export default async function RootLayout({
         <ClarityProvider />
         <MixpanelProvider>
           <GlobalInteractionTracker />
+          <FormAnalyticsTracker />
           <WebVitalsTracker />
           <AuthProvider
             user={user ? { id: user.id, email: user.email ?? "" } : null}

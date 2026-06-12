@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-zinc-400">Enter your email and we&apos;ll send a reset link.</p>
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} data-form-id="auth_forgot_password" className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
             Email
