@@ -2,7 +2,15 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { ReviewCard } from './review-card'
+
+// Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, ⓘ provenance on the queue counts). Data + query
+// semantics unchanged: the bucket/constraint filter links are this page's
+// own sound custom controls (the queue is a generated JSON artifact, not a
+// windowed metric) — kept; the global filter bar does not apply here.
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Tier-1 Review' }
@@ -89,14 +97,14 @@ export default async function Tier1ReviewPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Tier-1 Title Review</h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            {rewrites.length} pages shown · {overrideMap.size} active overrides
-            {file.generatedAt && ` · generated ${file.generatedAt.slice(0, 10)}`}
-          </p>
-        </div>
+      <PageHeader>
+        <p className="flex items-center gap-1 text-xs text-zinc-500">
+          {rewrites.length} pages shown · {overrideMap.size} active overrides
+          {file.generatedAt && ` · generated ${file.generatedAt.slice(0, 10)}`}
+          <MetricInfo docKey="tier1_queue" />
+        </p>
+      </PageHeader>
+      <div className="-mt-4 flex flex-wrap items-end justify-end gap-4">
         <div className="flex flex-col gap-2">
           <nav className="flex flex-wrap gap-2 text-xs">
             <FilterLink href="/admin/tier1-review" label={`All (${counts['1A'] + counts['1B'] + counts['1C']})`} active={!bucket && !constraint} />

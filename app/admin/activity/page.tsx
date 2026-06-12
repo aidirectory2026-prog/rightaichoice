@@ -1,9 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 
 // Phase 8.d.5b — full ordered list for one activity-feed type. Linked
 // from Knowledge Room's "view all →" CTA when a panel hits the 20-row cap.
+//
+// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, type switcher tabs, ⓘ provenance). Data + query
+// semantics unchanged, including the page's own window convention (rolling
+// today=24h/7d/30d via ?range, or ?from) — it inherits whatever window the
+// Knowledge Room "view all" link carried, so we deliberately did NOT swap it
+// for the calendar-anchored picker (that would change the row sets).
+//
+// Merge decision (10.5c): evaluated merging this page INTO /admin/daily —
+// kept separate. Zero shared data sources: this is the pipeline activity
+// drill-down over refresh_logs/tools; /admin/daily is the human growth-loop
+// checklist over referring_domains/outreach_log. See phase5c-gate.md.
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -96,17 +109,41 @@ export default async function ActivityPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-start gap-3">
-        <Link href="/admin/updates" className="text-zinc-400 hover:text-emerald-300 mt-1">
-          <ChevronLeft className="h-5 w-5" />
+      <PageHeader>
+        <Link href="/admin/updates" className="text-xs text-zinc-500 hover:text-emerald-300">
+          ← Knowledge Room
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">{TYPE_LABEL[type]}</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            {rows.length.toLocaleString()} entries · since {new Date(cutoff).toISOString().slice(0, 19)} UTC
-          </p>
-        </div>
+      </PageHeader>
+
+      {/* Type switcher — custom control kept (one feed type per view) */}
+      <div className="mb-4 flex items-center gap-2">
+        {VALID_TYPES.map((t) => {
+          const qs = new URLSearchParams()
+          qs.set('type', t)
+          if (sp.range) qs.set('range', sp.range)
+          if (sp.from) qs.set('from', sp.from)
+          if (sp.to) qs.set('to', sp.to)
+          return (
+            <Link
+              key={t}
+              href={`/admin/activity?${qs.toString()}`}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                type === t
+                  ? 'border-emerald-700 bg-emerald-950 text-emerald-400'
+                  : 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600'
+              }`}
+            >
+              {TYPE_LABEL[t]}
+            </Link>
+          )
+        })}
       </div>
+
+      <p className="mb-4 flex items-center gap-1 text-xs text-zinc-500">
+        <span className="text-zinc-300 font-medium">{TYPE_LABEL[type]}</span>
+        <span>· {rows.length.toLocaleString()} entries · since {new Date(cutoff).toISOString().slice(0, 19)} UTC</span>
+        <MetricInfo docKey="kr_activity_feed" align="left" />
+      </p>
 
       <div className="rounded-lg border border-zinc-800 overflow-hidden">
         <table className="w-full text-sm">

@@ -413,6 +413,285 @@ const docs = {
     caveats: ['Compared-with reflects profile aggregates (per-visitor lifetime arrays scoped by last-active) — it answers "who", not "how many times".', EPOCHS.mirror, EPOCHS.botRecall],
   },
 
+  // ── SEO & Growth (Phase 10.5c) ───────────────────────────────────────
+  seo_pulse_wow: {
+    key: 'seo_pulse_wow',
+    title: 'Site-wide GSC totals (WoW)',
+    whatItCounts:
+      'Google Search Console clicks / impressions / CTR / average position for the whole site over the trailing 7-day and 28-day scopes, with the delta against the PREVIOUS weekly snapshot of the same scope.',
+    howComputed:
+      'The latest two rows per scope from gsc_snapshots (snapshot_date desc, totals jsonb written verbatim from the GSC API by the weekly snapshot-gsc cron, Mon). Delta = current − prior. This is snapshot pairing, NOT the global date filter — the page deliberately keeps this custom control.',
+    whyTrusted:
+      'Phase 1 agent audit verified the WoW totals exactly against the stored gsc_snapshots rows (PASS, metric-audit.md "Also verified PASS"); the numbers are Google\'s own — we store and difference them, we never recompute them.',
+    caveats: [
+      'GSC data lags ~2 days and Google revises recent days — two snapshots taken a week apart are comparable, but neither matches the live GSC UI for the same window.',
+      'No snapshot row → "No snapshot yet": the weekly cron has not run for that scope.',
+    ],
+  },
+  seo_pulse_queue: {
+    key: 'seo_pulse_queue',
+    title: 'Triage queue counts',
+    whatItCounts:
+      'Open weekly-loop actions by status: proposed (awaiting a decision), accepted (awaiting execution), executed (measuring for 4 weeks), plus the critical/high priority split of the proposed queue.',
+    howComputed:
+      "One select on weekly_loop_actions with status IN ('proposed','accepted','rejected'-excluded …) — exactly the rows rendered in the cards below, counted in app code after the fetch. Accept / Reject / Mark-executed are server actions that update the same table.",
+    whyTrusted:
+      'Phase 1 agent audit verified the action counts exactly (PASS); the counts and the visible card lists come from the SAME fetched rows, so the tiles can never disagree with the queue you see.',
+    caveats: ['Not date-ranged — the queue is a live worklist, not a windowed metric.'],
+  },
+  seo_impact_summary: {
+    key: 'seo_impact_summary',
+    title: 'Title-change impact summary',
+    whatItCounts:
+      'For approved title overrides: how many have a +28-day outcome measurement, how many are still waiting, the average CTR lift and the average position gain across measured pages that had impressions in BOTH windows.',
+    howComputed:
+      'title_overrides rows with a baseline captured and reverted_at IS NULL; measured = measured_at set (outcome_* columns written by the weekly seo-impact cron 28 days after approval against the latest GSC snapshot); avg lift = mean(outcome_ctr − baseline_ctr); position gain = mean(baseline_position − outcome_position), so positive = moved UP the SERP.',
+    whyTrusted:
+      'Source-traced in the Phase 1 audit sweep; baseline and outcome are both stored GSC numbers (never recomputed), and the comparable-pages rule (impressions in both windows) is applied in page code you can read at app/admin/seo-impact/page.tsx.',
+    caveats: [
+      'Before/after is NOT a controlled experiment — seasonality and ranking shifts land in the same delta.',
+      'Pages with zero impressions in either window are excluded from the averages but still listed.',
+    ],
+  },
+  niche_tracker_summary: {
+    key: 'niche_tracker_summary',
+    title: 'Niche page tracker summary',
+    whatItCounts:
+      'The /best niche pages being tracked: how many have ANY impressions in the latest 28-day GSC snapshot, how many gained impressions vs the prior snapshot, and total impressions/clicks across all tracked pages.',
+    howComputed:
+      'Single select on the service-role niche_page_latest view (seeded from lib/data/best-pages.ts joined to the latest two gsc_snapshots), summed in app code. Refreshes weekly when the Mon snapshot cron lands — not affected by the global date filter.',
+    whyTrusted:
+      'Phase 1 agent audit recomputed the view exactly from the GSC snapshot JSONB (PASS — 64 tracked / 398 impressions at audit time); totals are sums over the same rows the table below displays.',
+    caveats: [
+      'Pages built recently read 0 until Google reports them (~2–4 weeks).',
+      'Clicks stay near 0 while positions sit on page 4+ — authority-gated, not a page-quality signal.',
+    ],
+  },
+  ai_citations_kpis: {
+    key: 'ai_citations_kpis',
+    title: 'AI citation KPIs (30d)',
+    whatItCounts:
+      'Manually logged answer-engine checks over the last 30 days: how many times RightAIChoice was cited, across how many distinct engines, and the citation rate (cited ÷ checked). Target: 10 citations / 30d (doc 11).',
+    howComputed:
+      "SQL on ai_citations via _admin_audit_exec with checked_on >= current_date − 30 days — a true rolling DB window computed at query time, deliberately FIXED at 30 days (the doc-11 KPI definition) rather than following the global date filter.",
+    whyTrusted:
+      'The table is a manual log — every row was typed in by the operator, so the KPI is exactly as trustworthy as the logging discipline; the SQL is a 3-aggregate one-liner you can re-run verbatim from the page source (Phase 1: verified trivially).',
+    caveats: [
+      'Manual-first tracking: weeks with no checking discipline read as zero citations even if engines cite us.',
+      'A "not cited" row is signal too — log misses, or the rate is meaningless.',
+    ],
+  },
+  authority_summary: {
+    key: 'authority_summary',
+    title: 'Referring-domain tracker',
+    whatItCounts:
+      'Unique referring domains ever logged, how many were first seen inside the selected window, the average DA estimate over rows that have one, and the top acquisition channel all-time.',
+    howComputed:
+      'One select over referring_domains (manually curated via the add-form + 7O outreach workflows); the window count filters first_seen_at >= range start in app code; channel totals and avg DA are computed over the same fetched rows the tables below render.',
+    whyTrusted:
+      'Source-traced in Phase 1; the tiles aggregate exactly the rows listed on this page — recount the table and you have re-verified the tile.',
+    caveats: [
+      'Manually curated — a backlink nobody logged does not exist here (Ahrefs/Moz are the discovery tools, this is the ledger).',
+      'DA estimates are whatever was typed at log time; they are not refreshed automatically.',
+    ],
+  },
+  tier1_queue: {
+    key: 'tier1_queue',
+    title: 'Tier-1 title rewrite queue',
+    whatItCounts:
+      'AI-suggested title rewrites awaiting review, bucketed by current GSC position (1A pos≤10 / 1B 11–20 / 1C 21–30) and by binding constraint (title-bound / mixed / rank-bound), plus how many overrides are currently active.',
+    howComputed:
+      'Reads candidates/tier1-rewrites.json (generated by npm run tier1:rewrite from GSC candidates + DeepSeek suggestions, priority = impressions × title-leverage) and joins active title_overrides (reverted_at IS NULL) from the DB. File-based by design — the queue is a build artifact, not a live metric.',
+    whyTrusted:
+      'Counts are client-visible filters over the same JSON file rendered below; the active-override count is a direct DB select. Approvals write through the audited title_overrides path that /admin/seo-impact measures 28 days later.',
+    caveats: [
+      'The JSON is as fresh as its last generation run (date shown in the header) — regenerate before a review session.',
+      'Priority is a heuristic for ROI ordering, not a measurement.',
+    ],
+  },
+
+  // ── Content Ops (Phase 10.5c) ────────────────────────────────────────
+  kr_catalog_state: {
+    key: 'kr_catalog_state',
+    title: 'Catalog state',
+    whatItCounts:
+      'The live catalog right now (always today, never windowed): published tools, the single stalest verification timestamp, the compare-pages cascade backlog, never-refreshed tools, and how many tools have a "Latest from" feed.',
+    howComputed:
+      'Five cheap exact PostgREST counts/selects on tools + the v_stale_comparisons view, fetched fresh on every request (force-dynamic, no caching).',
+    whyTrusted:
+      'Phase 1 agent audit PASS: catalog counts were twice-fetched deterministic and exact (2,003 published at audit time); the stalest-tool and cascade-backlog tiles matched hand SQL.',
+    caveats: ['These tiles ignore the date picker by design — they describe the catalog NOW.'],
+  },
+  kr_user_activity: {
+    key: 'kr_user_activity',
+    title: 'User activity (window)',
+    whatItCounts:
+      'Ground-truth user actions in the selected window: server-logged page views and searches, tool saves, saved plans, newsletter signups, and newly logged referring domains.',
+    howComputed:
+      'Exact head-counts on the server-side ground-truth tables (page_views, search_logs, user_saved_tools, saved_stacks, newsletter_subscribers, referring_domains) with created_at >= window start. Top tools / top searches come from the kr_top_tools / kr_top_searches SQL-side GROUP BY RPCs (audit F9 fix: the old client-side grouping silently undercounted past 2,000 un-ordered rows at 14d/30d/90d).',
+    whyTrusted:
+      'F9 is a documented Phase-2 fix with the kr_* RPCs verified against hand SQL; these are server-written tables, so ad-blockers cannot hide activity here — they are the triangulation source for the analytics mirror, not derived from it.',
+    caveats: [
+      'page_views/search_logs include any traffic that executes the server path — bot filtering does not apply on this page.',
+      'Window start is a rolling cutoff (>= start); presets behave exactly as the picker labels them.',
+    ],
+  },
+  kr_activity_feed: {
+    key: 'kr_activity_feed',
+    title: 'Activity feed (tools refreshed / added / latest)',
+    whatItCounts:
+      'WHICH tools changed in the window, by name: refresh-SOP completions (with the fields each run updated), newly published tools (manual vs auto-ingested), and tools whose "Latest from" feed was rebuilt.',
+    howComputed:
+      'refresh_logs (status=refreshed) and tools (created_at / latest_updates_at >= window start), newest first, 20 per panel with a "view all" drill-down to /admin/activity (full list, cap 500).',
+    whyTrusted:
+      'Reads the pipelines\' own write-ahead logs — the same rows the refresh/ingestion jobs wrote, not a derived aggregate; spot-checked in the Phase 1 sweep.',
+    caveats: ['Panels show the 20 most recent; the count next to each panel is the fetched-row count, capped at 20 — use "view all" for the real total.'],
+  },
+  kr_pipeline_results: {
+    key: 'kr_pipeline_results',
+    title: 'Pipeline results (window)',
+    whatItCounts:
+      'What the content pipelines did in the window: refresh ok/failed mix, ingestion discovered/duplicate/gated/failed mix, regenerated compare editorials, and the last 8 errors of each kind with drill-down.',
+    howComputed:
+      'kr_refresh_mix RPC (SQL-side GROUP BY — audit F9 fix: the old 5,000-row client grouping dropped ~26% of a 30d window), ingestion_logs grouped in app code (volume safely below its cap), tool_comparisons.last_reviewed_at for cascade, plus bounded error selects.',
+    whyTrusted:
+      'F9 fix verified against hand SQL in Phase 2; error lists are raw rows (no aggregation to get wrong); the ok/failed badge and the error list read the same tables.',
+    caveats: ['Ingestion mix still groups client-side under a 5,000-row cap — accurate at current volumes, revisit if ingestion ever exceeds that in one window.'],
+  },
+  kr_pipeline_cost: {
+    key: 'kr_pipeline_cost',
+    title: 'Pipeline cost (NOT INSTRUMENTED — F8)',
+    whatItCounts:
+      'It currently counts nothing real: every pipeline_runs row ever has estimated_cost_usd / DeepSeek + Anthropic tokens / apify_usd at 0 or NULL, because no handler calls ctx.recordTokens / ctx.recordApifyUsd.',
+    howComputed:
+      'The plumbing exists (per-pipeline cost aggregation + a $5/day trailing-24h red flag) and activates automatically once any run logs a nonzero cost; until then the page renders an explicit "Not instrumented (F8)" state instead of a misleading "$0.00".',
+    whyTrusted:
+      'Audit finding F8 (metric-audit.md): SELECT count(*) FILTER (WHERE coalesce(estimated_cost_usd,0)>0) FROM pipeline_runs → 0 of 1,826 rows. Honesty rule: a number we do not measure is rendered as "not measured", never as zero.',
+    caveats: ['Fix direction: populate token+cost fields in withPipelineLogging/cronRoute handlers — until then ALL cost UI on this page and /admin/health is informational only.'],
+  },
+  kr_health_score: {
+    key: 'kr_health_score',
+    title: 'Pipeline health score (7d + 30d)',
+    whatItCounts:
+      'Per pipeline: success rate over the last 7 and 30 days, the trend vs the prior equal window, run count, mean/p95 duration (7d), and error-class tallies (30d). Degrading pipelines (<90% 7d) sort first with a red edge.',
+    howComputed:
+      'pipeline_runs rows from the last 60 days (cap 10,000 — current volume ~2k), aggregated in app code with fixed now-anchored 7/14/30/60-day windows. Deliberately NOT controlled by the page date picker: a health score over an arbitrary window is noise.',
+    whyTrusted:
+      'Reads the same pipeline_runs substrate whose per-pipeline numbers the Phase 1 audit verified exactly against the pipeline_health RPC; the aggregation is plain counting you can re-run from the page source.',
+    caveats: ['Success rate counts runs, not items — one run that processed 0 items "succeeds".', 'The 10k/60d cap is monitored headroom, not a correctness guarantee at 5× current volume.'],
+  },
+  tools_catalog_freshness: {
+    key: 'tools_catalog_freshness',
+    title: 'Tools catalog freshness split',
+    whatItCounts:
+      'Published tools split by verification age: Fresh (verified <30d ago), Aging (30–90d), Stale (>90d or never verified). Tiles link to the matching filtered list.',
+    howComputed:
+      'Computed in app code over the full fetched tools list using two cutoffs (now−30d, now−90d) on last_verified_at; the stale/aging filter views re-apply the SAME cutoffs as SQL predicates, so tile counts and filtered lists agree.',
+    whyTrusted:
+      'Trivially recountable: the tiles aggregate exactly the rows in the table below; the freshness SLA versions of these numbers are independently checked nightly by /admin/data-audit (fresh-7day-sla).',
+    caveats: ['Drafts are excluded from the freshness split (unpublished tools have no freshness SLA).'],
+  },
+  freshness_field_map: {
+    key: 'freshness_field_map',
+    title: 'Field freshness map',
+    whatItCounts:
+      'Per data field (last_verified_at, latest_updates_at, viability, …) × pricing tier: how many published tools never had the field filled, how many are stale past 7d/30d, and the p50/p95 age with the single oldest tool.',
+    howComputed:
+      'Single select on the v_field_freshness MATERIALIZED view, refreshed nightly by the refresh-freshness-view cron (23:45 UTC) — numbers are as of the last refresh, not live.',
+    whyTrusted:
+      'Source-traced in the Phase 1 sweep; the view definition (migrations 091/091a) is plain percentile SQL over tools, and the nightly refresh is itself monitored on /admin/health.',
+    caveats: ['Materialized: up to ~24h stale by design. If the refresh cron fails, this page silently shows yesterday — check /admin/health if numbers look frozen.'],
+  },
+  daily_checklist: {
+    key: 'daily_checklist',
+    title: 'Daily checklist counters',
+    whatItCounts:
+      'Today\'s manual-growth-loop progress: referring domains logged today, outreach emails sent today (target 5+), HARO replies today, founder drafts in the pool, plus lifetime totals.',
+    howComputed:
+      'Exact counts on referring_domains (first_seen_at) and outreach_log (sent_at) since IST midnight — the 9.A.1 fix replaced the old UTC midnight that made "today" wrong for the first 5.5 IST hours — plus head-counts for lifetime.',
+    whyTrusted:
+      'The IST-midnight window comes from the same shared parseRange helper every audited admin page uses; counts are over manually written ledger tables (same trust model as /admin/authority).',
+    caveats: ['"Done" states are inferred from counters (e.g. outreach ≥ 5), not ticked boxes — sending 5 emails nobody logged leaves the task red.'],
+  },
+
+  // ── Pipelines & Health (Phase 10.5c) ─────────────────────────────────
+  pipeline_health_kpis: {
+    key: 'pipeline_health_kpis',
+    title: 'Pipeline health KPIs',
+    whatItCounts:
+      'How many pipelines are healthy / failing / stale right now, the count of failed or timed-out runs in the last 24h, and the 7-day estimated cost (currently "Not instrumented" — F8).',
+    howComputed:
+      'pipeline_health() RPC (7d aggregates per pipeline_key) + a distinct-on last-run query, classified by the F12-corrected cadence map: failing = last run failed OR >36h since success for a daily-or-faster job OR an expected pipeline that has NEVER logged a run; stale = last success older than ~2.5× nominal cadence.',
+    whyTrusted:
+      'Phase 1 audit verified the per-pipeline RPC numbers exactly (PASS) and finding F12 documents every correction baked into these KPIs (calculate-viability ~15d cadence, 8 previously-unmapped keys, failure-only monitors split out, never-logged keys surfaced red instead of invisible).',
+    caveats: [
+      'The cadence map is hand-maintained from vercel.json + GH workflow schedules — a new cron without a map entry falls back to an 8-day stale rule until added.',
+      'The 7d cost KPI is honest-but-empty until cost instrumentation lands (F8).',
+    ],
+  },
+  pipeline_sla: {
+    key: 'pipeline_sla',
+    title: 'Per-pipeline SLA verdict',
+    whatItCounts:
+      'For every pipeline that has ever logged a run — plus every EXPECTED pipeline that never has (red "missing" rows) — its last run status, items processed/ok/failed, duration, and an SLA verdict against its expected cadence.',
+    howComputed:
+      'Last-success age vs CADENCE_HOURS[key]: >36h for daily-or-faster = hard FAIL (spec rule); >2.5× cadence = stale; unmapped keys use an 8-day fallback. F12: keys in the cadence map with zero pipeline_runs rows ever are synthesized as status "missing" / SLA fail — a silent blind spot made loudly visible.',
+    whyTrusted:
+      'F12 (metric-audit.md) is the documented audit of exactly this table: false hard-FAILs, permanent FAILs and invisible pipelines were each reproduced with SQL and fixed in this classification; underlying per-pipeline aggregates verified exact in Phase 1.',
+    caveats: ['"missing" rows mean the JOB NEVER LOGGED — it may be running fine but un-instrumented, or not running at all; both deserve a look.', 'Cadences are nominal — retries and deploy skew are absorbed by the 2.5× slack.'],
+  },
+  pipeline_monitors: {
+    key: 'pipeline_monitors',
+    title: 'Failure-only monitors',
+    whatItCounts:
+      'Breach loggers (freshness-sla, poll-gh-actions-heartbeat): a row here is a recorded BREACH of the monitored condition, not a crashed cron — so "last breach logged" recent = bad, long ago = good.',
+    howComputed:
+      'Same pipeline_health() aggregates, but keys in MONITOR_KEYS are split out of the SLA table because success-SLA verdicts are meaningless for jobs that only write on failure (F12: they used to read as forever-failing).',
+    whyTrusted:
+      'F12 documented the forever-failing artifact and this section is its fix; the breach rows themselves are written by the monitors at breach time (write-ahead, not derived).',
+    caveats: ['A monitor that is itself broken logs nothing and looks healthy — the nightly tracking_health invariants are the backstop.'],
+  },
+  catalog_freshness_sla: {
+    key: 'catalog_freshness_sla',
+    title: 'Catalog freshness SLA (7-day)',
+    whatItCounts:
+      'Whether every published tool was verified within the last 7 days: how many breach, how many were never verified, and the single worst age.',
+    howComputed:
+      'One SQL aggregate over tools (is_published = true) via _admin_audit_exec — the SAME SQL as the data-audit "fresh-7day-sla" invariant, so this banner and /admin/data-audit can never disagree.',
+    whyTrusted:
+      'Shared-SQL-by-construction with the audited data-audit suite; trivially re-runnable (the query is in the page source).',
+    caveats: ['A pass here says tools were touched, not that the refresh content was good — content quality is the refresh pipeline\'s own QA.'],
+  },
+
+  event_capture_health: {
+    key: 'event_capture_health',
+    title: 'Event capture health',
+    whatItCounts:
+      'Per event: when it last fired, fire counts over 24h/7d/30d, and what % of its rows carry the critical super-properties (device_type, page_path, auth_state). Plus the "dead events" list — cataloged names that have not fired in 30 days.',
+    howComputed:
+      'getEventHealth(30): one SQL pass over user_events grouped by event_name with now-anchored 24h/7d/30d windows, unioned against the event catalog so never-firing names surface as dead instead of disappearing. Now-anchored by design (capture health is about NOW), so the page date filter does not apply.',
+    whyTrusted:
+      'Phase 1 audit verified getEventHealth exactly (PASS — page_viewed 2,580/30d at audit time); it is recorded in the baseline snapshot\'s volatile section every run, and the Phase 3 synthetic suite independently proves each event\'s firing path.',
+    caveats: [
+      'A sub-95% super-property column on a high-volume event usually means a call site bypasses the super-prop bridge — instrumentation bug, not user behavior.',
+      EPOCHS.mirror,
+    ],
+  },
+  mixpanel_volume_budget: {
+    key: 'mixpanel_volume_budget',
+    title: 'Mixpanel free-tier volume budget',
+    whatItCounts:
+      'Event volume vs the Mixpanel free-tier monthly cap: today, month-to-date, the 30-day daily average, and the projected month-end total (MTD + avg × remaining days).',
+    howComputed:
+      'getVolumeProjection(): counts over user_events (our mirror receives the same stream we send Mixpanel) with calendar-month boundaries; projection is simple linear extrapolation. Now-anchored — the date filter does not apply.',
+    whyTrusted:
+      'Phase 1 audit verified getVolumeProjection exactly (PASS — 1,513 today / 10,735 MTD at audit time); the mirror-vs-Mixpanel delta is separately watched by the reconciliation checks.',
+    caveats: [
+      'Counts OUR mirror — ad-blocked browsers block Mixpanel and the mirror alike for client events, but server events always land, so mirror volume can run slightly above Mixpanel\'s billable count.',
+      'Linear projection ignores weekly seasonality; treat >85% as act-now regardless.',
+    ],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

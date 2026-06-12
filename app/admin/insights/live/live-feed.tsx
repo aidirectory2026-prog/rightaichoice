@@ -176,7 +176,7 @@ function SessionList({ sessions }: { sessions: LiveSession[] }) {
               {s.seconds_since_last < 60 ? `${s.seconds_since_last}s` : relativeTime(s.last_event_at)}
             </div>
             <Link
-              href={`/admin/insights/journey/${encodeURIComponent(s.distinct_id)}`}
+              href={`/admin/insights/user/${encodeURIComponent(s.distinct_id)}?tab=journey`}
               className="mt-1 inline-flex items-center gap-0.5 text-[10px] text-zinc-500 hover:text-emerald-400 transition-colors"
             >
               Journey <ArrowUpRight className="h-2.5 w-2.5" />
@@ -199,7 +199,7 @@ function ActivityList({ feed }: { feed: ActivityEvent[] }) {
           </div>
           <div className="mt-0.5">
             <Link
-              href={`/admin/insights/journey/${encodeURIComponent(e.distinct_id)}`}
+              href={`/admin/insights/user/${encodeURIComponent(e.distinct_id)}?tab=journey`}
               className="text-zinc-500 hover:text-emerald-400 font-mono text-[10px]"
             >
               {e.distinct_id.slice(0, 12)}…

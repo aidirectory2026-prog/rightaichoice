@@ -1,11 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { CheckCircle2, Circle, ExternalLink, Mail, LinkIcon, FileText, Search } from 'lucide-react'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 import { parseRange } from '@/lib/admin/range'
 
 // Visual companion to `npm run daily`. Shows today's tasks at a glance,
 // the live state of each one (already done? still pending? skipped?),
 // and direct deep-links to the next action.
+//
+// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled stat cards with ⓘ provenance). Data +
+// query semantics unchanged: the page is pinned to TODAY (IST) by design —
+// a checklist for a different date range makes no sense, so the global
+// filter bar does not apply here.
+//
+// 10.5c merge decision — /admin/activity stays a SEPARATE page: despite the
+// similar name, it shares zero data sources with this checklist (activity =
+// refresh_logs/tools pipeline feed, the Knowledge Room "view all" drill-down;
+// daily = referring_domains/outreach_log human checklist). See phase5c-gate.md.
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Daily — Admin' }
@@ -116,20 +129,21 @@ export default async function DailyAdmin() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Daily checklist · {todayISO}</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Companion to <code className="text-emerald-400">npm run daily</code>. The Bing
-          + GSC + IndexNow steps run automatically (via launchd 09:00 / Vercel cron) —
-          these are the manual pieces that need a human.
-        </p>
-      </div>
+      <PageHeader>
+        <span className="text-xs text-zinc-500">{todayISO} (IST)</span>
+      </PageHeader>
+      <p className="mb-8 -mt-2 max-w-3xl text-xs text-zinc-500">
+        Companion to <code className="text-emerald-400">npm run daily</code>. The Bing
+        + GSC + IndexNow steps run automatically (via launchd 09:00 / Vercel cron) —
+        these are the manual pieces that need a human. Pinned to today (IST midnight);
+        the global range filter does not apply here.
+      </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <Stat label="RDs today" value={rdsToday} sub={`${rdsLifetime ?? 0} lifetime`} />
-        <Stat label="Emails sent today" value={outreachToday} sub={`${outreachLifetime ?? 0} lifetime`} />
-        <Stat label="HARO replies today" value={haroToday} sub="goal: 2-3/day" />
-        <Stat label="Founder drafts" value={draftedFounders ?? 0} sub="ready to send" />
+        <Stat label="RDs today" value={rdsToday} sub={`${rdsLifetime ?? 0} lifetime`} info={<MetricInfo docKey="daily_checklist" />} />
+        <Stat label="Emails sent today" value={outreachToday} sub={`${outreachLifetime ?? 0} lifetime`} info={<MetricInfo docKey="daily_checklist" />} />
+        <Stat label="HARO replies today" value={haroToday} sub="goal: 2-3/day" info={<MetricInfo docKey="daily_checklist" />} />
+        <Stat label="Founder drafts" value={draftedFounders ?? 0} sub="ready to send" info={<MetricInfo docKey="daily_checklist" />} />
       </div>
 
       <div className="space-y-3">
@@ -205,11 +219,15 @@ export default async function DailyAdmin() {
   )
 }
 
-function Stat({ label, value, sub }: { label: string; value: number; sub: string }) {
+// Kit-styled stat card with the shared ⓘ provenance slot.
+function Stat({ label, value, sub, info }: { label: string; value: number; sub: string; info?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
-      <div className="text-xs text-zinc-400">{label}</div>
-      <div className="text-2xl font-bold text-white mt-1">{value.toLocaleString()}</div>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+        {info ?? null}
+      </div>
+      <div className="text-2xl font-semibold text-white mt-2">{value.toLocaleString()}</div>
       <div className="text-[11px] text-zinc-500 mt-1">{sub}</div>
     </div>
   )

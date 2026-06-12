@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Layers, ChevronLeft } from 'lucide-react'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 
 // Phase 8.d.8 — heatmap of field freshness across the published catalog.
 // Backed by v_field_freshness materialized view (refreshed nightly by
 // /api/cron/refresh-freshness-view).
+//
+// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, ⓘ provenance). Data + query semantics unchanged.
+// Not date-ranged: the materialized view always reflects its last nightly
+// refresh, so the global filter bar does not apply — stated below.
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -83,23 +89,22 @@ export default async function FreshnessPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-start gap-3">
-        <Link href="/admin/updates" className="text-zinc-400 hover:text-emerald-300 mt-1">
-          <ChevronLeft className="h-5 w-5" />
+      <PageHeader>
+        <Link href="/admin/updates" className="text-xs text-zinc-500 hover:text-emerald-300">
+          ← Knowledge Room
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Layers className="h-5 w-5 text-emerald-400" />
-            Field freshness map
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Per-field × pricing-tier age distribution across published tools. Tells you what to
-            refresh next.
-          </p>
-        </div>
-      </div>
+      </PageHeader>
+      <p className="mb-6 -mt-2 max-w-3xl text-xs text-zinc-500">
+        Per-field × pricing-tier age distribution across published tools — tells you what to refresh
+        next. Reads the v_field_freshness materialized view (refreshed nightly, not date-ranged — the
+        global filter does not apply here).
+      </p>
 
       {/* ── Summary table ───────────────────────────────────────── */}
+      <h2 className="mb-3 flex items-center gap-1 text-sm font-semibold text-white">
+        Per-field summary
+        <MetricInfo docKey="freshness_field_map" align="left" />
+      </h2>
       <div className="mb-8 rounded-lg border border-zinc-800 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-zinc-900/60 text-xs text-zinc-400">

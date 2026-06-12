@@ -121,7 +121,7 @@ function main(): void {
     // Phase 8.g.11.f — informational-only for now. The admin /health page
     // surfaces these prominently. Once the orphan count drops below ~5,
     // switch this to process.exit(1) to enforce no-new-orphans in CI.
-    console.warn(`\n${orphans.length} orphan events (defined but never called) — review on /admin/insights/health:`)
+    console.warn(`\n${orphans.length} orphan events (defined but never called) — review on /admin/health (Event capture health):`)
     for (const n of orphans) console.warn(`  - ${n}`)
     console.warn('\n(Not failing the build — see comment in scripts/mixpanel/check-orphans.ts.)')
   } else {

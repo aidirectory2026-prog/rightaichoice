@@ -129,7 +129,8 @@ export default async function InsightsPage({
             <Link href="/admin/insights/goals" className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
               <Target className="h-3 w-3" />Goals
             </Link>
-            <Link href="/admin/insights/health" className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
+            {/* 10.5c.4 — event-capture health merged into /admin/health */}
+            <Link href="/admin/health" className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">
               <ShieldCheck className="h-3 w-3" />Health
             </Link>
             <Link href={`/admin/insights/events${qs({ days, include_bots: includeBots })}`} className="flex items-center gap-1 rounded border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200">

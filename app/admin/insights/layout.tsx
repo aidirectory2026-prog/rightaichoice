@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, BarChart3, ChevronLeft, Filter, Globe2, Monitor, Route, Wrench } from 'lucide-react'
+import { Activity, BarChart3, ChevronLeft, Filter, Globe2, Monitor, Users, Wrench } from 'lucide-react'
 import { LiveTickerBadge } from './_ui/live-ticker-badge'
 
 export const metadata = { title: 'Insights — Admin' }
@@ -11,7 +11,9 @@ const TABS = [
   { href: '/admin/insights/tools', label: 'Tools', icon: Wrench },
   { href: '/admin/insights/geo', label: 'Geo', icon: Globe2 },
   { href: '/admin/insights/devices', label: 'Devices', icon: Monitor },
-  { href: '/admin/insights/journey', label: 'Journeys', icon: Route },
+  // 10.5c.4 — journeys merged: index → Users directory, per-user journey →
+  // the user 360 page's "Journey" tab.
+  { href: '/admin/insights/users', label: 'Users', icon: Users },
 ] as const
 
 export default function InsightsLayout({ children }: { children: React.ReactNode }) {
