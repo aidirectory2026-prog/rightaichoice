@@ -2,9 +2,14 @@
 // Phase 8.g.10 — added: session-grouped view (30-min idle = new session)
 //   + geo from Vercel IP headers + Clarity replay deep-link per session
 //   + Mixpanel profile deep-link in header.
+// Phase 10.5c.4 (2026-06-12) — journey merge: the old
+// /admin/insights/journey/[distinct_id] route now redirect()s to
+// ?tab=journey here. Two tabs, same queries/data: "Profile" (identity +
+// computed traits + live stream) and "Journey" (sessions timeline + flat
+// event log). Nothing was removed — the single page was split into tabs.
 
 import Link from 'next/link'
-import { ChevronLeft, ExternalLink, Globe, MapPin, PlayCircle } from 'lucide-react'
+import { ChevronLeft, ExternalLink, Globe, MapPin, PlayCircle, Route, UserRound } from 'lucide-react'
 import { getEventsForDistinctId, getUserProfile, getUserSessions, type RawEventRow, type UserProfile, type UserSession } from '../../queries'
 import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 
@@ -260,13 +265,34 @@ function EventRow({ ev }: { ev: RawEventRow }) {
   )
 }
 
+function TabLink({ href, active, icon, children }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition-colors ${
+        active
+          ? 'border-emerald-700 bg-emerald-950/40 text-emerald-300'
+          : 'border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+      }`}
+    >
+      {icon}
+      {children}
+    </Link>
+  )
+}
+
 export default async function UserTimelinePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ distinct_id: string }>
+  searchParams: Promise<{ tab?: string }>
 }) {
   const { distinct_id } = await params
+  const { tab: tabParam } = await searchParams
   const distinctId = decodeURIComponent(distinct_id)
+  const tab: 'profile' | 'journey' = tabParam === 'journey' ? 'journey' : 'profile'
+  const base = `/admin/insights/user/${encodeURIComponent(distinctId)}`
 
   const [events, profile, sessions] = await Promise.all([
     getEventsForDistinctId(distinctId, 200),
@@ -278,12 +304,12 @@ export default async function UserTimelinePage({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/admin/insights/events" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+          <Link href="/admin/insights/users" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
             <ChevronLeft className="h-3 w-3" />
-            Raw events
+            Users
           </Link>
           <span className="text-zinc-700">/</span>
-          <h1 className="text-lg font-semibold text-white">User timeline</h1>
+          <h1 className="text-lg font-semibold text-white">User 360</h1>
         </div>
         <div className="text-xs text-zinc-500">
           {sessions.length} sessions · {events.length} events shown
@@ -295,44 +321,61 @@ export default async function UserTimelinePage({
         <div className="mt-1 break-all font-mono text-xs text-zinc-200">{distinctId}</div>
       </div>
 
-      <ProfileSection profile={profile} latestSession={sessions[0] ?? null} distinctId={distinctId} />
-
-      {/* Phase 8.g.11.e — live stream filtered to this user only. Watch
-          their actions arrive in real time. */}
-      <div className="mb-6">
-        <LiveEventsTicker filterDistinctId={distinctId} />
+      {/* 10.5c.4 — journey merged in as a tab (old /insights/journey/[id]
+          route redirects here with ?tab=journey). */}
+      <div className="mb-5 flex items-center gap-2">
+        <TabLink href={base} active={tab === 'profile'} icon={<UserRound className="h-3.5 w-3.5" />}>
+          Profile
+        </TabLink>
+        <TabLink href={`${base}?tab=journey`} active={tab === 'journey'} icon={<Route className="h-3.5 w-3.5" />}>
+          Journey
+        </TabLink>
       </div>
 
-      {/* ── Sessions ─────────────────────────────────── */}
-      <div className="mb-6">
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-zinc-200">Sessions (30-min idle = new session)</h2>
-          <span className="text-[10px] text-zinc-500">newest first, max 50</span>
-        </div>
-        {sessions.length === 0 ? (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-3 py-6 text-center text-xs text-zinc-500">
-            No sessions yet.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {sessions.map((s) => <SessionCard key={s.session_num} s={s} />)}
-          </div>
-        )}
-      </div>
+      {tab === 'profile' ? (
+        <>
+          <ProfileSection profile={profile} latestSession={sessions[0] ?? null} distinctId={distinctId} />
 
-      {/* ── Flat event log ────────────────────────────── */}
-      <div className="rounded-lg border border-zinc-800">
-        <div className="border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 text-[10px] uppercase tracking-wider text-zinc-500">
-          Flat event timeline (newest first, max 200)
-        </div>
-        {events.length === 0 ? (
-          <div className="px-3 py-8 text-center text-xs text-zinc-500">
-            No events found for this distinct_id.
+          {/* Phase 8.g.11.e — live stream filtered to this user only. Watch
+              their actions arrive in real time. */}
+          <div className="mb-6">
+            <LiveEventsTicker filterDistinctId={distinctId} />
           </div>
-        ) : (
-          events.map((ev) => <EventRow key={ev.id} ev={ev} />)
-        )}
-      </div>
+        </>
+      ) : (
+        <>
+          {/* ── Journey: sessions timeline ─────────────────────── */}
+          <div className="mb-6">
+            <div className="mb-2 flex items-baseline justify-between">
+              <h2 className="text-sm font-semibold text-zinc-200">Sessions (30-min idle = new session)</h2>
+              <span className="text-[10px] text-zinc-500">newest first, max 50</span>
+            </div>
+            {sessions.length === 0 ? (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-3 py-6 text-center text-xs text-zinc-500">
+                No sessions yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sessions.map((s) => <SessionCard key={s.session_num} s={s} />)}
+              </div>
+            )}
+          </div>
+
+          {/* ── Journey: flat event log ────────────────────────── */}
+          <div className="rounded-lg border border-zinc-800">
+            <div className="border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 text-[10px] uppercase tracking-wider text-zinc-500">
+              Flat event timeline (newest first, max 200)
+            </div>
+            {events.length === 0 ? (
+              <div className="px-3 py-8 text-center text-xs text-zinc-500">
+                No events found for this distinct_id.
+              </div>
+            ) : (
+              events.map((ev) => <EventRow key={ev.id} ev={ev} />)
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

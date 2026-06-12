@@ -663,6 +663,35 @@ const docs = {
     caveats: ['A pass here says tools were touched, not that the refresh content was good — content quality is the refresh pipeline\'s own QA.'],
   },
 
+  event_capture_health: {
+    key: 'event_capture_health',
+    title: 'Event capture health',
+    whatItCounts:
+      'Per event: when it last fired, fire counts over 24h/7d/30d, and what % of its rows carry the critical super-properties (device_type, page_path, auth_state). Plus the "dead events" list — cataloged names that have not fired in 30 days.',
+    howComputed:
+      'getEventHealth(30): one SQL pass over user_events grouped by event_name with now-anchored 24h/7d/30d windows, unioned against the event catalog so never-firing names surface as dead instead of disappearing. Now-anchored by design (capture health is about NOW), so the page date filter does not apply.',
+    whyTrusted:
+      'Phase 1 audit verified getEventHealth exactly (PASS — page_viewed 2,580/30d at audit time); it is recorded in the baseline snapshot\'s volatile section every run, and the Phase 3 synthetic suite independently proves each event\'s firing path.',
+    caveats: [
+      'A sub-95% super-property column on a high-volume event usually means a call site bypasses the super-prop bridge — instrumentation bug, not user behavior.',
+      EPOCHS.mirror,
+    ],
+  },
+  mixpanel_volume_budget: {
+    key: 'mixpanel_volume_budget',
+    title: 'Mixpanel free-tier volume budget',
+    whatItCounts:
+      'Event volume vs the Mixpanel free-tier monthly cap: today, month-to-date, the 30-day daily average, and the projected month-end total (MTD + avg × remaining days).',
+    howComputed:
+      'getVolumeProjection(): counts over user_events (our mirror receives the same stream we send Mixpanel) with calendar-month boundaries; projection is simple linear extrapolation. Now-anchored — the date filter does not apply.',
+    whyTrusted:
+      'Phase 1 audit verified getVolumeProjection exactly (PASS — 1,513 today / 10,735 MTD at audit time); the mirror-vs-Mixpanel delta is separately watched by the reconciliation checks.',
+    caveats: [
+      'Counts OUR mirror — ad-blocked browsers block Mixpanel and the mirror alike for client events, but server events always land, so mirror volume can run slightly above Mixpanel\'s billable count.',
+      'Linear projection ignores weekly seasonality; treat >85% as act-now regardless.',
+    ],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',

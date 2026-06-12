@@ -31,6 +31,13 @@ const EXTRA_ROUTES = [
   '/admin/insights/events?event=page_viewed&prop=path',
   '/admin/insights/users?sort=events',
   '/admin/insights?device=desktop&bots=0',
+  // 10.5c.4 — journey/health merges: the user 360 Journey tab must render
+  // (unknown ids render the empty state, never 500), and the old routes must
+  // redirect (3xx counts as ok below as long as it isn't a /login bounce).
+  '/admin/insights/user/phase10-smoke-unknown-visitor?tab=journey',
+  '/admin/insights/journey/phase10-smoke-unknown-visitor',
+  '/admin/insights/journey',
+  '/admin/insights/health',
 ]
 
 function adminDb() {
