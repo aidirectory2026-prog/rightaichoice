@@ -168,6 +168,27 @@ Every shipped change re-checked against the LIVE site and database after PR #14 
 
 ---
 
+## 2026-06-12 — Observation-week results + new P0 found & fixed
+
+**Observation results (~2 days post-deploy) — the fixes hold:**
+- cascade-hubs: 42 consecutive successes; **ISR backlog fully drained (2,845 → 0)**.
+- onboard-tools: 168 successes, **zero timeouts** (was 8 timeout emails/day).
+- scrape-sentiment: 2 clean daily runs. submit-urls-bing: 2 clean runs, no quota emails.
+- Freshness: only **6 tools** >3 days stale (from 935) — SLA effectively met.
+- Tracking truth: 20 human outbound clicks vs **0 bot-counted** (was ~96% bots); `click_logs` recording (24 rows, was broken-forever).
+- Plan CTA new copy: 0/110 clicks so far — too early, keep watching. Newsletter: 0 — too early.
+- `freshness-sla` alert noise: now fires on a single straggler daily-tier tool (threshold `>0`); tune to ≥5 or 36h grace if it keeps emailing (deferred — may self-resolve).
+
+**NEW P0 — catalog ingestion dead since June 1 (found via the daily `freshness-batch` failure email).**
+- **No new tool has been added for 11 days.** Discovery finds ~100 candidates/day but the curation gate rejected 100% of them.
+- Root cause chain: Reddit started blocking tokenless API requests from datacenter IPs ~Jun 1 → the scrapers were migrated to OAuth that same day **but the ingest traction probe was missed** → every candidate scored `reddit=0` → the "in-use" criterion + traction score starved → nothing reached the 3-of-4 bar → the ingest script correctly exited failure daily. The alarm worked; the cause was never traced until now.
+- **Fixed** (commit `f3b137d`): traction probe now uses the shared Reddit OAuth token (public endpoint only as local fallback); ingest GH job now passes `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`.
+- **⚠️ BLOCKED ON FOUNDER:** the Reddit credentials **do not exist in any environment**. Create a free Reddit "script" app at reddit.com/prefs/apps (2 minutes), then add `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` to (a) GitHub repo secrets and (b) Vercel env vars. Until then, ingestion stays gated-to-zero and the daily failure email continues.
+
+**DEEPER FINDING (logged for next phase, not fixed here):** `tool_sentiment_cache` history shows **zero Reddit/Twitter/G2 posts ever collected** — the entire social-scraping layer has never returned data (missing credentials across all sources). Every "sentiment report" on the site has been synthesized from the tool's own metadata, not real community posts. The same Reddit creds above revive the Reddit leg; Twitter (Apify) and G2 need their own follow-up. This affects the credibility of the sentiment/viability features and deserves a scoped workstream.
+
+---
+
 ## Phase summary — everything done and verified (in plain words)
 
 This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
