@@ -791,6 +791,160 @@ export async function getUserProfile(distinctId: string): Promise<UserProfile | 
   return (data ?? null) as UserProfile | null
 }
 
+// ── User 360 v2 (Phase 10.6) ───────────────────────────────────────
+// insights_user_profile_v2 + insights_user_sessions_v2 (migration 158).
+// Point lookups by distinct_id — not part of the pinned snapshot surface.
+
+export interface UserProfileV2 {
+  distinct_id: string
+  user_id: string | null
+  username: string | null
+  email_domain: string | null
+  is_authed: boolean
+  first_seen_at: string | null
+  last_seen_at: string | null
+  lifetime_events: number
+  events_30d: number
+  bot_events: number
+  session_count: number
+  is_returning: boolean
+  first_touch_referrer: string | null
+  first_touch_landing: string | null
+  first_touch_utm_source: string | null
+  first_touch_utm_medium: string | null
+  first_touch_utm_campaign: string | null
+  top_countries: Array<{ value: string; events: number }>
+  top_devices: Array<{ value: string; events: number }>
+  last_clarity_session_id: string | null
+}
+
+export async function getUserProfileV2(distinctId: string): Promise<UserProfileV2 | null> {
+  const db = getAdminClient()
+  const { data, error } = await rpc(db, 'insights_user_profile_v2', {
+    p_distinct_id: distinctId,
+  })
+  if (error) throw new Error(`insights_user_profile_v2 failed: ${error.message}`)
+  const row = ((data ?? []) as Array<Record<string, unknown>>)[0]
+  if (!row) return null
+  return {
+    ...(row as unknown as UserProfileV2),
+    lifetime_events: Number(row.lifetime_events ?? 0),
+    events_30d: Number(row.events_30d ?? 0),
+    bot_events: Number(row.bot_events ?? 0),
+    session_count: Number(row.session_count ?? 0),
+    top_countries: (row.top_countries ?? []) as Array<{ value: string; events: number }>,
+    top_devices: (row.top_devices ?? []) as Array<{ value: string; events: number }>,
+  }
+}
+
+export interface SessionEventRow {
+  id: string
+  created_at: string
+  event_name: string
+  page_path: string | null
+  device_type: string | null
+  auth_state: string | null
+  source_kind: string
+  bot_likely: boolean
+  properties: Record<string, unknown> | null
+}
+
+export interface UserSessionV2 {
+  session_key: string
+  /** How this session was grouped: real per-tab id vs 30-min-gap fallback. */
+  method: 'session_id' | 'gap'
+  started_at: string
+  ended_at: string
+  duration_sec: number
+  event_count: number
+  /** Ordered page flow (consecutive duplicates collapsed). */
+  pages: string[]
+  /** Key-action counts (tool_visit_* / plan_* / sentiment_* / …). */
+  key_actions: Record<string, number>
+  entry_page: string | null
+  exit_page: string | null
+  device_type: string | null
+  country: string | null
+  city: string | null
+  region: string | null
+  referrer: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  clarity_session_id: string | null
+  /** Full event payload, ascending, capped at p_events_cap per session. */
+  events: SessionEventRow[]
+  events_truncated: boolean
+}
+
+export async function getUserSessionsV2(
+  distinctId: string,
+  limit = 50,
+  eventsCap = 500,
+): Promise<UserSessionV2[]> {
+  const db = getAdminClient()
+  const { data, error } = await rpc(db, 'insights_user_sessions_v2', {
+    p_distinct_id: distinctId,
+    p_limit: limit,
+    p_events_cap: eventsCap,
+  })
+  if (error) throw new Error(`insights_user_sessions_v2 failed: ${error.message}`)
+  return ((data ?? []) as UserSessionV2[]).map((s) => ({
+    ...s,
+    pages: s.pages ?? [],
+    key_actions: s.key_actions ?? {},
+    events: s.events ?? [],
+  }))
+}
+
+// Cross-links: the user's actual content rows (reviews / saved tools /
+// plan intents), so the 360 page links out to what they did — not just
+// what they fired.
+
+export interface UserContentLinks {
+  reviews: Array<{ tool_slug: string; tool_name: string; rating: number; created_at: string }>
+  savedTools: Array<{ tool_slug: string; tool_name: string; created_at: string }>
+  planIntents: Array<{ id: string; typed_goal: string | null; source_surface: string | null; created_at: string }>
+}
+
+export async function getUserContentLinks(
+  distinctId: string,
+  userId: string | null,
+): Promise<UserContentLinks> {
+  const db = getAdminClient()
+  type ToolJoin = { slug: string; name: string } | Array<{ slug: string; name: string }> | null
+  const firstTool = (t: ToolJoin) => (Array.isArray(t) ? t[0] : t) ?? null
+
+  const [reviewsRes, savedRes, intentsRes] = await Promise.all([
+    userId
+      ? db.from('reviews').select('rating,created_at,tools(slug,name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(20)
+      : Promise.resolve({ data: [] }),
+    userId
+      ? db.from('user_saved_tools').select('created_at,tools(slug,name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(50)
+      : Promise.resolve({ data: [] }),
+    (userId
+      ? db.from('plan_intents').select('id,typed_goal,source_surface,created_at').or(`distinct_id.eq."${distinctId}",user_id.eq.${userId}`)
+      : db.from('plan_intents').select('id,typed_goal,source_surface,created_at').eq('distinct_id', distinctId)
+    ).order('created_at', { ascending: false }).limit(20),
+  ])
+
+  const reviews = ((reviewsRes.data ?? []) as Array<{ rating: number; created_at: string; tools: ToolJoin }>)
+    .map((r) => {
+      const t = firstTool(r.tools)
+      return t ? { tool_slug: t.slug, tool_name: t.name, rating: r.rating, created_at: r.created_at } : null
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+  const savedTools = ((savedRes.data ?? []) as Array<{ created_at: string; tools: ToolJoin }>)
+    .map((r) => {
+      const t = firstTool(r.tools)
+      return t ? { tool_slug: t.slug, tool_name: t.name, created_at: r.created_at } : null
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+  const planIntents = ((intentsRes.data ?? []) as UserContentLinks['planIntents'])
+
+  return { reviews, savedTools, planIntents }
+}
+
 // ── KPI goals + event health (Phase 8.g.9) ─────────────────────────
 
 export interface KpiGoal {
