@@ -1,0 +1,648 @@
+{
+  "ai_chat_message": [
+    {
+      "file": "components/ai/chat-interface.tsx",
+      "line": 62,
+      "method": "analytics.aiChatMessageRich"
+    }
+  ],
+  "ai_chat_response_received": [
+    {
+      "file": "components/ai/chat-interface.tsx",
+      "line": 113,
+      "method": "analytics.aiChatResponseReceived"
+    }
+  ],
+  "ai_chat_tool_clicked": [
+    {
+      "file": "components/ai/chat-message.tsx",
+      "line": 56,
+      "method": "analytics.aiChatToolClicked"
+    }
+  ],
+  "blog_internal_link_clicked": [
+    {
+      "file": "components/blog/tracked-blog-link.tsx",
+      "line": 13,
+      "method": "analytics.blogInternalLinkClicked"
+    }
+  ],
+  "category_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 55,
+      "method": "analytics.categoryViewed"
+    }
+  ],
+  "collection_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 58,
+      "method": "analytics.collectionViewed"
+    }
+  ],
+  "compare_share_clicked": [
+    {
+      "file": "components/compare/compare-page-actions.tsx",
+      "line": 38,
+      "method": "analytics.compareShareClicked"
+    },
+    {
+      "file": "components/compare/compare-tray.tsx",
+      "line": 33,
+      "method": "analytics.compareShareClicked"
+    }
+  ],
+  "compare_tool_added": [
+    {
+      "file": "components/compare/add-to-compare-button.tsx",
+      "line": 25,
+      "method": "analytics.compareToolAdded"
+    }
+  ],
+  "compare_tool_removed": [
+    {
+      "file": "components/compare/add-to-compare-button.tsx",
+      "line": 22,
+      "method": "analytics.compareToolRemoved"
+    }
+  ],
+  "compare_tray_opened": [
+    {
+      "file": "components/compare/compare-tray.tsx",
+      "line": 22,
+      "method": "analytics.compareTrayOpened"
+    }
+  ],
+  "comparison_viewed": [
+    {
+      "file": "components/compare/compare-view-tracker.tsx",
+      "line": 29,
+      "method": "analytics.comparisonViewedRich"
+    }
+  ],
+  "context_menu_opened": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 70,
+      "method": "analytics.contextMenuOpened"
+    }
+  ],
+  "copy_text_event": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 56,
+      "method": "analytics.copyTextEvent"
+    }
+  ],
+  "dashboard_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 43,
+      "method": "analytics.dashboardViewed"
+    }
+  ],
+  "filter_applied": [
+    {
+      "file": "components/tools/tool-filters.tsx",
+      "line": 86,
+      "method": "analytics.filterApplied"
+    }
+  ],
+  "hero_cta_clicked": [
+    {
+      "file": "components/home/goal-input.tsx",
+      "line": 93,
+      "method": "analytics.heroCtaClicked"
+    }
+  ],
+  "login_completed": [
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 53,
+      "method": "serverAnalytics.loginCompleted"
+    },
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 78,
+      "method": "serverAnalytics.loginCompleted"
+    }
+  ],
+  "nav_cta_clicked": [
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 33,
+      "method": "analytics.navCtaClicked"
+    },
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 155,
+      "method": "analytics.navCtaClicked"
+    }
+  ],
+  "navigation_back": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 89,
+      "method": "analytics.navigationBack"
+    }
+  ],
+  "newsletter_subscribed": [
+    {
+      "file": "app/api/newsletter/subscribe/route.ts",
+      "line": 74,
+      "method": "serverAnalytics.newsletterSubscribedServer"
+    }
+  ],
+  "page_viewed": [
+    {
+      "file": "components/providers/mixpanel-provider.tsx",
+      "line": 181,
+      "method": "analytics.pageViewed"
+    }
+  ],
+  "paste_text_event": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 63,
+      "method": "analytics.pasteTextEvent"
+    }
+  ],
+  "plan_chip_selected": [
+    {
+      "file": "components/ai/intake-modal.tsx",
+      "line": 50,
+      "method": "analytics.planChipSelected"
+    }
+  ],
+  "plan_completed": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 318,
+      "method": "analytics.planCompleted"
+    }
+  ],
+  "plan_cta_clicked": [
+    {
+      "file": "components/cta/plan-cta-button.tsx",
+      "line": 41,
+      "method": "analytics.planCtaClicked"
+    },
+    {
+      "file": "components/cta/plan-cta-link.tsx",
+      "line": 38,
+      "method": "analytics.planCtaClicked"
+    },
+    {
+      "file": "components/home/goal-input.tsx",
+      "line": 95,
+      "method": "analytics.planCtaClicked"
+    },
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 37,
+      "method": "analytics.planCtaClicked"
+    },
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 157,
+      "method": "analytics.planCtaClicked"
+    }
+  ],
+  "plan_cta_dismissed": [
+    {
+      "file": "components/cta/plan-cta-sticky.tsx",
+      "line": 59,
+      "method": "analytics.planCtaDismissed"
+    }
+  ],
+  "plan_cta_impression": [
+    {
+      "file": "components/cta/plan-cta-inline.tsx",
+      "line": 51,
+      "method": "analytics.planCtaImpression"
+    },
+    {
+      "file": "components/cta/plan-cta-sticky.tsx",
+      "line": 48,
+      "method": "analytics.planCtaImpression"
+    },
+    {
+      "file": "components/home/goal-input.tsx",
+      "line": 71,
+      "method": "analytics.planCtaImpression"
+    }
+  ],
+  "plan_existing_tool_added": [
+    {
+      "file": "components/ai/existing-tools-chip-input.tsx",
+      "line": 67,
+      "method": "analytics.planExistingToolAdded"
+    }
+  ],
+  "plan_existing_tool_removed": [
+    {
+      "file": "components/ai/existing-tools-chip-input.tsx",
+      "line": 82,
+      "method": "analytics.planExistingToolRemoved"
+    }
+  ],
+  "plan_goal_typed": [
+    {
+      "file": "components/home/goal-input.tsx",
+      "line": 64,
+      "method": "analytics.fieldTextChanged"
+    }
+  ],
+  "plan_intake_submitted": [
+    {
+      "file": "components/ai/intake-modal.tsx",
+      "line": 66,
+      "method": "analytics.planIntakeSubmitted"
+    }
+  ],
+  "plan_intent_linked_to_user": [
+    {
+      "file": "lib/cta/persist-intent.ts",
+      "line": 128,
+      "method": "analytics.planIntentLinkedToUser"
+    }
+  ],
+  "plan_intent_persisted": [
+    {
+      "file": "lib/cta/persist-intent.ts",
+      "line": 100,
+      "method": "analytics.planIntentPersisted"
+    }
+  ],
+  "plan_match_tier": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 328,
+      "method": "analytics.planMatchTier"
+    }
+  ],
+  "plan_perf": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 331,
+      "method": "analytics.planPerf"
+    }
+  ],
+  "plan_results_displayed": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 322,
+      "method": "analytics.planResultsDisplayed"
+    }
+  ],
+  "plan_results_tool_clicked": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 1008,
+      "method": "analytics.planResultsToolClicked"
+    }
+  ],
+  "plan_signup_modal_completed": [
+    {
+      "file": "components/providers/auth-provider.tsx",
+      "line": 78,
+      "method": "analytics.planSignupModalCompleted"
+    }
+  ],
+  "plan_signup_modal_oauth_clicked": [
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 107,
+      "method": "analytics.planSignupModalOAuthClicked"
+    }
+  ],
+  "plan_signup_modal_shown": [
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 68,
+      "method": "analytics.planSignupModalShown"
+    }
+  ],
+  "plan_signup_modal_skipped": [
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 132,
+      "method": "analytics.planSignupModalSkipped"
+    }
+  ],
+  "plan_started": [
+    {
+      "file": "components/ai/project-planner.tsx",
+      "line": 205,
+      "method": "analytics.planStarted"
+    }
+  ],
+  "profile_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 49,
+      "method": "analytics.profileViewed"
+    }
+  ],
+  "review_form_opened": [
+    {
+      "file": "components/reviews/review-form.tsx",
+      "line": 27,
+      "method": "analytics.reviewFormOpened"
+    }
+  ],
+  "review_rating_set": [
+    {
+      "file": "components/reviews/review-form.tsx",
+      "line": 56,
+      "method": "analytics.reviewRatingSet"
+    }
+  ],
+  "review_submitted": [
+    {
+      "file": "components/reviews/review-form.tsx",
+      "line": 40,
+      "method": "analytics.reviewSubmittedRich"
+    }
+  ],
+  "review_text_changed": [
+    {
+      "file": "components/reviews/review-form.tsx",
+      "line": 73,
+      "method": "analytics.reviewTextChanged"
+    }
+  ],
+  "saved_list_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 46,
+      "method": "analytics.savedListViewed"
+    }
+  ],
+  "scroll_depth_reached": [
+    {
+      "file": "components/providers/mixpanel-provider.tsx",
+      "line": 222,
+      "method": "analytics.scrollDepthReached"
+    }
+  ],
+  "search_query_submitted": [
+    {
+      "file": "components/home/goal-input.tsx",
+      "line": 94,
+      "method": "analytics.searchQuerySubmitted"
+    },
+    {
+      "file": "components/layout/search-bar.tsx",
+      "line": 78,
+      "method": "analytics.searchQuerySubmitted"
+    }
+  ],
+  "search_query_typed": [
+    {
+      "file": "components/layout/search-bar.tsx",
+      "line": 35,
+      "method": "analytics.fieldTextChanged"
+    }
+  ],
+  "search_result_clicked": [
+    {
+      "file": "components/layout/search-bar.tsx",
+      "line": 192,
+      "method": "analytics.searchResultClickedRich"
+    }
+  ],
+  "search_typing": [
+    {
+      "file": "components/layout/search-bar.tsx",
+      "line": 71,
+      "method": "analytics.searchTyping"
+    }
+  ],
+  "sentiment_card_viewed": [
+    {
+      "file": "components/tools/sentiment-report-page.tsx",
+      "line": 133,
+      "method": "analytics.sentimentCardViewed"
+    }
+  ],
+  "sentiment_pay_clicked": [
+    {
+      "file": "components/tools/sentiment-report-page.tsx",
+      "line": 180,
+      "method": "analytics.sentimentPayClicked"
+    },
+    {
+      "file": "components/tools/sentiment-report-page.tsx",
+      "line": 214,
+      "method": "analytics.sentimentPayClicked"
+    }
+  ],
+  "sentiment_payment_failed": [
+    {
+      "file": "app/api/payments/paypal/capture/route.ts",
+      "line": 45,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/razorpay/verify/route.ts",
+      "line": 56,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/razorpay/verify/route.ts",
+      "line": 63,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/razorpay/verify/route.ts",
+      "line": 77,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_payment_initiated": [
+    {
+      "file": "app/api/payments/paypal/order/route.ts",
+      "line": 46,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/razorpay/order/route.ts",
+      "line": 46,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_payment_succeeded": [
+    {
+      "file": "app/api/payments/paypal/capture/route.ts",
+      "line": 49,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/razorpay/verify/route.ts",
+      "line": 82,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_paywall_shown": [
+    {
+      "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
+      "line": 87,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
+      "line": 105,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_result_viewed": [
+    {
+      "file": "components/tools/sentiment-report-page.tsx",
+      "line": 165,
+      "method": "analytics.sentimentResultViewed"
+    }
+  ],
+  "sentiment_scan_completed": [
+    {
+      "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
+      "line": 192,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_scan_failed": [
+    {
+      "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
+      "line": 204,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_scan_requested": [
+    {
+      "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
+      "line": 109,
+      "method": "serverAnalytics.sentimentEvent"
+    }
+  ],
+  "sentiment_scan_started": [
+    {
+      "file": "components/tools/sentiment-report-page.tsx",
+      "line": 153,
+      "method": "analytics.sentimentScanStarted"
+    }
+  ],
+  "share_clicked": [
+    {
+      "file": "components/shared/share-button.tsx",
+      "line": 100,
+      "method": "analytics.shareClicked"
+    },
+    {
+      "file": "components/shared/share-button.tsx",
+      "line": 106,
+      "method": "analytics.shareClicked"
+    }
+  ],
+  "signup_completed": [
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 51,
+      "method": "serverAnalytics.signupCompleted"
+    },
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 76,
+      "method": "serverAnalytics.signupCompleted"
+    }
+  ],
+  "signup_started": [
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 129,
+      "method": "analytics.signupStarted"
+    }
+  ],
+  "stack_saved": [
+    {
+      "file": "components/stacks/save-stack-button.tsx",
+      "line": 123,
+      "method": "analytics.stackSavedRich"
+    }
+  ],
+  "tab_visibility_changed": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 80,
+      "method": "analytics.tabVisibilityChanged"
+    },
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 84,
+      "method": "analytics.tabVisibilityChanged"
+    }
+  ],
+  "time_on_page": [
+    {
+      "file": "components/providers/mixpanel-provider.tsx",
+      "line": 232,
+      "method": "analytics.timeOnPage"
+    }
+  ],
+  "tool_faq_opened": [
+    {
+      "file": "components/tools/faq-section.tsx",
+      "line": 41,
+      "method": "analytics.toolFaqOpened"
+    }
+  ],
+  "tool_page_viewed": [
+    {
+      "file": "components/tools/page-view-tracker.tsx",
+      "line": 27,
+      "method": "analytics.toolPageViewed"
+    }
+  ],
+  "tool_saved": [
+    {
+      "file": "components/tools/save-tool-button.tsx",
+      "line": 45,
+      "method": "analytics.toolSaved"
+    }
+  ],
+  "tool_unsaved": [
+    {
+      "file": "components/tools/save-tool-button.tsx",
+      "line": 46,
+      "method": "analytics.toolUnsaved"
+    }
+  ],
+  "tool_visit_clicked": [
+    {
+      "file": "components/tools/visit-website-button.tsx",
+      "line": 52,
+      "method": "analytics.toolVisitClicked"
+    }
+  ],
+  "tool_visit_redirected": [
+    {
+      "file": "app/api/tools/[slug]/visit/route.ts",
+      "line": 116,
+      "method": "serverAnalytics.toolVisitRedirected"
+    }
+  ],
+  "viability_badge_clicked": [
+    {
+      "file": "components/tools/viability-badge.tsx",
+      "line": 90,
+      "method": "analytics.viabilityBadgeClicked"
+    }
+  ],
+  "viability_page_viewed": [
+    {
+      "file": "components/analytics/page-event-tracker.tsx",
+      "line": 52,
+      "method": "analytics.viabilityPageViewed"
+    }
+  ]
+}
