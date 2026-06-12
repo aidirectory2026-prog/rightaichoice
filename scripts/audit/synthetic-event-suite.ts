@@ -866,6 +866,17 @@ const RECIPES: Recipe[] = [
   },
   { event: 'activation_milestone', mode: 'payload', run: noop, props: () => ({ milestone: 'first_tool_saved', value: 1 }) },
 
+  // System / performance (browser flush is hide/route-change-timed —
+  // canonical payload keeps the suite deterministic; the tracker itself is
+  // dev-validated at the capture() choke point)
+  {
+    event: 'web_vitals',
+    mode: 'payload',
+    note: 'flush timing (visibility/pagehide) is nondeterministic headlessly — payload-driven',
+    run: noop,
+    props: () => ({ path: '/', lcp_ms: 1840, fcp_ms: 920, ttfb_ms: 240, cls: 0.02, metric_count: 4, slow_page: false }),
+  },
+
   // Dashboard / profile / saved (require auth)
   { event: 'dashboard_viewed', mode: 'payload', note: 'requires authenticated user', run: noop, props: () => ({ has_saves: true, saves_count: 4, has_plans: true }) },
   { event: 'saved_list_viewed', mode: 'payload', note: 'requires authenticated user', run: noop, props: () => ({ count: 4 }) },

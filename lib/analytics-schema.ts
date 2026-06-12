@@ -960,6 +960,27 @@ export const EVENT_SCHEMAS = {
     ]),
   },
 
+  // ── System / performance ──────────────────────────────────────────
+  web_vitals: {
+    description:
+      'Per-page web-vitals beacon — components/analytics/web-vitals-tracker.tsx accumulates useReportWebVitals metrics (LCP/FCP/TTFB/INP/CLS, hard page loads only) and flushes ONE web_vitals event per page load on first visibility-hidden / pagehide / route change. slow_page = any metric in its "poor" band (LCP>4s, INP>500ms, CLS>0.25, TTFB>1.8s, FCP>3s).',
+    plainEnglish: 'How fast a page loaded and responded for a real visitor.',
+    category: 'system',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        lcp_ms: z.number().optional(),
+        fcp_ms: z.number().optional(),
+        ttfb_ms: z.number().optional(),
+        inp_ms: z.number().optional(),
+        cls: z.number().optional(),
+        metric_count: z.number(),
+        slow_page: z.boolean(),
+      })
+      .strict(),
+  },
+
   // ── Engagement / passive capture ──────────────────────────────────
   scroll_depth_reached: {
     description: 'Scroll depth marks (25/50/75/100) — analytics.scrollDepthReached from the scroll tracker.',

@@ -945,6 +945,23 @@ export const analytics = {
   errorEncountered(boundary: string, message: string) {
     capture('error_encountered', { boundary, message: message.slice(0, 200) })
   },
+  /**
+   * 10.7b — one web-vitals beacon per hard page load, flushed by
+   * components/analytics/web-vitals-tracker.tsx on first hide/route-change.
+   * Metric fields optional: only what the browser actually reported.
+   */
+  webVitals(props: {
+    path: string
+    lcp_ms?: number
+    fcp_ms?: number
+    ttfb_ms?: number
+    inp_ms?: number
+    cls?: number
+    metric_count: number
+    slow_page: boolean
+  }) {
+    capture('web_vitals', { ...props })
+  },
   /** Generic client-side perf marker — e.g. "ai_chat_first_token", "plan_llm_response". */
   perfMark(marker: string, duration_ms: number, context?: string) {
     capture('perf_mark', { marker, duration_ms, context: context ?? '' })

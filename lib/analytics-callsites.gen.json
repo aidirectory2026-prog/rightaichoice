@@ -644,5 +644,17 @@
       "line": 52,
       "method": "analytics.viabilityPageViewed"
     }
+  ],
+  "web_vitals": [
+    {
+      "file": "components/analytics/web-vitals-tracker.tsx",
+      "line": 64,
+      "method": "analytics.webVitals"
+    },
+    {
+      "file": "components/analytics/web-vitals-tracker.tsx",
+      "line": 89,
+      "method": "analytics.webVitals"
+    }
   ]
 }
