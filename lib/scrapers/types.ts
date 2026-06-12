@@ -11,6 +11,7 @@ export type SentimentSource =
   | 'youtube'
   | 'producthunt'
   | 'appstore'
+  | 'bluesky'
   | 'g2'
   | 'trustpilot'
   | 'google'

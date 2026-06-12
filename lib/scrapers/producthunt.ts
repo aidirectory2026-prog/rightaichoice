@@ -9,21 +9,27 @@ const GQL = 'https://api.producthunt.com/v2/api/graphql'
 
 // PH's schema doesn't support a cheap free-text product search on `posts`, so we
 // resolve by the tool's slug via the `post(slug:)` field.
+// Fable-5 review (2026-06-13): the original query requested `reviews(...)`,
+// a field that DOESN'T EXIST on Post — every call returned a GraphQL error,
+// `data.post` came back undefined, and the scraper silently yielded 0 posts
+// since launch. Post exposes `comments` (real user voices on the launch) plus
+// the aggregate reviewsRating/reviewsCount — use those.
 const BY_SLUG = `query BySlug($slug: String!) {
   post(slug: $slug) {
-    name tagline votesCount reviewsRating url
-    reviews(first: 15) { edges { node { rating sentiment body user { name } } } }
+    name tagline votesCount reviewsRating reviewsCount url
+    comments(first: 15, order: VOTES_COUNT) { edges { node { body votesCount user { name } } } }
   }
 }`
 
-type Review = { rating?: number; sentiment?: string; body?: string; user?: { name?: string } }
+type PhComment = { body?: string; votesCount?: number; user?: { name?: string } }
 type Post = {
   name?: string
   tagline?: string
   votesCount?: number
   reviewsRating?: number
+  reviewsCount?: number
   url?: string
-  reviews?: { edges?: { node?: Review }[] }
+  comments?: { edges?: { node?: PhComment }[] }
 }
 
 function slugify(name: string): string {
@@ -61,25 +67,24 @@ export async function scrapeProductHunt(toolName: string): Promise<ScrapeResult>
     if (!post) return { source: 'producthunt', posts: [], scrapedAt: new Date().toISOString() }
 
     const posts: ScrapedPost[] = []
-    // The product card itself: tagline + aggregate rating.
+    // The product card itself: tagline + aggregate rating + review count.
     posts.push({
       source: 'producthunt',
-      title: `${post.name ?? toolName}${post.reviewsRating ? ` (${post.reviewsRating}★ on PH)` : ''}`,
+      title: `${post.name ?? toolName}${post.reviewsRating ? ` (${post.reviewsRating}★ from ${post.reviewsCount ?? '?'} PH reviews)` : ''}`,
       body: `${post.tagline ?? ''} — ${post.votesCount ?? 0} upvotes`.slice(0, 400),
       score: post.votesCount,
       url: post.url,
     })
-    for (const edge of post.reviews?.edges ?? []) {
-      const r = edge.node
-      const body = (r?.body ?? '').trim()
+    for (const edge of post.comments?.edges ?? []) {
+      const c = edge.node
+      const body = (c?.body ?? '').trim()
       if (body.length < 20) continue
       posts.push({
         source: 'producthunt',
-        title: `${post.name ?? toolName} review${r?.rating ? ` (${r.rating}★)` : ''}`,
+        title: `${post.name ?? toolName} launch comment`,
         body: body.slice(0, 1500),
-        author: r?.user?.name,
-        score: r?.rating,
-        sentiment: r?.sentiment?.toLowerCase(),
+        author: c?.user?.name,
+        score: c?.votesCount,
         url: post.url,
       })
     }
