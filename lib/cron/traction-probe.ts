@@ -8,6 +8,8 @@
 // Per-candidate cost: ~2s sequential. Run via Promise.all in ingest.ts
 // to amortize across the batch.
 
+import { getRedditAppToken } from '@/lib/scrapers/reddit'
+
 type HnResult = {
   storyCount: number       // stories last 30 days
   maxPoints: number        // top story points last 30 days
@@ -35,7 +37,15 @@ export type TractionSignal = {
 }
 
 const HN_ALGOLIA = 'https://hn.algolia.com/api/v1/search'
-const REDDIT_SEARCH = 'https://www.reddit.com/search.json'
+// Fable-5 review (2026-06-12) — Reddit 403s tokenless *.json endpoints from
+// datacenter IPs since ~2026-06-01 (see lib/scrapers/reddit.ts, migrated to
+// OAuth that day). This probe was left on the public endpoint, so every
+// candidate scored reddit=0, the curation gate rejected 100/100 candidates
+// daily, and the catalog admitted ZERO new tools for 11 days. Use the shared
+// OAuth app token; fall back to the public endpoint only when no creds are
+// configured (works from residential IPs locally).
+const REDDIT_PUBLIC_SEARCH = 'https://www.reddit.com/search.json'
+const REDDIT_OAUTH_SEARCH = 'https://oauth.reddit.com/search.json'
 
 const HN_HARD_FLOOR = 30          // any story with ≥30 points in last 30d → pass
 const REDDIT_THREAD_FLOOR = 3     // ≥3 unique threads in last 30d → pass
@@ -71,16 +81,18 @@ async function probeHN(toolName: string): Promise<HnResult> {
 }
 
 async function probeReddit(toolName: string): Promise<RedditResult> {
-  // Reddit JSON search — no auth, sorted by relevance. Restrict to last
+  // Reddit search, OAuth-first (see header note). Restrict to last
   // 30 days via the `t` param (week / month / year — we use month).
   const q = encodeURIComponent(`"${toolName}"`)
-  const url = `${REDDIT_SEARCH}?q=${q}&restrict_sr=false&t=month&limit=25&sort=relevance`
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'RightAIChoice-Ingest/1.0 (rightaichoice.com)',
-      },
-    })
+    const token = await getRedditAppToken()
+    const base = token ? REDDIT_OAUTH_SEARCH : REDDIT_PUBLIC_SEARCH
+    const url = `${base}?q=${q}&restrict_sr=false&t=month&limit=25&sort=relevance`
+    const headers: Record<string, string> = {
+      'User-Agent': 'RightAIChoice-Ingest/1.0 (rightaichoice.com)',
+    }
+    if (token) headers.Authorization = `Bearer ${token}`
+    const res = await fetch(url, { headers })
     if (!res.ok) return { threadCount: 0, totalUpvotes: 0, ok: false }
     const json = (await res.json()) as {
       data?: { children?: Array<{ data?: { ups?: number; created_utc?: number } }> }
