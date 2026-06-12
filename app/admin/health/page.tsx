@@ -14,7 +14,16 @@
 // pipeline_health() RPC gives the 7d aggregates (runs, failures, last_success,
 // avg duration, 7d cost). A bounded distinct-on query adds the LAST run's
 // per-run items + duration + est cost (the RPC only carries averages/sums).
+//
+// Phase 10.5c.3 (2026-06-12) — re-skinned onto the shared admin kit
+// (PageHeader breadcrumb, kit-styled KPI cards, ⓘ provenance). Data + query
+// semantics unchanged: the F12 failure-only monitors section and the
+// missing-pipelines red rows (expected-but-never-logged keys) are kept
+// verbatim. Not date-ranged: health is about NOW (last run / last success /
+// trailing 24h-7d windows), so the global filter bar does not apply.
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { PageHeader } from '@/components/admin/page-header'
+import { MetricInfo } from '@/components/admin/metric-info'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -285,32 +294,36 @@ export default async function PipelineHealthPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">Pipeline Health</h1>
-        <p className="text-sm text-zinc-400 mt-1 max-w-3xl">
+        <PageHeader />
+        <p className="-mt-3 max-w-3xl text-xs text-zinc-500">
           Last run, last success, recent failures, and SLA verdict for every cron/job — read live from{' '}
-          <code className="text-zinc-300">pipeline_runs</code> (written by{' '}
-          <code className="text-zinc-300">cronRoute()</code>). A pipeline is <span className="text-rose-400">failing</span>{' '}
+          <code className="text-zinc-400">pipeline_runs</code> (written by{' '}
+          <code className="text-zinc-400">cronRoute()</code>). A pipeline is <span className="text-rose-400">failing</span>{' '}
           if its last run failed or it breached the 36h daily SLA; <span className="text-amber-400">stale</span> if its
-          last success is older than ~{SLA_SLACK}× its expected cadence.
+          last success is older than ~{SLA_SLACK}× its expected cadence. Health is about now (last
+          run / trailing 24h–7d), so the global range filter does not apply here.
         </p>
       </div>
 
       {/* SLA / KPI banner */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi label="Healthy" value={String(healthyCount)} tone="ok" />
-        <Kpi label="Failing" value={String(failingCount)} tone={failingCount ? 'bad' : 'ok'} />
-        <Kpi label="Stale" value={String(staleCount)} tone={staleCount ? 'warn' : 'ok'} />
-        <Kpi label="Fails / 24h" value={String(failures24h.length)} tone={failures24h.length ? 'bad' : 'ok'} />
+        <Kpi label="Healthy" value={String(healthyCount)} tone="ok" info={<MetricInfo docKey="pipeline_health_kpis" />} />
+        <Kpi label="Failing" value={String(failingCount)} tone={failingCount ? 'bad' : 'ok'} info={<MetricInfo docKey="pipeline_health_kpis" />} />
+        <Kpi label="Stale" value={String(staleCount)} tone={staleCount ? 'warn' : 'ok'} info={<MetricInfo docKey="pipeline_health_kpis" />} />
+        <Kpi label="Fails / 24h" value={String(failures24h.length)} tone={failures24h.length ? 'bad' : 'ok'} info={<MetricInfo docKey="pipeline_health_kpis" />} />
         {costInstrumented ? (
-          <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} />
+          <Kpi label="7d est cost" value={`$${cost7d.toFixed(2)}`} info={<MetricInfo docKey="kr_pipeline_cost" />} />
         ) : (
-          <Kpi label="7d est cost" value="Not instrumented (F8)" tone="warn" />
+          <Kpi label="7d est cost" value="Not instrumented (F8)" tone="warn" info={<MetricInfo docKey="kr_pipeline_cost" />} />
         )}
       </div>
 
       {/* Catalog freshness SLA (A1) */}
       <section>
-        <h2 className="text-sm font-semibold text-zinc-200 mb-2">Catalog freshness SLA (7-day)</h2>
+        <h2 className="mb-2 flex items-center gap-1 text-sm font-semibold text-zinc-200">
+          Catalog freshness SLA (7-day)
+          <MetricInfo docKey="catalog_freshness_sla" align="left" />
+        </h2>
         <div
           className={`rounded-lg border p-4 ${
             freshPass ? 'border-emerald-900/50 bg-emerald-950/20' : 'border-rose-900/50 bg-rose-950/20'
@@ -335,7 +348,10 @@ export default async function PipelineHealthPage() {
 
       {/* Per-pipeline status table */}
       <section>
-        <h2 className="text-sm font-semibold text-zinc-200 mb-2">Per-pipeline status (last run, worst-first)</h2>
+        <h2 className="mb-2 flex items-center gap-1 text-sm font-semibold text-zinc-200">
+          Per-pipeline status (last run, worst-first)
+          <MetricInfo docKey="pipeline_sla" align="left" />
+        </h2>
         {rows.length === 0 ? (
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 text-sm text-zinc-500">
             No pipeline runs recorded yet.
@@ -411,8 +427,9 @@ export default async function PipelineHealthPage() {
       {/* F12: failure-only monitors — breach loggers, not cadence pipelines */}
       {monitorRows.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-zinc-200 mb-2">
+          <h2 className="mb-2 flex items-center gap-1 text-sm font-semibold text-zinc-200">
             Monitors <span className="text-zinc-500 font-normal">(failure-only — a row here is a breach record, not a crashed cron)</span>
+            <MetricInfo docKey="pipeline_monitors" align="left" />
           </h2>
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full text-sm">
@@ -516,13 +533,18 @@ function SlaTag({ verdict }: { verdict: SlaVerdict }) {
   return <span className={`text-[11px] ${cls}`}>{verdict.label}</span>
 }
 
-function Kpi({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'bad' | 'warn' }) {
+// Kit-styled KPI card (tone coloring + string values — kit MetricCard is
+// plain-number-only) with the shared ⓘ provenance slot.
+function Kpi({ label, value, tone, info }: { label: string; value: string; tone?: 'ok' | 'bad' | 'warn'; info?: React.ReactNode }) {
   const color =
     tone === 'bad' ? 'text-rose-400' : tone === 'warn' ? 'text-amber-400' : tone === 'ok' ? 'text-emerald-400' : 'text-white'
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className={`text-xl font-bold mt-1 ${color}`}>{value}</div>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+        {info ?? null}
+      </div>
+      <div className={`mt-2 text-2xl font-semibold ${color}`}>{value}</div>
     </div>
   )
 }

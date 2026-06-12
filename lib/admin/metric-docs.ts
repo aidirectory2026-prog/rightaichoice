@@ -614,6 +614,55 @@ const docs = {
     caveats: ['"Done" states are inferred from counters (e.g. outreach ≥ 5), not ticked boxes — sending 5 emails nobody logged leaves the task red.'],
   },
 
+  // ── Pipelines & Health (Phase 10.5c) ─────────────────────────────────
+  pipeline_health_kpis: {
+    key: 'pipeline_health_kpis',
+    title: 'Pipeline health KPIs',
+    whatItCounts:
+      'How many pipelines are healthy / failing / stale right now, the count of failed or timed-out runs in the last 24h, and the 7-day estimated cost (currently "Not instrumented" — F8).',
+    howComputed:
+      'pipeline_health() RPC (7d aggregates per pipeline_key) + a distinct-on last-run query, classified by the F12-corrected cadence map: failing = last run failed OR >36h since success for a daily-or-faster job OR an expected pipeline that has NEVER logged a run; stale = last success older than ~2.5× nominal cadence.',
+    whyTrusted:
+      'Phase 1 audit verified the per-pipeline RPC numbers exactly (PASS) and finding F12 documents every correction baked into these KPIs (calculate-viability ~15d cadence, 8 previously-unmapped keys, failure-only monitors split out, never-logged keys surfaced red instead of invisible).',
+    caveats: [
+      'The cadence map is hand-maintained from vercel.json + GH workflow schedules — a new cron without a map entry falls back to an 8-day stale rule until added.',
+      'The 7d cost KPI is honest-but-empty until cost instrumentation lands (F8).',
+    ],
+  },
+  pipeline_sla: {
+    key: 'pipeline_sla',
+    title: 'Per-pipeline SLA verdict',
+    whatItCounts:
+      'For every pipeline that has ever logged a run — plus every EXPECTED pipeline that never has (red "missing" rows) — its last run status, items processed/ok/failed, duration, and an SLA verdict against its expected cadence.',
+    howComputed:
+      'Last-success age vs CADENCE_HOURS[key]: >36h for daily-or-faster = hard FAIL (spec rule); >2.5× cadence = stale; unmapped keys use an 8-day fallback. F12: keys in the cadence map with zero pipeline_runs rows ever are synthesized as status "missing" / SLA fail — a silent blind spot made loudly visible.',
+    whyTrusted:
+      'F12 (metric-audit.md) is the documented audit of exactly this table: false hard-FAILs, permanent FAILs and invisible pipelines were each reproduced with SQL and fixed in this classification; underlying per-pipeline aggregates verified exact in Phase 1.',
+    caveats: ['"missing" rows mean the JOB NEVER LOGGED — it may be running fine but un-instrumented, or not running at all; both deserve a look.', 'Cadences are nominal — retries and deploy skew are absorbed by the 2.5× slack.'],
+  },
+  pipeline_monitors: {
+    key: 'pipeline_monitors',
+    title: 'Failure-only monitors',
+    whatItCounts:
+      'Breach loggers (freshness-sla, poll-gh-actions-heartbeat): a row here is a recorded BREACH of the monitored condition, not a crashed cron — so "last breach logged" recent = bad, long ago = good.',
+    howComputed:
+      'Same pipeline_health() aggregates, but keys in MONITOR_KEYS are split out of the SLA table because success-SLA verdicts are meaningless for jobs that only write on failure (F12: they used to read as forever-failing).',
+    whyTrusted:
+      'F12 documented the forever-failing artifact and this section is its fix; the breach rows themselves are written by the monitors at breach time (write-ahead, not derived).',
+    caveats: ['A monitor that is itself broken logs nothing and looks healthy — the nightly tracking_health invariants are the backstop.'],
+  },
+  catalog_freshness_sla: {
+    key: 'catalog_freshness_sla',
+    title: 'Catalog freshness SLA (7-day)',
+    whatItCounts:
+      'Whether every published tool was verified within the last 7 days: how many breach, how many were never verified, and the single worst age.',
+    howComputed:
+      'One SQL aggregate over tools (is_published = true) via _admin_audit_exec — the SAME SQL as the data-audit "fresh-7day-sla" invariant, so this banner and /admin/data-audit can never disagree.',
+    whyTrusted:
+      'Shared-SQL-by-construction with the audited data-audit suite; trivially re-runnable (the query is in the page source).',
+    caveats: ['A pass here says tools were touched, not that the refresh content was good — content quality is the refresh pipeline\'s own QA.'],
+  },
+
   devices_adblock: {
     key: 'devices_adblock',
     title: 'Ad-block signal',
