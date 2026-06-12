@@ -960,6 +960,60 @@ export const EVENT_SCHEMAS = {
     ]),
   },
 
+  // ── Frustration / behavior-depth signals (10.7c) ──────────────────
+  rage_click: {
+    description:
+      '3+ clicks within 1s inside a 30px radius — GlobalInteractionTracker (document-level, throttled 1/10s, max 10/page). Click coordinates and target are from the LAST click of the burst.',
+    plainEnglish: 'Someone clicked the same spot repeatedly in frustration.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({ page_path: z.string(), target_element_id: z.string(), click_count: z.number() })
+      .strict(),
+  },
+  dead_click: {
+    description:
+      'Click on a non-interactive element styled clickable (cursor:pointer, no interactive ancestor) that produced NO UI response — no DOM mutation and no navigation within 600ms (MutationObserver probe). GlobalInteractionTracker, throttled 1/5s, max 10/page.',
+    plainEnglish: 'Someone clicked something that looked clickable but nothing happened.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ page_path: z.string(), target_element_id: z.string() }).strict(),
+  },
+  exit_intent: {
+    description:
+      'Desktop-only (maxTouchPoints=0): mouse left through the top of the viewport (mouseout with relatedTarget=null, clientY<=0) — the classic about-to-close/switch-tab gesture. GlobalInteractionTracker; at most once per page, suppressed in the first 5s after mount.',
+    plainEnglish: 'Someone moved their mouse toward closing the tab or leaving the page.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ page_path: z.string(), seconds_on_page: z.number() }).strict(),
+  },
+  error_encountered: {
+    description:
+      'Client-side error capture — GlobalInteractionTracker wires window "error" (capture phase: distinguishes failed resource loads from JS exceptions), "unhandledrejection", plus the legacy analytics.errorEncountered(boundary, message) call shape for React boundaries. Deduped per message, max 5/page.',
+    plainEnglish: 'Something broke in the visitor’s browser on our site.',
+    category: 'system',
+    source: 'client',
+    props: z
+      .object({
+        boundary: z.string(),
+        message: z.string(),
+        error_type: z.enum(['js_error', 'unhandled_rejection', 'resource_error', 'react_boundary']).optional(),
+        source_url: z.string().optional(),
+        line: z.number().optional(),
+        col: z.number().optional(),
+        page_path: z.string().optional(),
+      })
+      .strict(),
+  },
+  external_link_clicked: {
+    description:
+      'Click on an anchor whose host is not ours — GlobalInteractionTracker document-level capture listener (throttled 1/1s). Affiliate "Visit website" clicks are NOT this event (they navigate via internal /api/tools/[slug]/visit and have their own pair).',
+    plainEnglish: 'Someone clicked a link that leads off our site.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ url: z.string(), entity: z.string(), entity_id: z.string() }).strict(),
+  },
+
   // ── System / performance ──────────────────────────────────────────
   web_vitals: {
     description:

@@ -875,6 +875,53 @@ const RECIPES: Recipe[] = [
     props: () => ({ path: '/tools', heartbeat_n: 1, engaged_seconds_delta: 22, engaged_seconds_total: 22 }),
   },
 
+  // Frustration / behavior-depth signals (10.7c.2 — real triggers need
+  // multi-click timing / mouse-out gestures / thrown errors, all
+  // nondeterministic headlessly — payload-driven)
+  {
+    event: 'rage_click',
+    mode: 'payload',
+    note: 'real trigger needs 3 clicks <1s within 30px — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', target_element_id: 'div.filter-panel', click_count: 4 }),
+  },
+  {
+    event: 'dead_click',
+    mode: 'payload',
+    note: 'real trigger needs a 600ms no-mutation probe — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', target_element_id: 'div.card-header' }),
+  },
+  {
+    event: 'exit_intent',
+    mode: 'payload',
+    note: 'real trigger is a desktop mouse-out through viewport top — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', seconds_on_page: 42 }),
+  },
+  {
+    event: 'error_encountered',
+    mode: 'payload',
+    note: 'real trigger is a thrown error / failed resource — payload-driven',
+    run: noop,
+    props: () => ({
+      boundary: 'window',
+      message: "Synthetic: TypeError: Cannot read properties of undefined (reading 'slug')",
+      error_type: 'js_error',
+      source_url: 'https://rightaichoice.com/_next/static/chunks/synthetic.js',
+      line: 1,
+      col: 4242,
+      page_path: '/tools',
+    }),
+  },
+  {
+    event: 'external_link_clicked',
+    mode: 'payload',
+    note: 'global anchor listener (foreign host) — payload-driven',
+    run: noop,
+    props: () => ({ url: 'https://example.com/pricing', entity: 'anchor', entity_id: 'a.underline' }),
+  },
+
   // System / performance (browser flush is hide/route-change-timed —
   // canonical payload keeps the suite deterministic; the tracker itself is
   // dev-validated at the capture() choke point)

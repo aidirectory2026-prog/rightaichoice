@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { analytics } from '@/lib/analytics'
 
 export default function GlobalError({
   error,
@@ -14,6 +15,12 @@ export default function GlobalError({
   // never surface error.message to users — it can leak internals.
   useEffect(() => {
     console.error(error)
+    // 10.7c.2 — route-level React boundary tripped: record it so error_rate
+    // in /admin reflects rendered-error pages, not just window errors.
+    analytics.errorEncountered('app/error', error.message || 'render error', {
+      error_type: 'react_boundary',
+      page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    })
   }, [error])
 
   return (

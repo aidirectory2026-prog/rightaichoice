@@ -84,14 +84,14 @@
   "context_menu_opened": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 70,
+      "line": 122,
       "method": "analytics.contextMenuOpened"
     }
   ],
   "copy_text_event": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 56,
+      "line": 108,
       "method": "analytics.copyTextEvent"
     }
   ],
@@ -102,11 +102,49 @@
       "method": "analytics.dashboardViewed"
     }
   ],
+  "dead_click": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 207,
+      "method": "analytics.deadClick"
+    }
+  ],
   "engaged_time_heartbeat": [
     {
       "file": "components/providers/mixpanel-provider.tsx",
       "line": 279,
       "method": "analytics.engagedTimeHeartbeat"
+    }
+  ],
+  "error_encountered": [
+    {
+      "file": "app/error.tsx",
+      "line": 20,
+      "method": "analytics.errorEncountered"
+    },
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 273,
+      "method": "analytics.errorEncountered"
+    },
+    {
+      "file": "components/shared/section-error-boundary.tsx",
+      "line": 27,
+      "method": "analytics.errorEncountered"
+    }
+  ],
+  "exit_intent": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 251,
+      "method": "analytics.exitIntent"
+    }
+  ],
+  "external_link_clicked": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 225,
+      "method": "analytics.externalLinkClicked"
     }
   ],
   "filter_applied": [
@@ -150,7 +188,7 @@
   "navigation_back": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 89,
+      "line": 141,
       "method": "analytics.navigationBack"
     }
   ],
@@ -171,7 +209,7 @@
   "paste_text_event": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 63,
+      "line": 115,
       "method": "analytics.pasteTextEvent"
     }
   ],
@@ -350,6 +388,13 @@
       "file": "components/analytics/page-event-tracker.tsx",
       "line": 49,
       "method": "analytics.profileViewed"
+    }
+  ],
+  "rage_click": [
+    {
+      "file": "components/analytics/global-interaction-tracker.tsx",
+      "line": 160,
+      "method": "analytics.rageClick"
     }
   ],
   "review_form_opened": [
@@ -580,12 +625,12 @@
   "tab_visibility_changed": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 80,
+      "line": 132,
       "method": "analytics.tabVisibilityChanged"
     },
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 84,
+      "line": 136,
       "method": "analytics.tabVisibilityChanged"
     }
   ],

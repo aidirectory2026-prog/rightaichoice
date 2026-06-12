@@ -962,8 +962,40 @@ export const analytics = {
   externalLinkClicked(url: string, entity: string, entityId: string) {
     capture('external_link_clicked', { url, entity, entity_id: entityId })
   },
-  errorEncountered(boundary: string, message: string) {
-    capture('error_encountered', { boundary, message: message.slice(0, 200) })
+  // 10.7c — extended with error_type / source location for the global
+  // error listeners (js errors, unhandled rejections, failed resources).
+  // The legacy 2-arg call shape still validates (extras are optional).
+  errorEncountered(
+    boundary: string,
+    message: string,
+    extra?: {
+      error_type?: 'js_error' | 'unhandled_rejection' | 'resource_error' | 'react_boundary'
+      source_url?: string
+      line?: number
+      col?: number
+      page_path?: string
+    },
+  ) {
+    capture('error_encountered', {
+      boundary,
+      message: message.slice(0, 200),
+      ...(extra?.error_type ? { error_type: extra.error_type } : {}),
+      ...(extra?.source_url ? { source_url: extra.source_url.slice(0, 300) } : {}),
+      ...(typeof extra?.line === 'number' ? { line: extra.line } : {}),
+      ...(typeof extra?.col === 'number' ? { col: extra.col } : {}),
+      ...(extra?.page_path ? { page_path: extra.page_path } : {}),
+    })
+  },
+  // ── 10.7c — frustration / behavior-depth signals ────────────────
+  // All emitted by GlobalInteractionTracker (document-level, throttled).
+  rageClick(props: { page_path: string; target_element_id: string; click_count: number }) {
+    capture('rage_click', { ...props })
+  },
+  deadClick(props: { page_path: string; target_element_id: string }) {
+    capture('dead_click', { ...props })
+  },
+  exitIntent(props: { page_path: string; seconds_on_page: number }) {
+    capture('exit_intent', { ...props })
   },
   /**
    * 10.7b — one web-vitals beacon per hard page load, flushed by

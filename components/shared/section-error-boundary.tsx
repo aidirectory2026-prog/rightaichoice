@@ -1,7 +1,8 @@
 'use client'
 
-import { Component, type ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { analytics } from '@/lib/analytics'
 
 type Props = {
   children: ReactNode
@@ -17,6 +18,16 @@ export class SectionErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    // 10.7c.2 — section-level boundary tripped (page survives, a section
+    // shows the fallback). Recorded so silent partial-page failures are
+    // visible in /admin error metrics.
+    analytics.errorEncountered('section', error.message || 'section render error', {
+      error_type: 'react_boundary',
+      page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    })
   }
 
   render() {

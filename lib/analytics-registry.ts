@@ -54,8 +54,10 @@ export const ADMIN_CONSUMED_EVENTS = new Set<string>([
 export const PLANNED_EVENTS = new Set<string>([
   'ai_chat_tool_suggested', 'best_page_viewed', 'blog_post_viewed',
   'compare_attribute_row_expanded', 'compare_csv_exported', 'dashboard_widget_clicked',
-  'discussion_replied', 'element_dwell', 'empty_search', 'error_encountered',
-  'external_link_clicked', 'filter_no_results', 'form_field_changed', 'form_submitted',
+  'discussion_replied', 'element_dwell', 'empty_search',
+  // 10.7c — error_encountered + external_link_clicked promoted to FIRED
+  // (GlobalInteractionTracker global listeners).
+  'filter_no_results', 'form_field_changed', 'form_submitted',
   'form_validation_failed', 'onboarding_completed', 'onboarding_step_completed',
   'password_reset_requested', 'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
   'plan_goal_text_submitted', 'plan_intent_linked_to_user', 'plan_intent_persisted',
