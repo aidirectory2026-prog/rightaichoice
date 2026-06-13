@@ -1,0 +1,84 @@
+name: Nightly Verify
+
+# Phase 10.9 — the permanent nightly verification cycle. Runs the FULL
+# verification orchestrator (scripts/audit/nightly-verify.ts) once a night and
+# lands one tracking_health row per "mean" under a single run_at. The admin
+# trust banner (app/admin/layout.tsx) reflects the result on the next page
+# load; tracking-watchdog.yml (8AM UTC) reads the same table and emails on fail.
+#
+# Means: V_registry, V_schema, V_synthetic (needs the app running),
+# V_filters, V_mixpanel, V_invariants (rolls up the in-DB pg_cron batch).
+#
+# Schedule: 21:00 UTC — AFTER the in-DB invariant suite (pg_cron, 19:30 UTC),
+# so V_invariants/V_schema read a fresh batch.
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+# Don't let two cycles overlap (they'd both write tracking_health batches).
+concurrency:
+  group: nightly-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.NEXT_PUBLIC_MIXPANEL_TOKEN }}
+      MIXPANEL_PROJECT_ID: ${{ secrets.MIXPANEL_PROJECT_ID }}
+      MIXPANEL_SERVICE_ACCOUNT_USERNAME: ${{ secrets.MIXPANEL_SERVICE_ACCOUNT_USERNAME }}
+      MIXPANEL_SERVICE_ACCOUNT_SECRET: ${{ secrets.MIXPANEL_SERVICE_ACCOUNT_SECRET }}
+      MIXPANEL_API_HOST: ${{ secrets.MIXPANEL_API_HOST }}
+      MIXPANEL_DATA_API_HOST: ${{ secrets.MIXPANEL_DATA_API_HOST }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+      BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      # puppeteer-core needs a real Chrome binary; the synthetic suite reads
+      # CHROME_PATH (default macOS path otherwise). Install a stable Chrome and
+      # export its path for the run.
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        id: setup-chrome
+        with:
+          chrome-version: stable
+
+      - name: Build
+        run: npm run build
+
+      # Start the production server in the background and wait until it answers.
+      # The orchestrator NEVER starts its own server — it targets $BASE_URL.
+      - name: Start server
+        run: |
+          npm run start &
+          echo "SERVER_PID=$!" >> "$GITHUB_ENV"
+          npx wait-on --timeout 120000 http://localhost:3000
+
+      - name: Run nightly verification cycle
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        # The orchestrator writes ALL tracking_health rows before exiting; a
+        # non-zero exit (any mean failed) fails the job, but the banner-feeding
+        # rows have already landed. tracking-watchdog (8AM UTC) then emails.
+        run: npx tsx scripts/audit/nightly-verify.ts --base-url=http://localhost:3000
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -n "${SERVER_PID:-}" ]; then kill "$SERVER_PID" || true; fi
