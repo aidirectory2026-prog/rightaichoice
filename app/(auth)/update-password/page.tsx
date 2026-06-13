@@ -15,7 +15,7 @@ export default function UpdatePasswordPage() {
         <p className="mt-1 text-sm text-zinc-400">Enter your new password below.</p>
       </div>
 
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} data-form-id="auth_update_password" className="space-y-4">
         {state?.error && (
           <div className="bg-red-950 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
             {state.error}

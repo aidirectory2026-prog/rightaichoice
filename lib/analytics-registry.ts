@@ -54,16 +54,30 @@ export const ADMIN_CONSUMED_EVENTS = new Set<string>([
 export const PLANNED_EVENTS = new Set<string>([
   'ai_chat_tool_suggested', 'best_page_viewed', 'blog_post_viewed',
   'compare_attribute_row_expanded', 'compare_csv_exported', 'dashboard_widget_clicked',
-  'discussion_replied', 'element_dwell', 'empty_search', 'error_encountered',
-  'external_link_clicked', 'filter_no_results', 'form_field_changed', 'form_submitted',
-  'form_validation_failed', 'onboarding_completed', 'onboarding_step_completed',
-  'password_reset_requested', 'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
-  'plan_goal_text_submitted', 'plan_intent_linked_to_user', 'plan_intent_persisted',
+  'discussion_replied', 'element_dwell', 'empty_search',
+  // 10.7c — error_encountered + external_link_clicked promoted to FIRED
+  // (GlobalInteractionTracker global listeners); form_field_changed +
+  // form_submitted + form_validation_failed promoted to FIRED
+  // (FormAnalyticsTracker generic <form> instrumentation, 10.7c.3).
+  'filter_no_results', 'onboarding_completed', 'onboarding_step_completed',
+  'perf_mark', 'plan_abandoned', 'plan_goal_text_changed',
+  'plan_goal_text_submitted',
+  // 10.7c.5 — PROMOTED out of here: password_reset_requested
+  // (forgot-password success state), plan_intent_persisted +
+  // plan_intent_linked_to_user (real callers in lib/cta/persist-intent.ts —
+  // the registry scanner now walks lib/ + actions/ too). DEMOTED into here
+  // in the same pass: activation_milestone + recommendation_requested had
+  // ZERO call sites (client or server) — the old "server emitters always
+  // fire" rule hid that; emitters kept for future wiring.
+  'activation_milestone', 'recommendation_requested',
   'plan_results_shared', 'plan_results_tool_saved', 'plan_step_back', 'plan_step_completed',
   'pricing_viewed', 'profile_tool_clicked', 'question_answered', 'question_asked',
   'recommendation_result_clicked', 'recommendation_step_completed', 'role_page_viewed',
   'saved_list_filtered', 'saved_tool_removed_from_list', 'search_no_results',
-  'signup_email_entered', 'signup_method_selected', 'stack_exported', 'stack_viewed',
+  // 10.7c.6 — signup_email_entered + signup_method_selected promoted to
+  // FIRED (signup-page wiring: email blur domain-capture, Google button +
+  // email-form-submit method selection).
+  'stack_exported', 'stack_viewed',
   'tool_alternative_clicked', 'tool_integration_link_clicked', 'tool_pricing_tier_hovered',
   'tool_screenshot_opened', 'tool_share_clicked', 'tool_show_more_alternatives',
   'tool_tab_switched', 'upgrade_clicked', 'workflow_generated', 'workflow_saved',

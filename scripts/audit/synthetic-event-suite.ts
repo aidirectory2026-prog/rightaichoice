@@ -214,6 +214,22 @@ async function assertEvent(
     }
     if (!row.device_type) issues.push('device_type column null')
     if (!row.page_path) issues.push('page_path column null')
+    // (3b) 10.7b — environment envelope: every event captured by a REAL
+    // browser must carry the env_* keys getEnvContext() stamps (payload
+    // recipes POST raw MirrorEvents and legitimately lack them). Async /
+    // Chromium-optional keys (env_ad_blocker, env_connection_*, env_dnt,
+    // env_device_memory) are deliberately not asserted.
+    if (mode === 'browser') {
+      for (const k of ['env_locale', 'env_timezone', 'env_color_scheme']) {
+        if (typeof props[k] !== 'string' || (props[k] as string).length === 0) issues.push(`properties.${k} missing`)
+      }
+      for (const k of ['env_viewport_w', 'env_viewport_h', 'env_screen_w', 'env_screen_h', 'env_dpr', 'env_cpu_cores']) {
+        if (typeof props[k] !== 'number') issues.push(`properties.${k} missing`)
+      }
+      for (const k of ['env_touch', 'env_cookie_enabled']) {
+        if (typeof props[k] !== 'boolean') issues.push(`properties.${k} missing`)
+      }
+    }
     // (4) not tagged schema-invalid
     if (props.schema_valid === false) {
       issues.push(`row tagged schema_valid=false: ${JSON.stringify(props.schema_issues ?? [])}`)
@@ -702,6 +718,7 @@ const RECIPES: Recipe[] = [
   { event: 'compare_tool_removed', mode: 'payload', run: noop, props: (s) => ({ tool_slug: s.tool, tray_count: 1 }) },
   { event: 'compare_share_clicked', mode: 'payload', run: noop, props: (s) => ({ tools: `${s.tool},chatgpt` }) },
   { event: 'compare_tray_opened', mode: 'payload', run: noop, props: () => ({ tray_count: 2 }) },
+  { event: 'compare_tray_cleared', mode: 'payload', note: 'abandoned compare intent (10.7c.6)', run: noop, props: () => ({ tool_count: 2 }) },
 
   // Plan flow (real flow triggers paid AI generation — payload-driven)
   { event: 'plan_started', mode: 'payload', note: 'real trigger runs paid AI plan generation', run: noop, props: () => ({ source: 'plan_page' }) },
@@ -769,7 +786,8 @@ const RECIPES: Recipe[] = [
   { event: 'plan_signup_modal_oauth_clicked', mode: 'payload', note: 'OAuth flow — not browser-drivable headlessly', run: noop, props: () => ({ provider: 'google' }) },
   { event: 'plan_signup_modal_skipped', mode: 'payload', note: 'skip navigates to /plan and runs paid AI generation', run: noop, props: () => ({ typed_goal_char_count: 54 }) },
   { event: 'plan_signup_modal_completed', mode: 'payload', note: 'OAuth flow — not browser-drivable headlessly', run: noop, props: () => ({ provider: 'google', was_anon_to_known: true, source_surface: 'homepage' }) },
-  { event: 'recommendation_requested', mode: 'payload', run: noop, props: () => ({ use_case: 'video editing', budget: 'free', level: 'beginner' }) },
+  // 10.7c.5 — recommendation_requested recipe removed (event demoted to
+  // PLANNED: zero call sites for either emitter).
 
   // Search extra
   {
@@ -782,6 +800,9 @@ const RECIPES: Recipe[] = [
 
   // Discovery
   { event: 'filter_applied', mode: 'payload', run: noop, props: () => ({ filter_type: 'pricing', value: 'free', source: 'tools_page' }) },
+  { event: 'filter_cleared', mode: 'payload', note: '10.7c.6 — pill ✕ / select reset / clear-all (filter_type="all")', run: noop, props: () => ({ filter_type: 'pricing', page_path: '/tools' }) },
+  { event: 'sort_changed', mode: 'payload', note: '10.7c.6 — carries previous order', run: noop, props: () => ({ page_path: '/tools', from: 'trending', to: 'newest' }) },
+  { event: 'pagination_clicked', mode: 'payload', note: '10.7c.6 — listing pagination link', run: noop, props: () => ({ page_path: '/tools', from_page: 1, to_page: 2, total_pages: 58 }) },
   { event: 'collection_viewed', mode: 'payload', run: noop, props: () => ({ slug: 'best-free-ai-tools' }) },
 
   // AI chat (real chat hits paid LLM API)
@@ -835,9 +856,17 @@ const RECIPES: Recipe[] = [
 
   // Auth (OAuth flows — payload-driven)
   { event: 'signup_started', mode: 'payload', note: 'auth flow', run: noop, props: () => ({ source: 'navbar' }) },
+  { event: 'signup_email_entered', mode: 'payload', note: 'auth step (10.7c.6) — domain only, never the local part', run: noop, props: () => ({ email_domain: 'gmail.com', method_intent: 'email', source: 'signup_page' }) },
+  { event: 'signup_method_selected', mode: 'payload', note: 'auth step (10.7c.6)', run: noop, props: () => ({ method: 'google', source: 'signup_page' }) },
   { event: 'signup_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
   { event: 'login_completed', mode: 'payload', note: 'auth flow (server-authoritative shape)', run: noop, props: () => ({ method: 'google', source: 'server' }) },
+  { event: 'password_reset_requested', mode: 'payload', note: 'auth flow (forgot-password success state)', run: noop, props: () => ({ method: 'email' }) },
   { event: 'password_reset_completed', mode: 'payload', note: 'auth flow', run: noop, props: () => ({ method: 'email' }) },
+
+  // Plan-intent persistence (10.7c.5 — real triggers need the signup modal
+  // + an anon→known auth transition — payload-driven)
+  { event: 'plan_intent_persisted', mode: 'payload', note: 'fires after POST /api/plan/intent succeeds', run: noop, props: () => ({ source_surface: 'plan_signup_modal', char_count: 64 }) },
+  { event: 'plan_intent_linked_to_user', mode: 'payload', note: 'fires after anon→known stitch with count_linked > 0', run: noop, props: () => ({ user_id: '', count_linked: 2 }) },
 
   // Content / growth
   { event: 'blog_internal_link_clicked', mode: 'payload', run: noop, props: (s) => ({ from_slug: 'best-ai-video-tools', to_path: `/tools/${s.tool}` }) },
@@ -848,7 +877,129 @@ const RECIPES: Recipe[] = [
     run: noop,
     props: () => ({ source: 'footer', email_domain: 'gmail.com', page_path_at_subscribe: '/blog/best-ai-video-tools', tool_slug_context: '' }),
   },
-  { event: 'activation_milestone', mode: 'payload', run: noop, props: () => ({ milestone: 'first_tool_saved', value: 1 }) },
+  // 10.7c.5 — activation_milestone recipe removed (event demoted to
+  // PLANNED: zero call sites for either emitter).
+
+  // Engagement depth (real heartbeat needs 30s wall time — payload-driven)
+  {
+    event: 'engaged_time_heartbeat',
+    mode: 'payload',
+    note: 'real beat needs 30s of wall time — payload-driven',
+    run: noop,
+    props: () => ({ path: '/tools', heartbeat_n: 1, engaged_seconds_delta: 22, engaged_seconds_total: 22 }),
+  },
+
+  // Frustration / behavior-depth signals (10.7c.2 — real triggers need
+  // multi-click timing / mouse-out gestures / thrown errors, all
+  // nondeterministic headlessly — payload-driven)
+  {
+    event: 'rage_click',
+    mode: 'payload',
+    note: 'real trigger needs 3 clicks <1s within 30px — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', target_element_id: 'div.filter-panel', click_count: 4 }),
+  },
+  {
+    event: 'dead_click',
+    mode: 'payload',
+    note: 'real trigger needs a 600ms no-mutation probe — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', target_element_id: 'div.card-header' }),
+  },
+  {
+    event: 'exit_intent',
+    mode: 'payload',
+    note: 'real trigger is a desktop mouse-out through viewport top — payload-driven',
+    run: noop,
+    props: () => ({ page_path: '/tools', seconds_on_page: 42 }),
+  },
+  {
+    event: 'error_encountered',
+    mode: 'payload',
+    note: 'real trigger is a thrown error / failed resource — payload-driven',
+    run: noop,
+    props: () => ({
+      boundary: 'window',
+      message: "Synthetic: TypeError: Cannot read properties of undefined (reading 'slug')",
+      error_type: 'js_error',
+      source_url: 'https://rightaichoice.com/_next/static/chunks/synthetic.js',
+      line: 1,
+      col: 4242,
+      page_path: '/tools',
+    }),
+  },
+  {
+    event: 'external_link_clicked',
+    mode: 'payload',
+    note: 'global anchor listener (foreign host) — payload-driven',
+    run: noop,
+    props: () => ({ url: 'https://example.com/pricing', entity: 'anchor', entity_id: 'a.underline' }),
+  },
+
+  // Form analytics (10.7c.3 — focus/blur cycles and native submits are
+  // nondeterministic headlessly — payload-driven)
+  {
+    event: 'form_field_changed',
+    mode: 'payload',
+    note: 'real trigger is a blur-with-changed-value — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'newsletter_inline',
+      field_name: 'email',
+      field_type: 'email',
+      has_value: true,
+      value_length: 19,
+      page_path: '/blog/best-ai-video-tools',
+      focus_order: 1,
+      corrections: 0,
+    }),
+  },
+  {
+    event: 'form_submitted',
+    mode: 'payload',
+    note: 'real trigger is a native form submit — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'review',
+      all_field_names_filled: ['text', 'pros', 'cons'],
+      field_count_filled: 3,
+      field_count_skipped: 1,
+      time_to_submit_ms: 48_000,
+    }),
+  },
+  {
+    event: 'form_validation_failed',
+    mode: 'payload',
+    note: 'real trigger is native constraint validation — payload-driven',
+    run: noop,
+    props: () => ({ form_id: 'auth_signup', field_name: 'email', error_code: 'typeMismatch' }),
+  },
+  {
+    event: 'form_abandoned',
+    mode: 'payload',
+    note: 'real trigger is leaving a touched form — payload-driven',
+    run: noop,
+    props: () => ({
+      form_id: 'auth_signup',
+      page_path: '/signup',
+      last_field_name: 'password',
+      fields_touched: 2,
+      corrections_total: 1,
+      seconds_on_form: 35,
+      focus_order: ['email', 'password'],
+    }),
+  },
+
+  // System / performance (browser flush is hide/route-change-timed —
+  // canonical payload keeps the suite deterministic; the tracker itself is
+  // dev-validated at the capture() choke point)
+  {
+    event: 'web_vitals',
+    mode: 'payload',
+    note: 'flush timing (visibility/pagehide) is nondeterministic headlessly — payload-driven',
+    run: noop,
+    props: () => ({ path: '/', lcp_ms: 1840, fcp_ms: 920, ttfb_ms: 240, cls: 0.02, metric_count: 4, slow_page: false }),
+  },
 
   // Dashboard / profile / saved (require auth)
   { event: 'dashboard_viewed', mode: 'payload', note: 'requires authenticated user', run: noop, props: () => ({ has_saves: true, saves_count: 4, has_plans: true }) },

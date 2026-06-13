@@ -38,6 +38,7 @@ export function QuestionForm({ toolId }: { toolId: string }) {
   return (
     <form
       action={action}
+      data-form-id="qa_question"
       className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4"
     >
       <input type="hidden" name="tool_id" value={toolId} />

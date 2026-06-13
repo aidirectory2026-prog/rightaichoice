@@ -43,9 +43,10 @@ export function UnsubscribeForm({ prefillEmail, token }: { prefillEmail: string;
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} data-form-id="newsletter_unsubscribe" className="space-y-3">
       <input
         type="email"
+        name="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}

@@ -240,6 +240,100 @@ function getFirstTouchFallback(): FirstTouch | null {
   }
 }
 
+// ── 10.7b — device / environment envelope ────────────────────────────
+// Computed ONCE per page load (module-level cache) and stamped into the
+// properties of every mirrored event by mirrorContext(). All keys are
+// namespaced env_* (declared in BASE_CONTEXT_SCHEMA, lib/analytics-schema.ts)
+// so they can never collide with real payload properties. Near-zero cost:
+// a handful of synchronous navigator/screen reads, once.
+type EnvContext = Record<string, string | number | boolean>
+
+let envContextCache: EnvContext | null = null
+
+function getEnvContext(): EnvContext {
+  if (envContextCache) return envContextCache
+  const env: EnvContext = {}
+  try {
+    if (typeof navigator !== 'undefined') {
+      if (navigator.language) env.env_locale = navigator.language
+      if (typeof navigator.hardwareConcurrency === 'number') env.env_cpu_cores = navigator.hardwareConcurrency
+      env.env_touch = (navigator.maxTouchPoints ?? 0) > 0
+      env.env_cookie_enabled = navigator.cookieEnabled === true
+      // deviceMemory + connection are Chromium-only — stamp when present.
+      const nav = navigator as Navigator & {
+        deviceMemory?: number
+        doNotTrack?: string | null
+        connection?: { effectiveType?: string; downlink?: number; rtt?: number }
+      }
+      if (typeof nav.deviceMemory === 'number') env.env_device_memory = nav.deviceMemory
+      if (nav.connection) {
+        if (nav.connection.effectiveType) env.env_connection_type = nav.connection.effectiveType
+        if (typeof nav.connection.downlink === 'number') env.env_downlink = nav.connection.downlink
+        if (typeof nav.connection.rtt === 'number') env.env_rtt = nav.connection.rtt
+      }
+      // Do-not-track: only stamped when actively requested (true), so the
+      // common null/unset case adds no payload weight.
+      if (nav.doNotTrack === '1' || (window as Window & { doNotTrack?: string | null }).doNotTrack === '1') env.env_dnt = true
+    }
+    if (typeof window !== 'undefined') {
+      env.env_viewport_w = window.innerWidth
+      env.env_viewport_h = window.innerHeight
+      env.env_dpr = window.devicePixelRatio || 1
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (tz) env.env_timezone = tz
+      } catch { /* very old engines */ }
+      try {
+        env.env_color_scheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'no-preference'
+      } catch { /* matchMedia unavailable */ }
+    }
+    if (typeof screen !== 'undefined') {
+      env.env_screen_w = screen.width
+      env.env_screen_h = screen.height
+    }
+  } catch {
+    /* never let env capture break tracking */
+  }
+  envContextCache = env
+  scheduleAdBlockerProbe()
+  return envContextCache
+}
+
+// Ad-blocker signal — "Mixpanel blocked but our mirror alive". One no-cors
+// probe against the public Mixpanel API host, scheduled 3s after the first
+// event so it never competes with page load. Result cached per-session
+// (sessionStorage) and merged into the env cache; events sent before the
+// probe resolves simply lack env_ad_blocker (schema-optional).
+const ADBLOCK_KEY = 'rac_adblock_v1'
+let adBlockerProbeScheduled = false
+
+function scheduleAdBlockerProbe(): void {
+  if (adBlockerProbeScheduled || typeof window === 'undefined') return
+  adBlockerProbeScheduled = true
+  try {
+    const cached = sessionStorage.getItem(ADBLOCK_KEY)
+    if (cached === 'true' || cached === 'false') {
+      if (envContextCache) envContextCache.env_ad_blocker = cached === 'true'
+      return
+    }
+  } catch { /* storage blocked — probe anyway */ }
+  setTimeout(() => {
+    // no-cors: resolves opaquely when the host is reachable, rejects
+    // (TypeError) when a client-side blocker kills the request.
+    fetch('https://api-eu.mixpanel.com/track/?ip=1', { method: 'HEAD', mode: 'no-cors' })
+      .then(() => false)
+      .catch(() => true)
+      .then((blocked) => {
+        if (envContextCache) envContextCache.env_ad_blocker = blocked
+        try { sessionStorage.setItem(ADBLOCK_KEY, String(blocked)) } catch { /* ignore */ }
+      })
+  }, 3000)
+}
+
 // Current-URL UTM params, read at event time so every mirrored event carries
 // last-touch campaign attribution (user_events.utm_* columns were always null
 // because the client never sent these fields).
@@ -329,6 +423,11 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
       if (clickIds[k]) mergedProps[k] = clickIds[k]
     }
   } catch { /* classification must never block the send */ }
+  // 10.7b — device/environment envelope (computed once per page load,
+  // reused on every event; keys namespaced env_* in BASE_CONTEXT_SCHEMA).
+  try {
+    Object.assign(mergedProps, getEnvContext())
+  } catch { /* env capture must never block the send */ }
   return {
     event_name: eventName,
     distinct_id: distinctId,
@@ -788,6 +887,22 @@ export const analytics = {
   // ──────────────────────────────────────────────────────────────
   // Discovery / browse
   // ──────────────────────────────────────────────────────────────
+  // 10.7c.6 — clears were silent before (only sets fired filter_applied).
+  filterCleared(filterType: string, pagePath: string) {
+    capture('filter_cleared', { filter_type: filterType, page_path: pagePath })
+  },
+  // 10.7c.6 — richer than filter_applied('sort'): carries the PREVIOUS order.
+  sortChanged(props: { page_path: string; from: string; to: string }) {
+    capture('sort_changed', { ...props })
+  },
+  // 10.7c.6 — listing pagination clicks (ToolPagination Link onClick).
+  paginationClicked(props: { page_path: string; from_page: number; to_page: number; total_pages: number }) {
+    capture('pagination_clicked', { ...props })
+  },
+  // 10.7c.6 — abandoned compare intent (tray emptied without comparing).
+  compareTrayCleared(toolCount: number) {
+    capture('compare_tray_cleared', { tool_count: toolCount })
+  },
   filterApplied(filterType: string, value: string, source: string) {
     capture('filter_applied', { filter_type: filterType, value, source })
   },
@@ -825,17 +940,37 @@ export const analytics = {
   emptySearch(query: string, source: string) {
     capture('empty_search', { query: query.slice(0, 100), source })
   },
-  scrollDepthReached(path: string, depth: 25 | 50 | 75 | 100) {
+  // 10.7c — marks widened 25/50/75/100 → 10/25/50/75/90/100.
+  scrollDepthReached(path: string, depth: 10 | 25 | 50 | 75 | 90 | 100) {
     capture('scroll_depth_reached', { path, depth })
   },
   /**
    * Time-on-page beacon. Fire once on unmount/pagehide with bucketed seconds.
    * Useful for content-quality grading alongside scroll_depth_reached.
+   * 10.7c — optional maxScrollPct (deepest scroll on the page, 0-100).
+   * Additive: the nightly bot classifier keeps reading path/seconds/bucket.
    */
-  timeOnPage(path: string, seconds: number) {
+  timeOnPage(path: string, seconds: number, maxScrollPct?: number) {
     const bucket =
       seconds < 5 ? '<5s' : seconds < 15 ? '5-15s' : seconds < 30 ? '15-30s' : seconds < 60 ? '30-60s' : seconds < 180 ? '1-3min' : '>3min'
-    capture('time_on_page', { path, seconds: Math.floor(seconds), bucket })
+    capture('time_on_page', {
+      path,
+      seconds: Math.floor(seconds),
+      bucket,
+      ...(maxScrollPct !== undefined ? { max_scroll_pct: Math.round(maxScrollPct) } : {}),
+    })
+  },
+  /**
+   * 10.7c — real-attention heartbeat (~30s cadence, visibility+input-aware,
+   * delta>0 only, capped per page). Emitted by EngagementCapture.
+   */
+  engagedTimeHeartbeat(props: {
+    path: string
+    heartbeat_n: number
+    engaged_seconds_delta: number
+    engaged_seconds_total: number
+  }) {
+    capture('engaged_time_heartbeat', { ...props })
   },
   newsletterSubscribed(source: string) {
     capture('newsletter_subscribed', { source })
@@ -843,8 +978,57 @@ export const analytics = {
   externalLinkClicked(url: string, entity: string, entityId: string) {
     capture('external_link_clicked', { url, entity, entity_id: entityId })
   },
-  errorEncountered(boundary: string, message: string) {
-    capture('error_encountered', { boundary, message: message.slice(0, 200) })
+  // 10.7c — extended with error_type / source location for the global
+  // error listeners (js errors, unhandled rejections, failed resources).
+  // The legacy 2-arg call shape still validates (extras are optional).
+  errorEncountered(
+    boundary: string,
+    message: string,
+    extra?: {
+      error_type?: 'js_error' | 'unhandled_rejection' | 'resource_error' | 'react_boundary'
+      source_url?: string
+      line?: number
+      col?: number
+      page_path?: string
+    },
+  ) {
+    capture('error_encountered', {
+      boundary,
+      message: message.slice(0, 200),
+      ...(extra?.error_type ? { error_type: extra.error_type } : {}),
+      ...(extra?.source_url ? { source_url: extra.source_url.slice(0, 300) } : {}),
+      ...(typeof extra?.line === 'number' ? { line: extra.line } : {}),
+      ...(typeof extra?.col === 'number' ? { col: extra.col } : {}),
+      ...(extra?.page_path ? { page_path: extra.page_path } : {}),
+    })
+  },
+  // ── 10.7c — frustration / behavior-depth signals ────────────────
+  // All emitted by GlobalInteractionTracker (document-level, throttled).
+  rageClick(props: { page_path: string; target_element_id: string; click_count: number }) {
+    capture('rage_click', { ...props })
+  },
+  deadClick(props: { page_path: string; target_element_id: string }) {
+    capture('dead_click', { ...props })
+  },
+  exitIntent(props: { page_path: string; seconds_on_page: number }) {
+    capture('exit_intent', { ...props })
+  },
+  /**
+   * 10.7b — one web-vitals beacon per hard page load, flushed by
+   * components/analytics/web-vitals-tracker.tsx on first hide/route-change.
+   * Metric fields optional: only what the browser actually reported.
+   */
+  webVitals(props: {
+    path: string
+    lcp_ms?: number
+    fcp_ms?: number
+    ttfb_ms?: number
+    inp_ms?: number
+    cls?: number
+    metric_count: number
+    slow_page: boolean
+  }) {
+    capture('web_vitals', { ...props })
   },
   /** Generic client-side perf marker — e.g. "ai_chat_first_token", "plan_llm_response". */
   perfMark(marker: string, duration_ms: number, context?: string) {
@@ -1252,7 +1436,20 @@ export const analytics = {
   },
 
   // ── Catch-all form events (covers anything not specifically wired) ──
-  formFieldChanged(props: { form_id: string; field_name: string; field_type: 'text' | 'select' | 'checkbox' | 'textarea'; has_value: boolean; value_length: number; page_path: string }) {
+  // 10.7c.3 — wired generically by components/analytics/form-analytics-tracker.tsx
+  // (document-level focusin/focusout/submit/invalid listeners over every <form>).
+  // field_type widened to the real input-type space; focus_order (1-based
+  // first-focus position) + corrections (re-edit cycles) added per the plan.
+  formFieldChanged(props: {
+    form_id: string
+    field_name: string
+    field_type: string
+    has_value: boolean
+    value_length: number
+    page_path: string
+    focus_order: number
+    corrections: number
+  }) {
     capture('form_field_changed', { ...props })
   },
   formSubmitted(formId: string, allFieldNamesFilled: string[], fieldCountSkipped: number, timeToSubmitMs: number) {
@@ -1263,6 +1460,19 @@ export const analytics = {
       field_count_skipped: fieldCountSkipped,
       time_to_submit_ms: timeToSubmitMs,
     })
+  },
+  // 10.7c.3 — abandon point: a touched-but-never-submitted form, flushed
+  // once per form on route change / pagehide.
+  formAbandoned(props: {
+    form_id: string
+    page_path: string
+    last_field_name: string
+    fields_touched: number
+    corrections_total: number
+    seconds_on_form: number
+    focus_order: string[]
+  }) {
+    capture('form_abandoned', { ...props })
   },
 
   // ── Phase 8.g.11.d — passive browser-API capture ────────────────

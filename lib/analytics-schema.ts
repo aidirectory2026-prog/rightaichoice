@@ -72,6 +72,32 @@ export const BASE_CONTEXT_SCHEMA = z
     fbclid: z.string(),
     msclkid: z.string(),
     ttclid: z.string(),
+    // 10.7b — device / environment / performance envelope, computed ONCE per
+    // page load by getEnvContext() (lib/analytics.ts) and stamped into
+    // properties on every mirrored event. Namespaced env_* so they can never
+    // collide with real payload properties (the share_clicked `channel`
+    // lesson from 10.7a). All optional: older clients / payload recipes /
+    // server emitters simply don't carry them.
+    env_locale: z.string(), // navigator.language, e.g. 'en-US'
+    env_timezone: z.string(), // IANA zone from Intl, e.g. 'Asia/Kolkata'
+    env_viewport_w: z.number(), // window.innerWidth at first event
+    env_viewport_h: z.number(), // window.innerHeight at first event
+    env_screen_w: z.number(), // screen.width (CSS px)
+    env_screen_h: z.number(), // screen.height (CSS px)
+    env_dpr: z.number(), // devicePixelRatio (retina = 2, …)
+    env_connection_type: z.string(), // navigator.connection.effectiveType ('4g', …)
+    env_downlink: z.number(), // Mbps estimate (navigator.connection.downlink)
+    env_rtt: z.number(), // round-trip ms estimate (navigator.connection.rtt)
+    env_device_memory: z.number(), // GB bucket (navigator.deviceMemory: 0.25–8)
+    env_cpu_cores: z.number(), // navigator.hardwareConcurrency
+    env_touch: z.boolean(), // touch-capable device (maxTouchPoints > 0)
+    env_cookie_enabled: z.boolean(), // navigator.cookieEnabled
+    env_dnt: z.boolean(), // do-not-track requested (only stamped when true)
+    env_color_scheme: z.enum(['dark', 'light', 'no-preference']), // prefers-color-scheme
+    // Async signal — true when the Mixpanel API host is unreachable from this
+    // browser (ad-blocker) while our own mirror is clearly alive (the event
+    // carrying this flag arrived). Absent until the one-time probe resolves.
+    env_ad_blocker: z.boolean(),
   })
   .partial()
 
@@ -103,6 +129,25 @@ export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'fbclid',
   'msclkid',
   'ttclid',
+  // 10.7b — device/environment envelope (getEnvContext in lib/analytics.ts
+  // folds these into properties on every client event; all optional).
+  'env_locale',
+  'env_timezone',
+  'env_viewport_w',
+  'env_viewport_h',
+  'env_screen_w',
+  'env_screen_h',
+  'env_dpr',
+  'env_connection_type',
+  'env_downlink',
+  'env_rtt',
+  'env_device_memory',
+  'env_cpu_cores',
+  'env_touch',
+  'env_cookie_enabled',
+  'env_dnt',
+  'env_color_scheme',
+  'env_ad_blocker',
 ])
 
 export type EventCategory =
@@ -397,6 +442,14 @@ export const EVENT_SCHEMAS = {
     source: 'client',
     props: z.object({ tray_count: z.number() }).strict(),
   },
+  compare_tray_cleared: {
+    description:
+      'Compare tray "Clear" button — analytics.compareTrayCleared from CompareTray (10.7c.6). tool_count = how many selections were discarded; an abandoned-compare-intent signal (vs compare_share_clicked which is the converted path).',
+    plainEnglish: 'Someone emptied their comparison tray without comparing.',
+    category: 'compare',
+    source: 'client',
+    props: z.object({ tool_count: z.number() }).strict(),
+  },
 
   // ── Plan flow ─────────────────────────────────────────────────────
   plan_started: {
@@ -616,25 +669,28 @@ export const EVENT_SCHEMAS = {
   },
 
   // ── Recommend wizard ──────────────────────────────────────────────
-  recommendation_requested: {
+  // 10.7c.5 — recommendation_requested schema REMOVED: zero call sites for
+  // either the client or server emitter (the loose "server emitters always
+  // fire" registry rule had been hiding this). Demoted to PLANNED; the
+  // emitters remain in lib/analytics.ts + lib/mixpanel-server.ts for when
+  // the recommend wizard ships.
+
+  // ── Plan intent persistence (10.7c.5 — promoted from PLANNED) ─────
+  plan_intent_persisted: {
     description:
-      'Recommendation request. Client: analytics.recommendationRequested (use_case/budget/level). Server: recommendationRequestedServer adds result slugs (Mixpanel only).',
-    plainEnglish: 'Someone asked for tool recommendations.',
+      'A typed plan goal was durably saved to plan_intents via POST /api/plan/intent — lib/cta/persist-intent.ts persistPlanIntent() (called from the plan signup modal + auth provider pending-intent replay). Fires only after the fetch succeeds.',
+    plainEnglish: 'A visitor’s typed goal was saved so it survives signup.',
     category: 'plan',
-    source: 'both',
-    props: z.union([
-      z.object({ use_case: z.string(), budget: z.string(), level: z.string() }).strict(),
-      z
-        .object({
-          use_case: z.string(),
-          budget: z.string(),
-          skill_level: z.string(),
-          result_count: z.number(),
-          result_tool_slugs: z.array(z.string()),
-          source: z.literal('server'),
-        })
-        .strict(),
-    ]),
+    source: 'client',
+    props: z.object({ source_surface: z.string(), char_count: z.number() }).strict(),
+  },
+  plan_intent_linked_to_user: {
+    description:
+      'Pre-auth plan_intents rows were stitched to the authenticated user via POST /api/plan/intent/link — lib/cta/persist-intent.ts linkPlanIntentsToUser() after identify() on anon→known. user_id is deliberately empty (server already knows; client must not leak it). Fires only when count_linked > 0.',
+    plainEnglish: 'A new signup’s earlier anonymous plan goals were connected to their account.',
+    category: 'plan',
+    source: 'client',
+    props: z.object({ user_id: z.string(), count_linked: z.number() }).strict(),
   },
 
   // ── Search ────────────────────────────────────────────────────────
@@ -693,11 +749,43 @@ export const EVENT_SCHEMAS = {
 
   // ── Discovery / browse ────────────────────────────────────────────
   filter_applied: {
-    description: 'Catalog filter applied — analytics.filterApplied.',
+    description:
+      'Catalog filter applied — analytics.filterApplied. NOTE: changing the sort select also fires this (filter_type="sort") for historical continuity; the richer sort_changed (with from→to) fires alongside it since 10.7c.6.',
     plainEnglish: 'Someone filtered the tool catalog.',
     category: 'discovery',
     source: 'client',
     props: z.object({ filter_type: z.string(), value: z.string(), source: z.string() }).strict(),
+  },
+  filter_cleared: {
+    description:
+      'Catalog filter removed — analytics.filterCleared from ToolFilters (10.7c.6): a FilterPill ✕, clearing a select back to its placeholder, or the "Clear all" button (filter_type="all"). Previously clears were silent (only sets fired filter_applied).',
+    plainEnglish: 'Someone removed a catalog filter (or cleared them all).',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ filter_type: z.string(), page_path: z.string() }).strict(),
+  },
+  sort_changed: {
+    description:
+      'Catalog sort order changed — analytics.sortChanged from the ToolFilters sort select (10.7c.6). Carries the PREVIOUS order too (from→to), which filter_applied never captured. Fires alongside the legacy filter_applied(filter_type="sort").',
+    plainEnglish: 'Someone changed how the tool list is sorted.',
+    category: 'discovery',
+    source: 'client',
+    props: z.object({ page_path: z.string(), from: z.string(), to: z.string() }).strict(),
+  },
+  pagination_clicked: {
+    description:
+      'Listing pagination link clicked (prev/next/numbered) — analytics.paginationClicked from ToolPagination (10.7c.6; /tools, /categories/[slug], /search). Fires on click before the <Link> navigation.',
+    plainEnglish: 'Someone moved to another page of a tool listing.',
+    category: 'discovery',
+    source: 'client',
+    props: z
+      .object({
+        page_path: z.string(),
+        from_page: z.number(),
+        to_page: z.number(),
+        total_pages: z.number(),
+      })
+      .strict(),
   },
   category_viewed: {
     description: 'Category page view — analytics.categoryViewed.',
@@ -828,6 +916,30 @@ export const EVENT_SCHEMAS = {
     source: 'client',
     props: z.object({ source: z.string() }).strict(),
   },
+  signup_email_entered: {
+    description:
+      'Email field blurred with an @-containing value on the signup page — analytics.signupEmailEntered (10.7c.6, fire-once per page visit). PII rule: only the DOMAIN is captured, never the local part.',
+    plainEnglish: 'Someone typed their email into the signup form.',
+    category: 'auth',
+    source: 'client',
+    props: z
+      .object({
+        email_domain: z.string(),
+        method_intent: z.enum(['email', 'google', 'github']),
+        source: z.string(),
+      })
+      .strict(),
+  },
+  signup_method_selected: {
+    description:
+      'Signup method chosen on the signup page — analytics.signupMethodSelected (10.7c.6): the Google OAuth button click or the email/password form submit. The step BETWEEN signup_started and signup_completed that shows which method users attempt (vs which completes).',
+    plainEnglish: 'Someone picked how to sign up (Google or email).',
+    category: 'auth',
+    source: 'client',
+    props: z
+      .object({ method: z.enum(['email', 'google', 'github']), source: z.string() })
+      .strict(),
+  },
   signup_completed: {
     description:
       'Account created. Server-authoritative (serverAnalytics.signupCompleted, deterministic insert_id, mirrors to user_events); client method exists too.',
@@ -850,9 +962,17 @@ export const EVENT_SCHEMAS = {
       z.object({ method: z.string() }).strict(),
     ]),
   },
+  password_reset_requested: {
+    description:
+      'Reset-link request succeeded on /forgot-password — analytics.passwordResetRequested fired from the success state of the forgot-password page (10.7c.5).',
+    plainEnglish: 'Someone asked for a password-reset email.',
+    category: 'auth',
+    source: 'client',
+    props: z.object({ method: z.literal('email') }).strict(),
+  },
   password_reset_completed: {
     description:
-      'Password reset finished. Client method + serverAnalytics.passwordResetCompletedServer (Mixpanel only).',
+      'Password reset finished. Server-authoritative: actions/auth.ts updatePassword → serverAnalytics.passwordResetCompletedServer (Mixpanel only). A client method with the same shape exists but is unwired.',
     plainEnglish: 'Someone reset their password.',
     category: 'auth',
     source: 'both',
@@ -903,34 +1023,176 @@ export const EVENT_SCHEMAS = {
       z.object({ source: z.string() }).strict(),
     ]),
   },
-  activation_milestone: {
+  // 10.7c.5 — activation_milestone schema REMOVED: zero call sites for
+  // either the client or server emitter (hidden by the loose server-emitter
+  // registry rule). Demoted to PLANNED; emitters kept for a future genuine
+  // first-save/first-plan wiring that knows the "first" server-side.
+
+  // ── Frustration / behavior-depth signals (10.7c) ──────────────────
+  rage_click: {
     description:
-      'North-star activation signal (first_tool_saved, first_plan_completed, …). Client analytics.activationMilestone + server activationMilestoneServer (Mixpanel only).',
-    plainEnglish: 'Someone hit a meaningful "first" on the site.',
+      '3+ clicks within 1s inside a 30px radius — GlobalInteractionTracker (document-level, throttled 1/10s, max 10/page). Click coordinates and target are from the LAST click of the burst.',
+    plainEnglish: 'Someone clicked the same spot repeatedly in frustration.',
     category: 'engagement',
-    source: 'both',
-    props: z.union([
-      z.object({ milestone: z.string(), value: z.number().optional() }).strict(),
-      z.object({ milestone: z.string(), source: z.literal('server') }).strict(),
-    ]),
+    source: 'client',
+    props: z
+      .object({ page_path: z.string(), target_element_id: z.string(), click_count: z.number() })
+      .strict(),
+  },
+  dead_click: {
+    description:
+      'Click on a non-interactive element styled clickable (cursor:pointer, no interactive ancestor) that produced NO UI response — no DOM mutation and no navigation within 600ms (MutationObserver probe). GlobalInteractionTracker, throttled 1/5s, max 10/page.',
+    plainEnglish: 'Someone clicked something that looked clickable but nothing happened.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ page_path: z.string(), target_element_id: z.string() }).strict(),
+  },
+  exit_intent: {
+    description:
+      'Desktop-only (maxTouchPoints=0): mouse left through the top of the viewport (mouseout with relatedTarget=null, clientY<=0) — the classic about-to-close/switch-tab gesture. GlobalInteractionTracker; at most once per page, suppressed in the first 5s after mount.',
+    plainEnglish: 'Someone moved their mouse toward closing the tab or leaving the page.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ page_path: z.string(), seconds_on_page: z.number() }).strict(),
+  },
+  error_encountered: {
+    description:
+      'Client-side error capture — GlobalInteractionTracker wires window "error" (capture phase: distinguishes failed resource loads from JS exceptions), "unhandledrejection", plus the legacy analytics.errorEncountered(boundary, message) call shape for React boundaries. Deduped per message, max 5/page.',
+    plainEnglish: 'Something broke in the visitor’s browser on our site.',
+    category: 'system',
+    source: 'client',
+    props: z
+      .object({
+        boundary: z.string(),
+        message: z.string(),
+        error_type: z.enum(['js_error', 'unhandled_rejection', 'resource_error', 'react_boundary']).optional(),
+        source_url: z.string().optional(),
+        line: z.number().optional(),
+        col: z.number().optional(),
+        page_path: z.string().optional(),
+      })
+      .strict(),
+  },
+  external_link_clicked: {
+    description:
+      'Click on an anchor whose host is not ours — GlobalInteractionTracker document-level capture listener (throttled 1/1s). Affiliate "Visit website" clicks are NOT this event (they navigate via internal /api/tools/[slug]/visit and have their own pair).',
+    plainEnglish: 'Someone clicked a link that leads off our site.',
+    category: 'engagement',
+    source: 'client',
+    props: z.object({ url: z.string(), entity: z.string(), entity_id: z.string() }).strict(),
+  },
+
+  // ── Form analytics (10.7c.3 — FormAnalyticsTracker, every <form>) ──
+  form_field_changed: {
+    description:
+      'Field blur where the value changed during the focus — FormAnalyticsTracker (document focusin/focusout, every <form>; real forms carry data-form-id: auth_login, auth_signup, review, newsletter_*, site_search, home_goal, plan_intake, qa_question, profile_edit, …). focus_order = 1-based first-focus position within the form; corrections = edit cycles beyond the first (re-edits). Value text itself is NEVER captured — only its length. Password/hidden fields skipped entirely. Max 30/form per page.',
+    plainEnglish: 'Someone filled in (or re-edited) one field of a form.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        field_name: z.string(),
+        field_type: z.string(),
+        has_value: z.boolean(),
+        value_length: z.number(),
+        page_path: z.string(),
+        focus_order: z.number(),
+        corrections: z.number(),
+      })
+      .strict(),
+  },
+  form_submitted: {
+    description:
+      'Native form submit (document capture) — FormAnalyticsTracker. all_field_names_filled = named visible fields with a non-empty value at submit (names only, never values; capped 20); time_to_submit_ms measured from first field focus.',
+    plainEnglish: 'Someone submitted a form.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        all_field_names_filled: z.array(z.string()),
+        field_count_filled: z.number(),
+        field_count_skipped: z.number(),
+        time_to_submit_ms: z.number(),
+      })
+      .strict(),
+  },
+  form_validation_failed: {
+    description:
+      'Native constraint validation blocked a submit — document-level "invalid" capture listener in FormAnalyticsTracker. error_code is the ValidityState flag that fired (valueMissing, typeMismatch, patternMismatch, …). Throttled 1/2s.',
+    plainEnglish: 'A form told someone their input was invalid.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({ form_id: z.string(), field_name: z.string(), error_code: z.string() })
+      .strict(),
+  },
+  form_abandoned: {
+    description:
+      'A form that had at least one focused field was left without submitting — flushed once per form on route change / pagehide by FormAnalyticsTracker. last_field_name is the abandon point; focus_order is the first-focus order of touched fields (names only, capped 15).',
+    plainEnglish: 'Someone started filling a form but left without submitting it.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        form_id: z.string(),
+        page_path: z.string(),
+        last_field_name: z.string(),
+        fields_touched: z.number(),
+        corrections_total: z.number(),
+        seconds_on_form: z.number(),
+        focus_order: z.array(z.string()),
+      })
+      .strict(),
+  },
+
+  // ── System / performance ──────────────────────────────────────────
+  web_vitals: {
+    description:
+      'Per-page web-vitals beacon — components/analytics/web-vitals-tracker.tsx accumulates useReportWebVitals metrics (LCP/FCP/TTFB/INP/CLS, hard page loads only) and flushes ONE web_vitals event per page load on first visibility-hidden / pagehide / route change. slow_page = any metric in its "poor" band (LCP>4s, INP>500ms, CLS>0.25, TTFB>1.8s, FCP>3s).',
+    plainEnglish: 'How fast a page loaded and responded for a real visitor.',
+    category: 'system',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        lcp_ms: z.number().optional(),
+        fcp_ms: z.number().optional(),
+        ttfb_ms: z.number().optional(),
+        inp_ms: z.number().optional(),
+        cls: z.number().optional(),
+        metric_count: z.number(),
+        slow_page: z.boolean(),
+      })
+      .strict(),
   },
 
   // ── Engagement / passive capture ──────────────────────────────────
   scroll_depth_reached: {
-    description: 'Scroll depth marks (25/50/75/100) — analytics.scrollDepthReached from the scroll tracker.',
+    description:
+      'Scroll depth marks — analytics.scrollDepthReached from EngagementCapture. 10.7c widened the marks from 25/50/75/100 to 10/25/50/75/90/100 (finer reading-depth resolution; old rows simply lack the 10/90 marks).',
     plainEnglish: 'How far down a page someone scrolled.',
     category: 'engagement',
     source: 'client',
     props: z
       .object({
         path: z.string(),
-        depth: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]),
+        depth: z.union([
+          z.literal(10),
+          z.literal(25),
+          z.literal(50),
+          z.literal(75),
+          z.literal(90),
+          z.literal(100),
+        ]),
       })
       .strict(),
   },
   time_on_page: {
-    description: 'Fire-once time-on-page beacon on unmount/pagehide — analytics.timeOnPage (bucketed).',
-    plainEnglish: 'How long someone stayed on a page.',
+    description:
+      'Fire-once time-on-page beacon on unmount/pagehide — analytics.timeOnPage (bucketed). 10.7c adds optional max_scroll_pct (deepest scroll position reached on the page, 0-100) — additive only, the nightly behavioral bot classifier keeps reading path/seconds/bucket unchanged.',
+    plainEnglish: 'How long someone stayed on a page (and how deep they got).',
     category: 'engagement',
     source: 'client',
     props: z
@@ -938,6 +1200,22 @@ export const EVENT_SCHEMAS = {
         path: z.string(),
         seconds: z.number(),
         bucket: z.enum(['<5s', '5-15s', '15-30s', '30-60s', '1-3min', '>3min']),
+        max_scroll_pct: z.number().optional(),
+      })
+      .strict(),
+  },
+  engaged_time_heartbeat: {
+    description:
+      'Every ~30s of wall time while a page is open — EngagementCapture (mixpanel-provider.tsx). engaged_seconds_delta = seconds within the interval the visitor was actually attentive (tab visible AND input/scroll within the previous 15s); engaged_seconds_total = cumulative for the page. Skipped when delta=0; capped at 40 beats/page (~20 min). Complements — does NOT replace — the fire-once time_on_page the nightly bot classifier reads.',
+    plainEnglish: 'Proof someone was actively reading or interacting, in 30-second slices.',
+    category: 'engagement',
+    source: 'client',
+    props: z
+      .object({
+        path: z.string(),
+        heartbeat_n: z.number(),
+        engaged_seconds_delta: z.number(),
+        engaged_seconds_total: z.number(),
       })
       .strict(),
   },

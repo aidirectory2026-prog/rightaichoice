@@ -1,12 +1,21 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { forgotPassword } from '@/actions/auth'
 import { Logo } from '@/components/shared/logo'
+import { analytics } from '@/lib/analytics'
 
 export default function ForgotPasswordPage() {
   const [state, action, pending] = useActionState(forgotPassword, null)
+  // 10.7c.5 — record the successful reset-link request exactly once.
+  const requestTrackedRef = useRef(false)
+  useEffect(() => {
+    if (state?.success && !requestTrackedRef.current) {
+      requestTrackedRef.current = true
+      analytics.passwordResetRequested('email')
+    }
+  }, [state?.success])
 
   if (state?.success) {
     return (
@@ -33,7 +42,7 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-zinc-400">Enter your email and we&apos;ll send a reset link.</p>
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} data-form-id="auth_forgot_password" className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
             Email

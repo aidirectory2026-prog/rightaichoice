@@ -78,8 +78,19 @@ function walk(dir: string, acc: string[] = []): string[] {
   }
   return acc
 }
-const callSiteFiles = [...walk('app'), ...walk('components')]
-  .filter((f) => f !== 'lib/analytics.ts')
+// 10.7c.5 — call sites also live in lib/ (e.g. lib/cta/persist-intent.ts
+// fires plan_intent_persisted/linked) and actions/ (server actions call
+// serverAnalytics.*). Walking only app/ + components/ hid those real
+// emitters as "planned". The analytics core files are excluded: schema
+// descriptions mention method names in prose and would self-certify.
+const CALL_SITE_EXCLUDED = new Set([
+  'lib/analytics.ts',
+  'lib/analytics-schema.ts',
+  'lib/analytics-registry.ts',
+  'lib/mixpanel-server.ts',
+])
+const callSiteFiles = [...walk('app'), ...walk('components'), ...walk('lib'), ...walk('actions')]
+  .filter((f) => !CALL_SITE_EXCLUDED.has(f))
 const callSiteBlob = callSiteFiles.map(read).join('\n')
 
 const calledMethods = new Set<string>()
@@ -88,8 +99,25 @@ for (const [method] of methodToEvent) {
 }
 const fired = new Set<string>()
 for (const [method, event] of methodToEvent) if (calledMethods.has(method)) fired.add(event)
-// server-side emitters always fire from server routes
-for (const m of serverSrc.matchAll(/event: '([a-z_]+)'/g)) fired.add(m[1])
+// 10.7c.5 — TIGHTENED server rule. Previously every `event:` literal in
+// mixpanel-server.ts counted as fired ("server emitters always fire"),
+// which hid dead server emitters: activation_milestone and
+// recommendation_requested had ZERO callers anywhere yet showed as FIRED.
+// Now a server event fires only when its serverAnalytics method has a real
+// call site (app/, components/, lib/, actions/).
+const serverMethodToEvent = new Map<string, string>()
+{
+  let currentMethod: string | null = null
+  for (const line of serverSrc.split('\n')) {
+    const mDef = line.match(/^\s{2}([a-zA-Z][a-zA-Z0-9]*)\s*\(/) // 2-space indent method
+    if (mDef) currentMethod = mDef[1]
+    const mCap = line.match(/event: '([a-z_]+)'/)
+    if (mCap && currentMethod) serverMethodToEvent.set(currentMethod, mCap[1])
+  }
+}
+for (const [method, event] of serverMethodToEvent) {
+  if (new RegExp(`serverAnalytics\\.${method}\\b`).test(callSiteBlob)) fired.add(event)
+}
 // 10.3.3 — typed-field events fire when a call site passes their literal to
 // fieldTextChanged({ event_name: 'x_typed', … })
 for (const e of typedEvents) {
@@ -239,7 +267,9 @@ type CallSite = { file: string; line: number; method: string }
     ['analytics.ts', 'mixpanel-server.ts', 'analytics-schema.ts', 'analytics-registry.ts']
       .map((f) => join('lib', f)),
   )
-  const siteFiles = [...walk('app'), ...walk('components'), ...walk('lib')]
+  // 10.7c.5 — actions/ added: server actions are real firing sites
+  // (e.g. actions/auth.ts → serverAnalytics.passwordResetCompletedServer).
+  const siteFiles = [...walk('app'), ...walk('components'), ...walk('lib'), ...walk('actions')]
     .filter((f) => !NON_SITE_FILES.has(f))
   const sites = new Map<string, CallSite[]>()
   const addSite = (event: string, site: CallSite) => {
