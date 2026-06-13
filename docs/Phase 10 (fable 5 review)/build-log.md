@@ -222,6 +222,24 @@ Founder mandate: reports must be outstanding, accurate, extremely valuable — w
 - All verified against live APIs: Cursor → `cursor/cursor` 33k stars; LangChain → 139k stars + real issues + 15 SO posts; Ollama → 174k stars + its famous AMD-GPU issue (323 comments). Mix is now **9 live free sources + Reddit pending**.
 - **Playbook written for the team:** `docs/automated-workflows/10-sentiment-sources-playbook.md` — full architecture (who each source represents, costs, auth, failure modes), the data-flow diagram, env-keys checklist, verification commands, and rules for adding sources.
 
+### 2026-06-13 (later) — Production verification + source-label quality pass
+
+**PRODUCTION VERIFIED — the full sentiment mix is live and Bluesky works.** After the founder added the Bluesky creds + redeployed and merged PR #29, live `tool_sentiment_cache` rows (12:19 UTC) show the new mix producing real data at scale:
+- `google-gemini`: **130 mentions** across hn, youtube, appstore, **bluesky**, stackoverflow, lemmy
+- `canva-ai`: **126 mentions** across 7 sources incl. bluesky + stackoverflow + lemmy
+- `chorus-ai` / `quizlet-ai`: bluesky + lemmy contributing
+- vs the old reality of 0–9 mentions and zero social data. Reddit correctly still absent (pending approval); GitHub correctly empty for these closed-source tools (name-match guard working).
+
+**Label-quality fix (branch `fable5-sentiment-labels`, awaiting merge):** while verifying, found user-facing reports leaked raw keys (`stackoverflow`, `hn`) and the synthesizer's prompt/schema still named the four **dead** sources (Reddit-via-Apify, X/Twitter, Quora, G2) as where data comes from — misdirecting the model and keying the per-source sentiment bars by dead sources.
+- New `lib/scrapers/source-labels.ts` (single `sourceLabel()` map, graceful fallback).
+- Synthesizer section headers + system prompt + `sentiment_breakdown` schema now reference the real live sources; model keys the breakdown/themes by the exact labels.
+- Applied in the scan route, report-client, and `sentiment-synthesis.tsx` (the inline block on every tool page).
+- Verified end-to-end (real scrape + DeepSeek): LangChain → 104 posts; report breakdown keyed "Hacker News, YouTube, Product Hunt, Stack Overflow, GitHub, Lemmy". `tsc` + `next build` clean.
+
+_Plain language: the data was already flowing the moment you redeployed — popular tools now draw on 100+ real community posts including live Bluesky chatter. This last fix just makes the source names read "Bluesky, Stack Overflow" instead of "bluesky, stackoverflow" on the page, and stops the AI from being told it's reading sources we retired months ago._
+
+---
+
 ## Phase summary — everything done and verified (in plain words)
 
 This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
