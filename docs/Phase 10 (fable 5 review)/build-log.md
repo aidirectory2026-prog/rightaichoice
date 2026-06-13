@@ -240,6 +240,26 @@ _Plain language: the data was already flowing the moment you redeployed — popu
 
 ---
 
+### 2026-06-13 (closeout) — Label fix merged + fabricated-report cleanup
+
+- **PR #31 merged** (`87c94a0`) — clean source labels everywhere + synthesizer no longer told it reads the four retired sources. Deployed.
+- **Honesty cleanup (live DB):** found **14 `status=ready` rows with zero real mentions** — fabricated sentiment reports the old AI invented from tool metadata before the honesty gate existed. Worst offenders: **chatgpt** and **cursor** (two of the highest-traffic pages), plus 12 niche tools. The inline block renders the full report body for any non-expired `ready` row, so the 10 non-expired ones were actively showing invented "community sentiment." Marked all 14 `status='failed'` → they stop rendering immediately and re-enter the scrape queue. Verified: **0 fabricated reports remain live.**
+- **State:** 134 ready rows; freshly-scraped tools average ~88 real mentions. The catalog-wide average is still climbing as the daily cron (top-100/day, 7-day cache) rotates every tool onto the new 9-source mix — full coverage within ~a week. cursor/chatgpt are top tools and already expired, so they re-scrape onto the new mix on the next cron pass.
+
+**Sentiment workstream: COMPLETE.** Real community data flowing (Bluesky + Stack Overflow + Lemmy + GitHub all live and verified in production), clean labels, honesty gate enforced both forward (new scrapes) and backward (the 14-row cleanup). Reddit slots in automatically when its API application is approved.
+
+---
+
+## Open items at phase close (time/approval-gated, not blocked on code)
+
+1. **Reddit Data API approval** — application submitted; 2–4 week wait. Auto-engages (probe + ingest gate + sentiment source) when `REDDIT_CLIENT_ID/SECRET` land.
+2. **Conversion metrics observation** — compare-page clicks, newsletter subs, plan-CTA CTR vs the 0.37% baseline need real traffic to accumulate (admin dashboard tracks them).
+3. **/best SEO movement** — internal-link + OG-image effects show in GSC over 2–4 weeks; weekly niche tracker measures automatically.
+4. **Founder affiliate enrollment** — the `/admin/analytics` "Affiliate gaps" card is the to-do list; revenue starts when programs are joined and `affiliate_url`s populated.
+5. **Sentiment full-catalog refresh** — ~1 week for the daily cron to put every tool on the new 9-source mix.
+
+---
+
 ## Phase summary — everything done and verified (in plain words)
 
 This phase started with three worries: *"we get traffic but no conversions," "I don't trust the tracking,"* and *"are the pipelines running and is our data fresh?"* Here is what was actually found and fixed, end to end:
