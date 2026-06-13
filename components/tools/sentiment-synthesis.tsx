@@ -1,5 +1,6 @@
 import { ThumbsUp, ThumbsDown, TrendingUp, BookOpen, AlertTriangle, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { sourceLabel } from '@/lib/scrapers/source-labels'
 
 // Phase 3 (2026-05-05): replaces the previous SentimentBlock + its client
 // "Generate" / poll flow + the "See the full report" link. This component
@@ -85,7 +86,7 @@ export async function SentimentSynthesis({
         {cached.mention_count != null && cached.mention_count > 0 && (
           <p className="mt-2 text-xs text-zinc-500">
             {cached.mention_count} mentions across {sources.length} source{sources.length === 1 ? '' : 's'}
-            {sources.length > 0 && ` (${sources.join(', ')})`}.
+            {sources.length > 0 && ` (${sources.map(sourceLabel).join(', ')})`}.
           </p>
         )}
       </div>
@@ -151,7 +152,7 @@ export async function SentimentSynthesis({
               <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
                 <div className="text-xs font-medium text-white mb-1">{t.theme}</div>
                 {t.sources?.length > 0 && (
-                  <div className="text-xs text-zinc-500 leading-relaxed">Seen on {t.sources.join(', ')}</div>
+                  <div className="text-xs text-zinc-500 leading-relaxed">Seen on {t.sources.map(sourceLabel).join(', ')}</div>
                 )}
               </div>
             ))}

@@ -1,5 +1,6 @@
 import { callDeepSeek, stripJsonFences } from '@/lib/plan/deepseek'
 import type { AllScrapeResults } from '@/lib/scrapers'
+import { sourceLabel } from '@/lib/scrapers/source-labels'
 
 // DeepSeek (deepseek-chat, JSON mode) — Phase 9 Workstream S1 (2026-06-01).
 // Switched off Anthropic Haiku: (1) "use DeepSeek everywhere" — the data
@@ -74,8 +75,9 @@ type ToolContext = {
 function buildScrapeContext(results: AllScrapeResults): string {
   const sections: string[] = []
 
-  // Iterate every source that returned data (Reddit, HN, YouTube, Product Hunt,
-  // App Store, Trustpilot). Empty/credential-less sources are simply omitted.
+  // Iterate every source that returned data. Empty/credential-less sources are
+  // simply omitted. Section headers use the human label so the model attributes
+  // quotes to "Stack Overflow"/"Hacker News", not "STACKOVERFLOW"/"HN".
   for (const result of results.all) {
     if (result.posts.length === 0) continue
 
@@ -91,13 +93,13 @@ function buildScrapeContext(results: AllScrapeResults): string {
       })
       .join('\n')
 
-    sections.push(`## ${result.source.toUpperCase()} (${result.posts.length} posts)\n${postTexts}`)
+    sections.push(`## ${sourceLabel(result.source)} (${result.posts.length} posts)\n${postTexts}`)
   }
 
   return sections.length > 0 ? sections.join('\n\n') : '(No community data was found for this tool across the scraped sources.)'
 }
 
-const SYSTEM_PROMPT = `You are an expert AI tool analyst for RightAIChoice. You synthesize community feedback from Reddit, X/Twitter, Quora, and G2 into honest, actionable tool reports.
+const SYSTEM_PROMPT = `You are an expert AI tool analyst for RightAIChoice. You synthesize real community feedback — from Hacker News, Reddit, Stack Overflow, GitHub, Product Hunt, the App Store, Bluesky, Lemmy, and YouTube — into honest, actionable tool reports.
 
 Rules:
 - Be honest and specific — never generic marketing language
@@ -148,8 +150,8 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
   "pros": ["6-8 specific strengths grounded in real user feedback, max 18 words each"],
   "cons": ["6-8 specific weaknesses/complaints grounded in real user feedback, max 18 words each"],
   "sentiment_score": "positive" | "mixed" | "negative",
-  "sentiment_breakdown": {"reddit": 0.0-1.0, "twitter": 0.0-1.0, "quora": 0.0-1.0, "g2": 0.0-1.0},
-  "themes": [{"theme": "Key community narrative", "sources": ["reddit", "twitter"]}],
+  "sentiment_breakdown": {"<source>": 0.0-1.0 for EACH source that appears in the COMMUNITY DATA above (use the exact source name from each section header, e.g. "Hacker News", "Stack Overflow", "GitHub", "Reddit", "Product Hunt", "App Store", "Bluesky", "Lemmy", "YouTube"); include only sources that actually have data},
+  "themes": [{"theme": "Key community narrative", "sources": ["the source names that voiced this theme, matching the section headers"]}],
   "best_for": ["Specific user segment 1", "Specific user segment 2", "Specific use case"],
   "not_for": ["Specific user segment who should avoid", "Specific use case it's bad for"],
   "pricing_analysis": {
@@ -170,7 +172,7 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
   "integration_insights": [{"tool": "Zapier/Slack/etc", "sentiment": "positive" | "mixed" | "negative", "note": "Brief insight"}]
 }
 
-For sentiment_breakdown, use 0.0-1.0 where 1.0 is fully positive. Set to 0 for sources with no data.
+For sentiment_breakdown, use 0.0-1.0 where 1.0 is fully positive, keyed by the EXACT source names from the COMMUNITY DATA section headers. Only include sources that actually returned data — never invent a source that isn't in the data above.
 For scorecard, every field is an integer 0-100 grounded in the actual sentiment (overall = the weighted gist; be honest — a flawed tool should score low on its weak axes, not a flat 70s).
 For red_flags, surface 3-5 genuine dealbreakers/risks from real complaints — these are about reliability, support, lock-in, churn, data/safety, NOT the pricing hidden_costs (keep those separate).
 For standout_quotes, return 6-8 quotes that mix genuine praise and genuine criticism so the reader sees both sides.
