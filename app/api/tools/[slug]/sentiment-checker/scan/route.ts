@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { scrapeAllSources } from '@/lib/scrapers'
+import { sourceLabel } from '@/lib/scrapers/source-labels'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { pricingForRequest, freeScanLimitFromRequest, getCountryFromRequest } from '@/lib/geo/currency'
@@ -22,17 +23,12 @@ function getIp(req: Request): string | undefined {
   return h.get('cf-connecting-ip') ?? h.get('x-real-ip') ?? h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  reddit: 'Reddit', hn: 'Hacker News', youtube: 'YouTube', producthunt: 'Product Hunt',
-  appstore: 'App Store', trustpilot: 'Trustpilot', google: 'Google', twitter: 'X', quora: 'Quora',
-}
-
 export type LiveMention = { source: string; title: string; snippet: string; date: string | null; url: string | null; score: number | null }
 
 /** Top real posts across all sources — the "live mentions" feed (recency-first). */
 function buildMentions(scrape: Awaited<ReturnType<typeof scrapeAllSources>>): LiveMention[] {
   return scrape.all
-    .flatMap((r) => r.posts.map((p) => ({ ...p, label: SOURCE_LABELS[p.source] ?? p.source })))
+    .flatMap((r) => r.posts.map((p) => ({ ...p, label: sourceLabel(p.source) })))
     .filter((p) => (p.body && p.body.length > 20) || p.title)
     .sort((a, b) => (Date.parse(b.date ?? '') || 0) - (Date.parse(a.date ?? '') || 0) || (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 18)

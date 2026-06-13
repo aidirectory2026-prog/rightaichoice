@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { sourceLabel } from '@/lib/scrapers/source-labels'
 import {
   Sparkles,
   ThumbsUp,
@@ -299,7 +300,7 @@ export function ReportClient({
           </div>
           <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
             <span>Based on {report.mention_count} mentions</span>
-            <span>Sources: {(report.sources_scraped ?? []).join(', ') || 'AI analysis'}</span>
+            <span>Sources: {(report.sources_scraped ?? []).map(sourceLabel).join(', ') || 'AI analysis'}</span>
             {report.synthesized_at && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -344,7 +345,7 @@ export function ReportClient({
         <div className="space-y-3">
           {Object.entries(report.sentiment_breakdown).map(([source, score]) => (
             <div key={source} className="flex items-center gap-3">
-              <span className="w-16 text-xs text-zinc-400 capitalize">{source}</span>
+              <span className="w-24 shrink-0 text-xs text-zinc-400">{sourceLabel(source)}</span>
               <div className="flex-1 h-3 rounded-full bg-zinc-800 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
@@ -369,7 +370,7 @@ export function ReportClient({
               <p className="text-sm text-zinc-300 font-medium">{theme.theme}</p>
               <div className="mt-2 flex gap-1.5">
                 {theme.sources.map((s) => (
-                  <span key={s} className="text-[10px] rounded-full bg-zinc-800 px-2 py-0.5 text-zinc-500 capitalize">{s}</span>
+                  <span key={s} className="text-[10px] rounded-full bg-zinc-800 px-2 py-0.5 text-zinc-500">{sourceLabel(s)}</span>
                 ))}
               </div>
             </div>
