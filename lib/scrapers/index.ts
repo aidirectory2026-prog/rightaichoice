@@ -4,6 +4,9 @@ import { scrapeYouTube } from './youtube'
 import { scrapeProductHunt } from './producthunt'
 import { scrapeAppStore } from './appstore'
 import { scrapeBluesky } from './bluesky'
+import { scrapeStackOverflow } from './stackoverflow'
+import { scrapeGitHub } from './github-signals'
+import { scrapeLemmy } from './lemmy'
 import { scrapeTrustpilot } from './dataforseo'
 import type { ScrapeResult, SentimentSource } from './types'
 
@@ -26,6 +29,9 @@ export type AllScrapeResults = {
   producthunt: ScrapeResult
   appstore: ScrapeResult
   bluesky: ScrapeResult
+  stackoverflow: ScrapeResult
+  github: ScrapeResult
+  lemmy: ScrapeResult
   trustpilot: ScrapeResult
   // legacy (retired) — always empty, retained for back-compat
   twitter: ScrapeResult
@@ -69,25 +75,31 @@ export async function scrapeAllSources(
   const budget = options?.budgetMs ?? 40_000
   const includeReviews = options?.includeReviewSites ?? true
 
-  const [reddit, hn, youtube, producthunt, appstore, bluesky, trustpilot] = await Promise.all([
+  const [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot] = await Promise.all([
     withBudget('reddit', scrapeReddit(toolName), budget),
     withBudget('hn', scrapeHN(toolName), budget),
     withBudget('youtube', scrapeYouTube(toolName), budget),
     withBudget('producthunt', scrapeProductHunt(toolName), budget),
     withBudget('appstore', scrapeAppStore(toolName), budget),
-    // Fable-5 review (2026-06-13) — free public-API short-form voice,
-    // replacing the retired Apify Twitter source.
+    // Fable-5 review (2026-06-13) — free official-API additions:
+    // bluesky = short-form social (replaces retired Apify Twitter),
+    // stackoverflow = dev Q&A (the free Quora substitute),
+    // github = adoption ground-truth + loudest issues for OSS tools,
+    // lemmy = federated Reddit-style forum (partial Reddit stand-in).
     withBudget('bluesky', scrapeBluesky(toolName), budget),
+    withBudget('stackoverflow', scrapeStackOverflow(toolName), budget),
+    withBudget('github', scrapeGitHub(toolName), budget),
+    withBudget('lemmy', scrapeLemmy(toolName), budget),
     includeReviews
       ? withBudget('trustpilot', scrapeTrustpilot(toolName, options?.website, Math.min(budget, 30_000)), budget)
       : Promise.resolve(EMPTY('trustpilot')),
   ])
 
   const results = {
-    reddit, hn, youtube, producthunt, appstore, bluesky, trustpilot,
+    reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot,
     twitter: EMPTY('twitter'), quora: EMPTY('quora'), g2: EMPTY('g2'),
   }
-  const all = [reddit, hn, youtube, producthunt, appstore, bluesky, trustpilot]
+  const all = [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot]
 
   const sourcesSucceeded: string[] = []
   const sourcesFailed: string[] = []
