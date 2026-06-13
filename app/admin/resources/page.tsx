@@ -1,22 +1,88 @@
-// Phase 10.4.1 — Resources / learning guide placeholder. The real
-// auto-generated event dictionary + learning guide ships in Phase 8.
-import { BookOpen } from 'lucide-react'
+// Phase 10.8 — Resources landing / learning-guide index. Replaces the
+// "Coming in Phase 8" placeholder. One card per guide section; the two
+// auto-generated sections (event dictionary, metric provenance) are derived
+// at render time from lib/analytics-schema.ts and lib/admin/metric-docs.ts so
+// they can never drift from the live system.
+
+import {
+  BookOpen,
+  Workflow,
+  Cpu,
+  ListTree,
+  ShieldCheck,
+  GanttChartSquare,
+  BookMarked,
+} from 'lucide-react'
+import { GuideCard, GuideHeader, Callout } from './_components'
+import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
+import { METRIC_DOCS } from '@/lib/admin/metric-docs'
 
 export const metadata = { title: 'Learning guide — Admin' }
 
-export default function ResourcesPage() {
+export default function ResourcesIndexPage() {
+  const eventCount = SCHEMA_EVENT_NAMES.length
+  const metricCount = Object.keys(METRIC_DOCS).length
+
   return (
     <div>
-      <h1 className="mb-6 text-lg font-semibold text-white">Learning guide</h1>
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-10 text-center">
-        <BookOpen className="mx-auto h-8 w-8 text-zinc-600" aria-hidden />
-        <p className="mt-4 text-sm font-medium text-zinc-300">Coming in Phase 8</p>
-        <p className="mx-auto mt-2 max-w-md text-xs text-zinc-500">
-          The learning guide — an auto-generated event dictionary (plain-English +
-          technical descriptions from the schema registry) plus how-to docs for every
-          admin surface — lands in Phase 8 of the analytics redesign.
-        </p>
+      <GuideHeader
+        icon={<BookOpen className="h-6 w-6 text-emerald-500" />}
+        title="Learning guide"
+        subtitle="Everything this admin panel knows about the website's visitors — what we capture, how it travels from a browser to these screens, and why every number here can be trusted. Written for two readers at once: the owner (plain English) and a future engineer (the exact mechanics). The event dictionary and metric cards are generated live from the system itself, so they always describe reality, not a stale doc."
+      />
+
+      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <GuideCard
+          href="/admin/resources/tracking-overview"
+          step="1 · the story"
+          title="How tracking works"
+          blurb="The non-technical version: a visitor's browser → our tracking code → Mixpanel + our own database → these admin screens. With a simple pipeline diagram."
+          icon={<Workflow className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/tracking-technical"
+          step="2 · under the hood"
+          title="How tracking works, technically"
+          blurb="capture() → queue → /api/track-mirror → user_events + intent profile. Identity stitching, sessions, bot detection, dedup, the outage retry queue, and tag-don't-drop schema validation."
+          icon={<Cpu className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/event-dictionary"
+          step="3 · reference"
+          title="Event dictionary"
+          blurb={`Every one of the ${eventCount} events we fire — plain-English meaning, every property, lifecycle status, and a link to its live detail page. Generated from the schema registry.`}
+          icon={<ListTree className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/metrics"
+          step="4 · reference"
+          title="Metric provenance cards"
+          blurb={`For each of the ${metricCount} headline metrics: what it counts, how it's computed, why it's trusted, and its caveats — the same content behind every ⓘ popover.`}
+          icon={<GanttChartSquare className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/trust"
+          step="5 · trust"
+          title="Trust & verification"
+          blurb="The eight independent ways we keep these numbers honest, a 'this number looks wrong' runbook, and our data-privacy / retention posture."
+          icon={<ShieldCheck className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/glossary"
+          step="6 · reference"
+          title="Glossary & FAQ"
+          blurb="distinct_id vs user, session, bot flag, UTM, first touch, IST windows, data epochs — every term that appears on these screens, defined once."
+          icon={<BookMarked className="h-5 w-5" />}
+        />
       </div>
+
+      <Callout tone="good" title="The promise behind this guide">
+        Two of these six sections — the <strong>event dictionary</strong> and the{' '}
+        <strong>metric provenance cards</strong> — are not written by hand. They are generated at
+        page-load time from the same source files that power the live tracking code and the ⓘ
+        popovers on the dashboard. If an event or a metric changes, this guide changes with it on
+        the next page view. There is no second copy to keep in sync.
+      </Callout>
     </div>
   )
 }

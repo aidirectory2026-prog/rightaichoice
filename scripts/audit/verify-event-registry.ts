@@ -89,8 +89,12 @@ const CALL_SITE_EXCLUDED = new Set([
   'lib/analytics-registry.ts',
   'lib/mixpanel-server.ts',
 ])
+// app/admin/resources/** is the in-admin learning guide (Phase 8): it
+// DESCRIBES events in prose with code-like snippets (analytics.x(), capture())
+// that would otherwise read as fake firing sites — documentation never emits.
+const isDocFile = (f: string) => f.startsWith('app/admin/resources/')
 const callSiteFiles = [...walk('app'), ...walk('components'), ...walk('lib'), ...walk('actions')]
-  .filter((f) => !CALL_SITE_EXCLUDED.has(f))
+  .filter((f) => !CALL_SITE_EXCLUDED.has(f) && !isDocFile(f))
 const callSiteBlob = callSiteFiles.map(read).join('\n')
 
 const calledMethods = new Set<string>()
@@ -270,7 +274,7 @@ type CallSite = { file: string; line: number; method: string }
   // 10.7c.5 — actions/ added: server actions are real firing sites
   // (e.g. actions/auth.ts → serverAnalytics.passwordResetCompletedServer).
   const siteFiles = [...walk('app'), ...walk('components'), ...walk('lib'), ...walk('actions')]
-    .filter((f) => !NON_SITE_FILES.has(f))
+    .filter((f) => !NON_SITE_FILES.has(f) && !isDocFile(f))
   const sites = new Map<string, CallSite[]>()
   const addSite = (event: string, site: CallSite) => {
     if (!sites.has(event)) sites.set(event, [])
