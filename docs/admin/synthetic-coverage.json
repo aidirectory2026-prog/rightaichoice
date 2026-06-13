@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-12T20:03:53.612Z",
-  "runid": "e2e-mqbcrb1g",
+  "generated_at": "2026-06-13T08:32:42.410Z",
+  "runid": "e2e-mqc3idt1",
   "base_url": "http://localhost:3000",
   "mode": "all",
   "partial": false,
@@ -14,129 +14,129 @@
     "negative_test": "pass",
     "channel_probe_browser": "pass",
     "channel_probe_payload": "pass",
-    "duration_ms": 125409
+    "duration_ms": 120895
   },
   "events": [
     {
       "event": "page_viewed",
       "mode": "browser",
       "pass": true,
-      "ms": 234
+      "ms": 257
     },
     {
       "event": "plan_cta_impression",
       "mode": "browser",
       "pass": true,
-      "ms": 182,
+      "ms": 192,
       "note": "piggyback: fires on homepage GoalInput mount (surface=homepage)"
     },
     {
       "event": "plan_goal_typed",
       "mode": "browser",
       "pass": true,
-      "ms": 181
+      "ms": 198
     },
     {
       "event": "hero_cta_clicked",
       "mode": "browser",
       "pass": true,
-      "ms": 180
+      "ms": 187
     },
     {
       "event": "plan_cta_clicked",
       "mode": "browser",
       "pass": true,
-      "ms": 188,
+      "ms": 181,
       "note": "piggyback: same \"Plan My Stack\" click (surface=homepage)"
     },
     {
       "event": "plan_signup_modal_shown",
       "mode": "browser",
       "pass": true,
-      "ms": 184,
+      "ms": 182,
       "note": "modal opens for anon users on CTA click; closed without OAuth/skip"
     },
     {
       "event": "scroll_depth_reached",
       "mode": "browser",
       "pass": true,
-      "ms": 180
+      "ms": 188
     },
     {
       "event": "context_menu_opened",
       "mode": "browser",
       "pass": true,
-      "ms": 188
+      "ms": 189
     },
     {
       "event": "copy_text_event",
       "mode": "browser",
       "pass": true,
-      "ms": 186
+      "ms": 184
     },
     {
       "event": "paste_text_event",
       "mode": "browser",
       "pass": true,
-      "ms": 192
+      "ms": 202
     },
     {
       "event": "tab_visibility_changed",
       "mode": "browser",
       "pass": true,
-      "ms": 179
+      "ms": 180
     },
     {
       "event": "time_on_page",
       "mode": "browser",
       "pass": true,
-      "ms": 182,
+      "ms": 187,
       "note": "piggyback: EngagementCapture emits on the same visibility→hidden transition"
     },
     {
       "event": "search_typing",
       "mode": "browser",
       "pass": true,
-      "ms": 222
+      "ms": 243
     },
     {
       "event": "search_query_submitted",
       "mode": "browser",
       "pass": true,
-      "ms": 184,
+      "ms": 191,
       "note": "piggyback: fires on the settled (debounced) navbar query"
     },
     {
       "event": "search_query_typed",
       "mode": "browser",
       "pass": true,
-      "ms": 182,
+      "ms": 190,
       "note": "piggyback: 1s-idle commit from the same typing"
     },
     {
       "event": "tool_page_viewed",
       "mode": "browser",
       "pass": true,
-      "ms": 178
+      "ms": 188
     },
     {
       "event": "tool_visit_clicked",
       "mode": "browser",
       "pass": true,
-      "ms": 186,
+      "ms": 191,
       "note": "navigation prevented so no affiliate redirect / click_logs pollution"
     },
     {
       "event": "compare_tool_added",
       "mode": "browser",
       "pass": true,
-      "ms": 183
+      "ms": 188
     },
     {
       "event": "sentiment_card_viewed",
       "mode": "browser",
       "pass": true,
-      "ms": 187
+      "ms": 190
     },
     {
       "event": "category_viewed",
@@ -148,203 +148,203 @@
       "event": "comparison_viewed",
       "mode": "browser",
       "pass": true,
-      "ms": 183
+      "ms": 199
     },
     {
       "event": "navigation_back",
       "mode": "browser",
       "pass": true,
-      "ms": 189,
+      "ms": 184,
       "note": "same-document pushState + history.back() → real popstate"
     },
     {
       "event": "nav_cta_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 186
+      "ms": 188
     },
     {
       "event": "tool_saved",
       "mode": "payload",
       "pass": true,
-      "ms": 180
+      "ms": 192
     },
     {
       "event": "tool_unsaved",
       "mode": "payload",
       "pass": true,
-      "ms": 178
+      "ms": 183
     },
     {
       "event": "tool_visit_redirected",
       "mode": "payload",
       "pass": true,
-      "ms": 180,
+      "ms": 194,
       "note": "server-only emitter (lib/mixpanel-server.ts) — payload exercises ingest, not the emitter"
     },
     {
       "event": "tool_faq_opened",
       "mode": "payload",
       "pass": true,
-      "ms": 186
+      "ms": 183
     },
     {
       "event": "viability_badge_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 181
+      "ms": 202
     },
     {
       "event": "viability_page_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 190
+      "ms": 185
     },
     {
       "event": "sentiment_scan_started",
       "mode": "payload",
       "pass": true,
-      "ms": 184,
+      "ms": 202,
       "note": "requires signed-in user with scan quota"
     },
     {
       "event": "sentiment_result_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 185,
+      "ms": 183,
       "note": "requires a completed scan"
     },
     {
       "event": "sentiment_pay_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 196,
       "note": "requires paywall state (payments sandboxed)"
     },
     {
       "event": "sentiment_scan_requested",
       "mode": "payload",
       "pass": true,
-      "ms": 181,
+      "ms": 193,
       "note": "server-only emitter — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_scan_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 188,
+      "ms": 187,
       "note": "server-only emitter — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_scan_failed",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 189,
       "note": "server-only emitter — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_paywall_shown",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 185,
       "note": "server-only emitter — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_payment_initiated",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 200,
       "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_payment_succeeded",
       "mode": "payload",
       "pass": true,
-      "ms": 181,
+      "ms": 183,
       "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
     },
     {
       "event": "sentiment_payment_failed",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 197,
       "note": "server-only emitter (payments) — payload exercises ingest, not the emitter"
     },
     {
       "event": "compare_tool_removed",
       "mode": "payload",
       "pass": true,
-      "ms": 192
+      "ms": 190
     },
     {
       "event": "compare_share_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 180
+      "ms": 196
     },
     {
       "event": "compare_tray_opened",
       "mode": "payload",
       "pass": true,
-      "ms": 181
+      "ms": 200
     },
     {
       "event": "compare_tray_cleared",
       "mode": "payload",
       "pass": true,
-      "ms": 182,
+      "ms": 183,
       "note": "abandoned compare intent (10.7c.6)"
     },
     {
       "event": "plan_started",
       "mode": "payload",
       "pass": true,
-      "ms": 187,
+      "ms": 190,
       "note": "real trigger runs paid AI plan generation"
     },
     {
       "event": "plan_intake_submitted",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 182,
       "note": "real trigger runs paid AI plan generation"
     },
     {
       "event": "plan_chip_selected",
       "mode": "payload",
       "pass": true,
-      "ms": 180
+      "ms": 205
     },
     {
       "event": "plan_existing_tool_added",
       "mode": "payload",
       "pass": true,
-      "ms": 180
+      "ms": 186
     },
     {
       "event": "plan_existing_tool_removed",
       "mode": "payload",
       "pass": true,
-      "ms": 182
+      "ms": 215
     },
     {
       "event": "plan_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 187,
+      "ms": 181,
       "note": "real trigger runs paid AI plan generation"
     },
     {
       "event": "plan_match_tier",
       "mode": "payload",
       "pass": true,
-      "ms": 184
+      "ms": 191
     },
     {
       "event": "plan_perf",
       "mode": "payload",
       "pass": true,
-      "ms": 182
+      "ms": 190
     },
     {
       "event": "plan_results_displayed",
@@ -357,305 +357,305 @@
       "event": "plan_results_tool_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 180
+      "ms": 192
     },
     {
       "event": "plan_cta_dismissed",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 186,
       "note": "sticky bar needs scroll-state + dismissal timing — payload-driven"
     },
     {
       "event": "plan_signup_modal_oauth_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 204,
       "note": "OAuth flow — not browser-drivable headlessly"
     },
     {
       "event": "plan_signup_modal_skipped",
       "mode": "payload",
       "pass": true,
-      "ms": 187,
+      "ms": 185,
       "note": "skip navigates to /plan and runs paid AI generation"
     },
     {
       "event": "plan_signup_modal_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 184,
+      "ms": 200,
       "note": "OAuth flow — not browser-drivable headlessly"
     },
     {
       "event": "search_result_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 188,
+      "ms": 183,
       "note": "autocomplete dropdown click is timing-flaky headlessly — payload-driven"
     },
     {
       "event": "filter_applied",
       "mode": "payload",
       "pass": true,
-      "ms": 179
+      "ms": 188
     },
     {
       "event": "filter_cleared",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 189,
       "note": "10.7c.6 — pill ✕ / select reset / clear-all (filter_type=\"all\")"
     },
     {
       "event": "sort_changed",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 183,
       "note": "10.7c.6 — carries previous order"
     },
     {
       "event": "pagination_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 180,
+      "ms": 191,
       "note": "10.7c.6 — listing pagination link"
     },
     {
       "event": "collection_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 182
+      "ms": 183
     },
     {
       "event": "ai_chat_message",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 201,
       "note": "real trigger hits paid LLM API"
     },
     {
       "event": "ai_chat_response_received",
       "mode": "payload",
       "pass": true,
-      "ms": 176,
+      "ms": 184,
       "note": "real trigger hits paid LLM API"
     },
     {
       "event": "ai_chat_tool_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 186,
+      "ms": 197,
       "note": "real trigger hits paid LLM API"
     },
     {
       "event": "review_form_opened",
       "mode": "payload",
       "pass": true,
-      "ms": 188
+      "ms": 182
     },
     {
       "event": "review_rating_set",
       "mode": "payload",
       "pass": true,
-      "ms": 179
+      "ms": 188
     },
     {
       "event": "review_text_changed",
       "mode": "payload",
       "pass": true,
-      "ms": 179
+      "ms": 190
     },
     {
       "event": "review_submitted",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 184,
       "note": "requires authenticated user"
     },
     {
       "event": "signup_started",
       "mode": "payload",
       "pass": true,
-      "ms": 188,
+      "ms": 189,
       "note": "auth flow"
     },
     {
       "event": "signup_email_entered",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 183,
       "note": "auth step (10.7c.6) — domain only, never the local part"
     },
     {
       "event": "signup_method_selected",
       "mode": "payload",
       "pass": true,
-      "ms": 181,
+      "ms": 203,
       "note": "auth step (10.7c.6)"
     },
     {
       "event": "signup_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 180,
+      "ms": 183,
       "note": "auth flow (server-authoritative shape)"
     },
     {
       "event": "login_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 186,
+      "ms": 199,
       "note": "auth flow (server-authoritative shape)"
     },
     {
       "event": "password_reset_requested",
       "mode": "payload",
       "pass": true,
-      "ms": 194,
+      "ms": 183,
       "note": "auth flow (forgot-password success state)"
     },
     {
       "event": "password_reset_completed",
       "mode": "payload",
       "pass": true,
-      "ms": 185,
+      "ms": 188,
       "note": "auth flow"
     },
     {
       "event": "plan_intent_persisted",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 190,
       "note": "fires after POST /api/plan/intent succeeds"
     },
     {
       "event": "plan_intent_linked_to_user",
       "mode": "payload",
       "pass": true,
-      "ms": 182,
+      "ms": 187,
       "note": "fires after anon→known stitch with count_linked > 0"
     },
     {
       "event": "blog_internal_link_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 183
+      "ms": 190
     },
     {
       "event": "share_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 178
+      "ms": 182
     },
     {
       "event": "newsletter_subscribed",
       "mode": "payload",
       "pass": true,
-      "ms": 178
+      "ms": 197
     },
     {
       "event": "engaged_time_heartbeat",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 184,
       "note": "real beat needs 30s of wall time — payload-driven"
     },
     {
       "event": "rage_click",
       "mode": "payload",
       "pass": true,
-      "ms": 182,
+      "ms": 288,
       "note": "real trigger needs 3 clicks <1s within 30px — payload-driven"
     },
     {
       "event": "dead_click",
       "mode": "payload",
       "pass": true,
-      "ms": 193,
+      "ms": 184,
       "note": "real trigger needs a 600ms no-mutation probe — payload-driven"
     },
     {
       "event": "exit_intent",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 188,
       "note": "real trigger is a desktop mouse-out through viewport top — payload-driven"
     },
     {
       "event": "error_encountered",
       "mode": "payload",
       "pass": true,
-      "ms": 180,
+      "ms": 190,
       "note": "real trigger is a thrown error / failed resource — payload-driven"
     },
     {
       "event": "external_link_clicked",
       "mode": "payload",
       "pass": true,
-      "ms": 186,
+      "ms": 184,
       "note": "global anchor listener (foreign host) — payload-driven"
     },
     {
       "event": "form_field_changed",
       "mode": "payload",
       "pass": true,
-      "ms": 180,
+      "ms": 192,
       "note": "real trigger is a blur-with-changed-value — payload-driven"
     },
     {
       "event": "form_submitted",
       "mode": "payload",
       "pass": true,
-      "ms": 191,
+      "ms": 182,
       "note": "real trigger is a native form submit — payload-driven"
     },
     {
       "event": "form_validation_failed",
       "mode": "payload",
       "pass": true,
-      "ms": 179,
+      "ms": 199,
       "note": "real trigger is native constraint validation — payload-driven"
     },
     {
       "event": "form_abandoned",
       "mode": "payload",
       "pass": true,
-      "ms": 186,
+      "ms": 184,
       "note": "real trigger is leaving a touched form — payload-driven"
     },
     {
       "event": "web_vitals",
       "mode": "payload",
       "pass": true,
-      "ms": 187,
+      "ms": 202,
       "note": "flush timing (visibility/pagehide) is nondeterministic headlessly — payload-driven"
     },
     {
       "event": "dashboard_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 189,
+      "ms": 182,
       "note": "requires authenticated user"
     },
     {
       "event": "saved_list_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 178,
+      "ms": 187,
       "note": "requires authenticated user"
     },
     {
       "event": "profile_viewed",
       "mode": "payload",
       "pass": true,
-      "ms": 195
+      "ms": 190
     },
     {
       "event": "stack_saved",
       "mode": "payload",
       "pass": true,
-      "ms": 181,
+      "ms": 183,
       "note": "requires authenticated user + plan flow"
     }
   ]
