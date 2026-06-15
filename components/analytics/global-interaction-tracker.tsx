@@ -291,6 +291,19 @@ export function GlobalInteractionTracker() {
         if (tag === 'img' || tag === 'script' || tag === 'link' || tag === 'video' || tag === 'audio' || tag === 'source' || tag === 'iframe') {
           const src =
             target.getAttribute('src') || target.getAttribute('href') || 'unknown'
+          // Fable-5 review (2026-06-15) — only record FIRST-PARTY resource
+          // failures. Cross-origin third-party scripts (Microsoft Clarity and
+          // other trackers) are routinely blocked by visitors' ad-blockers;
+          // those failures aren't site bugs and were 96% of error_encountered
+          // volume (272/281 in 30d). Our own assets — including the
+          // /_next/image logo proxies — are same-origin and still captured.
+          let firstParty = false
+          try {
+            firstParty = new URL(src, window.location.href).origin === window.location.origin
+          } catch {
+            firstParty = false
+          }
+          if (!firstParty) return
           recordError('resource', `Failed to load ${tag}: ${src.slice(0, 160)}`, {
             error_type: 'resource_error',
             source_url: src.slice(0, 300),

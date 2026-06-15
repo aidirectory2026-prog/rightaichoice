@@ -9,6 +9,7 @@ import { ComparisonTable } from '@/components/compare/comparison-table'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
 import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
+import { sanitizeEditorialMdx } from '@/lib/mdx-sanitize'
 import { mdxComponents } from '@/components/blog/mdx-components'
 import {
   getComparisonBySlug,
@@ -323,7 +324,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
               <h2 className="text-lg font-semibold text-white mb-4">Feature-by-feature</h2>
               <div className="prose-custom">
                 <MDXRemote
-                  source={editorial.feature_analysis}
+                  source={sanitizeEditorialMdx(editorial.feature_analysis)}
                   components={mdxComponents}
                   options={{ mdxOptions: {}, blockJS: true, blockDangerousJS: true }}
                 />
@@ -337,7 +338,7 @@ export default async function ComparisonSlugPage({ params }: Props) {
               <h2 className="text-lg font-semibold text-white mb-4">Pricing compared</h2>
               <div className="prose-custom">
                 <MDXRemote
-                  source={editorial.pricing_analysis}
+                  source={sanitizeEditorialMdx(editorial.pricing_analysis)}
                   components={mdxComponents}
                   options={{ mdxOptions: {}, blockJS: true, blockDangerousJS: true }}
                 />
