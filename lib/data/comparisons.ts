@@ -114,18 +114,32 @@ export async function getAllComparisonSlugs() {
 
   // Phase 9 noindex sweep: exclude noindex=true rows so off-domain / low-quality
   // compares stay out of the sitemap. The page still resolves at the URL.
-  return fetchAllPages<{
+  const rows = await fetchAllPages<{
     slug: string
+    tool_ids: string[] | null
     last_reviewed_at: string | null
     published_at: string | null
   }>((from, to) =>
     db
       .from('tool_comparisons')
-      .select('slug, last_reviewed_at, published_at')
+      .select('slug, tool_ids, last_reviewed_at, published_at')
       .eq('is_editorial', true)
       .eq('noindex', false)
       .order('published_at', { ascending: false })
       .range(from, to)
+  )
+
+  // Fable-5 audit (2026-06-15): exclude compares that reference an UNPUBLISHED
+  // tool. The page 404s in that case (getToolsForComparisonByIds returns <2
+  // published tools → notFound()), so advertising them in the sitemap fed
+  // Google 15 dead URLs. Filter to compares whose every tool is published.
+  const { data: pub } = await db
+    .from('tools')
+    .select('id')
+    .eq('is_published', true)
+  const publishedIds = new Set((pub ?? []).map((t: { id: string }) => t.id))
+  return rows.filter(
+    (r) => Array.isArray(r.tool_ids) && r.tool_ids.length >= 2 && r.tool_ids.every((id) => publishedIds.has(id)),
   )
 }
 
