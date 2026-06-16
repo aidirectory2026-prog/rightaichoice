@@ -73,8 +73,8 @@ export default async function FunnelsPage({
       <p className="mb-6 max-w-3xl text-xs text-zinc-500">
         Both funnels count EVENTS per step over {filters.range.label.toLowerCase()},{' '}
         {filters.includeBots ? 'bots included' : 'humans only (audit F6)'}; the smart filters above apply to every step.
-        Step-over-step % compares each main step with the previous main step — the 4a/4b modal branches are shown
-        against step 3 and excluded from the main path.
+        Step-over-step % compares each step with the previous one. The signup steps track the LIVE
+        signup_method_selected → signup_completed events (the old plan_signup_modal_* events were retired on 2026-05-28).
       </p>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

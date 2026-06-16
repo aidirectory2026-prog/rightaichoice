@@ -52,17 +52,20 @@ export type LinkRateStat = {
   link_rate_pct: number
 }
 
-/** 4a/4b are BRANCHES off step 3, not sequential steps — the funnel
- *  renderer excludes them from the main-path step-over-step %. */
+// Audit (2026-06-16): the old steps 4a/4b/5 tracked plan_signup_modal_oauth_clicked
+// / _skipped / _completed — events the signup-flow refactor killed on ~2026-05-28
+// (skipped NEVER fired; the others stopped). The funnel therefore showed ~0
+// signups while signups were actually happening. Re-pointed at the LIVE events:
+// signup_method_selected (method chosen) + signup_completed (the real conversion).
+// No branches now — every step is on the main path.
 export const EVENT_FUNNEL: ReadonlyArray<{ event: string; label: string; branch?: boolean }> = [
-  { event: 'plan_cta_impression',          label: '1. CTA shown' },
-  { event: 'plan_cta_clicked',             label: '2. CTA clicked' },
-  { event: 'plan_signup_modal_shown',      label: '3. Signup modal shown' },
-  { event: 'plan_signup_modal_oauth_clicked', label: '4a. OAuth clicked', branch: true },
-  { event: 'plan_signup_modal_skipped',    label: '4b. Skipped (alt path)', branch: true },
-  { event: 'plan_signup_modal_completed',  label: '5. Signup completed' },
-  { event: 'plan_started',                 label: '6. /plan loaded' },
-  { event: 'plan_completed',               label: '7. Plan finalized' },
+  { event: 'plan_cta_impression',     label: '1. CTA shown' },
+  { event: 'plan_cta_clicked',        label: '2. CTA clicked' },
+  { event: 'plan_signup_modal_shown', label: '3. Signup gate shown' },
+  { event: 'signup_method_selected',  label: '4. Signup method chosen' },
+  { event: 'signup_completed',        label: '5. Signup completed' },
+  { event: 'plan_started',            label: '6. /plan loaded' },
+  { event: 'plan_completed',          label: '7. Plan finalized' },
 ]
 
 /** Fetches the full funnel for the filters using direct event counts.

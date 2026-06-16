@@ -67,6 +67,10 @@ export default async function PlanConversionPage({
     value: s.count,
     branch: branchByStep.get(s.step),
   }))
+  // Semantic lookups (not magic indices) — the funnel step set has changed once
+  // already (dead signup events) and silently broke the KPI strip. Look up by
+  // event name so reordering can never misroute a number again.
+  const stepCount = (event: string) => funnel.find((s) => s.step === event)?.count ?? 0
 
   return (
     <div>
@@ -90,9 +94,9 @@ export default async function PlanConversionPage({
 
       {/* ── KPI strip ─────────────────────────────────────────────────────── */}
       <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="CTAs shown" value={funnel[0]?.count ?? 0} info={<MetricInfo docKey="funnel_plan_acquisition" />} />
-        <MetricCard label="CTA clicks" value={funnel[1]?.count ?? 0} />
-        <MetricCard label="Signups completed" value={funnel[5]?.count ?? 0} />
+        <MetricCard label="CTAs shown" value={stepCount('plan_cta_impression')} info={<MetricInfo docKey="funnel_plan_acquisition" />} />
+        <MetricCard label="CTA clicks" value={stepCount('plan_cta_clicked')} />
+        <MetricCard label="Signups completed" value={stepCount('signup_completed')} />
         <MetricCard
           label="Goals captured"
           value={linkRate.total_anon_intents}
@@ -104,7 +108,7 @@ export default async function PlanConversionPage({
       {/* ── Funnel ────────────────────────────────────────────────────────── */}
       <section className="mb-8">
         <FunnelStrip
-          title="CTA → signup → plan (4a/4b are branches off step 3)"
+          title="CTA → signup → plan"
           steps={funnelSteps}
           info={<MetricInfo docKey="funnel_plan_acquisition" />}
         />
