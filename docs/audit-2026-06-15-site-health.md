@@ -17,6 +17,13 @@ Triggered by: "many pages crashing, site very slow, warnings in GSC / Bing / Sup
 
 ## 2. Performance — the real "site is slow" root cause 🔴
 
+> **UPDATE 2026-06-16 (verified by build + local runtime test):** the caching problem is **TWO layers**, not one.
+> - **Layer 1 — `cookies()` in the root layout** forced every route dynamic. **FIXED** on branch `caching-phase1` (root layout no longer reads cookies; auth resolved client-side in `AuthProvider`). Proven: all no-DB pages (`/about`, `/login`, `/best`, `/blog`, marketing) flipped from `ƒ` to **static `○`**.
+> - **Layer 2 — uncached Supabase queries (the bigger blocker for the money pages).** In Next 15, DB fetches are uncached by default → data-driven routes (compare, best, blog, homepage) opt into dynamic rendering and **override `revalidate`** (the homepage has `revalidate=60` yet renders `ƒ`). To cache these, the Supabase data-fetch functions must go through Next's data cache (`unstable_cache` with `revalidate` + `cacheTag`); the freshness cascade (cascade-hubs → `revalidatePath`) already provides the invalidation hook, so the plumbing exists. This is a careful data-layer change (~10-15 functions) — its own focused step.
+> - Net: Layer 1 is a safe foundation but only caches low-traffic static pages; **Layer 2 is the headline win** and must be done carefully with stale-data verification.
+
+
+
 - Measured: most pages **1–2 s TTFB**; two pages hit **32 s and 45 s** (cold renders that look like a crash/hang in the browser).
 - Header proof on `/tools/chatgpt`: `x-vercel-cache: MISS`, `cache-control: private, no-cache, no-store`. **Despite `revalidate=300` (ISR), every page renders fresh on every request with ZERO edge caching.**
 - **Root cause:** the root layout (`app/layout.tsx`) reads `cookies()` for the auth check. In Next.js, any route that reads cookies is forced dynamic — so **all ~2,800 pages opt out of static/ISR caching** and render server-side on every hit. The compare route is even explicitly `force-dynamic` for the same reason.
