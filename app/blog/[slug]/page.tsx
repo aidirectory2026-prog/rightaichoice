@@ -14,6 +14,11 @@ import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 import { NewsletterForm } from '@/components/newsletter/newsletter-form'
 
+// Caching refactor (fable-5, 2026-06-16): static ISR (blog is filesystem MDX,
+// no dynamic API). Edge-cached; revalidates hourly.
+export const dynamic = 'force-static'
+export const revalidate = 3600
+
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
 }

@@ -15,6 +15,10 @@ import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 import { UpdatedBadge } from '@/components/shared/updated-badge'
 import { getLastChangedAt } from '@/lib/seo/freshness'
 
+// Caching refactor (fable-5, 2026-06-16): opt into static ISR (no dynamic API
+// used; root layout no longer reads cookies). Edge-cached, revalidated hourly +
+// on data change via the freshness cascade's revalidatePath.
+export const dynamic = 'force-static'
 export const revalidate = 3600 // 1 hour
 
 type PageProps = {

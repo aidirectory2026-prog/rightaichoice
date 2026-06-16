@@ -50,10 +50,15 @@ type EditorialComparison = {
 type Props = { params: Promise<{ slug: string }> }
 
 // Caching refactor (fable-5, 2026-06-16): the root layout no longer reads auth
-// cookies, so this route is no longer forced dynamic. Compare pages have NO
-// per-user/server-cookie reads → ISR-cache them at the edge (first hit renders
-// + caches, refreshed hourly; the freshness cascade revalidates on data change).
+// cookies, AND this route uses NO dynamic API (verified: a `dynamic='error'`
+// build prerendered it cleanly). In Next 16 a [slug] route without
+// generateStaticParams still renders on-demand DYNAMIC by default — so we opt
+// it into static ISR explicitly. force-static is safe here precisely because
+// no cookies/headers/searchParams are read; it renders once on first hit,
+// edge-caches, and the freshness cascade's revalidatePath(/compare/<slug>)
+// rebuilds it on data change (1h revalidate is the self-healing backstop).
 // This is the #2 traffic surface — the largest single edge-caching win.
+export const dynamic = 'force-static'
 export const revalidate = 3600
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
