@@ -266,24 +266,30 @@ export async function getFirstTouchChannels(
 
 // ── Plan Funnel ─────────────────────────────────────────────────────
 
+// Phase 10 — unique-PEOPLE sequential funnel (was event-count per step, which
+// read "absurd" because steps didn't shrink). insights_funnel_users counts the
+// distinct visitors who completed the longest contiguous prefix up to each step.
 export async function getPlanFunnel(f: AdminFilters): Promise<MetricResult[]> {
   const db = getAdminClient()
   const sel = f.range
-  const cutoff = sel.cutoffISO
-  const steps = ['plan_started', 'plan_intake_submitted', 'plan_completed', 'plan_results_tool_clicked']
-  const results = await Promise.all(
-    steps.map((step) =>
-      applyFilters(maybeFilterBots(
-        db.from('user_events').select('*', { count: 'exact', head: true })
-          .eq('event_name', step).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO),
-        f.includeBots,
-      ), f, { dropEvent: true }), // each step is event-pinned
-    ),
+  const steps: Array<[string, string]> = [
+    ['plan_started', 'Started the plan'],
+    ['plan_intake_submitted', 'Submitted intake'],
+    ['plan_completed', 'Plan generated'],
+    ['plan_results_tool_clicked', 'Clicked a result'],
+  ]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (db as any).rpc('insights_funnel_users', {
+    p_steps: steps.map((s) => s[0]),
+    p_cutoff: sel.cutoffISO,
+    p_end: sel.endCutoffISO,
+    p_include_bots: f.includeBots,
+    p_filters: filtersToJsonb(f),
+  })
+  const byIndex = new Map(
+    ((data ?? []) as Array<{ step_index: number; users: number }>).map((r) => [Number(r.step_index), Number(r.users)]),
   )
-  return steps.map((step, i) => ({
-    label: step.replace(/_/g, ' '),
-    value: results[i].count ?? 0,
-  }))
+  return steps.map(([, label], i) => ({ label, value: byIndex.get(i + 1) ?? 0 }))
 }
 
 export async function getTopExistingTools(f: AdminFilters): Promise<BarRow[]> {

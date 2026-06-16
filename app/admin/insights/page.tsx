@@ -185,7 +185,7 @@ export default async function InsightsPage({
 
       <SectionHeading title="Plan Funnel" subtitle="Highest-intent vendor signal — where users drop off" />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <FunnelStrip title="Plan flow conversion" steps={planFunnel} />
+        <FunnelStrip title="Plan completion (unique people, sequential)" steps={planFunnel} />
         <BarList title="Tools mentioned as 'already use'" rows={topExistingTools} emptyHint="No plan submissions yet" />
         <BarList title="Top use cases entered" rows={topUseCases} emptyHint="No use cases yet" />
       </div>

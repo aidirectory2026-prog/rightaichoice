@@ -14,7 +14,7 @@ import { FunnelStrip, MetricCard, type FunnelStepDatum } from '@/components/admi
 import { parseAdminFilters } from '@/lib/admin/filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '@/app/admin/insights/queries'
-import { EVENT_FUNNEL, getPlanFunnel, getSurfaceBreakdown, getIntentStream, getLinkRate } from '@/lib/admin/plan-conversion'
+import { getFunnelUsers, ACQUISITION_STEPS, type FunnelUserStep, getSurfaceBreakdown, getIntentStream, getLinkRate } from '@/lib/admin/plan-conversion'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -54,23 +54,17 @@ export default async function PlanConversionPage({
   const filters = parseAdminFilters(sp)
 
   const [funnel, surfaces, intents, linkRate, countryOptions] = await Promise.all([
-    getPlanFunnel(filters),
+    getFunnelUsers(ACQUISITION_STEPS, filters),
     getSurfaceBreakdown(filters),
     getIntentStream(filters, 50),
     getLinkRate(filters),
     getCountryFilterOptions(),
   ])
 
-  const branchByStep = new Map(EVENT_FUNNEL.map((s) => [s.event, !!s.branch]))
-  const funnelSteps: FunnelStepDatum[] = funnel.map((s) => ({
-    label: s.label,
-    value: s.count,
-    branch: branchByStep.get(s.step),
-  }))
-  // Semantic lookups (not magic indices) — the funnel step set has changed once
-  // already (dead signup events) and silently broke the KPI strip. Look up by
-  // event name so reordering can never misroute a number again.
-  const stepCount = (event: string) => funnel.find((s) => s.step === event)?.count ?? 0
+  // Unique PEOPLE per step (sequential) — the strip shrinks monotonically.
+  const funnelSteps: FunnelStepDatum[] = funnel.map((s: FunnelUserStep) => ({ label: s.label, value: s.users }))
+  // Look up by event name so a future step-set change can't misroute a number.
+  const stepUsers = (event: string) => funnel.find((s) => s.step === event)?.users ?? 0
 
   return (
     <div>
@@ -87,16 +81,17 @@ export default async function PlanConversionPage({
       </div>
 
       <p className="mb-6 max-w-3xl text-sm text-zinc-400">
-        Funnel and intent stream for the global Plan-Your-Stack CTA. Tracks every
-        impression, click, signup-modal interaction, and durable typed goal — including
-        users who skip the signup gate. {filters.includeBots ? 'Bots included.' : 'Humans only (audit F6).'}
+        Acquisition funnel + intent stream for the global Plan-Your-Stack CTA. The funnel counts{' '}
+        <span className="font-medium text-zinc-200">unique people</span>, sequentially — each step is the
+        distinct visitors who reached it and every step before. {filters.includeBots ? 'Bots included.' : 'Humans only.'}{' '}
+        The intent stream + link rate below honor the date range only (the plan_intents table has no bot flag).
       </p>
 
       {/* ── KPI strip ─────────────────────────────────────────────────────── */}
       <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="CTAs shown" value={stepCount('plan_cta_impression')} info={<MetricInfo docKey="funnel_plan_acquisition" />} />
-        <MetricCard label="CTA clicks" value={stepCount('plan_cta_clicked')} />
-        <MetricCard label="Signups completed" value={stepCount('signup_completed')} />
+        <MetricCard label="Saw the CTA" value={stepUsers('plan_cta_impression')} kind="people" info={<MetricInfo docKey="funnel_plan_acquisition" />} />
+        <MetricCard label="Clicked it" value={stepUsers('plan_cta_clicked')} kind="people" />
+        <MetricCard label="Signed up" value={stepUsers('signup_completed')} kind="people" />
         <MetricCard
           label="Goals captured"
           value={linkRate.total_anon_intents}
@@ -108,7 +103,7 @@ export default async function PlanConversionPage({
       {/* ── Funnel ────────────────────────────────────────────────────────── */}
       <section className="mb-8">
         <FunnelStrip
-          title="CTA → signup → plan"
+          title="Saw CTA → signed up (unique people)"
           steps={funnelSteps}
           info={<MetricInfo docKey="funnel_plan_acquisition" />}
         />

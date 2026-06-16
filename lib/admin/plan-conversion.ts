@@ -16,7 +16,7 @@
  */
 
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { applyFilters, type AdminFilters } from './filters'
+import { applyFilters, filtersToJsonb, type AdminFilters } from './filters'
 
 export type FunnelStep = {
   step: string
@@ -87,6 +87,67 @@ export async function getPlanFunnel(f: AdminFilters): Promise<FunnelStep[]> {
     }),
   )
   return results
+}
+
+// ── Unique-visitor sequential funnels (Phase 10 — traffic analysis upgrade) ──
+// The event-count funnel above reads "absurd": steps count raw events, so they
+// don't decrease monotonically (a modal can be "shown" more than a CTA is
+// "clicked"). insights_funnel_users (migration 162) instead counts the distinct
+// PEOPLE who completed the longest contiguous prefix up to each step — so the
+// numbers always shrink and read like a real drop-off.
+
+export type FunnelUserStep = {
+  step: string
+  label: string
+  users: number
+  pct_of_first: number // % of step-1 users still present
+  dropped_from_prev: number // users lost since the previous step
+  drop_pct: number // % lost vs the previous step
+}
+
+// Two clean, separate journeys (no more 7-step CTA+signup+plan mash-up):
+export const ACQUISITION_STEPS: ReadonlyArray<{ event: string; label: string }> = [
+  { event: 'plan_cta_impression', label: 'Saw the CTA' },
+  { event: 'plan_cta_clicked', label: 'Clicked the CTA' },
+  { event: 'plan_signup_modal_shown', label: 'Reached signup gate' },
+  { event: 'signup_completed', label: 'Signed up' },
+]
+export const COMPLETION_STEPS: ReadonlyArray<{ event: string; label: string }> = [
+  { event: 'plan_started', label: 'Started the plan' },
+  { event: 'plan_intake_submitted', label: 'Submitted intake' },
+  { event: 'plan_completed', label: 'Plan generated' },
+  { event: 'plan_results_tool_clicked', label: 'Clicked a result' },
+]
+
+export async function getFunnelUsers(
+  steps: ReadonlyArray<{ event: string; label: string }>,
+  f: AdminFilters,
+): Promise<FunnelUserStep[]> {
+  const db = getAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (db as any).rpc('insights_funnel_users', {
+    p_steps: steps.map((s) => s.event),
+    p_cutoff: f.range.cutoffISO,
+    p_end: f.range.endCutoffISO,
+    p_include_bots: f.includeBots,
+    p_filters: filtersToJsonb(f),
+  })
+  const rows = (data ?? []) as Array<{ step_index: number; event_name: string; users: number }>
+  const byIndex = new Map(rows.map((r) => [Number(r.step_index), Number(r.users)]))
+  const first = byIndex.get(1) ?? 0
+  return steps.map((s, i) => {
+    const users = byIndex.get(i + 1) ?? 0
+    const prev = i === 0 ? users : (byIndex.get(i) ?? 0)
+    const dropped = Math.max(0, prev - users)
+    return {
+      step: s.event,
+      label: s.label,
+      users,
+      pct_of_first: first > 0 ? Math.round((users / first) * 1000) / 10 : 0,
+      dropped_from_prev: i === 0 ? 0 : dropped,
+      drop_pct: i === 0 || prev === 0 ? 0 : Math.round((dropped / prev) * 1000) / 10,
+    }
+  })
 }
 
 /** Per-surface impressions vs clicks vs signups (computed from event props). */

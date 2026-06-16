@@ -18,8 +18,8 @@ import { MetricInfo } from '@/components/admin/metric-info'
 import { FunnelStrip, MetricCard, type FunnelStepDatum } from '@/components/admin/charts'
 import { parseAdminFilters } from '@/lib/admin/filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
-import { EVENT_FUNNEL, getPlanFunnel as getAcquisitionFunnel } from '@/lib/admin/plan-conversion'
-import { getCountryFilterOptions, getPlanFunnel as getJourneyFunnel } from '../queries'
+import { getFunnelUsers, ACQUISITION_STEPS, COMPLETION_STEPS, type FunnelUserStep } from '@/lib/admin/plan-conversion'
+import { getCountryFilterOptions } from '../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -34,27 +34,22 @@ export default async function FunnelsPage({
   const filters = parseAdminFilters(sp)
 
   const [acquisition, journey, countryOptions] = await Promise.all([
-    getAcquisitionFunnel(filters),
-    getJourneyFunnel(filters),
+    getFunnelUsers(ACQUISITION_STEPS, filters),
+    getFunnelUsers(COMPLETION_STEPS, filters),
     getCountryFilterOptions(),
   ])
 
-  // Join the 4a/4b branch flags back onto the funnel counts (the query
-  // result shape stays oracle-identical; presentation metadata lives in
-  // the exported EVENT_FUNNEL definition).
-  const branchByStep = new Map(EVENT_FUNNEL.map((s) => [s.event, !!s.branch]))
-  const acquisitionSteps: FunnelStepDatum[] = acquisition.map((s) => ({
-    label: s.label,
-    value: s.count,
-    branch: branchByStep.get(s.step),
-  }))
-  const journeySteps: FunnelStepDatum[] = journey.map((s) => ({ label: s.label, value: s.value }))
+  // Both funnels now count unique PEOPLE who reached each step (sequential —
+  // longest contiguous prefix), so the strip always shrinks step to step.
+  const byEvent = (rows: FunnelUserStep[], ev: string) => rows.find((r) => r.step === ev)?.users ?? 0
+  const acquisitionSteps: FunnelStepDatum[] = acquisition.map((s) => ({ label: s.label, value: s.users }))
+  const journeySteps: FunnelStepDatum[] = journey.map((s) => ({ label: s.label, value: s.users }))
 
-  const ctaShown = acquisition[0]?.count ?? 0
-  const planFinalized = acquisition[acquisition.length - 1]?.count ?? 0
-  const endToEnd = ctaShown > 0 ? Math.round((planFinalized / ctaShown) * 1000) / 10 : 0
-  const journeyStarted = journey[0]?.value ?? 0
-  const journeyClicked = journey[journey.length - 1]?.value ?? 0
+  const sawCta = byEvent(acquisition, 'plan_cta_impression')
+  const signedUp = byEvent(acquisition, 'signup_completed')
+  const planStarted = byEvent(journey, 'plan_started')
+  const planCompleted = byEvent(journey, 'plan_completed')
+  const completionRate = planStarted > 0 ? Math.round((planCompleted / planStarted) * 1000) / 10 : 0
 
   return (
     <div>
@@ -71,27 +66,28 @@ export default async function FunnelsPage({
       </div>
 
       <p className="mb-6 max-w-3xl text-xs text-zinc-500">
-        Both funnels count EVENTS per step over {filters.range.label.toLowerCase()},{' '}
-        {filters.includeBots ? 'bots included' : 'humans only (audit F6)'}; the smart filters above apply to every step.
-        Step-over-step % compares each step with the previous one. The signup steps track the LIVE
-        signup_method_selected → signup_completed events (the old plan_signup_modal_* events were retired on 2026-05-28).
+        Both funnels count <span className="font-medium text-zinc-300">unique people</span>, sequentially —
+        each step is the count of distinct visitors who reached it <em>and every step before it</em>, so the
+        numbers always shrink and the % is the share who made it from the previous step. Over{' '}
+        {filters.range.label.toLowerCase()}, {filters.includeBots ? 'bots included' : 'humans only'}; the smart
+        filters above apply to every step.
       </p>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricCard label="CTA impressions" value={ctaShown} info={<MetricInfo docKey="funnel_plan_acquisition" />} />
-        <MetricCard label="Plans finalized" value={planFinalized} extra={<span className="text-[10px] text-zinc-500">{endToEnd}% of CTA impressions</span>} />
-        <MetricCard label="Plan flow started" value={journeyStarted} info={<MetricInfo docKey="funnel_plan_journey" />} />
-        <MetricCard label="Result-tool clicks" value={journeyClicked} />
+        <MetricCard label="Saw plan CTA" value={sawCta} kind="people" info={<MetricInfo docKey="funnel_plan_acquisition" />} />
+        <MetricCard label="Signed up" value={signedUp} kind="people" />
+        <MetricCard label="Started a plan" value={planStarted} kind="people" info={<MetricInfo docKey="funnel_plan_journey" />} />
+        <MetricCard label="Completed a plan" value={planCompleted} kind="people" extra={<span className="text-[10px] text-zinc-500">{completionRate}% of starters</span>} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <FunnelStrip
-          title="Plan acquisition — CTA → signup → plan"
+          title="Acquisition — saw CTA → signed up (unique people)"
           steps={acquisitionSteps}
           info={<MetricInfo docKey="funnel_plan_acquisition" />}
         />
         <FunnelStrip
-          title="Plan journey — inside the flow"
+          title="Plan completion — started → generated (unique people)"
           steps={journeySteps}
           info={<MetricInfo docKey="funnel_plan_journey" />}
         />

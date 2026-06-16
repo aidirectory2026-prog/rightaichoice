@@ -29,8 +29,16 @@ export function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1)
 }
 
+// What a metric counts — surfaced as a tiny badge so "767" is never ambiguous
+// between raw events, unique people, and signed-in accounts (Phase 10).
+const METRIC_KIND_LABEL: Record<'people' | 'events' | 'accounts', string> = {
+  people: 'people',
+  events: 'events',
+  accounts: 'accounts',
+}
+
 export function MetricCard({
-  label, value, suffix, info, extra,
+  label, value, suffix, info, extra, kind,
 }: {
   label: string
   value: number
@@ -39,11 +47,20 @@ export function MetricCard({
   info?: ReactNode
   /** Optional slot under the value — delta chips, hints. */
   extra?: ReactNode
+  /** What the number counts — renders a tiny disambiguating badge. */
+  kind?: 'people' | 'events' | 'accounts'
 }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
       <div className="flex items-center justify-between gap-1">
-        <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
+          {kind ? (
+            <span className="rounded bg-zinc-800 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-zinc-400">
+              {METRIC_KIND_LABEL[kind]}
+            </span>
+          ) : null}
+        </div>
         {info ?? null}
       </div>
       <div className="mt-2 text-2xl font-semibold text-white">
