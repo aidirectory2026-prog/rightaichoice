@@ -249,10 +249,21 @@ export async function POST(req: NextRequest) {
   // admin metric count real humans (distinct user_id) instead of always
   // returning 0.
   let serverUserId: string | null = null
+  // Identity enrichment (2026-06-16) — when the session resolves, also lift the
+  // email DOMAIN (never the raw address) and the account creation time off the
+  // auth user. These flow into upsert_user_intent below, which COALESCEs them,
+  // so every signed-in user's intent profile self-heals: email_domain + signup_at
+  // get filled on the first mirrored event after sign-in, not only on the
+  // newsletter_subscribed path. Domain-only keeps the Mixpanel/PII policy intact.
+  let serverEmailDomain: string | null = null
+  let serverSignupAt: string | null = null
   try {
     const ssClient = await createClient()
     const { data } = await ssClient.auth.getUser()
     serverUserId = data.user?.id ?? null
+    const email = data.user?.email ?? null
+    if (email && email.includes('@')) serverEmailDomain = email.split('@')[1] ?? null
+    serverSignupAt = data.user?.created_at ?? null
   } catch {
     /* anon — keep null */
   }
@@ -390,9 +401,15 @@ export async function POST(req: NextRequest) {
       p_first_touch_landing: e.first_touch_landing ?? null,
       p_touch: touch,
       p_session: session,
+      // Server-resolved identity (null for anon). The RPC COALESCEs, so these
+      // only fill the first time and never overwrite — self-healing backfill.
+      p_email_domain: serverEmailDomain,
+      p_signup_at: serverSignupAt,
       ...updates,
     }
-    // Pull email_domain from newsletter_subscribed payload.
+    // Anon newsletter signups have no auth session, so recover the email_domain
+    // from the event payload (still domain-only). Overrides the server value
+    // only when actually present.
     if (e.event_name === 'newsletter_subscribed') {
       const ed = (e.properties as Record<string, unknown> | undefined)?.email_domain
       if (typeof ed === 'string') args.p_email_domain = ed

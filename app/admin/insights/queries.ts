@@ -865,6 +865,14 @@ export interface UserProfileV2 {
   user_id: string | null
   username: string | null
   email_domain: string | null
+  // Full identity — admin-only, joined from auth.users in the RPC (migration
+  // 159). EXECUTE on the function is service_role/postgres only (never
+  // anon/authenticated), so the real email is safe to return here. email is the
+  // full address (not just the domain); full_name + auth_provider tell you WHO
+  // signed up and HOW (google / email / …).
+  email: string | null
+  full_name: string | null
+  auth_provider: string | null
   is_authed: boolean
   first_seen_at: string | null
   last_seen_at: string | null
@@ -1236,6 +1244,11 @@ export interface UserDirectoryRow {
   top_country: string | null
   top_device: string | null
   is_returning: boolean
+  // Identity (admin-only, joined from auth.users in the RPC — migration 159).
+  // Null for anonymous visitors (no linked user_id).
+  email: string | null
+  full_name: string | null
+  auth_provider: string | null
 }
 
 export async function getUserDirectory(
@@ -1267,6 +1280,9 @@ export async function getUserDirectory(
       top_country: r.top_country,
       top_device: r.top_device,
       is_returning: !!r.is_returning,
+      email: r.email ?? null,
+      full_name: r.full_name ?? null,
+      auth_provider: r.auth_provider ?? null,
     })),
     total: Number(rows[0]?.total_rows ?? 0),
   }

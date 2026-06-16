@@ -128,7 +128,8 @@ function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId
         <span className="break-all font-mono text-xs text-zinc-200">{distinctId}</span>
         {p?.is_authed ? (
           <span className="rounded-full border border-emerald-700 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-            AUTHED{p.username ? ` · ${p.username}` : ''}
+            AUTHED{p.auth_provider ? ` · ${p.auth_provider}` : ''}
+            {p.full_name || p.username ? ` · ${p.full_name || p.username}` : ''}
           </span>
         ) : (
           <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold text-zinc-400">
@@ -201,7 +202,11 @@ function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId
             <HeaderStat label="Lifetime events" value={p.lifetime_events.toLocaleString()} />
             <HeaderStat label="Events (30d)" value={p.events_30d.toLocaleString()} />
             <HeaderStat label="Sessions" value={p.session_count.toLocaleString()} title="Hybrid count: distinct session_id values + 30-min-gap sessions for rows without one" />
-            <HeaderStat label="Email domain" value={p.email_domain ?? '—'} />
+            <HeaderStat
+              label="Email"
+              value={p.email ?? p.email_domain ?? '—'}
+              title={p.email ? `${p.full_name ?? p.username ?? ''} · signed up via ${p.auth_provider ?? 'unknown'}`.trim() : 'No linked auth account (anonymous or pre-signup)'}
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[11px]">

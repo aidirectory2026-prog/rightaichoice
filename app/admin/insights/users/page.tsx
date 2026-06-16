@@ -191,11 +191,15 @@ export default async function UsersDirectoryPage({
                       </span>
                       {r.user_id && (
                         <span
-                          className="inline-flex items-center gap-0.5 rounded-full border border-sky-800 bg-sky-950/40 px-1.5 py-0.5 text-[9px] font-medium text-sky-300"
-                          title={`Signed-in account: ${r.user_id}`}
+                          className="inline-flex max-w-[220px] items-center gap-0.5 truncate rounded-full border border-sky-800 bg-sky-950/40 px-1.5 py-0.5 text-[9px] font-medium text-sky-300"
+                          title={
+                            r.email
+                              ? `${r.full_name || r.email} · signed up via ${r.auth_provider ?? 'unknown'} · ${r.user_id}`
+                              : `Signed-in account: ${r.user_id}`
+                          }
                         >
-                          <UserCheck className="h-2.5 w-2.5" />
-                          account
+                          <UserCheck className="h-2.5 w-2.5 shrink-0" />
+                          <span className="truncate">{r.email ?? 'account'}</span>
                         </span>
                       )}
                     </Link>
