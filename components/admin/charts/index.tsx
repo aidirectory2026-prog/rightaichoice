@@ -109,11 +109,18 @@ export function DeltaChip({ current, previous }: { current: number; previous: nu
   )
 }
 
-export function MetricRow({ metrics, suffixes }: { metrics: ChartDatum[]; suffixes?: Record<string, string> }) {
+export function MetricRow({
+  metrics, suffixes, kinds,
+}: {
+  metrics: ChartDatum[]
+  suffixes?: Record<string, string>
+  /** Per-label people/events/accounts badge — disambiguates what each tile counts. */
+  kinds?: Record<string, 'people' | 'events' | 'accounts'>
+}) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {metrics.map((m, i) => (
-        <MetricCard key={`${m.label}-${i}`} label={m.label} value={m.value} suffix={suffixes?.[m.label]} />
+        <MetricCard key={`${m.label}-${i}`} label={m.label} value={m.value} suffix={suffixes?.[m.label]} kind={kinds?.[m.label]} />
       ))}
     </div>
   )

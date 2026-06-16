@@ -1,15 +1,11 @@
-// Phase 10.5b.3 (2026-06-12) — Funnels, rebuilt on the shared kit.
-//
-// The two VERIFIED plan funnels, both windowed/bot-filtered/smart-filtered
-// through the same AdminFilters contract every other rebuilt page uses:
-//   1. Plan acquisition (lib/admin/plan-conversion.ts getPlanFunnel):
-//      CTA shown → clicked → modal → (4a/4b branches) → signup → /plan →
-//      finalized — with step-over-step % on the MAIN path only.
-//   2. Plan journey (insights getPlanFunnel): started → intake → completed
-//      → recommended-tool click.
-// Replaces the old unique-users site funnel (insights_funnel_steps RPC),
-// whose p_days-only window could not honor calendar-anchored ranges — its
-// removal is documented in docs/admin/phase5b-gate.md.
+// Phase 10 (Traffic Analysis Upgrade, 2026-06-17) — Funnels count UNIQUE PEOPLE,
+// sequentially. Each step = distinct visitors who reached it AND every step
+// before (longest contiguous prefix, insights_funnel_users RPC), so the strip
+// always shrinks and the % reads as true drop-off — replacing the old
+// event-count version whose steps didn't decrease (a modal "shown" more than a
+// CTA "clicked"). Two clean journeys via getFunnelUsers(ACQUISITION_STEPS /
+// COMPLETION_STEPS), still windowed/bot-filtered/smart-filtered through the
+// shared AdminFilters contract.
 
 import Link from 'next/link'
 import { ArrowRight, Filter } from 'lucide-react'

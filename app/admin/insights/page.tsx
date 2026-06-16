@@ -158,16 +158,25 @@ export default async function InsightsPage({
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <MetricCard label="Bot events" value={botShare.bot_events} suffix={`${botShare.bot_pct}%`} />
-        <MetricCard label="Bot visitors" value={botShare.bot_visitors} suffix={`${botShare.bot_visitor_pct}%`} />
-        <MetricCard label="Total events" value={botShare.total_events} />
-        <MetricCard label="Total visitors" value={botShare.total_visitors} />
-        <MetricCard label="Human events" value={botShare.total_events - botShare.bot_events} />
-        <MetricCard label="Human visitors" value={botShare.total_visitors - botShare.bot_visitors} />
+        <MetricCard label="Bot events" value={botShare.bot_events} suffix={`${botShare.bot_pct}%`} kind="events" />
+        <MetricCard label="Bot visitors" value={botShare.bot_visitors} suffix={`${botShare.bot_visitor_pct}%`} kind="people" />
+        <MetricCard label="Total events" value={botShare.total_events} kind="events" />
+        <MetricCard label="Total visitors" value={botShare.total_visitors} kind="people" />
+        <MetricCard label="Human events" value={botShare.total_events - botShare.bot_events} kind="events" />
+        <MetricCard label="Human visitors" value={botShare.total_visitors - botShare.bot_visitors} kind="people" />
       </div>
 
       <SectionHeading title="Acquisition" subtitle="How visitors enter and how many convert" />
-      <MetricRow metrics={overview} />
+      <MetricRow
+        metrics={overview}
+        kinds={{
+          'Page views': 'events',
+          'Unique visitors': 'people',
+          'Signed-in accounts': 'accounts',
+          Signups: 'events',
+          'Newsletter subs': 'events',
+        }}
+      />
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <DailyChart title={`Daily active users · ${days}d`} points={dailyActive} />
         <BarList title="Page views by device" rows={deviceBreakdown} />
@@ -201,9 +210,9 @@ export default async function InsightsPage({
         subtitle="Who's coming back, when they first showed up, and how active they are. Click any row for the full visitor timeline."
       />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <MetricCard label={`Active visitors · ${days}d`} value={returningSummary.total} />
-        <MetricCard label="New (first time)" value={returningSummary.new_count} />
-        <MetricCard label="Returning" value={returningSummary.returning_count} />
+        <MetricCard label={`Active visitors · ${days}d`} value={returningSummary.total} kind="people" />
+        <MetricCard label="New (first time)" value={returningSummary.new_count} kind="people" />
+        <MetricCard label="Returning" value={returningSummary.returning_count} kind="people" />
         <MetricCard label="Returning rate" value={returningSummary.returning_pct} suffix="%" />
         <MetricCard
           label="Avg gap (days)"
