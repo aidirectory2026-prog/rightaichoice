@@ -13,11 +13,21 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const UPSTREAM = process.env.MIXPANEL_DATA_API_HOST || 'https://api-eu.mixpanel.com'
 
+// H11a (Cowork QA): only Mixpanel's ingestion endpoints may be proxied. The
+// catch-all otherwise forwarded ANY path (incl. export/admin APIs) upstream with
+// the Authorization header verbatim → usable as a free open relay. First path
+// segment must be one of these.
+const ALLOWED_PREFIXES = new Set(['track', 'engage', 'decide', 'record', 'groups'])
+const MAX_BODY = 2 * 1024 * 1024 // 2 MB — rrweb replay chunks + event batches are small
+
 export const runtime = 'edge'
 // Proxied analytics must never be cached — each request contains unique payload.
 export const dynamic = 'force-dynamic'
 
 async function forward(req: NextRequest, params: { path: string[] }) {
+  if (!ALLOWED_PREFIXES.has(params.path[0] ?? '')) {
+    return new NextResponse('Not found', { status: 404 })
+  }
   const subpath = params.path.join('/')
   const search = req.nextUrl.search
   const target = `${UPSTREAM}/${subpath}${search}`
@@ -49,6 +59,9 @@ async function forward(req: NextRequest, params: { path: string[] }) {
   if (contentEncoding) headers.set('content-encoding', contentEncoding)
 
   const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer()
+  if (body && body.byteLength > MAX_BODY) {
+    return new NextResponse('Payload too large', { status: 413 })
+  }
 
   const upstreamRes = await fetch(target, {
     method: req.method,

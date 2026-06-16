@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // Phase 7K (2026-05-16) — newsletter subscribe endpoint.
 //
@@ -21,6 +22,11 @@ const VALID_SOURCES = new Set([
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: NextRequest) {
+  // H11d (Cowork QA): every other write route is rate-limited; this one wasn't,
+  // leaving it open to list-bombing / spam. 5/min/IP is ample for a real signup.
+  const rl = await rateLimit('newsletter-subscribe', req, { limit: 5, windowMs: 60_000 })
+  if (!rl.ok) return rateLimitResponse(rl)
+
   let body: { email?: string; source?: string; source_entity?: string }
   try {
     body = await req.json()

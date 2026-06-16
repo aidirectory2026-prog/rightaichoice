@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+// H11c (Cowork QA): SVG removed — SVGs can carry inline <script>/onload handlers
+// and this bucket is public, so an uploaded SVG served as image/svg+xml is
+// stored-XSS the moment it's rendered inline.
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -12,12 +15,15 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
+  // Cowork QA: profiles has no `role` column (the gate is is_admin) — the old
+  // `profile.role !== 'admin'` check always 403'd. Use is_admin, consistent with
+  // every other admin gate.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('is_admin')
     .eq('id', user.id)
     .single()
-  if (profile?.role !== 'admin') {
+  if (!profile?.is_admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'Only PNG, JPEG, WebP, and SVG files are allowed' }, { status: 400 })
+    return NextResponse.json({ error: 'Only PNG, JPEG, and WebP files are allowed' }, { status: 400 })
   }
 
   if (file.size > MAX_SIZE) {
