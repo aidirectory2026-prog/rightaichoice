@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { ShareButton } from '@/components/shared/share-button'
+import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
 import { getRolePageBySlug, ROLE_PAGES } from '@/lib/data/role-pages'
 import { createClient } from '@/lib/supabase/server'
 import { pricingLabel, pricingColor } from '@/lib/utils'
@@ -254,15 +255,17 @@ export default async function RolePage({ params }: PageProps) {
                         >
                           Details
                         </Link>
-                        <a
-                          href={tool.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        {/* C3a (Cowork QA): route through /api/tools/[slug]/visit so the
+                            affiliate_url is applied + the click is logged (was a raw vendor link). */}
+                        <VisitWebsiteButton
+                          slug={tool.slug}
+                          url={tool.website_url}
+                          toolId={tool.id}
+                          source="role_page"
+                          label="Visit"
+                          icon={<ExternalLink className="h-3 w-3" />}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/20 border border-emerald-800 px-3 py-1.5 text-xs text-emerald-400 hover:bg-emerald-600/40 transition-colors"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Visit
-                        </a>
+                        />
                       </div>
                     </div>
                   )

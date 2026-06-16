@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { verifyPaypalWebhook } from '@/lib/payments/paypal'
+import { verifyPaypalWebhook, paypalEnabled } from '@/lib/payments/paypal'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +14,8 @@ export const dynamic = 'force-dynamic'
  * PAYPAL_WEBHOOK_ID in the PayPal dashboard for PAYMENT.CAPTURE.COMPLETED.
  */
 export async function POST(req: NextRequest) {
+  // C2 (Cowork QA): PayPal disabled — refuse before reading the body.
+  if (!paypalEnabled()) return NextResponse.json({ error: 'paypal_disabled' }, { status: 410 })
   const rawBody = await req.text()
   const ok = await verifyPaypalWebhook(req.headers, rawBody)
   if (!ok) {

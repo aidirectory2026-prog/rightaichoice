@@ -68,6 +68,10 @@ const envSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   NEXT_PUBLIC_PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_ENV: z.enum(['live', 'sandbox']).optional(),
+  // Phase 10 (Cowork QA) C2 — master kill switch for PayPal. DISABLED unless
+  // explicitly 'true'. PayPal capture/webhook never validated the paid amount,
+  // so the gateway is off until re-hardened. Razorpay is unaffected.
+  PAYPAL_ENABLED: z.enum(['true', 'false']).optional(),
 })
 
 function validateEnv() {

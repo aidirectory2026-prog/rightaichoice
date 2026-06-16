@@ -119,12 +119,14 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
     case 'tool_saved':
       updates.p_inc_saves = 1
       break
-    case 'tool_visit_redirected':
-      // 9.A.1 #4 — count the visit ONCE. tool_visit_clicked (client) and
-      // tool_visit_redirected (server) both fire for a single "Visit website"
-      // click, so incrementing on both double-counted tools_visited in the
-      // per-user profile. We keep only the server-authoritative redirect
-      // (also bot/prefetch-filtered at source in 9.0.2).
+    case 'tool_visit_clicked':
+      // C3c (Cowork QA) — count each "Visit website" ONCE. The previous code
+      // keyed on `tool_visit_redirected`, but that is a SERVER event mirrored
+      // only to user_events/Mixpanel (lib/mixpanel-server.ts) — it never reaches
+      // track-mirror, so the counter was stuck at 0. `tool_visit_clicked` is the
+      // CLIENT event and the only visit event that arrives here, so keying on it
+      // increments exactly once (no double count is possible — the server event
+      // never hits this code path). Bots are filtered upstream before this runs.
       updates.p_inc_tools_visited = 1
       updates.p_arr_tools_visited = arr('tool_slug')
       break

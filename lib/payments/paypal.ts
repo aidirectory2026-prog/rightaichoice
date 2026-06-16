@@ -14,14 +14,27 @@ export function paypalConfigured(): boolean {
 }
 
 /**
- * Public "payments are live" check for the paywall UI. True only when keys are
- * configured AND we're NOT in sandbox test mode — so while prod runs sandbox
- * keys (owner testing the checkout), real visitors keep the graceful
- * "paid scans coming soon" card instead of a live-looking sandbox button.
- * The admin `?paytest=` path forces the button on separately.
+ * Phase 10 (Cowork QA) C2 — master kill switch for the PayPal gateway.
+ * The PayPal capture/webhook paths never validated the captured amount/currency
+ * against our ledger (Razorpay does), so the paid feature was bypassable on
+ * PayPal. Owner decision: DISABLE PayPal entirely (default off) until checkout is
+ * re-hardened. Set PAYPAL_ENABLED=true to bring the gateway back. Razorpay (India)
+ * is a separate path and is unaffected.
+ */
+export function paypalEnabled(): boolean {
+  return process.env.PAYPAL_ENABLED === 'true'
+}
+
+/**
+ * Public "payments are live" check for the paywall UI. True only when the gateway
+ * is enabled AND keys are configured AND we're NOT in sandbox test mode — so while
+ * prod runs sandbox keys (owner testing the checkout), real visitors keep the
+ * graceful "paid scans coming soon" card instead of a live-looking sandbox button.
+ * With PayPal disabled (C2) this is always false → the UI shows the same graceful
+ * card and never mounts the PayPal Buttons SDK.
  */
 export function paypalLive(): boolean {
-  return paypalConfigured() && (process.env.PAYPAL_ENV ?? 'live') !== 'sandbox'
+  return paypalEnabled() && paypalConfigured() && (process.env.PAYPAL_ENV ?? 'live') !== 'sandbox'
 }
 
 async function accessToken(): Promise<string | null> {
