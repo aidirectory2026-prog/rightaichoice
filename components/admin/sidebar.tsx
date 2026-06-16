@@ -6,6 +6,7 @@
 // header opens a slide-over drawer with the same nav.
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronDown, Menu, X } from 'lucide-react'
@@ -145,34 +146,45 @@ export function MobileSidebar() {
       >
         <Menu className="h-5 w-5" aria-hidden />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-[60]">
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-zinc-800 bg-zinc-950 shadow-xl">
-            <div className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
-              <div className="flex items-center gap-2.5">
-                <Logo size="sm" />
-                <span className="rounded border border-emerald-800 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-400">
-                  Admin
-                </span>
+      {/* The drawer MUST be portalled to <body>. The admin header that holds
+          this component has `backdrop-blur-sm` (a backdrop-filter), which makes
+          it the containing block for `position:fixed` descendants — so a
+          `fixed inset-0` drawer rendered inline here collapses to the 56px
+          header box instead of the viewport, and the menu appears not to open
+          (confirmed: trapped element measured 390×56 vs the intended 390×844).
+          Portalling to document.body escapes the filtered ancestor so `fixed`
+          resolves against the viewport again. */}
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed inset-0 z-[60]">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+            <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-zinc-800 bg-zinc-950 shadow-xl">
+              <div className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
+                <div className="flex items-center gap-2.5">
+                  <Logo size="sm" />
+                  <span className="rounded border border-emerald-800 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                    Admin
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close admin navigation"
+                  className="rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close admin navigation"
-                className="rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
+              <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
-            <SidebarNav onNavigate={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
