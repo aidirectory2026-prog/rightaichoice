@@ -148,7 +148,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
         ))}
       </div>
 
-      <div className="border border-zinc-800 rounded-lg overflow-hidden">
+      <div className="overflow-x-auto border border-zinc-800 rounded-lg">
         <table className="w-full">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-900/50">

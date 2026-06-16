@@ -123,7 +123,7 @@ export default async function PlanConversionPage({
         <p className="mb-2 text-xs text-zinc-500">
           Which CTA surface (homepage hero / sticky bar / inline card / navbar / plan_page) actually pulls clicks + signups. <em>plan_page</em> = goal typed directly on /plan without arriving via an upstream CTA. The ALL row is computed without the surface filter — a built-in parity check.
         </p>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/40">
           <table className="w-full text-sm">
             <thead className="text-[10px] uppercase tracking-wider text-zinc-500 bg-zinc-950/60">
               <tr>
@@ -162,7 +162,7 @@ export default async function PlanConversionPage({
             Last 50 typed goals in this window · date range only (plan_intents has no bot/dimension columns)
           </span>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/40">
           {intents.length === 0 ? (
             <div className="py-10 text-center text-sm text-zinc-500">No typed goals captured in this window yet.</div>
           ) : (

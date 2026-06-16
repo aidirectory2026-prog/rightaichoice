@@ -136,7 +136,7 @@ export default async function AuthorityPage({
 
       <div className="mb-10">
         <h2 className="text-sm font-semibold text-white mb-3">By channel (all-time)</h2>
-        <div className="rounded-lg border border-zinc-800 overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm">
             <thead className="bg-zinc-900/60">
               <tr>
@@ -169,7 +169,7 @@ export default async function AuthorityPage({
 
       <div>
         <h2 className="text-sm font-semibold text-white mb-3">All referring domains</h2>
-        <div className="rounded-lg border border-zinc-800 overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm">
             <thead className="bg-zinc-900/60">
               <tr>

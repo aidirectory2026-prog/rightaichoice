@@ -145,7 +145,7 @@ export default async function ActivityPage({
         <MetricInfo docKey="kr_activity_feed" align="left" />
       </p>
 
-      <div className="rounded-lg border border-zinc-800 overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="w-full text-sm">
           <thead className="bg-zinc-900/60 text-xs text-zinc-400">
             <tr>

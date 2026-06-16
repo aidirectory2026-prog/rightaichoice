@@ -142,7 +142,7 @@ export default async function TrackingHealthPage() {
           the nightly orchestrator runs at 21:00 UTC.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm">
             <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
               <tr>
@@ -178,7 +178,7 @@ export default async function TrackingHealthPage() {
       {batches.length === 0 ? (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 text-sm text-zinc-400">No history yet.</div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm">
             <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
               <tr>

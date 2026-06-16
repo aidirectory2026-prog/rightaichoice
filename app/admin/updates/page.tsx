@@ -1000,7 +1000,7 @@ export default async function KnowledgeRoom({
 
       {/* ── 5. DAILY HISTORY TABLE (60 days, existing) ──────────── */}
       <Section title="Daily history (60 days)" icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}>
-        <div className="rounded-lg border border-zinc-800 overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm">
             <thead className="bg-zinc-900/60 text-xs text-zinc-400">
               <tr>
