@@ -184,6 +184,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     title: 'Tracking & Trust',
     items: [
       { href: '/admin/tracking-health', label: 'Tracking health', filterCapabilities: [] },
+      { href: '/admin/insights/errors', label: 'Errors', filterCapabilities: ['range'], description: 'Client errors split into app bugs vs resource/extension noise.' },
       { href: '/admin/data-audit', label: 'Data audit', filterCapabilities: [] },
       { href: '/admin/insights/reconciliation', label: 'Reconciliation', filterCapabilities: ['range'] },
     ],
