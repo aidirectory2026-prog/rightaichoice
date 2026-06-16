@@ -56,6 +56,41 @@ function loadCoverage(): Coverage | null {
   }
 }
 
+function ClarityPulse({ count24h, lastAt }: { count24h: number; lastAt: string | null }) {
+  const ok = count24h > 0
+  const ago = lastAt
+    ? (() => {
+        const m = Math.floor((Date.now() - new Date(lastAt).getTime()) / 60000)
+        if (m < 60) return `${m}m ago`
+        const h = Math.floor(m / 60)
+        return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`
+      })()
+    : null
+  return (
+    <div
+      className={`mb-6 flex flex-wrap items-center gap-2 rounded-lg border px-4 py-2.5 text-sm ${
+        ok ? 'border-emerald-800 bg-emerald-950/30' : 'border-amber-800 bg-amber-950/30'
+      }`}
+    >
+      <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${ok ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+      <span className="font-semibold text-zinc-200">Clarity replay:</span>
+      {ok ? (
+        <span className="text-emerald-300">
+          capturing — {count24h.toLocaleString()} session{count24h === 1 ? '' : 's'} tagged in the last 24h
+          {ago ? `, last ${ago}` : ''}
+        </span>
+      ) : (
+        <span className="text-amber-300">
+          no recordings in the last 24h
+          {lastAt
+            ? ` (last ever ${ago})`
+            : ' — none ever captured; confirm the CSP fix deployed and the Clarity tag is loading'}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default async function TrackingHealthPage() {
   const db = getAdminClient()
 
@@ -66,6 +101,27 @@ export default async function TrackingHealthPage() {
     .order('run_at', { ascending: false })
     .limit(1200)
   const all = (data as HealthRow[]) ?? []
+
+  // ── Clarity replay capture pulse ─────────────────────────────────
+  // Clarity was CSP-blocked until 2026-06-16 and recorded nothing. This is an
+  // at-a-glance "is replay actually capturing?" check: count events carrying a
+  // clarity_session_id in the last 24h + when the most recent one landed.
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const [{ count: clarityCount }, { data: lastClarityRow }] = await Promise.all([
+    db
+      .from('user_events')
+      .select('*', { count: 'exact', head: true })
+      .not('clarity_session_id', 'is', null)
+      .gte('created_at', since24h),
+    db
+      .from('user_events')
+      .select('created_at')
+      .not('clarity_session_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1),
+  ])
+  const clarity24h = clarityCount ?? 0
+  const lastClarityAt = (lastClarityRow as { created_at: string }[] | null)?.[0]?.created_at ?? null
 
   // Group into batches by run_at (preserving newest-first order).
   const byRun = new Map<string, HealthRow[]>()
@@ -130,6 +186,8 @@ export default async function TrackingHealthPage() {
         <span className="text-red-400">fail</span> turns it red, a{' '}
         <span className="text-amber-400">warn</span> amber. tracking-watchdog (8AM UTC) emails on fail.
       </p>
+
+      <ClarityPulse count24h={clarity24h} lastAt={lastClarityAt} />
 
       {/* ── 1. Latest cycle ───────────────────────────────────────────── */}
       <SectionHeading
