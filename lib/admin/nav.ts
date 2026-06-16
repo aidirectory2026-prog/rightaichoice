@@ -90,7 +90,13 @@ export const ADMIN_NAV: AdminNavSection[] = [
       {
         href: '/admin/insights/funnel',
         label: 'Funnels',
-        description: 'Plan acquisition + plan journey funnels, fully windowed and filterable.',
+        description: 'Plan acquisition + plan completion funnels — unique people, sequential.',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
+      {
+        href: '/admin/insights/searches',
+        label: 'Searches',
+        description: 'Which user searched what, when, and whether it returned results (zero-result spotting).',
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
     ],
@@ -102,6 +108,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
         href: '/admin/plan-conversion',
         label: 'Plan funnel',
         description: 'CTA funnel + surfaces + typed-goal stream (intents honor range only).',
+        filterCapabilities: ALL_FILTER_CAPABILITIES,
+      },
+      {
+        href: '/admin/insights/plan-dropoff',
+        label: 'Plan drop-off',
+        description: 'Every visitor who started a plan, the furthest step they reached, and who dropped.',
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
       { href: '/admin/onboarding', label: 'Onboarding', filterCapabilities: [] },
