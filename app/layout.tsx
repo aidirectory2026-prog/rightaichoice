@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
 import { Inter, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
-import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
@@ -92,48 +90,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Phase 9 perf (2026-05-29): skip the Supabase auth + profile round-trips
-  // for anonymous traffic. 99% of visitors are signed-out — paying ~150ms per
-  // page render for a getUser() that returns null is wasted Tokyo round-trip.
-  // Only resolve the user when an sb-*-auth-token cookie is actually present.
-  const cookieStore = await cookies();
-  // The Supabase session cookie is `sb-<ref>-auth-token`, but @supabase/ssr
-  // CHUNKS large sessions into `…-auth-token.0`, `…-auth-token.1`, etc. OAuth
-  // sessions carry provider tokens (+ offline refresh token) and routinely
-  // exceed the 3180-byte chunk threshold, so a plain `endsWith("-auth-token")`
-  // misses them → the user looks logged-out right after signing in. Match the
-  // base name and any numeric chunk suffix (but not `-auth-token-code-verifier`).
-  const hasSessionCookie = cookieStore
-    .getAll()
-    .some((c) => c.name.startsWith("sb-") && /-auth-token(\.\d+)?$/.test(c.name));
-
-  let user: { id: string; email: string | null } | null = null;
-  let profile: {
-    id: string;
-    username: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    is_admin: boolean;
-  } | null = null;
-
-  if (hasSessionCookie) {
-    const supabase = await createClient();
-    const {
-      data: { user: resolved },
-    } = await supabase.auth.getUser();
-    user = resolved
-      ? { id: resolved.id, email: resolved.email ?? null }
-      : null;
-    if (user) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url, is_admin")
-        .eq("id", user.id)
-        .single();
-      profile = data as typeof profile;
-    }
-  }
-
+  // Caching refactor (fable-5, 2026-06-16): the root layout no longer reads
+  // cookies / resolves the user server-side. Reading cookies here forced EVERY
+  // route to render dynamically (no edge cache) — the cause of the 1-2s
+  // TTFB-everywhere + cold-render spikes. Auth is now resolved CLIENT-SIDE in
+  // AuthProvider, so anonymous content pages (compare, categories, best, home,
+  // blog…) statically cache/ISR at the edge. Auth-gated route groups (/admin
+  // has its own getUser+redirect; /dashboard, /account, /plan resolve the user
+  // in their own server code) keep their own protection and stay dynamic.
   return (
     <html
       lang="en"
@@ -164,10 +128,7 @@ export default async function RootLayout({
           <GlobalInteractionTracker />
           <FormAnalyticsTracker />
           <WebVitalsTracker />
-          <AuthProvider
-            user={user ? { id: user.id, email: user.email ?? "" } : null}
-            profile={profile}
-          >
+          <AuthProvider>
             <CompareProvider>
               <OAuthContinueBanner />
               {children}

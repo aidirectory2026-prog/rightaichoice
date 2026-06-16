@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { analytics } from '@/lib/analytics'
 import { registerAnonSuperProps } from './mixpanel-provider'
 import { linkPlanIntentsToUser, readPendingIntent, clearPendingIntent, persistPlanIntent } from '@/lib/cta/persist-intent'
@@ -26,14 +27,58 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({ user: null, profile: null })
 
 export function AuthProvider({
-  user,
-  profile,
+  initialUser = null,
+  initialProfile = null,
   children,
 }: {
-  user: User
-  profile: Profile
+  // Caching refactor (fable-5, 2026-06-16): auth is now resolved CLIENT-SIDE so
+  // the root layout no longer reads cookies — that's what lets anonymous
+  // content pages be statically cached/ISR'd at the edge. The server renders
+  // the neutral (logged-out) shell; this provider confirms the real session on
+  // mount and updates the nav. `initial*` props stay optional for any caller
+  // that still wants to seed SSR state (none do today).
+  initialUser?: User
+  initialProfile?: Profile
   children: React.ReactNode
 }) {
+  const [user, setUser] = useState<User>(initialUser)
+  const [profile, setProfile] = useState<Profile>(initialProfile)
+
+  // Resolve the real session on the client, and keep it in sync with
+  // login/logout/token-refresh. Runs once; never throws into render.
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+
+    async function resolve(uid: string | null, email: string | null) {
+      if (!uid) {
+        if (active) { setUser(null); setProfile(null) }
+        return
+      }
+      if (active) setUser({ id: uid, email: email ?? '' })
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, is_admin')
+        .eq('id', uid)
+        .single()
+      if (active) setProfile((data as Profile) ?? null)
+    }
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => resolve(data.user?.id ?? null, data.user?.email ?? null))
+      .catch(() => { if (active) { setUser(null); setProfile(null) } })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      void resolve(session?.user?.id ?? null, session?.user?.email ?? null)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   // Phase 8.g.1 fix (2026-05-20) — previously this effect called
   // analytics.reset() on EVERY render where user was null, including the
   // first anonymous mount. Two consequences:

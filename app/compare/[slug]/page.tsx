@@ -49,10 +49,12 @@ type EditorialComparison = {
 
 type Props = { params: Promise<{ slug: string }> }
 
-// Root layout reads auth cookies, so every page is implicitly dynamic.
-// Force this route dynamic to match — keeping generateStaticParams would
-// trigger DYNAMIC_SERVER_USAGE at request time.
-export const dynamic = 'force-dynamic'
+// Caching refactor (fable-5, 2026-06-16): the root layout no longer reads auth
+// cookies, so this route is no longer forced dynamic. Compare pages have NO
+// per-user/server-cookie reads → ISR-cache them at the edge (first hit renders
+// + caches, refreshed hourly; the freshness cascade revalidates on data change).
+// This is the #2 traffic surface — the largest single edge-caching win.
+export const revalidate = 3600
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
