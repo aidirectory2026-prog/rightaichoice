@@ -561,6 +561,18 @@ function fmtDevice(d: string | null): string {
   return d
 }
 
+// Referrer host for the raw table — null/empty/"direct" all collapse to the
+// canonical "(direct)" label used everywhere else (geo, user-360), so the
+// column reads consistently instead of showing blanks for direct traffic.
+function refLabel(ref: string | null): string {
+  if (!ref || ref === 'direct') return '(direct)'
+  try {
+    return new URL(ref).hostname.replace(/^www\./, '')
+  } catch {
+    return ref
+  }
+}
+
 function RawTable({ rows }: { rows: RawEventRow[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800">
@@ -570,6 +582,7 @@ function RawTable({ rows }: { rows: RawEventRow[] }) {
             <th className="px-3 py-2">Time</th>
             <th className="px-3 py-2">distinct_id</th>
             <th className="px-3 py-2">Path</th>
+            <th className="px-3 py-2">Referrer</th>
             <th className="px-3 py-2">Device</th>
             <th className="px-3 py-2">Auth</th>
             <th className="px-3 py-2">Src</th>
@@ -580,7 +593,7 @@ function RawTable({ rows }: { rows: RawEventRow[] }) {
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-3 py-8 text-center text-zinc-500">No rows match the filters.</td>
+              <td colSpan={9} className="px-3 py-8 text-center text-zinc-500">No rows match the filters.</td>
             </tr>
           )}
           {rows.map((r) => (
@@ -599,6 +612,12 @@ function RawTable({ rows }: { rows: RawEventRow[] }) {
               </td>
               <td className="px-3 py-2 align-top text-zinc-400 max-w-[200px] truncate" title={r.page_path ?? ''}>
                 {r.page_path ?? '—'}
+              </td>
+              <td
+                className={`px-3 py-2 align-top max-w-[160px] truncate ${r.referrer && r.referrer !== 'direct' ? 'text-zinc-300' : 'text-zinc-600'}`}
+                title={r.referrer ?? '(direct)'}
+              >
+                {refLabel(r.referrer)}
               </td>
               <td className="px-3 py-2 align-top text-center">{fmtDevice(r.device_type)}</td>
               <td className="px-3 py-2 align-top text-zinc-400">{r.auth_state ?? '—'}</td>
