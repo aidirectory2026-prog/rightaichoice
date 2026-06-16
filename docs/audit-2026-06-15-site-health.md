@@ -56,11 +56,15 @@ Note: tool/compare page reads use the **service-role admin client** (bypasses RL
 - Diagnosis: **indexed but buried** — an authority/ranking problem (new domain, no backlinks), NOT an indexation or crawl problem. The dead/crashed pages above were actively *hurting* this (500s/404s signal low quality to Google).
 - 0 rows in `ai_citations` and only ~20 AI-referrer visits/30d → the AEO/AI-search opportunity is wide open (separate strategy track).
 
-## 6. What I could NOT access (need operator unblock)
+## 6. Vercel (CLI access — confirmed 2026-06-16)
 
-- **Vercel** (build warnings, function error logs, firewall events, Speed Insights / Core Web Vitals): no CLI/auth in this environment. → Authenticate the Vercel MCP, or paste the specific warnings.
-- **GSC UI warnings** (Coverage "why pages aren't indexed", Core Web Vitals report, Enhancements, Manual actions): not in our stored data. → Paste/screenshot the GSC "Pages" → "Why pages aren't indexed" list and the Core Web Vitals report.
-- **Bing Webmaster UI** (SEO analyzer warnings, crawl info): → paste/screenshot. (We DO control Bing submission via the submit-urls-bing cron + IndexNow.)
+- **Builds are healthy:** all recent deployments `● Ready`, ~1min build, zero failed builds. Only warning in build logs: a `@sentry/nextjs` `disableLogger` deprecation (cosmetic — rename to `webpack.treeshake.removeDebugLogging`).
+- **Build-level proof of the §2 caching problem:** the route table shows **152 routes `ƒ` (dynamic / server-rendered on demand) vs only 11 `○` (static).** Every content page — `/`, `/tools/[slug]`, `/compare/[slug]`, `/categories/[slug]`, `/best/[slug]`, `/for/[slug]`, `/stacks/[slug]`, `/blog/[slug]` — is `ƒ`. Nothing is prerendered/edge-cached. This is the definitive confirmation that the whole site server-renders on every request → the 1-2s baseline + cold-render spikes. **Fixing §2 flips these to static/ISR and is the top performance win.**
+
+## 7. Still need operator unblock
+
+- **GSC UI warnings** (Coverage "why pages aren't indexed", Core Web Vitals report, Enhancements, Manual actions): not in our stored data. → Paste/screenshot the GSC "Pages → Why pages aren't indexed" list + the Core Web Vitals report.
+- **Bing Webmaster UI** (SEO analyzer warnings, crawl info): → paste/screenshot. (We control Bing submission via the submit-urls-bing cron + IndexNow.)
 
 ---
 
