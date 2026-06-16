@@ -11,6 +11,7 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { getMixpanelDistinctId } from '@/lib/analytics'
 
 const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID
 const EXCLUDED_PATHS = ['/admin', '/api', '/auth']
@@ -49,33 +50,63 @@ function loadClarity(projectId: string) {
   loaded = true
 }
 
-// Phase 8.g.10 — once Clarity loads, ask for the session ID and forward
-// it to Mixpanel as a super-prop so EVERY event carries clarity_session_id.
-// /api/track-mirror then lifts it from properties to its own column, so
-// the per-user timeline page can deep-link to the Clarity replay.
-function bridgeClaritySessionToMixpanel() {
+// Clarity's user (_clck) and session (_clsk) cookies each pack several fields
+// delimited by "^" (newer) or "|" (older); the FIRST segment is the id we need
+// to rebuild a player deep-link. Read them in the visitor's own browser — the
+// admin can never see another user's cookies, so reconstruction must happen at
+// capture time.
+function clarityCookieId(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]+)'))
+  if (!m) return null
+  try {
+    const value = decodeURIComponent(m[1])
+    const parts = value.includes('^') ? value.split('^') : value.split('|')
+    return parts[0] || null
+  } catch {
+    return null
+  }
+}
+
+// Once Clarity loads: (1) identify the session with OUR distinct_id (+ optional
+// friendly name) via the official Identify API, so every recording is filterable
+// by the same distinct_id the admin user-360 page is keyed on; (2) forward the
+// session id AND a reconstructed player deep-link
+// (clarity.microsoft.com/player/<project>/<userId>/<sessionId>) to Mixpanel as
+// super-props, so /api/track-mirror persists them and the admin can one-click the
+// exact replay. The player URL needs the Clarity USER id (from _clck) — which we
+// never captured before, the reason the admin link could only reach the dashboard.
+function bridgeClarity(projectId: string, distinctId: string | null, friendlyName: string | null) {
   if (typeof window === 'undefined') return
   const w = window as unknown as Record<string, unknown>
-  const clarity = w['clarity'] as ((cmd: string, key: string, cb: (val: string) => void) => void) | undefined
+  const clarity = w['clarity'] as ((...args: unknown[]) => void) | undefined
   if (typeof clarity !== 'function') return
   try {
+    if (distinctId) clarity('identify', distinctId, undefined, undefined, friendlyName ?? undefined)
+  } catch { /* identify is best-effort */ }
+  try {
     clarity('get', 'session', (sessionId: string) => {
-      if (!sessionId) return
+      const clarityUserId = clarityCookieId('_clck')
+      const claritySessionId = clarityCookieId('_clsk') || sessionId
+      const playbackUrl =
+        clarityUserId && claritySessionId
+          ? `https://clarity.microsoft.com/player/${projectId}/${clarityUserId}/${claritySessionId}`
+          : null
+      const props: Record<string, string> = {}
+      if (sessionId) props.clarity_session_id = sessionId
+      if (playbackUrl) props.clarity_playback_url = playbackUrl
+      if (Object.keys(props).length === 0) return
       // Lazy-import mixpanel-browser so non-Mixpanel pages don't load it.
       import('mixpanel-browser').then(({ default: mp }) => {
         try {
-          mp.register({ clarity_session_id: sessionId })
+          mp.register(props)
         } catch {
-          // Mixpanel not initialised yet — try once on next tick.
-          setTimeout(() => {
-            try { mp.register({ clarity_session_id: sessionId }) } catch { /* swallow */ }
-          }, 500)
+          setTimeout(() => { try { mp.register(props) } catch { /* swallow */ } }, 500)
         }
       }).catch(() => { /* mixpanel-browser unavailable, ignore */ })
     })
   } catch {
-    // Clarity not fully loaded yet — try once more after a delay.
-    setTimeout(bridgeClaritySessionToMixpanel, 1000)
+    setTimeout(() => bridgeClarity(projectId, distinctId, friendlyName), 1000)
   }
 }
 
@@ -86,10 +117,15 @@ export function ClarityProvider() {
     if (!CLARITY_ID) return
     if (EXCLUDED_PATHS.some((p) => pathname.startsWith(p))) return
     loadClarity(CLARITY_ID)
-    // Wait for Clarity's <script> to finish loading before asking for the
-    // session ID. The 2s delay is generous — Clarity usually finishes
-    // bootstrapping in ~800ms even on slow connections.
-    const t = setTimeout(bridgeClaritySessionToMixpanel, 2000)
+    const projectId = CLARITY_ID
+    // Wait for Clarity's <script> to finish loading before identifying + asking
+    // for the session ID. The 2s delay is generous — Clarity usually finishes
+    // bootstrapping in ~800ms even on slow connections. distinct_id is our own
+    // cross-tab id (the same one the admin user-360 page is keyed on).
+    const t = setTimeout(
+      () => bridgeClarity(projectId, getMixpanelDistinctId(), null),
+      2000,
+    )
     return () => clearTimeout(t)
   }, [pathname])
 

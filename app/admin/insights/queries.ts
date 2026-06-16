@@ -889,6 +889,10 @@ export interface UserProfileV2 {
   top_countries: Array<{ value: string; events: number }>
   top_devices: Array<{ value: string; events: number }>
   last_clarity_session_id: string | null
+  // Reconstructed Clarity player deep-link for the user's most recent recorded
+  // session (clarity.microsoft.com/player/<project>/<userId>/<sessionId>). Null
+  // until Clarity records a session for them post-deploy.
+  last_clarity_playback_url: string | null
 }
 
 export async function getUserProfileV2(distinctId: string): Promise<UserProfileV2 | null> {

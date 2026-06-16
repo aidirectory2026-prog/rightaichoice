@@ -378,6 +378,9 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
       // ClarityProvider once the Clarity SDK boots. Folded into properties
       // below so /api/track-mirror can lift it to its own column.
       clarity_session_id: anyMp.get_property?.('clarity_session_id'),
+      // Reconstructed Clarity player deep-link (registered by ClarityProvider).
+      // Rides in properties so the admin user-360 page can one-click the replay.
+      clarity_playback_url: anyMp.get_property?.('clarity_playback_url'),
     }
   } catch {
     return null
@@ -387,6 +390,9 @@ async function mirrorContext(eventName: string, properties?: EventProperties): P
   const mergedProps: Record<string, unknown> = { ...(properties ?? {}) }
   if (typeof propsSnapshot.clarity_session_id === 'string' && propsSnapshot.clarity_session_id.length > 0) {
     mergedProps.clarity_session_id = propsSnapshot.clarity_session_id
+  }
+  if (typeof propsSnapshot.clarity_playback_url === 'string' && propsSnapshot.clarity_playback_url.length > 0) {
+    mergedProps.clarity_playback_url = propsSnapshot.clarity_playback_url
   }
   // Attribution-fix (2026-06-10) — session id + automation signal travel in
   // properties (JSONB) so no DDL is needed. navigator.webdriver=true is the

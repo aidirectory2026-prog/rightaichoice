@@ -99,9 +99,16 @@ function HeaderStat({ label, value, title }: { label: string; value: string; tit
 
 function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId: string }) {
   const mixpanelUrl = `https://eu.mixpanel.com/project/${MIXPANEL_PROJECT_ID}/view/${MIXPANEL_VIEW_ID}/app/users#user/${encodeURIComponent(distinctId)}`
-  const clarityUrl = CLARITY_PROJECT_ID
-    ? `https://clarity.microsoft.com/projects/view/${CLARITY_PROJECT_ID}/dashboard?date_d=Last%2030%20days`
-    : null
+  // Deep-link straight to this user's most recent recording when we have the
+  // reconstructed player URL (player/<project>/<userId>/<sessionId>); otherwise
+  // fall back to the project dashboard. Null until Clarity records a session for
+  // them (Clarity was CSP-blocked until 2026-06-16, so nothing exists pre-deploy).
+  const clarityDeepLink = p?.last_clarity_playback_url ?? null
+  const clarityUrl =
+    clarityDeepLink ??
+    (CLARITY_PROJECT_ID
+      ? `https://clarity.microsoft.com/projects/view/${CLARITY_PROJECT_ID}/dashboard?date_d=Last%2030%20days`
+      : null)
   const firstTouch = p
     ? [
         refHost(p.first_touch_referrer) && `from ${refHost(p.first_touch_referrer)}`,
@@ -162,13 +169,13 @@ function IdentityHeader({ p, distinctId }: { p: UserProfileV2 | null; distinctId
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 rounded border border-orange-900/70 bg-orange-950/30 px-2 py-1 text-xs text-orange-300 hover:text-orange-200"
               title={
-                p?.last_clarity_session_id
-                  ? `Opens the Clarity dashboard. Filter recordings manually with session id ${p.last_clarity_session_id} — Clarity has no code-verifiable per-session deep link (the player URL needs a Clarity user id we don't capture).`
-                  : 'Opens the Clarity dashboard. No stored Clarity session id for this user yet (the capture bridge has never returned one), so no per-session link is possible.'
+                clarityDeepLink
+                  ? 'Opens this user’s most recent Clarity recording directly (reconstructed player URL). You must be signed in to Clarity with project access.'
+                  : 'No Clarity recording for this user yet. Clarity was CSP-blocked until 2026-06-16, so recordings only exist for sessions after that deploy. Opens the project dashboard; filter by this user’s distinct_id (set via the Identify API) to find them.'
               }
             >
               <PlayCircle className="h-3 w-3" />
-              Clarity
+              {clarityDeepLink ? 'Watch replay' : 'Clarity'}
               <ExternalLink className="h-3 w-3" />
             </a>
           )}
