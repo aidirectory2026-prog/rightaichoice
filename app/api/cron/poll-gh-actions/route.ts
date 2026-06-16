@@ -27,7 +27,17 @@ export const maxDuration = 60
 
 const REPO_OWNER = 'aidirectory2026-prog'
 const REPO_NAME = 'rightaichoice'
-const WORKFLOWS = ['freshness-batch.yml', 'cron-pipelines.yml'] as const
+// H7 (Cowork QA): poll ALL workflows, not just two. nightly-verify,
+// retry-failed-tools, sync-mentions and tracking-watchdog previously had no
+// failure visibility in pipeline_runs / alerting.
+const WORKFLOWS = [
+  'freshness-batch.yml',
+  'cron-pipelines.yml',
+  'nightly-verify.yml',
+  'retry-failed-tools.yml',
+  'sync-mentions.yml',
+  'tracking-watchdog.yml',
+] as const
 const PER_WORKFLOW_LIMIT = 50
 
 type GhRun = {
