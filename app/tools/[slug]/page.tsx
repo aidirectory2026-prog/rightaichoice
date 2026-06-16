@@ -65,7 +65,7 @@ import { RecordRecentView } from '@/components/tools/record-recent-view'
 import { StickyToc } from '@/components/tools/sticky-toc'
 import { ViewTracker } from '@/components/analytics/view-tracker'
 import { LatestUpdatesSection } from '@/components/tools/latest-updates-section'
-import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo/json-ld'
+import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { buildToolPageMeta } from '@/lib/seo/metadata'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
 import { AuthorByline } from '@/components/shared/author-byline'
@@ -277,7 +277,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
     applicationCategory: categories[0]?.name ?? 'AIApplication',
     operatingSystem: (tool.platforms ?? []).join(', ') || 'Web',
     offers,
-    ...(tool.avg_rating > 0 && {
+    // H5 (Cowork QA): only emit AggregateRating when there is at least one real
+    // review AND a valid rating. A seed rating with reviewCount:0 is invalid
+    // structured data and makes Google suppress all rich results on the page.
+    ...(tool.avg_rating >= 1 && tool.review_count > 0 && {
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: Number(tool.avg_rating).toFixed(1),
@@ -303,9 +306,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
           via /api/views/tool/[id] on mount. Server dedups per (IP+id)
           in a 30-min sliding window via cookie. */}
       <ViewTracker entityType="tool" entityId={tool.id} />
+      {/* H1 (Cowork QA): jsonLdScriptProps applies safeJsonLd escaping so a
+          tool description / FAQ answer containing </script> can't break out. */}
       <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+        {...jsonLdScriptProps([
           jsonLd,
           breadcrumbJsonLd([
             { name: 'Home', url: 'https://rightaichoice.com' },
@@ -313,7 +317,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             { name: tool.name, url: `https://rightaichoice.com/tools/${slug}` },
           ]),
           ...(faqs.length > 0 ? [faqPageJsonLd(faqs.map((f) => ({ question: f.question, answer: f.answer })))] : []),
-        ]) }}
+        ])}
       />
 
       <main className="flex-1 pb-20 lg:pb-0">

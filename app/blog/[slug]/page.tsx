@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { getAllPosts, getPostBySlug } from '@/lib/data/blog'
 import { mdxComponents } from '@/components/blog/mdx-components'
-import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { LastUpdated } from '@/components/seo/last-updated'
 import { ReviewedByOurTeam } from '@/components/seo/reviewed-by-our-team'
 import { getTitleOverride } from '@/lib/seo/title-overrides'
@@ -118,12 +118,8 @@ export default async function BlogPostPage({ params }: PageProps) {
   return (
     <>
       <Navbar />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLdBlocks),
-        }}
-      />
+      {/* H1 (Cowork QA): escape JSON-LD via jsonLdScriptProps. */}
+      <script {...jsonLdScriptProps(jsonLdBlocks)} />
 
       <main className="flex-1">
         <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
