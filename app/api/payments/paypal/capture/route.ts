@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
-import { capturePaypalOrder } from '@/lib/payments/paypal'
+import { capturePaypalOrder, paypalEnabled } from '@/lib/payments/paypal'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 
@@ -16,6 +16,9 @@ function getIp(req: Request): string | undefined {
  * paid scan credit. Idempotent via grant_sentiment_credit (keyed on capture id).
  */
 export async function POST(req: NextRequest) {
+  // C2 (Cowork QA): PayPal disabled — refuse before any work (this is the route that
+  // granted credit without validating the paid amount).
+  if (!paypalEnabled()) return NextResponse.json({ error: 'paypal_disabled' }, { status: 410 })
   const rl = await rateLimit('pp-capture', req, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 

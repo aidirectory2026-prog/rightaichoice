@@ -3,7 +3,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { pricingForRequest } from '@/lib/geo/currency'
-import { createPaypalOrder, paypalConfigured } from '@/lib/payments/paypal'
+import { createPaypalOrder, paypalConfigured, paypalEnabled } from '@/lib/payments/paypal'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +14,8 @@ function getIp(req: Request): string | undefined {
 
 /** POST /api/payments/paypal/order — create a $1 order for one sentiment scan. */
 export async function POST(req: NextRequest) {
+  // C2 (Cowork QA): PayPal disabled — refuse before any work, even if the UI is hit directly.
+  if (!paypalEnabled()) return NextResponse.json({ error: 'paypal_disabled' }, { status: 410 })
   const rl = await rateLimit('pp-order', req, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
   if (!paypalConfigured()) return NextResponse.json({ error: 'paypal_unconfigured' }, { status: 503 })
