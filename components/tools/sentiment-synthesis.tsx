@@ -1,5 +1,5 @@
 import { ThumbsUp, ThumbsDown, TrendingUp, BookOpen, AlertTriangle, Search } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { sourceLabel } from '@/lib/scrapers/source-labels'
 
 // Phase 3 (2026-05-05): replaces the previous SentimentBlock + its client
@@ -35,7 +35,10 @@ export async function SentimentSynthesis({
   toolId: string
   toolName: string
 }) {
-  const supabase = await createClient()
+  // Caching Layer 3 (fable-5): use the cookie-free admin client so this server
+  // component (rendered on the now-statically-cached tool page) doesn't read
+  // cookies. The data is public per-tool sentiment, not user-scoped.
+  const supabase = getAdminClient()
 
   const { data: cached } = (await supabase
     .from('tool_sentiment_cache')

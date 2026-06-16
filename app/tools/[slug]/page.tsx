@@ -54,11 +54,9 @@ import { MigrationPaths } from '@/components/tools/migration-paths'
 import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
 import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
-import { getToolBySlug, getAlternativeTools, getTopInCategory, isToolSaved, getIntegrationLinks } from '@/lib/data/tools'
+import { getToolBySlug, getAlternativeTools, getTopInCategory, getIntegrationLinks } from '@/lib/data/tools'
 import { getEditorialComparisonsForTool } from '@/lib/data/comparisons'
 import { getFaqsForTool } from '@/lib/data/faqs'
-import { hasUserReviewed } from '@/lib/data/reviews'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { pricingLabel, pricingColor, formatNumber, timeAgo } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/share-button'
@@ -74,7 +72,12 @@ import { AuthorByline } from '@/components/shared/author-byline'
 import { findUseCaseLink } from '@/lib/use-case-link'
 import { getRelatedBestPages } from '@/lib/seo/best-page-links'
 
-// Revalidate tool pages every 5 minutes (ISR)
+// Caching Layer 3 (fable-5, 2026-06-16): tool pages no longer read cookies
+// (per-user saved/reviewed moved client-side via /api/me/tool-state), verified
+// with a `dynamic='error'` build. Opt into static ISR so the #1 traffic
+// surface serves from the edge instead of rendering 1-2s per request. The
+// freshness cascade's revalidatePath(/tools/<slug>) refreshes on data change.
+export const dynamic = 'force-static'
 export const revalidate = 300
 
 type PageProps = {
@@ -168,15 +171,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
     limit: 4,
   })
 
-  // Get alternatives + check saved status in parallel
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Fetch parallel data — community list/count fetches removed in Phase 1
-  // (the heavy Reviews/Questions/Discussions/Workflows blocks were replaced
-  // by the lightweight QuickFeedback strip). hasUserReviewed is kept so the
-  // strip hides the "Leave a review" CTA for users who already reviewed.
-  const [alternatives, categorySiblings, saved, alreadyReviewed, faqs, integrationLinks, editorialCompares] = await Promise.all([
+  // Caching Layer 3 (fable-5, 2026-06-16): this page is now statically
+  // edge-cached, so it no longer reads cookies / resolves the user
+  // server-side. The two per-user bits it used to compute here (saved,
+  // alreadyReviewed) are resolved CLIENT-SIDE by SaveToolButton + QuickFeedback
+  // via /api/me/tool-state/[toolId]. Everything below is tool-scoped (cacheable).
+  const [alternatives, categorySiblings, faqs, integrationLinks, editorialCompares] = await Promise.all([
     // Phase 7 Step 50 (BUG-015): pass slug + tag slugs + tagline so the
     // ranker can apply the general-LLM whitelist (Claude, ChatGPT, Gemini …)
     // and the IDENTITY_TAGS gate for image/video/voice tools.
@@ -190,8 +190,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
     // when the strict alternatives ranker returns nothing (was the case
     // for 934 of 1,178 pages — the section disappeared entirely).
     getTopInCategory(categoryIds, tool.id, 4).catch(() => [] as Awaited<ReturnType<typeof getTopInCategory>>),
-    user ? isToolSaved(tool.id, user.id).catch(() => false) : Promise.resolve(false),
-    user ? hasUserReviewed(tool.id, user.id).catch(() => false) : Promise.resolve(false),
     // Phase 4 SOP populates tool.faqs_long_tail (jsonb on tools) which
     // supersedes the legacy tool_faqs table. We prefer the new column when
     // present and fall back to getFaqsForTool only for tools the SOP
@@ -419,7 +417,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 }}
                 size="md"
               />
-              <SaveToolButton toolId={tool.id} toolName={tool.name} toolSlug={tool.slug} initialSaved={saved} />
+              <SaveToolButton toolId={tool.id} toolName={tool.name} toolSlug={tool.slug} />
               <ShareButton
                 url={`/tools/${tool.slug}`}
                 title={`${tool.name} — ${tool.tagline}`}
@@ -1064,8 +1062,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 toolId={tool.id}
                 toolSlug={tool.slug}
                 toolName={tool.name}
-                isLoggedIn={!!user}
-                alreadyReviewed={alreadyReviewed}
               />
             </div>
 
@@ -1311,7 +1307,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
           logo_url: tool.logo_url,
           website_url: tool.website_url,
         }}
-        initialSaved={saved}
       />
 
       <Footer />

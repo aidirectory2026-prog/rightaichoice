@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { Bookmark } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { toggleSave } from '@/actions/tools'
@@ -11,17 +11,36 @@ export function SaveToolButton({
   toolId,
   toolName,
   toolSlug,
-  initialSaved,
+  initialSaved = false,
 }: {
   toolId: string
   toolName?: string
   toolSlug?: string
-  initialSaved: boolean
+  // Caching Layer 3 (fable-5): now optional. The tool page is statically
+  // edge-cached and no longer resolves per-user saved-state server-side, so
+  // this component fetches it on mount when the visitor is signed in.
+  initialSaved?: boolean
 }) {
   const { user } = useAuth()
   const router = useRouter()
   const [saved, setSaved] = useState(initialSaved)
   const [isPending, startTransition] = useTransition()
+
+  // Resolve the real saved-state once auth is known (the cached page renders
+  // the signed-out default). Anonymous users stay false. Aborts if unmounted.
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    fetch(`/api/me/tool-state/${toolId}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d && typeof d.saved === 'boolean') setSaved(d.saved)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [user, toolId])
 
   function handleClick() {
     if (!user) {

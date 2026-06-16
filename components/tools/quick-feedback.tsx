@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageSquare, Star, X } from 'lucide-react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { QuestionForm } from '@/components/qa/question-form'
 
@@ -12,8 +13,6 @@ type QuickFeedbackProps = {
   toolId: string
   toolSlug: string
   toolName: string
-  isLoggedIn: boolean
-  alreadyReviewed: boolean
 }
 
 // Lightweight, single-section replacement for the old Reviews / Questions /
@@ -29,10 +28,29 @@ export function QuickFeedback({
   toolId,
   toolSlug,
   toolName,
-  isLoggedIn,
-  alreadyReviewed,
 }: QuickFeedbackProps) {
+  // Caching Layer 3 (fable-5): the tool page is statically edge-cached and no
+  // longer resolves per-user state server-side. Logged-in status comes from the
+  // client auth context; already-reviewed is fetched on mount so the "Leave a
+  // review" CTA still hides for users who already reviewed.
+  const { user } = useAuth()
+  const isLoggedIn = !!user
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [mode, setMode] = useState<Mode>('closed')
+
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    fetch(`/api/me/tool-state/${toolId}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d && typeof d.reviewed === 'boolean') setAlreadyReviewed(d.reviewed)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [user, toolId])
 
   const loginHref = `/login?next=${encodeURIComponent(`/tools/${toolSlug}#feedback`)}`
 
