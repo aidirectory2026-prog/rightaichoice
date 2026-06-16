@@ -127,5 +127,11 @@ const nextConfig: NextConfig = {
 
 export default withSentryConfig(nextConfig, {
   silent: true,
-  disableLogger: true,
+  // Fable-5 audit: `disableLogger` is deprecated in @sentry/nextjs 10 →
+  // moved to webpack.treeshake.removeDebugLogging (silences the build warning).
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });
