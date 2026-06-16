@@ -15,11 +15,17 @@ const securityHeaders = [
       // checkout scripts cross-origin and open their flows in iframes; without
       // these the script tag is CSP-blocked → "Could not load the payment
       // widget." script/connect/frame/img all need the provider origins.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com https://www.paypal.com https://www.paypalobjects.com",
+      // Microsoft Clarity (session replay) loads its tag from www.clarity.ms and
+      // streams recordings/pixels back over *.clarity.ms. It was silently
+      // CSP-blocked on every page (script-src had no clarity.ms) — Clarity never
+      // ran for anyone, which is why it produced ~all of the historical
+      // "Failed to load script" error noise. Whitelisting it here is what
+      // actually revives replay (the earlier fix only stopped LOGGING the block).
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com https://www.paypal.com https://www.paypalobjects.com https://www.clarity.ms https://*.clarity.ms",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://www.google.com https://*.gstatic.com https://cdn.rightaichoice.com https://cdn.futurepedia.io https://img.youtube.com https://i.ytimg.com https://*.razorpay.com https://*.paypal.com https://*.paypalobjects.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://www.google.com https://*.gstatic.com https://cdn.rightaichoice.com https://cdn.futurepedia.io https://img.youtube.com https://i.ytimg.com https://*.razorpay.com https://*.paypal.com https://*.paypalobjects.com https://*.clarity.ms",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.mixpanel.com https://api-js.mixpanel.com https://api-eu.mixpanel.com https://*.sentry.io https://*.ingest.sentry.io https://*.razorpay.com https://*.paypal.com",
+      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.mixpanel.com https://api-js.mixpanel.com https://api-eu.mixpanel.com https://*.sentry.io https://*.ingest.sentry.io https://*.razorpay.com https://*.paypal.com https://*.clarity.ms",
       "frame-src 'self' https://*.razorpay.com https://*.paypal.com",
       "frame-ancestors 'none'",
     ].join('; '),
