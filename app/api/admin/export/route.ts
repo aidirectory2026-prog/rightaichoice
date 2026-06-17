@@ -117,6 +117,29 @@ export async function GET(req: NextRequest) {
       const rows = (profileMatches ?? []) as Array<Record<string, unknown>>
       return csvResponse(rows, `tool_audience_${slug}_${today}.csv`)
     }
+    // Phase 11 — export the same data the new admin tables show.
+    case 'searches': {
+      const days = Math.max(1, Math.min(365, Number(url.searchParams.get('days') ?? '30')))
+      const cutoff = new Date(Date.now() - days * 86_400_000).toISOString()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (db as any).rpc('insights_search_log', { p_cutoff: cutoff, p_end: null, p_include_bots: false, p_limit: 5000 })
+      return csvResponse((data ?? []) as Array<Record<string, unknown>>, `searches_${days}d_${today}.csv`)
+    }
+    case 'plan_dropoff': {
+      const days = Math.max(1, Math.min(365, Number(url.searchParams.get('days') ?? '30')))
+      const cutoff = new Date(Date.now() - days * 86_400_000).toISOString()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (db as any).rpc('insights_plan_dropoff', { p_cutoff: cutoff, p_end: null, p_include_bots: false })
+      return csvResponse((data ?? []) as Array<Record<string, unknown>>, `plan_dropoff_${days}d_${today}.csv`)
+    }
+    case 'users_directory': {
+      const days = Math.max(1, Math.min(365, Number(url.searchParams.get('days') ?? '30')))
+      const cutoff = new Date(Date.now() - days * 86_400_000).toISOString()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (db as any).rpc('insights_user_directory', { p_cutoff: cutoff, p_end: null, p_include_bots: false, p_filters: null, p_sort: 'events', p_limit: 5000, p_offset: 0 })
+      const rows = ((data ?? []) as Array<Record<string, unknown>>).map(({ total_rows, ...rest }) => { void total_rows; return rest })
+      return csvResponse(rows, `users_${days}d_${today}.csv`)
+    }
     default:
       return NextResponse.json({ error: `Unknown export type: ${type}` }, { status: 400 })
   }

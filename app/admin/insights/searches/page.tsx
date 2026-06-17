@@ -76,7 +76,10 @@ export default async function SearchesPage({
             Searches
           </h1>
         </div>
-        <FilterBar activeRange={filters.range.key} countries={countryOptions} eventNames={[...SCHEMA_EVENT_NAMES]} />
+        <div className="flex items-center gap-2">
+          <a href="/api/admin/export?type=searches&days=30" className="rounded border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-900">Export CSV</a>
+          <FilterBar activeRange={filters.range.key} countries={countryOptions} eventNames={[...SCHEMA_EVENT_NAMES]} />
+        </div>
       </div>
 
       <p className="mb-4 max-w-3xl text-xs text-zinc-500">

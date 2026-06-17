@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, X, Play, Save, Users, Loader2, Trash2 } from 'lucide-react'
+import { Plus, X, Play, Save, Users, Loader2, Trash2, Download } from 'lucide-react'
 
 type CondType = 'did_event' | 'not_event' | 'sequence' | 'property'
 type Condition = { type: CondType; event?: string; first?: string; then?: string; field?: string; op?: string; value?: string }
@@ -81,6 +81,16 @@ export function CohortBuilder({ eventNames }: { eventNames: string[] }) {
   async function del(id: string) {
     await fetch('/api/admin/cohort', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     void refreshSaved()
+  }
+  function exportCsv() {
+    if (!results || results.length === 0) return
+    const headers = ['distinct_id', 'email', 'full_name', 'events', 'last_seen']
+    const esc = (v: unknown) => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
+    const csv = [headers.join(','), ...results.map((r) => headers.map((h) => esc((r as Record<string, unknown>)[h])).join(','))].join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    const a = document.createElement('a')
+    a.href = url; a.download = `cohort-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    URL.revokeObjectURL(url)
   }
 
   const evList = (id: string) => <datalist id={id}>{eventNames.map((e) => <option key={e} value={e} />)}</datalist>
@@ -167,6 +177,11 @@ export function CohortBuilder({ eventNames }: { eventNames: string[] }) {
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm text-zinc-300">
             <Users className="h-4 w-4 text-emerald-500" /> <strong>{results.length}</strong> {results.length === 1 ? 'person' : 'people'} match
+            {results.length > 0 && (
+              <button type="button" onClick={exportCsv} className="ml-2 inline-flex items-center gap-1 rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-900">
+                <Download className="h-3 w-3" /> Export CSV
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full min-w-[560px] text-sm">
