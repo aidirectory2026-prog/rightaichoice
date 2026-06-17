@@ -87,6 +87,11 @@ const nextConfig: NextConfig = {
       { source: '/discussions/:path*', destination: '/tools', permanent: true },
       { source: '/workflows', destination: '/plan', permanent: true },
       { source: '/workflows/:path*', destination: '/plan', permanent: true },
+      // H2 (Cowork QA): /tools/[slug]/report was a free, anonymous clone of the
+      // paid Market Sentiment Checker (/tools/[slug]/sentiment) — same scrape +
+      // Claude synthesis, 0 real visitors in 30 days. Retired: redirect to the
+      // paid checker (preserves any SEO equity) so there is one sentiment surface.
+      { source: '/tools/:slug/report', destination: '/tools/:slug/sentiment', permanent: true },
     ]
   },
   images: {

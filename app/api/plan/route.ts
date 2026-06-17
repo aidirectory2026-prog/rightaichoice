@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { callDeepSeek, stripJsonFences } from '@/lib/plan/deepseek'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { rateLimit, rateLimitResponse, underGlobalDailyLlmBudget, llmBudgetResponse } from '@/lib/rate-limit'
 import { computeMatchScore, type MatchScore } from '@/lib/plan/match-score'
 import { refinePrompt } from '@/lib/plan/refine-prompt'
 import { searchStageTools, type MatchTier } from '@/lib/plan/stage-search'
@@ -454,6 +454,8 @@ function profileToPromptContext(profile: UserProfile): string {
 export async function POST(request: Request) {
   const rl = await rateLimit('plan', request, { limit: 5, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
+  // H3 (Cowork QA): hard global daily ceiling on LLM spend (IP-rotation-proof).
+  if (!(await underGlobalDailyLlmBudget())) return llmBudgetResponse()
 
   try {
     const body = await request.json()

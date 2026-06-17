@@ -43,18 +43,24 @@ export const POST = cronRoute({ pipelineKey: 'scrape-sentiment' }, async (ctx) =
   const toolIds = tools.map((t) => t.id)
   const { data: cachedData } = (await admin
     .from('tool_sentiment_cache')
-    .select('tool_id, status, expires_at')
-    .in('tool_id', toolIds)) as { data: { tool_id: string; status: string; expires_at: string }[] | null }
+    .select('tool_id, status, expires_at, scraped_at')
+    .in('tool_id', toolIds)) as { data: { tool_id: string; status: string; expires_at: string; scraped_at: string | null }[] | null }
 
   const cachedMap = new Map(
-    (cachedData ?? []).map((c: { tool_id: string; status: string; expires_at: string }) => [c.tool_id, c])
+    (cachedData ?? []).map((c) => [c.tool_id, c])
   )
 
   const needsScraping = tools.filter((tool) => {
     const cached = cachedMap.get(tool.id)
     if (!cached) return true
     if (cached.status === 'failed') return true
-    if (cached.status === 'generating') return false // Skip in-progress
+    if (cached.status === 'generating') {
+      // H10 (Cowork QA): only skip a RECENT in-progress row. A 'generating' row
+      // older than 30 min is from a run killed mid-scrape (timeout/deploy/crash)
+      // and would otherwise wedge this tool's sentiment forever — regenerate it.
+      const startedAt = cached.scraped_at ? new Date(cached.scraped_at).getTime() : 0
+      return Date.now() - startedAt > 30 * 60 * 1000
+    }
     return new Date(cached.expires_at) < new Date() // Expired
   })
 

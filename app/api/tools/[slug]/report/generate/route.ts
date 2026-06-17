@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { scrapeAllSources } from '@/lib/scrapers'
 import { synthesizeReport } from '@/lib/ai/synthesize-report'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { validateCronSecret } from '@/lib/cron/auth'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // Allow up to 2 minutes for scraping + synthesis
@@ -15,6 +16,14 @@ type RouteContext = { params: Promise<{ slug: string }> }
  * Triggers scraping + AI synthesis and stores the result.
  */
 export async function POST(req: NextRequest, { params }: RouteContext) {
+  // H2 (Cowork QA): the /report page is retired (redirects to the paid /sentiment
+  // checker), so this expensive scrape + Claude endpoint is no longer user-facing.
+  // Lock it to cron/admin (CRON_SECRET) — it was previously anonymous with only a
+  // 3/min/IP limit, letting anyone drain AI/scraper spend across tools/IPs and
+  // reproduce the paywalled report for free.
+  const unauthorized = validateCronSecret(req)
+  if (unauthorized) return unauthorized
+
   const rl = await rateLimit('report-generate', req, { limit: 3, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
 

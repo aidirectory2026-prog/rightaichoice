@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/footer'
 import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { createClient } from '@/lib/supabase/server'
-import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 export const revalidate = 3600
 
@@ -98,15 +98,15 @@ export default async function ViabilityPage() {
   return (
     <>
       <Navbar />
+      {/* H1 (Cowork QA): escape JSON-LD via jsonLdScriptProps. */}
       <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+        {...jsonLdScriptProps([
           jsonLd,
           breadcrumbJsonLd([
             { name: 'Home', url: 'https://rightaichoice.com' },
             { name: 'Viability Scores', url: 'https://rightaichoice.com/viability' },
           ]),
-        ]) }}
+        ])}
       />
 
       <main className="flex-1">
@@ -283,6 +283,28 @@ export default async function ViabilityPage() {
               )}
             </section>
           </div>
+
+          {/* H4 (Cowork QA): the FAQPage structured data emitted above must be
+              backed by visible on-page content, else Google can suppress the rich
+              result / flag a policy issue. Render the exact same Q&A from jsonLd
+              so the markup and the visible text are guaranteed identical. */}
+          <section className="mt-16">
+            <h2 className="text-lg font-semibold text-white mb-5">Frequently asked questions</h2>
+            <div className="space-y-3">
+              {jsonLd.mainEntity.map((qa) => (
+                <details
+                  key={qa.name}
+                  className="group rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-white">
+                    {qa.name}
+                    <span className="text-zinc-500 transition-transform group-open:rotate-180">▾</span>
+                  </summary>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{qa.acceptedAnswer.text}</p>
+                </details>
+              ))}
+            </div>
+          </section>
 
           {/* CTA */}
           <div className="mt-16 rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
