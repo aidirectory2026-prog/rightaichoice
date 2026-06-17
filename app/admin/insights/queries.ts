@@ -920,6 +920,44 @@ export async function getUserProfileV2(distinctId: string): Promise<UserProfileV
   }
 }
 
+// Phase 11 — per-user pain points (insights_user_painpoints, migration 163).
+// "Where did this user struggle" at a glance: real errors (vs extension/resource
+// noise), frustration signals, zero-result searches, plan/signup progress.
+export interface UserPainpoints {
+  real_errors: number
+  noise_errors: number
+  rage_clicks: number
+  dead_clicks: number
+  exit_intents: number
+  forms_abandoned: number
+  zero_result_searches: number
+  started_plan: boolean
+  completed_plan: boolean
+  hit_signup_gate: boolean
+  signed_up: boolean
+}
+
+export async function getUserPainpoints(distinctId: string): Promise<UserPainpoints | null> {
+  const db = getAdminClient()
+  const { data } = await rpc(db, 'insights_user_painpoints', { p_distinct_id: distinctId })
+  const row = ((data ?? []) as Array<Record<string, unknown>>)[0]
+  if (!row) return null
+  const n = (k: string) => Number(row[k] ?? 0)
+  return {
+    real_errors: n('real_errors'),
+    noise_errors: n('noise_errors'),
+    rage_clicks: n('rage_clicks'),
+    dead_clicks: n('dead_clicks'),
+    exit_intents: n('exit_intents'),
+    forms_abandoned: n('forms_abandoned'),
+    zero_result_searches: n('zero_result_searches'),
+    started_plan: !!row.started_plan,
+    completed_plan: !!row.completed_plan,
+    hit_signup_gate: !!row.hit_signup_gate,
+    signed_up: !!row.signed_up,
+  }
+}
+
 export interface SessionEventRow {
   id: string
   created_at: string

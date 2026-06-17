@@ -34,6 +34,8 @@ import {
   getUserProfile,
   getUserProfileV2,
   getUserSessionsV2,
+  getUserPainpoints,
+  type UserPainpoints,
   type SessionEventRow,
   type UserContentLinks,
   type UserProfile,
@@ -42,6 +44,7 @@ import {
 } from '../../queries'
 import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 import { classifyChannel, hostFromReferrer } from '@/lib/analytics/channels'
+import { eventDisplay, TONE_CLASS } from '@/lib/admin/event-display'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -393,39 +396,100 @@ function ContentLinks({ links }: { links: UserContentLinks }) {
   )
 }
 
+// ── Pain points (Phase 11) ─────────────────────────────────────────
+// One-glance "where did this user struggle / succeed", built from
+// insights_user_painpoints — real errors only (extension/cross-origin noise
+// excluded), frustration signals, zero-result searches, plan/signup progress.
+
+function PainPoints({ p }: { p: UserPainpoints | null }) {
+  if (!p) return null
+  type Chip = { label: string; tone: 'bad' | 'warn' | 'good' }
+  const chips: Chip[] = []
+  if (p.real_errors > 0) chips.push({ label: `Hit ${p.real_errors} real error${p.real_errors > 1 ? 's' : ''}`, tone: 'bad' })
+  if (p.rage_clicks > 0) chips.push({ label: `Rage-clicked ${p.rage_clicks}×`, tone: 'bad' })
+  if (p.zero_result_searches > 0) chips.push({ label: `${p.zero_result_searches} search${p.zero_result_searches > 1 ? 'es' : ''} found nothing`, tone: 'warn' })
+  if (p.forms_abandoned > 0) chips.push({ label: `Abandoned ${p.forms_abandoned} form${p.forms_abandoned > 1 ? 's' : ''}`, tone: 'warn' })
+  if (p.started_plan && !p.completed_plan) chips.push({ label: 'Started a plan but didn’t finish', tone: 'warn' })
+  if (p.hit_signup_gate && !p.signed_up) chips.push({ label: 'Hit the signup gate but didn’t sign up', tone: 'warn' })
+  if (p.dead_clicks > 0) chips.push({ label: `${p.dead_clicks} dead click${p.dead_clicks > 1 ? 's' : ''}`, tone: 'warn' })
+  if (p.exit_intents > 2) chips.push({ label: `Tried to leave ${p.exit_intents}×`, tone: 'warn' })
+  const wins: Chip[] = []
+  if (p.signed_up) wins.push({ label: 'Signed up', tone: 'good' })
+  if (p.completed_plan) wins.push({ label: 'Completed a plan', tone: 'good' })
+
+  const toneCls = (t: Chip['tone']) =>
+    t === 'bad'
+      ? 'border-red-800 bg-red-950/40 text-red-300'
+      : t === 'warn'
+        ? 'border-amber-800 bg-amber-950/40 text-amber-300'
+        : 'border-emerald-800 bg-emerald-950/40 text-emerald-300'
+
+  if (chips.length === 0 && wins.length === 0) {
+    return (
+      <div className="mb-5 rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-2.5 text-xs text-zinc-500">
+        No friction signals for this user — no real errors, rage-clicks, dead-ends or abandoned flows.
+      </div>
+    )
+  }
+  return (
+    <div className="mb-5 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Pain points &amp; wins</div>
+      <div className="flex flex-wrap gap-1.5">
+        {[...chips, ...wins].map((c, i) => (
+          <span key={i} className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneCls(c.tone)}`}>
+            {c.label}
+          </span>
+        ))}
+      </div>
+      {p.noise_errors > 0 && (
+        <div className="mt-2 text-[10px] text-zinc-600">
+          ({p.noise_errors} other &quot;errors&quot; were browser-extension / cross-origin noise — not site bugs — and are excluded.)
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Journey: sessions_v2 cards ─────────────────────────────────────
 
+function prettyPagePath(p: string | null): string {
+  if (!p || p === '/') return 'the homepage'
+  return p.split('?')[0]
+}
+
 function SessionEventLine({ ev }: { ev: SessionEventRow }) {
+  // Phase 11 — plain-language line: icon + human sentence instead of the raw
+  // event_name + JSON dump. The raw event name + properties live behind a small
+  // "details" toggle for power users.
+  const d = eventDisplay(ev.event_name, ev.properties ?? {})
+  const Icon = d.icon
   const propKeys = Object.keys(ev.properties ?? {})
   return (
-    <div className="border-b border-zinc-900 px-3 py-1.5 last:border-b-0 hover:bg-zinc-900/30">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-emerald-300">{ev.event_name}</span>
-          {ev.bot_likely && <span className="text-amber-400" title="bot">🤖</span>}
-          {ev.source_kind === 'server' && (
-            <span className="rounded bg-blue-900/40 px-1.5 py-0.5 text-[10px] text-blue-300">server</span>
+    <div className="flex items-start gap-2.5 border-b border-zinc-900 px-3 py-1.5 last:border-b-0 hover:bg-zinc-900/30">
+      <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${TONE_CLASS[d.tone]}`} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className={`text-xs ${d.tone === 'bad' ? 'text-red-200' : d.tone === 'warn' ? 'text-amber-200' : d.tone === 'good' ? 'text-emerald-200' : 'text-zinc-200'}`}>
+            {d.text}
+          </span>
+          <span className="whitespace-nowrap text-[10px] text-zinc-500" title={fmtDateTime(ev.created_at)}>
+            {fmtAgo(ev.created_at)}
+          </span>
+        </div>
+        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-zinc-600">
+          {ev.source_kind === 'server' && <span>server</span>}
+          {ev.bot_likely && <span className="text-amber-500" title="bot-flagged">bot</span>}
+          {propKeys.length > 0 && (
+            <details>
+              <summary className="cursor-pointer hover:text-zinc-400">details</summary>
+              <div className="mt-1 font-mono text-[10px] text-zinc-500">{ev.event_name}</div>
+              <pre className="mt-1 max-w-full overflow-x-auto rounded bg-zinc-950 p-2 text-[10px] text-zinc-400">
+                {JSON.stringify(ev.properties ?? {}, null, 2)}
+              </pre>
+            </details>
           )}
         </div>
-        <div className="whitespace-nowrap text-[10px] text-zinc-500" title={fmtDateTime(ev.created_at)}>
-          {new Date(ev.created_at).toISOString().slice(11, 19)} UTC
-        </div>
       </div>
-      <div className="mt-0.5 flex items-center gap-3 text-[10px] text-zinc-500">
-        {ev.page_path && <span>{ev.page_path}</span>}
-        {ev.device_type && <span>· {ev.device_type}</span>}
-        {ev.auth_state && <span>· {ev.auth_state}</span>}
-      </div>
-      {propKeys.length > 0 && (
-        <details className="mt-0.5">
-          <summary className="cursor-pointer text-[10px] text-zinc-500 hover:text-zinc-300">
-            {propKeys.length} properties — expand
-          </summary>
-          <pre className="mt-1 overflow-x-auto rounded bg-zinc-950 p-2 text-[10px] text-zinc-300">
-            {JSON.stringify(ev.properties ?? {}, null, 2)}
-          </pre>
-        </details>
-      )}
     </div>
   )
 }
@@ -452,35 +516,21 @@ function SessionCardV2({
     <details className="rounded-lg border border-zinc-800 bg-zinc-900/40" open={defaultOpen}>
       <summary className="cursor-pointer px-3 py-2.5">
         <div className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400">
-          <span className="text-zinc-200">Session {total - index}</span>
-          <span
-            className={`rounded-full border px-1.5 py-px text-[9px] font-semibold ${
-              s.method === 'session_id'
-                ? 'border-emerald-800 bg-emerald-950/40 text-emerald-300'
-                : 'border-zinc-700 bg-zinc-900 text-zinc-400'
-            }`}
-            title={
-              s.method === 'session_id'
-                ? 'Grouped by the per-tab session_id the envelope carries (epoch 2026-06-10)'
-                : 'Pre-epoch / server rows without a session_id — grouped by 30-minute idle gaps'
-            }
-          >
-            {s.method === 'session_id' ? 'session_id' : 'gap-30m'}
-          </span>
+          <span className="font-medium text-zinc-200">Visit {total - index}</span>
           <span title={fmtDateTime(s.started_at)}>{fmtAgo(s.started_at)}</span>
           <span className="text-zinc-600">·</span>
-          <span className="font-mono">{fmtDuration(s.duration_sec)}</span>
+          <span>{fmtDuration(s.duration_sec)}</span>
           <span className="text-zinc-600">·</span>
-          <span>{s.event_count} events</span>
-          <span className="text-zinc-600">·</span>
-          <span>{s.pages.length} page steps</span>
-          {s.device_type && <span>· {s.device_type}</span>}
-          {geo && <span>· {geo}</span>}
+          <span>{s.pages.length} {s.pages.length === 1 ? 'page' : 'pages'}</span>
+          {s.device_type && <span>· on {s.device_type}</span>}
+          {geo && <span>· from {geo}</span>}
+          {hostFromReferrer(s.referrer) && <span>· via {hostFromReferrer(s.referrer)}</span>}
         </div>
-        <div className="mt-1 truncate font-mono text-xs">
-          <span className="text-emerald-400">{s.entry_page ?? '—'}</span>
-          <span className="text-zinc-600"> → </span>
-          <span className="text-zinc-300">{s.exit_page ?? '—'}</span>
+        <div className="mt-1 truncate text-xs text-zinc-500">
+          Landed on <span className="text-emerald-400">{prettyPagePath(s.entry_page)}</span>
+          {s.exit_page && s.exit_page !== s.entry_page && (
+            <> · left from <span className="text-zinc-300">{prettyPagePath(s.exit_page)}</span></>
+          )}
         </div>
       </summary>
       <div className="space-y-3 border-t border-zinc-800 px-3 py-3">
@@ -507,11 +557,11 @@ function SessionCardV2({
 
         {keyActions.length > 0 && (
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Key actions</div>
+            <div className="text-[10px] uppercase tracking-wider text-zinc-500">What they did</div>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {keyActions.map(([name, n]) => (
-                <span key={name} className="rounded bg-emerald-950/40 border border-emerald-900 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300">
-                  {name} × {n}
+                <span key={name} className="rounded border border-emerald-900 bg-emerald-950/40 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                  {eventDisplay(name).label}{n > 1 ? ` ×${n}` : ''}
                 </span>
               ))}
             </div>
@@ -520,19 +570,18 @@ function SessionCardV2({
 
         <div className="rounded-lg border border-zinc-800">
           <div className="border-b border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
-            Events ({shown.length}{shown.length < s.event_count ? ` of ${s.event_count}` : ''}, oldest first)
+            Step by step ({shown.length}{shown.length < s.event_count ? ` of ${s.event_count}` : ''})
           </div>
           {shown.length === 0 ? (
             <div className="px-3 py-3 text-center text-[11px] text-zinc-500">
-              Hidden by the render cap — use “Show more events” below.
+              Older activity hidden — use “Show more” below.
             </div>
           ) : (
             shown.map((ev) => <SessionEventLine key={ev.id} ev={ev} />)
           )}
           {shown.length > 0 && shown.length < s.event_count && (
             <div className="px-3 py-2 text-center text-[10px] text-zinc-500">
-              {s.event_count - shown.length} more in this session
-              {s.events_truncated ? ' (tail truncated at the 500-event RPC cap)' : ''} — use “Show more events” below.
+              {s.event_count - shown.length} more in this visit — use “Show more” below.
             </div>
           )}
         </div>
@@ -571,10 +620,11 @@ export default async function UserTimelinePage({
   const ecap = Math.min(Math.max(parseInt(sp.ecap ?? '', 10) || EVENTS_RENDER_CAP, 50), 5000)
   const base = `/admin/insights/user/${encodeURIComponent(distinctId)}`
 
-  const [profileV2, traits, sessions] = await Promise.all([
+  const [profileV2, traits, sessions, painpoints] = await Promise.all([
     getUserProfileV2(distinctId),
     getUserProfile(distinctId),
     getUserSessionsV2(distinctId, 50),
+    getUserPainpoints(distinctId),
   ])
   const links = await getUserContentLinks(distinctId, profileV2?.user_id ?? null)
 
@@ -607,6 +657,8 @@ export default async function UserTimelinePage({
       </div>
 
       <IdentityHeader p={profileV2} distinctId={distinctId} />
+
+      <PainPoints p={painpoints} />
 
       {/* 10.5c.4 — journey merged in as a tab (old /insights/journey/[id]
           route redirects here with ?tab=journey). */}
