@@ -10,6 +10,7 @@ import { AlertTriangle } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { AdminSidebar, MobileSidebar } from '@/components/admin/sidebar'
 import { AdminBreadcrumb } from '@/components/admin/page-header'
+import { GlobalSearch } from '@/components/admin/global-search'
 
 export const metadata = { title: 'Admin' }
 
@@ -62,6 +63,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="flex min-w-0 items-center gap-3">
               <MobileSidebar />
               <AdminBreadcrumb />
+            </div>
+            <div className="hidden flex-1 justify-center px-4 md:flex">
+              <GlobalSearch />
             </div>
             <div className="flex shrink-0 items-center gap-4">
               <span className="text-xs text-zinc-500">{profile.username}</span>

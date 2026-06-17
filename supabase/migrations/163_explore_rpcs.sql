@@ -99,3 +99,39 @@ as $function$
 $function$;
 
 grant execute on function public.insights_plan_dropoff(timestamptz, timestamptz, boolean) to service_role;
+
+-- ── B. insights_search_everything — global admin search ─────────────
+-- Find a user (email/name/username/distinct_id), a person by what they
+-- searched/typed, or an event by name — one unified result list.
+create or replace function public.insights_search_everything(p_q text, p_limit int default 25)
+ returns table(kind text, label text, sublabel text, href text)
+ language sql security definer set search_path to 'public'
+as $function$
+  (select 'user'::text, coalesce(au.email, pr.username, p.distinct_id)::text,
+     coalesce(pr.full_name, au.raw_user_meta_data->>'full_name', 'anonymous visitor')::text,
+     '/admin/insights/user/' || p.distinct_id
+   from user_intent_profile p
+   left join auth.users au on au.id = p.user_id
+   left join profiles pr on pr.id = p.user_id
+   where au.email ilike '%'||p_q||'%' or pr.full_name ilike '%'||p_q||'%'
+      or pr.username ilike '%'||p_q||'%' or p.distinct_id ilike '%'||p_q||'%'
+   limit 10)
+  union all
+  (select 'searched'::text, left(s.q, 80)::text, ('searched / typed this · ' || left(s.distinct_id, 18))::text,
+     '/admin/insights/user/' || s.distinct_id
+   from (
+     select distinct on (coalesce(properties->>'query', properties->>'current_text'))
+       distinct_id, coalesce(properties->>'query', properties->>'current_text') as q, created_at
+     from user_events
+     where event_name in ('search_query_submitted','plan_goal_typed','search_query_typed','empty_search')
+       and coalesce(properties->>'query', properties->>'current_text','') ilike '%'||p_q||'%'
+     order by coalesce(properties->>'query', properties->>'current_text'), created_at desc
+   ) s
+   limit 10)
+  union all
+  (select 'event'::text, t.event_name::text, (t.n || ' events')::text, '/admin/insights/events?event=' || t.event_name
+   from (select event_name, count(*) n from user_events where event_name ilike '%'||p_q||'%' group by event_name order by 2 desc limit 5) t)
+  limit p_limit;
+$function$;
+
+grant execute on function public.insights_search_everything(text, int) to service_role;
