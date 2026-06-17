@@ -1204,7 +1204,7 @@ export function ProjectPlanner({
                                 </span>
                               </div>
                               <Link
-                                href={`/tools/${tool.slug}/report`}
+                                href={`/tools/${tool.slug}/sentiment`}
                                 onClick={(e) => e.stopPropagation()}
                                 className="mt-2 inline-flex items-center gap-1 text-[11px] text-teal-500 hover:text-teal-400 transition-colors"
                               >
