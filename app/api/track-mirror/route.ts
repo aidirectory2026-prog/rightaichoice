@@ -109,6 +109,15 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
     case 'plan_results_displayed':
       updates.p_arr_plan_use_cases = arr('use_case')
       break
+    case 'plan_goal_typed': {
+      // Phase 11 — the typed goal (home goal box) lands here as current_text.
+      // Persist it to the durable profile so "what they typed" survives beyond
+      // the raw event log (previously plan_goal_typed wrote nothing to the
+      // profile, so plan-starters who never completed showed an empty goal).
+      const t = str('current_text')
+      if (t) updates.p_arr_plan_use_cases = [t]
+      break
+    }
     case 'search_query_submitted':
       updates.p_inc_searches = 1
       updates.p_arr_search_queries = arr('query')

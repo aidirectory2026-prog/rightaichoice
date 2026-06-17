@@ -84,30 +84,26 @@ function bridgeClarity(projectId: string, distinctId: string | null, friendlyNam
   try {
     if (distinctId) clarity('identify', distinctId, undefined, undefined, friendlyName ?? undefined)
   } catch { /* identify is best-effort */ }
-  try {
-    clarity('get', 'session', (sessionId: string) => {
-      const clarityUserId = clarityCookieId('_clck')
-      const claritySessionId = clarityCookieId('_clsk') || sessionId
-      const playbackUrl =
-        clarityUserId && claritySessionId
-          ? `https://clarity.microsoft.com/player/${projectId}/${clarityUserId}/${claritySessionId}`
-          : null
-      const props: Record<string, string> = {}
-      if (sessionId) props.clarity_session_id = sessionId
-      if (playbackUrl) props.clarity_playback_url = playbackUrl
-      if (Object.keys(props).length === 0) return
-      // Lazy-import mixpanel-browser so non-Mixpanel pages don't load it.
-      import('mixpanel-browser').then(({ default: mp }) => {
-        try {
-          mp.register(props)
-        } catch {
-          setTimeout(() => { try { mp.register(props) } catch { /* swallow */ } }, 500)
-        }
-      }).catch(() => { /* mixpanel-browser unavailable, ignore */ })
-    })
-  } catch {
-    setTimeout(() => bridgeClarity(projectId, distinctId, friendlyName), 1000)
+  // Capture the session id + reconstructed player URL from Clarity's OWN cookies
+  // (_clsk = session, _clck = user), which appear once Clarity initialises. We do
+  // NOT gate on clarity('get','session', cb): that callback is unreliable and may
+  // never fire (the reason clarity_session_id was always null even when Clarity
+  // ran). Read the cookies directly and retry until they're set.
+  const tryCapture = (attempt: number) => {
+    const claritySessionId = clarityCookieId('_clsk')
+    const clarityUserId = clarityCookieId('_clck')
+    if (!claritySessionId) {
+      if (attempt < 5) setTimeout(() => tryCapture(attempt + 1), 1500)
+      return
+    }
+    const props: Record<string, string> = { clarity_session_id: claritySessionId }
+    if (clarityUserId) props.clarity_playback_url = `https://clarity.microsoft.com/player/${projectId}/${clarityUserId}/${claritySessionId}`
+    // Lazy-import mixpanel-browser so non-Mixpanel pages don't load it.
+    import('mixpanel-browser').then(({ default: mp }) => {
+      try { mp.register(props) } catch { setTimeout(() => { try { mp.register(props) } catch { /* swallow */ } }, 500) }
+    }).catch(() => { /* mixpanel-browser unavailable, ignore */ })
   }
+  tryCapture(0)
 }
 
 export function ClarityProvider() {
