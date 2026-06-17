@@ -594,8 +594,11 @@ async function onboardOne(
   const mk = (s: GateStatus, detail: string): GateCheck => ({ status: s, detail })
 
   // HARD gates.
+  // Cowork QA: description gate lowered 300 → 250. Real flagship tools (Canva 270,
+  // Gemini 293, Mem 290) were blocked by a few chars of margin; 250 still ensures
+  // a substantive description while letting good tools publish.
   const descLen = (gate?.description ?? '').length
-  checks.description = mk(descLen >= 300 ? 'pass' : 'fail', `${descLen} chars (need ≥300)`)
+  checks.description = mk(descLen >= 250 ? 'pass' : 'fail', `${descLen} chars (need ≥250)`)
   const featCount = Array.isArray(gate?.features) ? gate!.features!.length : 0
   checks.features = mk(featCount >= 3 ? 'pass' : 'fail', `${featCount} features (need ≥3)`)
   const pricingOk = VALID_PRICING.has(gate?.pricing_type ?? '')
@@ -807,7 +810,13 @@ export async function runOnboardSop(
     logStep(runId, stepRes)
     // Phase 10 #66 — count a failed attempt so a permanently-broken tool is
     // eventually dropped from the retry pool (surfaced by the draft-stuck alert).
-    if (!stepRes.onboarded) {
+    // Cowork QA FIX: key on `published`, not `onboarded`. A draft that runs the SOP
+    // fine (onboarded=true) but can't clear a HARD gate (published=false) was never
+    // counted — so the same 5 un-publishable tools sat at the front of the
+    // oldest-first queue every run and starved the other ~68 drafts (head-of-line
+    // block). Counting any non-publishing run means a persistently-stuck draft now
+    // reaches MAX_ONBOARD_ATTEMPTS and is skipped, so the queue advances.
+    if (!stepRes.published) {
       await supabase
         .from('tools')
         .update({ onboard_attempts: (tool.onboard_attempts ?? 0) + 1 } as never)
