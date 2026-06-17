@@ -103,6 +103,42 @@ export async function rateLimit(
   }
 }
 
+/**
+ * H3 (Cowork QA) — GLOBAL daily budget for expensive LLM endpoints. Unlike
+ * rateLimit (keyed per IP), this counts ALL callers against one shared key, so
+ * IP rotation can't bypass it — a hard ceiling on total Anthropic/LLM spend per
+ * day. Returns true while under budget. Fails OPEN on a DB error (a transient DB
+ * blip must not take chat/plan/recommend down; the per-IP limit still applies).
+ *
+ * The cap is a daily CALL count (a simple, robust proxy for spend). Override with
+ * env LLM_DAILY_CALL_CAP. Default 3000/day is far above current organic volume
+ * but stops a runaway abuse loop.
+ */
+export async function underGlobalDailyLlmBudget(name = 'llm'): Promise<boolean> {
+  const limit = Number(process.env.LLM_DAILY_CALL_CAP ?? 3000)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = getAdminClient() as any
+    const { data, error } = await admin.rpc('rate_limit_check', {
+      p_key: `global-daily:${name}`,
+      p_limit: limit,
+      p_window_ms: 86_400_000,
+    })
+    if (error || !data) return true // fail open on infra error
+    return Boolean(data.ok)
+  } catch {
+    return true // fail open on infra error
+  }
+}
+
+/** 503 response when the global LLM budget is exhausted. */
+export function llmBudgetResponse(): Response {
+  return new Response(
+    JSON.stringify({ error: 'AI is at capacity right now. Please try again later.' }),
+    { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '3600' } },
+  )
+}
+
 /** Convenience: returns a 429 Response with Retry-After header */
 export function rateLimitResponse(result: RateLimitResult): Response {
   const retryAfterSecs = Math.ceil((result.resetAt - Date.now()) / 1000)

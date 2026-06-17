@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
 import { SYSTEM_PROMPT, TOOL_DEFINITIONS } from '@/lib/ai/system-prompt'
 import { searchToolsForAI, type AISearchParams, type AIToolResult } from '@/lib/data/ai-search'
-import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { rateLimit, rateLimitResponse, underGlobalDailyLlmBudget, llmBudgetResponse } from '@/lib/rate-limit'
 import type Anthropic from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
@@ -25,6 +25,8 @@ const chatSchema = z.object({
 export async function POST(request: Request) {
   const rl = await rateLimit('chat', request, { limit: 10, windowMs: 60_000 })
   if (!rl.ok) return rateLimitResponse(rl)
+  // H3 (Cowork QA): hard global daily ceiling on LLM spend (IP-rotation-proof).
+  if (!(await underGlobalDailyLlmBudget())) return llmBudgetResponse()
 
   try {
     const body = await request.json()
