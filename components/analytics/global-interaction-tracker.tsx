@@ -255,6 +255,20 @@ export function GlobalInteractionTracker() {
     }
 
     // ── 10.7c.2 — client error capture. Deduped per message, max 5/page.
+    // Cowork QA: known NON-actionable client errors — not site bugs, and they were
+    // the bulk of error_encountered "today/yesterday" volume, making the admin error
+    // view useless. Drop them at capture so only real, fixable errors are recorded:
+    //  - browser-extension injected errors (chrome-/moz-/safari-extension:// source)
+    //  - opaque cross-origin throws ("Script error." with no detail)
+    //  - "@context…" — SEO / JSON-LD scanner extensions reading our schema markup
+    //  - "Object Not Found Matching Id" — Microsoft Office / Outlook extension
+    function isNonActionableError(message: string, filename = ''): boolean {
+      if (/-extension:\/\//.test(filename) || /extension:\/\//.test(message)) return true
+      const m = message || ''
+      if (m === 'Script error.' || m === 'Script error') return true
+      return m.includes('@context') || m.includes('Object Not Found Matching Id')
+    }
+
     function recordError(
       boundary: string,
       message: string,
@@ -277,7 +291,9 @@ export function GlobalInteractionTracker() {
     // failing element, no error message) from JS exceptions (ErrorEvent).
     function onWindowError(e: Event) {
       if (e instanceof ErrorEvent && (e.message || e.error)) {
-        recordError('window', e.message || String(e.error), {
+        const jsMessage = e.message || String(e.error)
+        if (isNonActionableError(jsMessage, e.filename || '')) return
+        recordError('window', jsMessage, {
           error_type: 'js_error',
           ...(e.filename ? { source_url: e.filename.slice(0, 300) } : {}),
           ...(typeof e.lineno === 'number' ? { line: e.lineno } : {}),
@@ -326,6 +342,7 @@ export function GlobalInteractionTracker() {
                   return 'unknown rejection'
                 }
               })()
+      if (isNonActionableError(message)) return
       recordError('window', message || 'unknown rejection', { error_type: 'unhandled_rejection' })
     }
 
