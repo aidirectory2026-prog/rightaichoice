@@ -318,9 +318,10 @@ function composeHtml(
 
 export const GET = cronRoute({ pipelineKey: 'email-weekly-digest' }, async (ctx) => {
   const apiKey = process.env.RESEND_API_KEY
-  const to = process.env.ALERT_EMAIL
+  // P2 (Cowork QA): same recipient fallback chain as the other alerters.
+  const to = process.env.ALERT_EMAIL ?? process.env.ALERT_EMAIL_TO ?? process.env.ADMIN_EMAIL
   if (!apiKey || !to) {
-    ctx.recordMetadata({ skipped: 'RESEND_API_KEY or ALERT_EMAIL not set' })
+    ctx.recordMetadata({ skipped: 'RESEND_API_KEY or alert recipient not set' })
     return { ok: true, skipped: 'env_not_configured' }
   }
 

@@ -44,8 +44,11 @@ type FailedRun = {
 
 async function sendEmail(run: FailedRun): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY
-  const to = process.env.ALERT_EMAIL
-  if (!apiKey || !to) return { ok: false, error: 'RESEND_API_KEY or ALERT_EMAIL not set' }
+  // P2 (Cowork QA): GH scripts use ALERT_EMAIL_TO/ADMIN_EMAIL; Vercel crons used
+  // ALERT_EMAIL only. Fall through the same chain so whichever is set works
+  // (else half the alerting silently no-ops).
+  const to = process.env.ALERT_EMAIL ?? process.env.ALERT_EMAIL_TO ?? process.env.ADMIN_EMAIL
+  if (!apiKey || !to) return { ok: false, error: 'RESEND_API_KEY or alert recipient not set' }
 
   const subject = `[RAC alert] ${run.pipeline_key} failed (${run.error_class ?? 'unknown'})`
   const errExcerpt = (run.error_message ?? '(no message)').slice(0, 500)
