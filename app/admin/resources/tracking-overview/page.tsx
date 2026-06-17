@@ -117,6 +117,18 @@ export default function TrackingOverviewPage() {
         </ul>
       </Section>
 
+      <Section title="Exploring people, not just charts (the Mixpanel-style tools)" audience="everyone">
+        <p>Beyond the dashboards, these screens let you study individual people and groups:</p>
+        <ul className="list-disc space-y-2 pl-5 text-zinc-400">
+          <li><strong>Search box (top of every admin page).</strong> Type an email, a name, something a person searched, or an event name — and jump straight to it.</li>
+          <li><strong>A person&apos;s journey</strong> (open any user). A plain-language story of everything they did — &ldquo;Typed a goal: …&rdquo;, &ldquo;Clicked through to Notion&rdquo;, &ldquo;Hit an error&rdquo; — grouped into visits, with a <strong>pain-points</strong> panel that flags where they struggled (real errors only — browser-extension noise is separated out).</li>
+          <li><strong>Cohorts</strong> (Audience → Cohorts). Build a group by what people did: &ldquo;started a plan but didn&apos;t finish&rdquo;, &ldquo;searched <em>then</em> started a plan&rdquo;, or by a property like email domain. Combine with ALL/ANY, run it, and save it.</li>
+          <li><strong>Plan drop-off</strong> and <strong>Searches</strong> (Behavior). See exactly who started a plan and where they stopped (with the goal they typed), and every search run with whether it returned results.</li>
+          <li><strong>Errors</strong> (Tracking &amp; Trust). Real app bugs, separated from third-party / browser-extension noise.</li>
+          <li><strong>Export CSV</strong> on the people, searches, drop-off and cohort tables for offline analysis.</li>
+        </ul>
+      </Section>
+
       <Callout tone="note" title="Where to go deeper">
         Want the exact mechanics — the function names, the database tables, how a logged-out and a
         logged-in visit get stitched into one person? That is the next section,{' '}
