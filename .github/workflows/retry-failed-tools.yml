@@ -31,6 +31,12 @@ jobs:
   retry:
     runs-on: ubuntu-latest
     timeout-minutes: 240
+    # P2 (Cowork QA): same concurrency group as freshness-batch's refresh-tools
+    # job — both run refresh-tools-batch.ts on the shared queue, so this never
+    # overlaps the nightly refresh (avoids double-processing the same tools).
+    concurrency:
+      group: refresh-tools-batch
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

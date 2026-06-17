@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Radar, GitCompareArrows, LayoutGrid, HelpCircle } from 'lucide-react'
+import { ToolLogo } from '@/components/tools/tool-logo'
 
 // Phase 9 S6 — server-rendered interlink + FAQ sections beneath the live
 // sentiment experience. Fills the page, keeps users in the funnel (scan other
@@ -58,10 +59,13 @@ export function SentimentRelated({
             {alternatives.slice(0, 6).map((a) => (
               <Link key={a.slug} href={`/tools/${a.slug}`} className="group rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 transition hover:border-emerald-500/30">
                 <div className="flex items-center gap-3">
-                  {a.logo_url
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={a.logo_url} alt="" className="h-9 w-9 shrink-0 rounded-lg object-contain" />
-                    : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-sm font-bold text-zinc-400">{a.name.charAt(0)}</div>}
+                  {/* P3 (Cowork QA): ToolLogo (next/image + initial-letter fallback) replaces the raw <img>. */}
+                  <ToolLogo
+                    tool={a}
+                    size={36}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-800"
+                    fallbackClassName="text-sm font-bold text-zinc-400"
+                  />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-white group-hover:text-emerald-300">{a.name}</p>
                     {a.tagline && <p className="truncate text-xs text-zinc-500">{a.tagline}</p>}

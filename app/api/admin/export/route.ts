@@ -104,6 +104,9 @@ export async function GET(req: NextRequest) {
     case 'tool_audience': {
       const slug = url.searchParams.get('slug')
       if (!slug) return NextResponse.json({ error: 'Missing slug param' }, { status: 400 })
+      // P2 (Cowork QA): slug is interpolated into a PostgREST .or() filter below,
+      // so validate it to a strict slug charset to prevent filter-string injection.
+      if (!/^[a-z0-9-]+$/.test(slug)) return NextResponse.json({ error: 'Invalid slug' }, { status: 400 })
       // Two queries: user_intent_profile where any array contains slug,
       // OR user_events where event has tool_slug=slug.
       const { data: profileMatches } = await db

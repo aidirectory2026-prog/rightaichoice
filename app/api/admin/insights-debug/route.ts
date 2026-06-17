@@ -52,7 +52,9 @@ async function run<T>(name: string, fn: () => Promise<T>): Promise<Result> {
     return { name, ok: true, ms: Date.now() - t0, sample }
   } catch (e) {
     const err = e as Error
-    return { name, ok: false, ms: Date.now() - t0, error: `${err.name}: ${err.message}\n${err.stack ?? ''}` }
+    // P2 (Cowork QA): don't return the stack trace in the JSON response (leaks
+    // file paths / internals). The name + message is enough for admin debugging.
+    return { name, ok: false, ms: Date.now() - t0, error: `${err.name}: ${err.message}` }
   }
 }
 

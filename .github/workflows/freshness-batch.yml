@@ -71,6 +71,14 @@ jobs:
        (github.event.inputs.pipeline == 'refresh-tools-batch' || github.event.inputs.pipeline == 'all'))
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    # P2 (Cowork QA): this job and Retry Failed Tools both run
+    # refresh-tools-batch.ts against the same stalest-first queue (no row
+    # locking), so overlapping runs double-process tools = wasted DeepSeek spend
+    # + last-writer-wins. Share one concurrency group across both workflows so
+    # they never run simultaneously (a second run queues, doesn't cancel).
+    concurrency:
+      group: refresh-tools-batch
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
