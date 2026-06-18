@@ -1,6 +1,6 @@
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { ShieldCheck, Search, Filter, RefreshCw, FileText, Gift, Mail, Users, Sparkles } from 'lucide-react'
+import { ShieldCheck, Search, Filter, RefreshCw, FileText, Mail, Users, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { jsonLdScriptProps } from '@/lib/seo/json-ld'
 
@@ -11,7 +11,7 @@ const PAGE_URL = 'https://rightaichoice.com/methodology'
 export const metadata = {
   title: 'Methodology — How RightAIChoice Picks, Reviews, and Discloses',
   description:
-    'How RightAIChoice selects tools, writes editorial verdicts, discloses affiliate relationships, and re-verifies pricing and features. Plus: how StackBack will share affiliate revenue back with users.',
+    'How RightAIChoice selects tools, writes editorial verdicts, discloses affiliate relationships, and re-verifies pricing and features.',
   alternates: { canonical: PAGE_URL },
 }
 
@@ -205,33 +205,7 @@ export default function MethodologyPage() {
             </ul>
           </section>
 
-          {/* (d) StackBack */}
-          <section className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
-              <Gift className="h-5 w-5 text-emerald-400" />
-              StackBack — sharing affiliate revenue back with users
-            </h2>
-            <p className="text-zinc-400 leading-relaxed mb-3">
-              StackBack is RightAIChoice&apos;s closed-loop loyalty programme, launching within the coming weeks. The
-              mechanic is simple and disclosed up front: when a logged-in user signs up for a paid AI tool through one
-              of our affiliate links and the vendor pays us a commission,{' '}
-              <strong className="text-white">we share 50% of that commission back to the user</strong> as a gift card
-              delivered via Tremendous (Amazon, Visa, Apple, hundreds of brands — the user picks).
-            </p>
-            <p className="text-zinc-400 leading-relaxed mb-3">
-              Why we&apos;re building it. Affiliate-funded discovery sites have a well-known incentive problem: revenue
-              scales with conversions, which can quietly bias rankings toward whoever pays the highest commission.
-              StackBack flips that — the user&apos;s incentive to convert is partly aligned with ours, and the
-              editorial team has no reason to bias picks because the user gets paid either way.
-            </p>
-            <p className="text-zinc-400 leading-relaxed">
-              Disclosure on every page from launch. Once StackBack is live, every affiliate-bearing CTA will surface
-              the cash-back amount inline before checkout, the user dashboard will show pending and approved rebates,
-              and the methodology section here will be updated with the exact percentage and payout timing.
-            </p>
-          </section>
-
-          {/* (e) Update cadence */}
+          {/* (d) Update cadence */}
           <section className="mb-12">
             <h2 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
               <RefreshCw className="h-5 w-5 text-emerald-400" />
