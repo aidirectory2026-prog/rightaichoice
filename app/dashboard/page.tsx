@@ -141,7 +141,6 @@ export default async function DashboardPage() {
                 the parent justify-between. */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-6 border-t border-zinc-800 pt-5">
               <div className="flex w-full flex-wrap items-center justify-between gap-6 sm:w-auto sm:flex-1">
-                <Stat icon={<Award className="h-4 w-4 text-emerald-400" />} label="Reputation" value={profile.reputation} />
                 <Stat icon={<Star className="h-4 w-4 text-amber-400" />} label="Reviews" value={profile.review_count} />
                 <Stat icon={<MessageSquare className="h-4 w-4 text-blue-400" />} label="Questions" value={profile.question_count} />
                 <Stat icon={<MessageCircle className="h-4 w-4 text-purple-400" />} label="Answers" value={profile.answer_count} />

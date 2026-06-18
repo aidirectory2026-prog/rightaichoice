@@ -111,8 +111,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
           </div>
 
           {/* Stats Row */}
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label="Reputation" value={profile.reputation} />
+          <div className="mt-8 grid grid-cols-3 gap-4">
             <StatCard label="Reviews" value={profile.review_count} />
             <StatCard label="Questions" value={profile.question_count} />
             <StatCard label="Answers" value={profile.answer_count} />

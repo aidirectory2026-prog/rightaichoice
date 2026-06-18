@@ -6,7 +6,7 @@ import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 export const metadata = {
   title: 'About',
-  description: `RightAIChoice is the decision-making engine for the AI ecosystem. ${TOOL_COUNT_DISPLAY} verified tools, community intelligence, and AI-powered recommendations.`,
+  description: `RightAIChoice is the decision-making engine for the AI ecosystem. ${TOOL_COUNT_DISPLAY} verified tools, independent editorial verdicts, and AI-powered recommendations.`,
 }
 
 export default function AboutPage() {
@@ -25,8 +25,8 @@ export default function AboutPage() {
               across scattered blog posts, biased listicles, and paid directories.
             </p>
             <p className="text-zinc-400 leading-relaxed">
-              We combine structured data, real community intelligence, and AI-powered analysis into a
-              single platform where every signal serves the user&apos;s decision — not the tool vendor&apos;s
+              We combine structured data, independent editorial analysis, and AI-powered recommendations
+              into a single platform where every signal serves the user&apos;s decision — not the tool vendor&apos;s
               marketing budget.
             </p>
           </div>
@@ -92,18 +92,18 @@ export default function AboutPage() {
                 <Brain className="h-5 w-5 text-emerald-400 mb-3" />
                 <h3 className="text-sm font-semibold text-white mb-1.5">3-Layer Intelligence</h3>
                 <p className="text-sm text-zinc-500">
-                  Structured discovery (search, filter, browse), community intelligence (reviews, Q&amp;A,
-                  discussions), and AI-powered analysis (recommendations, workflow generation, natural
-                  language search) — three layers working as one integrated system.
+                  Structured discovery (search, filter, browse), independent editorial verdicts (Best For /
+                  Not For, long-form Our Views, viability scoring), and AI-powered analysis (recommendations,
+                  workflow generation, natural language search) — three layers working as one integrated system.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <Users className="h-5 w-5 text-blue-400 mb-3" />
-                <h3 className="text-sm font-semibold text-white mb-1.5">Community-Driven Signal</h3>
+                <h3 className="text-sm font-semibold text-white mb-1.5">Open Community Input</h3>
                 <p className="text-sm text-zinc-500">
-                  Reviews from practitioners who actually use these tools. Questions answered by the community.
-                  Discussions with real technical depth. Every contribution is ranked by credibility and
-                  usefulness, not just recency.
+                  Every tool page is open for practitioners who actually use a tool to leave a review or ask a
+                  question — opt-in and credited. It&apos;s early, so these add to (never replace) our independent
+                  editorial verdict; as contributions grow, they sharpen the signal.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
@@ -139,7 +139,7 @@ export default function AboutPage() {
             <ul className="space-y-2 list-disc list-inside text-sm text-zinc-400 leading-relaxed">
               <li><strong className="text-zinc-300">Best For / Not For</strong> — Clear guidance on ideal and non-ideal use cases.</li>
               <li><strong className="text-zinc-300">Our Views</strong> — Long-form editorial analysis with specific, substantive critique.</li>
-              <li><strong className="text-zinc-300">AI Panel</strong> — On-demand AI analysis that synthesizes community reviews, features, and competitive positioning.</li>
+              <li><strong className="text-zinc-300">AI Panel</strong> — On-demand AI analysis that synthesizes public sentiment, features, and competitive positioning.</li>
               <li><strong className="text-zinc-300">FAQs</strong> — Auto-generated from real user pain points surfaced across Reddit, G2, ProductHunt, and community forums.</li>
             </ul>
             <p className="text-zinc-400 leading-relaxed mt-4">
@@ -160,13 +160,13 @@ export default function AboutPage() {
           <section className="mb-12">
             <h2 className="text-xl font-semibold text-white mb-4">Community Model</h2>
             <p className="text-zinc-400 leading-relaxed mb-4">
-              Our community layer is designed to surface expertise, not noise. Contributors earn reputation
-              through the quality of their contributions — reviews that help others decide, answers that solve
-              real problems, workflows that save people time. The reputation system rewards depth over volume
-              and genuine expertise over first-mover advantage.
+              Our community layer is opt-in and additive. Any signed-in user can leave a review or ask a
+              question on a tool page — practitioner input that helps others decide, surfaced alongside (never
+              in place of) our independent editorial verdict. We&apos;re early here by design: we&apos;d rather ship an
+              honest, empty-but-real review space than fake the activity.
             </p>
             <p className="text-zinc-400 leading-relaxed">
-              We believe the best product decisions come from combining structured data, community wisdom, and
+              We believe the best product decisions come from combining structured data, practitioner input, and
               AI analysis — each layer strengthening the others. The more people contribute, the better the
               platform gets for everyone. That&apos;s the flywheel we&apos;re building.
             </p>
