@@ -7,7 +7,8 @@
 // Every tile carries an ⓘ provenance popover fed by lib/admin/metric-docs.ts.
 
 import Link from 'next/link'
-import { LayoutDashboard, Radio } from 'lucide-react'
+import { LayoutDashboard, Radio, UserCheck, Sparkles } from 'lucide-react'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import {
@@ -89,6 +90,14 @@ export default async function AdminDashboardPage({
   const toolQs = (slug: string) =>
     `/admin/insights/tool/${encodeURIComponent(slug)}?days=${days}${includeBots ? '&include_bots=1' : ''}`
 
+  // Latest signups, straight from auth.users — so a new member is never missed.
+  type MemberBrief = { user_id: string; email: string | null; full_name: string | null; provider: string | null; signed_up: string; distinct_id: string | null }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const membersRes = await (getAdminClient() as any).rpc('insights_registered_users')
+  const allMembers = (membersRes.data ?? []) as MemberBrief[]
+  const recentMembers = allMembers.slice(0, 5)
+  const newMembers7d = allMembers.filter((m) => Date.now() - new Date(m.signed_up).getTime() < 7 * 86_400_000).length
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
@@ -124,6 +133,41 @@ export default async function AdminDashboardPage({
             }
           />
         ))}
+      </div>
+
+      {/* ── Latest members (never miss a signup) ───────────────────────── */}
+      <div className="mt-6 rounded-lg border border-emerald-900/60 bg-emerald-950/15 p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-emerald-300">
+            <UserCheck className="h-4 w-4" />
+            Latest members
+            <span className="text-xs font-normal text-emerald-500/80">
+              {allMembers.length} total{newMembers7d > 0 ? ` · ${newMembers7d} new this week` : ''}
+            </span>
+          </div>
+          <Link href="/admin/insights/members" className="text-xs text-emerald-400 hover:text-emerald-300">See all members →</Link>
+        </div>
+        {recentMembers.length === 0 ? (
+          <div className="text-xs text-zinc-500">No registered members yet.</div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {recentMembers.map((m) => {
+              const fresh = Date.now() - new Date(m.signed_up).getTime() < 7 * 86_400_000
+              const inner = (
+                <span className="flex items-center gap-1.5">
+                  {fresh && <Sparkles className="h-3 w-3 text-emerald-400" />}
+                  <span className="text-zinc-200">{m.email ?? m.full_name ?? 'member'}</span>
+                  <span className="text-[10px] text-zinc-500">{m.provider ?? 'email'} · {new Date(m.signed_up).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                </span>
+              )
+              return m.distinct_id ? (
+                <Link key={m.user_id} href={`/admin/insights/user/${encodeURIComponent(m.distinct_id)}`} className="rounded-full border border-zinc-800 bg-zinc-950/60 px-2.5 py-1 text-xs hover:border-emerald-800">{inner}</Link>
+              ) : (
+                <span key={m.user_id} className="rounded-full border border-zinc-800 bg-zinc-950/60 px-2.5 py-1 text-xs">{inner}</span>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/*
