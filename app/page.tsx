@@ -209,11 +209,11 @@ export default async function HomePage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
               Find the <span className="hero-shimmer">best AI tools</span>
               <br />
-              for what you&apos;re building.
+              for what you&apos;re actually building.
             </h1>
 
             <p className="mt-5 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Describe your goal — we&apos;ll match the right AI stack from 2,000+ tools, compared on what actually matters: real-world signals, side-by-side features, and total cost.
+              The tool that ranks #1 isn&apos;t always the one that&apos;s right for you. Describe your goal — we match the AI stack that fits, compared on real features, current pricing, and total cost across 2,000+ tools.
             </p>
 
             {/* Goal input → planner (textarea + chips inside the component) */}

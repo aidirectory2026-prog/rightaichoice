@@ -6,7 +6,7 @@ import { ImageResponse } from 'next/og'
 // define their own opengraph-image (e.g. /best/[slug]).
 
 export const runtime = 'edge'
-export const alt = 'RightAIChoice — Find the right AI tools for your workflow'
+export const alt = 'RightAIChoice — the best AI tools for your goal, matched on fit not search rank'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -39,10 +39,10 @@ export default function OgImage() {
           <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: -1 }}>RightAIChoice</div>
         </div>
         <div style={{ marginTop: 48, fontSize: 72, fontWeight: 800, letterSpacing: -2, lineHeight: 1.1 }}>
-          Find the right AI tools
+          Find the best AI tools for what you&apos;re building
         </div>
         <div style={{ marginTop: 24, fontSize: 32, color: '#a1a1aa' }}>
-          2,000+ tools · honest comparisons · real pricing
+          Matched to your goal, not search rank · 2,000+ tools · real pricing
         </div>
       </div>
     ),

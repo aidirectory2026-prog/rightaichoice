@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     template: "%s | RightAIChoice",
   },
   description:
-    "Find and compare the best AI tools for your workflow. Describe your goal — get a personalized AI stack with costs, alternatives, and real user-sentiment scores across 2,000+ tools.",
+    "Find and compare the best AI tools for your goal — the one that ranks #1 isn't always right for you. Describe what you're building and get a personalized AI stack with real features, current pricing, costs, and alternatives across 2,000+ tools.",
   keywords: [
     "best AI tools",
     "AI tools",
