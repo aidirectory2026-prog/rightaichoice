@@ -33,7 +33,7 @@ const BEST_FAQS: { question: string; answer: string; links?: { label: string; hr
   {
     question: 'How are these rankings chosen?',
     answer:
-      'Each guide ranks tools on independent criteria — features, pricing, integrations, and aggregated real user sentiment — never pay-for-placement. Picks are re-checked as tools and pricing change.',
+      'Each guide ranks tools on independent criteria — features, pricing, integrations, and real-world signals — never pay-for-placement. Picks are re-checked as tools and pricing change.',
     links: [{ label: 'How we rank tools', href: '/methodology' }],
   },
   {
@@ -79,7 +79,7 @@ export default function BestIndexPage() {
             <h1 className="text-3xl font-bold text-white">Best AI Tools by Use Case</h1>
             <p className="mt-3 text-zinc-400 max-w-2xl leading-relaxed">
               Hand-tested, ranked, and updated regularly — find the best AI tools for what you&apos;re building.
-              Every guide ranks tools on features, price, and real user sentiment, with a clear pick for each use case.
+              Every guide ranks tools on features, price, and real-world signals, with a clear pick for each use case.
             </p>
           </div>
 

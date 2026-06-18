@@ -26,11 +26,11 @@ import type { PricingType, Platform, SkillLevel } from '@/types'
 export const metadata: Metadata = {
   title: 'Browse All AI Tools — Directory & Comparison',
   description:
-    'Browse and compare 2,000+ AI tools by category, pricing, and real user sentiment. Filter by what you need, or describe your goal and get a recommended AI stack.',
+    'Browse and compare 2,000+ AI tools by category, pricing, and real-world signals. Filter by what you need, or describe your goal and get a recommended AI stack.',
   alternates: { canonical: '/tools' },
   openGraph: {
     title: 'Browse All AI Tools — Directory & Comparison',
-    description: 'Browse and compare 2,000+ AI tools by category, pricing, and real user sentiment.',
+    description: 'Browse and compare 2,000+ AI tools by category, pricing, and real-world signals.',
     url: 'https://rightaichoice.com/tools',
     type: 'website',
   },
@@ -45,7 +45,7 @@ const TOOLS_FAQS = [
   {
     question: 'How are AI tools rated on RightAIChoice?',
     answer:
-      'Each tool is scored on features, pricing, integrations, and aggregated real user sentiment — independently, never pay-for-placement.',
+      'Each tool is scored on features, pricing, integrations, and real-world signals — independently, never pay-for-placement.',
   },
   {
     question: 'Are these AI tools free?',

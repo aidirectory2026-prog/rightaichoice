@@ -102,7 +102,7 @@ export function buildComparePageMeta(
   // Lead with the question searchers ask + an answer-first, benefit-driven
   // snippet. (Per-page title_overrides still win where present.)
   const title = `${titlePrefix}: Which Should You Pick in 2026?`
-  const desc = `${titlePrefix} compared on pricing, key features, and real user sentiment — with a clear, independent verdict to help you decide which to pick in 2026.`
+  const desc = `${titlePrefix} compared on pricing, key features, and real-world signals — with a clear, independent verdict to help you decide which to pick in 2026.`
   const modified = toIso(timestamps.lastReviewedAt) ?? toIso(timestamps.publishedAt)
   const published = toIso(timestamps.publishedAt)
   return {

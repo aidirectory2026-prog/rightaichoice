@@ -34,7 +34,7 @@ const STACK_FAQS: { question: string; answer: string; links?: { label: string; h
   {
     question: 'How do I choose the right AI stack?',
     answer:
-      'Start from your goal or role, then match the best-rated tool to each stage on price, features, and real user sentiment. Use a ready-made stack below as a baseline, or describe your goal in the planner for a tailored one.',
+      'Start from your goal or role, then match the best-rated tool to each stage on price, features, and real-world signals. Use a ready-made stack below as a baseline, or describe your goal in the planner for a tailored one.',
     links: [{ label: 'Plan a custom AI stack', href: '/plan' }],
   },
   {

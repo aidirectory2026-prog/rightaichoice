@@ -138,15 +138,11 @@ export default async function ComparisonSlugPage({ params }: Props) {
     6
   ).catch(() => [])
 
-  const fmtRating = (r: unknown): string => {
-    const n = typeof r === 'number' ? r : parseFloat(String(r ?? ''))
-    return Number.isFinite(n) && n > 0 ? n.toFixed(1) : 'N/A'
-  }
 
   const genericFaqs: FaqRow[] = [
     {
       question: `Which is better, ${toolNames[0]} or ${toolNames[1]}?`,
-      answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case. ${toolNames[0]} has a rating of ${fmtRating((tools[0] as { avg_rating: unknown }).avg_rating)}/5 and ${toolNames[1]} has a rating of ${fmtRating((tools[1] as { avg_rating: unknown }).avg_rating)}/5 based on real user reviews.`,
+      answer: `The best choice between ${toolNames[0]} and ${toolNames[1]} depends on your specific use case — we compare them independently on features, current pricing, integrations, and real-world signals (with an on-demand sentiment scan available for each). See the side-by-side breakdown above to match them to your needs.`,
     },
     {
       question: `What are the main differences between ${toolNames[0]} and ${toolNames[1]}?`,

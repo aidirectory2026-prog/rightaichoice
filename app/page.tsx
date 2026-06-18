@@ -158,7 +158,7 @@ const HOMEPAGE_FAQS: {
   {
     question: 'How does RightAIChoice work, and is it free?',
     answer:
-      'RightAIChoice is an independent decision engine for AI tools. Tell us your goal and we match a recommended stack from 2,000+ tools, scored on real user sentiment, features, and cost. It is free to use.',
+      'RightAIChoice is an independent decision engine for AI tools. Tell us your goal and we match a recommended stack from 2,000+ tools, scored on real-world signals, features, and cost. It is free to use.',
     links: [{ label: 'How we rank tools', href: '/methodology' }],
   },
 ]
@@ -213,7 +213,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="mt-5 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Describe your goal — we&apos;ll match the right AI stack from 2,000+ tools, compared on what actually matters: real user sentiment, side-by-side features, and total cost.
+              Describe your goal — we&apos;ll match the right AI stack from 2,000+ tools, compared on what actually matters: real-world signals, side-by-side features, and total cost.
             </p>
 
             {/* Goal input → planner (textarea + chips inside the component) */}
@@ -246,7 +246,7 @@ export default async function HomePage() {
             <p className="mt-3 text-zinc-400 leading-relaxed">
               The fastest way to choose AI tools is to start from your goal, not the tool. Decide
               what you want to build, break the workflow into stages, then pick the best-rated tool
-              for each stage on price, features, and real user sentiment. That set of tools — working
+              for each stage on price, features, and real-world signals. That set of tools — working
               together across your workflow — is your <strong className="text-zinc-200">AI stack</strong>.
               RightAIChoice builds it for you in seconds: describe your goal and get a complete,
               costed stack with alternatives for every step.

@@ -37,7 +37,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Writing Tools',
     h1: 'Best AI Tools for Writing',
     description:
-      'Discover the top AI writing assistants for content creation, copywriting, long-form articles, and more. Compare features, pricing, and real user reviews.',
+      'Discover the top AI writing assistants for content creation, copywriting, long-form articles, and more. Compare features, pricing, and real-world signals.',
     categories: ['writing-content'],
     noindex: true,
   },
@@ -191,7 +191,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for Students',
     h1: 'Best AI Tools for Students in 2026',
     description:
-      'The best AI tools every student needs — for research, writing essays, studying, note-taking, and exam prep. Ranked on accuracy, free tiers, and real user sentiment.',
+      'The best AI tools every student needs — for research, writing essays, studying, note-taking, and exam prep. Ranked on accuracy, free tiers, and real-world signals.',
   },
   {
     slug: 'resume',
@@ -510,7 +510,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for Insurance',
     h1: 'Best AI Tools for Insurance in 2026',
     description:
-      'AI is reshaping insurance across claims processing, underwriting, fraud detection, and customer service. These are the tools insurers and agencies are actually using — compared on capability, pricing, and real user sentiment.',
+      'AI is reshaping insurance across claims processing, underwriting, fraud detection, and customer service. These are the tools insurers and agencies are actually using — compared on capability, pricing, and real-world signals.',
     niche: 'insurance',
   },
   {
@@ -556,7 +556,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for Customer Success',
     h1: 'Best AI Tools for Customer Success Teams',
     description:
-      'AI for customer success — health scoring, churn prediction, renewal forecasting, and automated playbooks. The best AI customer success platforms, compared on signals, integrations, pricing, and real user sentiment.',
+      'AI for customer success — health scoring, churn prediction, renewal forecasting, and automated playbooks. The best AI customer success platforms, compared on signals, integrations, pricing, and real-world signals.',
   },
   {
     slug: 'fitness',
@@ -612,7 +612,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Travel Tools',
     h1: 'Best AI Tools for Travel Planning',
     description:
-      'AI travel tools that plan itineraries, find deals, and handle booking and expenses. The best AI tools for travelers and travel agents, compared on planning quality, coverage, pricing, and real user sentiment.',
+      'AI travel tools that plan itineraries, find deals, and handle booking and expenses. The best AI tools for travelers and travel agents, compared on planning quality, coverage, pricing, and real-world signals.',
   },
   {
     slug: 'youtube',
@@ -620,7 +620,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for YouTube',
     h1: 'Best AI Tools for YouTube Creators',
     description:
-      'AI for YouTube — title and thumbnail generation, scripting, video ideas, and SEO optimization. The best AI tools for YouTubers, compared on output quality, time saved, pricing, and real user sentiment.',
+      'AI for YouTube — title and thumbnail generation, scripting, video ideas, and SEO optimization. The best AI tools for YouTubers, compared on output quality, time saved, pricing, and real-world signals.',
   },
   {
     slug: 'wordpress',
@@ -628,7 +628,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for WordPress',
     h1: 'Best AI Tools for WordPress Sites',
     description:
-      'AI for WordPress — site building, content generation, SEO, and AI-assisted hosting. The best AI WordPress tools and plugins, compared on ease of setup, output quality, pricing, and real user sentiment.',
+      'AI for WordPress — site building, content generation, SEO, and AI-assisted hosting. The best AI WordPress tools and plugins, compared on ease of setup, output quality, pricing, and real-world signals.',
   },
   {
     slug: 'newsletter',
@@ -676,7 +676,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Interior Design Tools',
     h1: 'Best AI Tools for Interior Design',
     description:
-      'AI interior design tools that redesign rooms, render concepts, and stage spaces from a photo. The best AI tools for interior designers and home renovators, compared on realism, control, pricing, and real user sentiment.',
+      'AI interior design tools that redesign rooms, render concepts, and stage spaces from a photo. The best AI tools for interior designers and home renovators, compared on realism, control, pricing, and real-world signals.',
   },
 
   // ── Phase 9 doc 22 — Phase B4 niche expansion (2026-06-06) ──────
@@ -694,7 +694,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI No-Code Tools',
     h1: 'Best AI No-Code & Low-Code Tools',
     description:
-      'Build apps, automations, and workflows without writing code. The best AI no-code tools and platforms, compared on what you can ship, learning curve, pricing, and real user sentiment.',
+      'Build apps, automations, and workflows without writing code. The best AI no-code tools and platforms, compared on what you can ship, learning curve, pricing, and real-world signals.',
   },
   {
     slug: 'knowledge-base',
@@ -702,7 +702,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Knowledge Base Tools',
     h1: 'Best AI Knowledge Base & Documentation Tools',
     description:
-      'AI knowledge base tools that write, organize, and surface documentation and support answers. The best AI knowledge base software, compared on search quality, integrations, pricing, and real user sentiment.',
+      'AI knowledge base tools that write, organize, and surface documentation and support answers. The best AI knowledge base software, compared on search quality, integrations, pricing, and real-world signals.',
   },
   {
     slug: 'market-research',
@@ -710,7 +710,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Market Research Tools',
     h1: 'Best AI Tools for Market Research',
     description:
-      'AI market research tools for surveys, social listening, competitor analysis, and synthesizing insights. The best AI market research software, compared on data sources, depth, pricing, and real user sentiment.',
+      'AI market research tools for surveys, social listening, competitor analysis, and synthesizing insights. The best AI market research software, compared on data sources, depth, pricing, and real-world signals.',
   },
   {
     slug: 'prompt-engineering',
@@ -718,7 +718,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Prompt Engineering Tools',
     h1: 'Best AI Prompt Engineering Tools',
     description:
-      'Tools to write, test, version, and optimize prompts across models. The best AI prompt engineering tools for builders, compared on testing workflow, model coverage, pricing, and real user sentiment.',
+      'Tools to write, test, version, and optimize prompts across models. The best AI prompt engineering tools for builders, compared on testing workflow, model coverage, pricing, and real-world signals.',
   },
   {
     slug: 'contract-management',
@@ -726,7 +726,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Contract Tools',
     h1: 'Best AI Tools for Contract Review & Management',
     description:
-      'AI contract tools that review, redline, extract clauses, and manage the contract lifecycle. The best AI contract management software, compared on accuracy, integrations, pricing, and real user sentiment.',
+      'AI contract tools that review, redline, extract clauses, and manage the contract lifecycle. The best AI contract management software, compared on accuracy, integrations, pricing, and real-world signals.',
   },
   {
     slug: '3d-modeling',
@@ -750,7 +750,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Procurement Tools',
     h1: 'Best AI Tools for Procurement & Sourcing',
     description:
-      'AI for procurement — spend analysis, supplier sourcing, contract intake, and approvals. The best AI procurement software, compared on savings impact, integrations, pricing, and real user sentiment.',
+      'AI for procurement — spend analysis, supplier sourcing, contract intake, and approvals. The best AI procurement software, compared on savings impact, integrations, pricing, and real-world signals.',
   },
   {
     slug: 'graphic-design',
@@ -758,7 +758,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Graphic Design Tools',
     h1: 'Best AI Tools for Graphic Design',
     description:
-      'AI graphic design tools that generate visuals, edit images, and produce on-brand assets fast. The best AI graphic design software, compared on output quality, ease of use, pricing, and real user sentiment.',
+      'AI graphic design tools that generate visuals, edit images, and produce on-brand assets fast. The best AI graphic design software, compared on output quality, ease of use, pricing, and real-world signals.',
   },
   {
     slug: 'data-scientists',
@@ -766,7 +766,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for Data Scientists',
     h1: 'Best AI Tools for Data Scientists',
     description:
-      'AI tools for data scientists — model building, evaluation, monitoring, and MLOps. The best AI tools for data science teams, compared on workflow fit, integrations, pricing, and real user sentiment.',
+      'AI tools for data scientists — model building, evaluation, monitoring, and MLOps. The best AI tools for data science teams, compared on workflow fit, integrations, pricing, and real-world signals.',
   },
   {
     slug: 'photography',
@@ -790,7 +790,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Call Center Tools',
     h1: 'Best AI Tools for Call Centers',
     description:
-      'AI for call centers — voice agents, real-time agent assist, call summaries, and QA. The best AI call center software, compared on call handling, integrations, pricing, and real user sentiment.',
+      'AI for call centers — voice agents, real-time agent assist, call summaries, and QA. The best AI call center software, compared on call handling, integrations, pricing, and real-world signals.',
   },
   {
     slug: 'real-estate-investing',
@@ -806,7 +806,7 @@ export const BEST_PAGES: BestPageConfig[] = [
     title: 'Best AI Tools for Veterinary',
     h1: 'Best AI Tools for Veterinary Practices',
     description:
-      'AI for veterinary practices — clinical note generation, triage, and client communication. The best AI veterinary tools for vets and clinics, compared on time saved, accuracy, pricing, and real user sentiment.',
+      'AI for veterinary practices — clinical note generation, triage, and client communication. The best AI veterinary tools for vets and clinics, compared on time saved, accuracy, pricing, and real-world signals.',
   },
   {
     slug: 'product-design',

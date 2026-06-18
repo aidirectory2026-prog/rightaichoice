@@ -20,7 +20,7 @@ const TEASERS: Array<{ icon: typeof Sparkles; title: string; body: string }> = [
   {
     icon: Layers,
     title: `Matching across ${TOOL_COUNT_DISPLAY} tools`,
-    body: 'We weigh pricing, skill level, integrations, and real user sentiment — not just tags.',
+    body: 'We weigh pricing, skill level, integrations, and real-world signals — not just tags.',
   },
   {
     icon: TrendingUp,

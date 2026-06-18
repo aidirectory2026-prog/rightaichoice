@@ -71,7 +71,7 @@ const PLAN_FAQS: { question: string; answer: string; links?: { label: string; hr
   {
     question: 'What is an AI stack builder?',
     answer:
-      'An AI stack builder turns a plain-language goal into a recommended set of AI tools across the stages of your workflow. RightAIChoice draws on 2,000+ tools scored on features, price, and real user sentiment to assemble the stack for you.',
+      'An AI stack builder turns a plain-language goal into a recommended set of AI tools across the stages of your workflow. RightAIChoice draws on 2,000+ tools scored on features, price, and real-world signals to assemble the stack for you.',
   },
   {
     question: 'Is the AI stack planner free?',

@@ -76,7 +76,7 @@ export default function PressPage() {
                 <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">One line</p>
                 <p className="text-sm text-zinc-300">
                   RightAIChoice is the decision engine for picking the right AI stack — tell it your
-                  goal and get the exact AI tools to use, with costs, alternatives, and real user sentiment.
+                  goal and get the exact AI tools to use, with costs, alternatives, and real-world signals.
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
@@ -87,7 +87,7 @@ export default function PressPage() {
                   describe your goal and it recommends a complete AI stack — the best-rated tool for each
                   stage of your workflow, with pricing, alternatives, and tradeoffs. It tracks{' '}
                   {TOOL_COUNT_DISPLAY} across every major category, scored independently on features,
-                  price, and aggregated real user sentiment — never pay-for-placement.
+                  price, and real-world signals — never pay-for-placement.
                 </p>
               </div>
             </div>

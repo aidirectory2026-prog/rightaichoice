@@ -11,7 +11,7 @@ import { itemListJsonLd, faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json
 export const metadata: Metadata = {
   title: 'AI Tool Categories — Best AI Tools by Category',
   description:
-    'Browse the best AI tools by category — writing, coding, image generation, video, marketing, productivity, and more. Each category ranked on features, price, and real user sentiment.',
+    'Browse the best AI tools by category — writing, coding, image generation, video, marketing, productivity, and more. Each category ranked on features, price, and real-world signals.',
   alternates: { canonical: '/categories' },
   openGraph: {
     title: 'AI Tool Categories — Best AI Tools by Category',
@@ -37,7 +37,7 @@ const CATEGORY_FAQS: { question: string; answer: string; links?: { label: string
   {
     question: 'How are the tools in each category ranked?',
     answer:
-      'On independent criteria — features, pricing, integrations, and aggregated real user sentiment — never pay-for-placement.',
+      'On independent criteria — features, pricing, integrations, and real-world signals — never pay-for-placement.',
     links: [{ label: 'How we rank tools', href: '/methodology' }],
   },
   {
