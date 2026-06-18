@@ -63,6 +63,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
         filterCapabilities: ALL_FILTER_CAPABILITIES,
       },
       {
+        href: '/admin/insights/members',
+        label: 'Members',
+        description: 'Every registered account (read from auth) — so a new signup is never missed.',
+        filterCapabilities: [],
+      },
+      {
         href: '/admin/insights/cohorts',
         label: 'Cohorts',
         description: 'Build segments: did/didn’t do an event, “A then B” sequences, user-property filters, AND/OR — saveable.',
