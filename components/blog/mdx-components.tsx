@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { TrackedBlogLink } from '@/components/blog/tracked-blog-link'
+import { ToolFact } from '@/components/blog/tool-fact'
 
 export function Callout({ type = 'info', children }: { type?: 'info' | 'warning' | 'tip'; children: React.ReactNode }) {
   const styles = {
@@ -66,6 +67,7 @@ export function ComparisonTable({ headers, rows }: { headers: string[]; rows: st
 export const mdxComponents = {
   Callout,
   ToolMention,
+  ToolFact,
   ComparisonTable,
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
     <h1 className="mt-10 mb-4 text-3xl font-bold text-white" {...props} />
