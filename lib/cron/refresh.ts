@@ -55,6 +55,12 @@ Return STRICT JSON matching this schema:
   "not_for": ["3-5 anti-fit scenarios, ≤180 chars each. Be honest — list real limitations."]
 }
 
+FRESHNESS PRIORITY (most important rule — the whole point of this refresh):
+- The user prompt includes a LATEST NEWS section with dated, independently-sourced updates (changelog / tech-press / community signal).
+- When LATEST NEWS contradicts or extends the vendor page, the NEWS WINS. Examples: page says "100k context" but news says "200k+ context" → write the current number; page says "$20/mo" but news reports a hike to "$25/mo" → reflect the hike; page (dated) omits a recent model/feature launch covered in news → include it.
+- Prefer specific, current facts — named model versions, dates, dollar amounts, version numbers — over generic phrasing. Surface CURRENT reality, never preserve dated vendor copy.
+- This does NOT license fabrication: only state facts present in the LATEST NEWS or the website content. If neither contains a fact, omit it.
+
 SEO rules:
 - tagline + description MUST contain the tool's primary capability keyword (the thing it's known for)
 - features should be search-able terms (developers, marketers Google them)
@@ -62,7 +68,22 @@ SEO rules:
 - our_views uses long-tail keywords naturally — never stuff
 - NO prose, NO markdown fences, JUST the JSON object.`
 
-function buildPrompt(toolName: string, websiteUrl: string, pageText: string): string {
+// Phase 11 B1 (2026-06-18): render the tool's captured latest_updates as a compact
+// bulleted news block. Mirrors scripts/backfill-tool-data.ts so the hourly refresh
+// has the same fresh-news visibility the monthly SOP does — the fix for editorial
+// reasserting stale facts (e.g. "100k context") from vendor homepage + training.
+function renderLatestNews(latestUpdates: unknown): string {
+  const lu = Array.isArray(latestUpdates) ? (latestUpdates as LatestItem[]) : []
+  if (!lu.length) {
+    return '(no recent third-party news / changelog signal captured — synthesize from the vendor page only)'
+  }
+  return lu
+    .slice(0, 10)
+    .map((it) => `- ${it.date ?? '?'} · ${it.source ?? '?'} · ${(it.title ?? '').slice(0, 140)} — ${(it.summary ?? '').slice(0, 220)}`)
+    .join('\n')
+}
+
+function buildPrompt(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): string {
   return `Refresh editorial metadata for this AI tool.
 
 Tool: ${toolName}
@@ -73,10 +94,16 @@ Website content (first 12000 chars):
 ${pageText.slice(0, 12000)}
 """
 
-Synthesize per the schema. Use ONLY information present in the page content above — never invent features, integrations, or pricing tiers not visible there. If a field can't be filled with high confidence, return a safe minimum (e.g., for features list: only what the page lists; for integrations: empty array if none mentioned).`
+## LATEST NEWS / COMMUNITY SIGNAL (independently sourced — last ~90 days)
+${renderLatestNews(latestUpdates)}
+
+Synthesize per the schema. PRIORITY ORDER for facts:
+1. LATEST NEWS above — the MOST current source; it OVERRIDES stale vendor copy whenever they conflict (newer model versions, price changes, recent launches, deprecations).
+2. Website content above — current as of today's scrape.
+Never invent features, integrations, or pricing tiers not present in EITHER source above. If a field can't be filled with high confidence, return a safe minimum (only what the sources list; empty array if none).`
 }
 
-async function callDeepSeek(toolName: string, websiteUrl: string, pageText: string): Promise<string> {
+async function callDeepSeek(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): Promise<string> {
   // Retry only the network round-trip: DeepSeek 5xx / 429 (rate_limited) and
   // transient fetch failures are classified transient by withRetry and re-tried
   // with backoff. A 4xx-other or malformed body still fails through to the
@@ -94,7 +121,7 @@ async function callDeepSeek(toolName: string, websiteUrl: string, pageText: stri
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText) },
+          { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText, latestUpdates) },
         ],
       }),
     })
@@ -109,7 +136,7 @@ async function callDeepSeek(toolName: string, websiteUrl: string, pageText: stri
   return json.choices[0]?.message?.content ?? ''
 }
 
-async function synthesize(toolName: string, websiteUrl: string, pageText: string): Promise<RefreshOut> {
+async function synthesize(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): Promise<RefreshOut> {
   // Single corrective retry on validation fail — same pattern as the
   // monthly Phase 4 SOP. Reduces transient validation failures by ~70%.
   let correction: string | undefined
@@ -118,6 +145,7 @@ async function synthesize(toolName: string, websiteUrl: string, pageText: string
       toolName,
       websiteUrl,
       correction ? `${pageText}\n\nPrev attempt failed: ${correction}. Return strict JSON.` : pageText,
+      latestUpdates,
     )
     const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
     try {
@@ -132,7 +160,19 @@ async function synthesize(toolName: string, websiteUrl: string, pageText: string
   throw new Error('unreachable')
 }
 
-type ToolRow = { id: string; slug: string; name: string; website_url: string; github_url: string | null }
+type LatestItem = { date?: string; source?: string; type?: string; title?: string; summary?: string }
+type ToolRow = {
+  id: string
+  slug: string
+  name: string
+  website_url: string
+  github_url: string | null
+  // Phase 11 B1 (2026-06-18): fresh news/changelog signal captured by the nightly
+  // refresh-latest-updates cron. Threaded into the editorial prompt so the hourly
+  // refresh stops reasserting stale facts (e.g. "100k context") from the vendor
+  // homepage + DeepSeek training when newer reality exists.
+  latest_updates: unknown
+}
 
 async function processTools(
   supabase: SupabaseClient,
@@ -184,7 +224,7 @@ async function processTools(
       }
       let fieldsUpdated: string[] = []
       if (scrapeOk) {
-        const parsed = await synthesize(tool.name, tool.website_url, pageText)
+        const parsed = await synthesize(tool.name, tool.website_url, pageText, tool.latest_updates)
         Object.assign(updateData, parsed)
         fieldsUpdated = Object.keys(parsed)
       }
@@ -245,7 +285,7 @@ export async function runRefresh(
   const dailyDueCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString()
   const { data: dailyDue, error: dailyErr } = await supabase
     .from('tools')
-    .select('id, slug, name, website_url, github_url')
+    .select('id, slug, name, website_url, github_url, latest_updates')
     .eq('is_published', true)
     .eq('refresh_tier', 'daily')
     .or(`last_verified_at.is.null,last_verified_at.lt.${dailyDueCutoff}`)
@@ -259,7 +299,7 @@ export async function runRefresh(
   if (remaining > 0) {
     const { data: std, error: stdErr } = await supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url')
+      .select('id, slug, name, website_url, github_url, latest_updates')
       .eq('is_published', true)
       .eq('refresh_tier', 'standard')
       .order('last_verified_at', { ascending: true, nullsFirst: true })
@@ -307,7 +347,7 @@ export async function runRefreshForSlugs(
     const chunk = slugs.slice(i, i + CHUNK)
     let q = supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url')
+      .select('id, slug, name, website_url, github_url, latest_updates')
       .in('slug', chunk)
     if (!opts?.includeUnpublished) q = q.eq('is_published', true)
     const { data: tools, error } = await q

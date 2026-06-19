@@ -42,6 +42,7 @@ const editorialSchema = z.object({
 
 type EditorialOut = z.infer<typeof editorialSchema>
 
+type LatestItem = { date?: string; source?: string; type?: string; title?: string; summary?: string }
 type ToolFacts = {
   id: string
   slug: string
@@ -53,6 +54,19 @@ type ToolFacts = {
   integrations: string[] | null
   best_for: string[] | null
   not_for: string[] | null
+  // Phase 11 B1 (2026-06-18): fresh news so the compare prose can cite recent
+  // changes (new model versions, price moves, launches) the static facts miss.
+  latest_updates: unknown
+}
+
+// Compact bulleted render of a tool's captured latest_updates for the prompt.
+function renderLatestNews(latestUpdates: unknown): string {
+  const lu = Array.isArray(latestUpdates) ? (latestUpdates as LatestItem[]) : []
+  if (!lu.length) return '(no recent news captured)'
+  return lu
+    .slice(0, 6)
+    .map((it) => `- ${it.date ?? '?'} · ${(it.title ?? '').slice(0, 120)} — ${(it.summary ?? '').slice(0, 160)}`)
+    .join('\n')
 }
 
 const SYSTEM_PROMPT = `You are an independent editorial analyst at RightAIChoice writing a head-to-head comparison between AI tools. Your goal: help a buyer decide. Be specific, concrete, no fluff. Reference actual features + pricing tiers, never invent.
@@ -66,6 +80,8 @@ Return STRICT JSON matching this schema:
   "use_cases": [{ "persona": "Solo founder", "recommendedSlug": "tool-a", "reasoning": "Because..." }] (max 5),
   "faqs": [{ "question": "Q?", "answer": "A." }] (max 8)
 }
+
+FRESHNESS: each tool includes a LATEST NEWS block. When it contradicts or extends the static facts (a newer model version, a price change, a recent launch/deprecation), the news WINS — reflect current reality, never dated copy. Do not invent facts absent from both the facts and the news.
 
 NO prose, NO fences, JUST the JSON.`
 
@@ -81,6 +97,7 @@ function buildPrompt(toolA: ToolFacts, toolB: ToolFacts): string {
     `best_for: ${(toolA.best_for ?? []).join(', ')}`,
     `not_for: ${(toolA.not_for ?? []).join(', ')}`,
     `description: ${(toolA.description ?? '').slice(0, 800)}`,
+    `LATEST NEWS:\n${renderLatestNews(toolA.latest_updates)}`,
     '',
     `## ${toolB.name} (slug: ${toolB.slug})`,
     `tagline: ${toolB.tagline ?? '(none)'}`,
@@ -90,8 +107,9 @@ function buildPrompt(toolA: ToolFacts, toolB: ToolFacts): string {
     `best_for: ${(toolB.best_for ?? []).join(', ')}`,
     `not_for: ${(toolB.not_for ?? []).join(', ')}`,
     `description: ${(toolB.description ?? '').slice(0, 800)}`,
+    `LATEST NEWS:\n${renderLatestNews(toolB.latest_updates)}`,
     '',
-    'Regenerate the editorial comparison fields per the schema. Be specific to TODAY\'s data above — do not write generic comparisons. Reference actual features/pricing/integrations in the analysis sections.',
+    'Regenerate the editorial comparison fields per the schema. Be specific to TODAY\'s data above — do not write generic comparisons. Reference actual features/pricing/integrations in the analysis sections, and let the LATEST NEWS override any stale static fact.',
   ].join('\n')
 }
 
@@ -151,7 +169,7 @@ async function regenOne(
 
   const { data, error } = await supabase
     .from('tools')
-    .select('id, slug, name, tagline, description, pricing_type, features, integrations, best_for, not_for')
+    .select('id, slug, name, tagline, description, pricing_type, features, integrations, best_for, not_for, latest_updates')
     .in('id', toolIds.slice(0, 2))
 
   if (error || !data || data.length < 2) {
