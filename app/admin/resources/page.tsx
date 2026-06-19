@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   GanttChartSquare,
   BookMarked,
+  RefreshCw,
 } from 'lucide-react'
 import { GuideCard, GuideHeader, Callout } from './_components'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
@@ -73,6 +74,13 @@ export default function ResourcesIndexPage() {
           title="Glossary & FAQ"
           blurb="distinct_id vs user, session, bot flag, UTM, first touch, IST windows, data epochs — every term that appears on these screens, defined once."
           icon={<BookMarked className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/data-pipelines"
+          step="7 · the catalog"
+          title="How the catalog stays fresh"
+          blurb="The data-layer machine: how ~2,000 tools refresh themselves from live news, how one change propagates to every page, how the Viability Score works, and what it costs. Plain English + the link to the full pipelines playbook."
+          icon={<RefreshCw className="h-5 w-5" />}
         />
       </div>
 
