@@ -51,17 +51,15 @@ async function getViabilityLeaderboard() {
 export default async function ViabilityPage() {
   const { safest, riskiest } = await getViabilityLeaderboard()
 
-  // Honest descriptions of what each signal actually measures today. Some
-  // signals (wrapper status, GitHub stars, pricing model) are tool-specific;
-  // the category-level factors are applied as baselines while per-tool detection
-  // is built out — the copy says so rather than overstating.
+  // Honest descriptions of what each signal actually measures today. All four are
+  // real, per-tool signals. (Per-category mortality and automated hyperscaler-overlap
+  // detection are on the roadmap — we'd rather ship four signals we can stand behind
+  // than pad the model with category baselines that don't differentiate tools.)
   const signals = [
-    { name: 'Wrapper Dependency', weight: '30%', desc: 'Is the tool built entirely on top of another AI API with no proprietary technology? Pure wrappers face the highest shutdown risk when the underlying API changes pricing or ships the same feature natively. (Tool-specific.)' },
-    { name: 'GitHub Traction', weight: '20%', desc: 'For tools with a public GitHub repo: star count and whether the project is openly developed. Widely-starred, public projects signal an active, invested community. Tools without a repo get a neutral score here. (Tool-specific.)' },
+    { name: 'Momentum', weight: '40%', desc: 'How recently the tool actually shipped or was covered — mined from real news, changelog entries and launches. A tool with a release or feature in the last quarter is demonstrably alive; one whose newest signal is two-plus years old is an abandonment risk. (Tool-specific.)' },
+    { name: 'Wrapper Dependency', weight: '30%', desc: 'Is the tool a thin wrapper over a third-party foundation model (OpenAI/Anthropic/Google) with no proprietary technology, data, or workflow? Pure wrappers face the highest shutdown risk when the provider changes pricing or ships the same feature natively. Judged per-tool. (Tool-specific.)' },
     { name: 'Revenue Model', weight: '20%', desc: 'Inferred from the pricing model: tools with a paid or freemium tier have a clearer revenue path than free-only tools with no monetization. A proxy for financial durability — not a funding-database lookup. (Tool-specific.)' },
-    { name: 'Hyperscaler Overlap', weight: '15%', desc: 'The risk that a big platform (Google, Microsoft, OpenAI) builds the same feature natively. Applied as a category baseline today; automated per-tool detection is on our roadmap.' },
-    { name: 'Category Mortality', weight: '10%', desc: 'How fragile the tool’s category tends to be. Applied as an industry baseline today (~29% AI-tool mortality); per-category rates are on our roadmap.' },
-    { name: 'Website Presence', weight: '5%', desc: 'Whether the tool has a live website and pricing page — a basic signal that the business is still operating.' },
+    { name: 'Website Presence', weight: '10%', desc: 'Whether the tool has a live website and pricing page — a basic signal that the business is still operating. (Tool-specific.)' },
   ]
 
   const jsonLd = {
@@ -73,7 +71,7 @@ export default async function ViabilityPage() {
         name: 'What is an AI tool viability score?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'A viability score is a 0–100 rating predicting the likelihood an AI tool will still be operational in 12 months. It combines 6 signals: wrapper dependency (30%), GitHub activity (20%), funding runway (20%), hyperscaler overlap (15%), category mortality (10%), and website health (5%).',
+          text: 'A viability score is a 0–100 rating predicting the likelihood an AI tool will still be operational in 12 months. It combines 4 signals: momentum (40%, how recently it shipped), wrapper dependency (30%), revenue model (20%), and website presence (10%).',
         },
       },
       {
@@ -147,7 +145,7 @@ export default async function ViabilityPage() {
           <section className="mb-16">
             <h2 className="text-xl font-semibold text-white mb-2">How We Score</h2>
             <p className="text-sm text-zinc-500 mb-6 max-w-2xl">
-              Each tool is evaluated across 6 signals. The weighted sum produces a single 0–100 score.
+              Each tool is evaluated across 4 signals. The weighted sum produces a single 0–100 score.
               Higher = more likely to survive the next 12 months.
             </p>
 

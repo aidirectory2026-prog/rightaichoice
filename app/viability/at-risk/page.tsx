@@ -59,9 +59,9 @@ export default async function AtRiskPage() {
               <h1 className="text-3xl font-bold text-white">At-Risk AI Tools</h1>
             </div>
             <p className="text-zinc-400 max-w-2xl leading-relaxed">
-              These tools scored below 40 on our viability model. Multiple risk signals are present — wrapper
-              dependency, low funding indicators, or high category mortality. Consider alternatives before
-              building critical workflows around them.
+              These tools scored below 40 on our viability model. Multiple risk signals are present — low
+              momentum (no recent releases or coverage), thin-wrapper dependency, or no clear revenue model.
+              Consider alternatives before building critical workflows around them.
             </p>
             <p className="mt-2 text-xs text-zinc-600">
               {tools.length} tools · Updated {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}

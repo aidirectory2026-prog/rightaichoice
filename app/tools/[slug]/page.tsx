@@ -711,7 +711,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400">
-                    We&apos;re still computing {tool.name}&apos;s viability across the 6 signals (funding, development activity, platform risk, etc.). Refreshing soon —{' '}
+                    We&apos;re still computing {tool.name}&apos;s viability across our signals (momentum, wrapper risk, revenue model, web presence). Refreshing soon —{' '}
                     <Link href="/viability" className="text-emerald-400 hover:text-emerald-300 transition-colors">
                       read how we score
                     </Link>
