@@ -72,6 +72,11 @@ const sopOutputSchema = z.object({
   editorial_verdict: z.string().min(120).max(700),
   our_views: z.string().min(200).max(3000),
 
+  // Phase 11 C (2026-06-18) — viability risk signal. Is this a thin wrapper over a
+  // third-party foundation model with little proprietary moat? Feeds tools.is_wrapper,
+  // the #1 input to the Viability Score (was never populated before).
+  is_wrapper: z.boolean(),
+
   // Structured
   features: z.array(z.string().min(8).max(200)).min(8).max(15),
   // Bumped 15 → 25 (2026-05-07): platform tools (Langflow, MetaGPT,
@@ -462,6 +467,7 @@ A. EDITORIAL
 - description (120-3000 chars): plain prose, what it does, who it's for, how it differs
 - editorial_verdict (120-700 chars): RAC's call. Ground the recommendation in named features + named alternatives.
 - our_views (200-3000 chars): long-form deep dive — strengths, weaknesses, where it fits, where it doesn't
+- is_wrapper (boolean): TRUE only if this tool is essentially a thin wrapper over a third-party foundation model (OpenAI/Anthropic/Google/etc.) — a chat or prompt UI with little proprietary technology, data, or workflow, that could be replicated in a weekend and is at high risk if the model provider ships the feature natively. FALSE for tools with a proprietary model, a real data moat, deep multi-step workflow/automation, non-LLM core value, or significant engineering beyond prompting. When genuinely unsure, return FALSE (don't flag established products as wrappers).
 
 B. STRUCTURED
 - features (8-15 items): each 8-200 chars. Concrete capability names ("AI-assisted drafting", "Stripe integration", "Custom domains"). NOT marketing taglines.
@@ -709,6 +715,7 @@ function sanitizeNestedArrays(obj: Record<string, unknown>): void {
 }
 
 const SAFE_MIN: Partial<Record<keyof SopOutput, (tool: ToolRow) => unknown>> = {
+  is_wrapper: () => false, // when unsure, never flag as a wrapper
   skip_if: (t) => `you need capabilities ${t.name} doesn't currently advertise — review the limitations and pricing tiers above before adopting.`,
   pricing_power_text: (t) => `${t.name}'s pricing fits teams whose volume aligns with the published tiers. Compare against the alternatives listed below for stage-specific value.`,
   setup_time_text: () => `Setup time varies by use case. Solo users typically reach first value within an hour; teams should budget half a day for shared setup including integrations and access controls.`,
@@ -821,6 +828,8 @@ async function writeAtomically(
     description: output.description,
     editorial_verdict: output.editorial_verdict,
     our_views: output.our_views,
+    is_wrapper: output.is_wrapper, // Phase 11 C — viability risk signal
+
     features: output.features,
     integrations: output.integrations,
     use_cases: output.use_cases,

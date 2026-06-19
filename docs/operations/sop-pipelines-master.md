@@ -1,353 +1,204 @@
 # Master SOP — Every Automated Pipeline
 
-**Single source of truth for every cron, every scheduled job, every "set it and forget it" automation in the codebase.**
+**The single source of truth for every cron, scheduled job, and "set-it-and-forget-it"
+automation that keeps RightAIChoice running. Keep this current with EVERY pipeline change.**
 
-Each pipeline has the same 7-field SOP:
-- **Schedule** — when it fires
-- **Trigger surface** — Vercel cron / launchd / manual
-- **What it reads** — input dependencies
-- **What it writes** — output side-effects
-- **Failure mode** — what happens when it errors
-- **Verification** — how to confirm it ran successfully
-- **Recovery** — what to do if it's failing
-
-This doc is read on Mondays during the weekly review. If a pipeline is failing repeatedly, find it here, follow Recovery.
+Last full review: **2026-06-18** (Phase 11 — freshness root fix, weekly deep refresh,
+cost tracking, viability rebuild).
 
 ---
 
-## ⚠️ Critical gotchas (read before touching ANY pipeline)
+## 0. The 60-second non-technical picture (for everyone on the team)
 
-Two production-silent failure modes that have each taken down pipelines. Both are
-invisible on the surface (jobs look "fine") — caught only by checking `pipeline_runs`
-and the Bing/Google sitemap dashboards. Both were found + fixed 2026-06-03.
+RightAIChoice is a catalog of ~2,070 AI tools that has to stay **accurate and fresh on
+its own**, with almost no human touching it day to day. A fleet of small robots
+("pipelines") runs on a schedule to do that. In plain English, they:
+
+1. **Find new tools** worth listing (and reject hype with no traction).
+2. **Keep every tool's facts current** — what it does, pricing, the latest news — so a
+   visitor never reads a stale "100k context" when the real number moved on.
+3. **Push that freshness everywhere** the tool is mentioned — its own page, comparison
+   pages, category/best pages, and blog posts — so nothing contradicts itself.
+4. **Score each tool's survival risk** (the Viability Score) so we can warn buyers off
+   tools likely to die.
+5. **Tell Google & Bing** about new/changed pages so they get indexed.
+6. **Watch itself** — log what every robot did + how much it cost, and email/Slack an
+   alert when one breaks.
+
+Two layers of robots run this:
+- **Vercel Crons** — lightweight jobs (seconds each). Run straight on our hosting.
+- **GitHub Actions** — heavy jobs (minutes to hours, e.g. refreshing hundreds of tools
+  with AI). Vercel caps a job at ~5 min, so the big work runs on GitHub's longer budget
+  and writes to the same database.
+
+Everything an AI robot does costs a little money (DeepSeek, an AI model ~10× cheaper than
+the big names). **Total AI spend is ~$130–200/month**, now tracked per-run in the
+database (`pipeline_runs.estimated_cost_usd`) and visible in `/admin/health`.
+
+**If something looks stale or broken:** check `/admin/health` and the `pipeline_runs`
+table first (see §4 Health-check). Every robot logs there.
+
+---
+
+## 1. ⚠️ Critical gotchas (read before touching ANY pipeline)
+
+Two production-silent failure modes that have each taken down pipelines. Both look "fine"
+on the surface — caught only by checking `pipeline_runs` and the sitemap dashboards.
 
 ### 1. Vercel Cron invokes via **GET** — every Vercel-cron route MUST export `GET`
-A route that only exports `POST` will **silently 405 on every scheduled fire and
-never run** (no `pipeline_runs` row at all — it looks like the cron "doesn't exist").
-The Phase 8.d.3 wrapper refactor (`01c68ca`) made several routes POST-only and
-**silently killed 5 crons** (`indexnow-unindexed`, `refresh-freshness-view`,
-`cleanup-user-events`, `scrape-sentiment`, `calculate-viability` — 0 runs for weeks).
-Fixed by aliasing `export const GET = POST` on each.
-
-- **Vercel-cron routes** (`vercel.json` → `crons`): must export `GET` (or both).
-- **GitHub-Actions routes** (`.github/workflows/cron-pipelines.yml`, which `curl -X POST`):
-  POST is fine. Several jobs live there because **Vercel Hobby only runs daily crons** —
-  sub-daily / some weekly jobs are driven from GH Actions instead.
-- **Rule of thumb:** export BOTH `GET` and `POST` from every cron route. Costs nothing,
-  immune to which trigger calls it.
-- **Detection:** `select pipeline_key, max(started_at) from pipeline_runs group by 1` —
-  cross-check against `vercel.json`; any cron listed there but absent/stale here is dead.
+A route that only exports `POST` will **silently 405 on every scheduled fire and never
+run** (no `pipeline_runs` row at all). The Phase 8.d.3 wrapper refactor made several
+routes POST-only and silently killed 5 crons for weeks. **Rule: export BOTH `GET` and
+`POST` from every cron route.** Detection: any `pipeline_key` in `vercel.json` that's
+absent/stale in `pipeline_runs` is dead.
 
 ### 2. Sitemaps must stay **CDN-cached** — or Bing drops them
-A `sitemap.ts` is a Route Handler that Next 16 **caches by default UNLESS it uses a
-request-time API**. Calling the cookie-reading `createClient()` (or setting
-`export const dynamic = 'force-dynamic'`) opts it out → every crawler fetch is an
-uncached DB render. When that render exceeds Bing's sitemap-fetch tolerance (~2–3s),
-Bing marks the feed **"Pending" and never ingests it**. This is exactly why
-`/tools/sitemap.xml` (1,994 URLs, ~3.4s uncached) sat Pending for weeks while Bing
-indexed only ~14 pages and sent **zero** traffic — and zero ChatGPT/Copilot citations,
-since those read Bing's index.
+A `sitemap.ts` Route Handler is cached by Next 16 **unless it uses a request-time API**.
+Calling the cookie-reading `createClient()` (or `force-dynamic`) opts it out → every
+crawler fetch is an uncached DB render; when that exceeds Bing's ~2–3s tolerance, Bing
+marks the feed "Pending" forever. **Sitemap data MUST come from the cookie-free
+`getAdminClient()`.** Verify: `curl -sI .../tools/sitemap.xml | grep x-vercel-cache` → `HIT`.
 
-- **Sitemap data MUST come from the cookie-free `getAdminClient()`**, never
-  `createClient()`. Never set `force-dynamic` on a sitemap.
-- **Verify cached:** `curl -sI https://rightaichoice.com/tools/sitemap.xml | grep x-vercel-cache`
-  → must be `HIT`, total time < ~1s.
-- **Verify Bing ingested:** Bing Webmaster `GetFeeds` → each feed `Status: Success`
-  with non-zero `UrlCount`. A "Pending" feed with 0 URLs = Bing can't fetch it.
+### 3. (Phase 11) Scrapers fail silently on bot-protected sites — regenerate, don't freeze
+The flagship vendor sites (claude.ai, x.ai, perplexity.ai = Cloudflare 403; gemini =
+JS-only SPA) **cannot be scraped** by plain fetch. The old refresh "preserved" editorial
+on scrape failure → those tools' editorial **froze for months** while the cron logged
+"refreshed". Fixed B1.2: when scrape is blocked but news + profile exist, regenerate from
+those + model knowledge (honesty guard against restating unconfirmed numbers). Watch the
+new `scrapeBlocked` metric in `pipeline_runs.metadata` — a spike = scraper degraded.
 
 ---
 
-## Pipeline inventory (12 active, all server-side)
-
-| # | Path | Schedule (UTC) | Lid-state | Purpose |
-|---|---|---|---|---|
-| 1 | `/api/cron/indexnow-recent` | Daily 07:00 | server | IndexNow ping new URLs (Bing/Yandex) |
-| 2 | `/api/cron/submit-urls-bing` | Daily 09:00 | server | Bing direct API submission, smart-rotation |
-| 3 | `/api/cron/refresh-latest-updates` | Daily 02:00 | server | Per-tool "Latest from" refresh (top 50) |
-| 4 | `/api/cron/refresh-tools` | **Hourly** | server | **200+/day tool refresh — Phase 8 freshness contract** |
-| 5 | `/api/cron/ingest-tools` | 01:00 + 13:00 | server | **50 new tools/day target — Phase 8 freshness contract** |
-| 6 | `/api/cron/refresh-compare-editorials` | Daily 08:00 | server | **Cascade: regen compare editorials when underlying tools refresh** |
-| 7 | `/api/cron/calculate-viability` | Mon 04:00 | server | Recompute viability score per tool |
-| 8 | `/api/cron/refresh-faqs` | Mon 05:00 | server | Regenerate stale FAQs via DeepSeek |
-| 9 | `/api/cron/resubmit-sitemap-gsc` | Mon 06:00 | server | Tell Google to re-fetch sitemap-index |
-| 10 | `/api/cron/scrape-sentiment` | Sun 04:00 | server | Reddit/HN/G2 sentiment quotes per tool |
-| 11 | `/api/cron/discover-tutorials` | Sun 05:00 | server | YouTube tutorial discovery per tool |
-| 12 | `/api/cron/generate-editorials` | Sun 06:00 | server | Backfill new editorial comparisons |
-
-**Plus 1 manual + 1 quarterly pipeline:**
-- `scripts/backfill-tool-data.ts` (Phase 4 SOP full-catalog refresh) — manual monthly via `npm run refresh:apply -- --force`
-- `scripts/refresh-latest-updates.ts --all` — manual monthly full-catalog latest-updates refresh
-
-**All Vercel crons require `CRON_SECRET` env var in Vercel project.** No other auth.
-
-> **⚠️ This inventory table is partially stale (2026-06-03).** The authoritative
-> trigger lists are **`vercel.json` → `crons`** (Vercel, GET) and
-> **`.github/workflows/cron-pipelines.yml`** (GitHub Actions, POST); live status is
-> in **`/admin/health`** + `pipeline_runs`. Not yet itemized below but live in
-> `vercel.json`: `snapshot-gsc`, `triage-gsc`, `email-weekly-digest`, `seo-impact`
-> (the weekly GSC loop), `snapshot-daily-updates`, `refresh-freshness-view`,
-> `cleanup-user-events`, `indexnow-unindexed`, `onboard-tools`.
->
-> **Dead-cron fix (2026-06-03):** five routes were POST-only and never fired as
-> Vercel crons (see Critical Gotcha #1) — `indexnow-unindexed`,
-> `refresh-freshness-view`, `cleanup-user-events`, `scrape-sentiment`,
-> `calculate-viability`. All now export `GET`. Confirm each logs a run in
-> `pipeline_runs` after its next scheduled fire.
-
----
-
-## 1. IndexNow recent (`/api/cron/indexnow-recent`)
-
-| Field | Value |
-|---|---|
-| Schedule | Daily 07:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `tools.created_at`, `tool_comparisons.created_at` (last 7 days) |
-| Writes | POST to api.indexnow.org with URL batch |
-| Failure mode | IndexNow returns 200 even on garbage; real failures = network errors or 4xx |
-| Verification | Vercel deploy logs → search for "indexnow-recent" → expect 200 OK + `submittedCount` field |
-| Recovery | If failing 3+ days: check `lib/indexnow.ts` key matches the file at `public/<key>.txt` (Bing validates ownership before accepting submissions) |
-
-**Why it exists:** baseline freshness signal to Bing/Yandex for net-new content. Complements `/api/cron/submit-urls-bing` (which handles older content via smart rotation).
-
----
-
-## 2. Bing direct API submission (`/api/cron/submit-urls-bing`)
-
-| Field | Value |
-|---|---|
-| Schedule | Daily 09:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `bing_submit_state` (single row) + `tools` / `tool_comparisons` / `categories` per current rotation type |
-| Writes | POST to Bing SubmitUrlbatch + UPDATE `bing_submit_state` (cursor + lifetime stats) |
-| Failure mode | Same-day re-fire is rejected by Bing (400 "Quota exceeded"); cron silently skips when `last_run_utc` matches today |
-| Verification | `select * from bing_submit_state` → `last_run_utc` should be today; `lifetime_submitted` should bump by ~100 daily |
-| Recovery | If `lifetime_runs` not incrementing: check Vercel logs for "BING_WEBMASTER_API_KEY missing" → re-add to Vercel env. If cron fires but Bing returns 4xx: api key rotated, generate new at https://www.bing.com/webmasters → Settings → API Access |
-
-**Why it exists:** authenticated direct push to Bing gets stronger crawl-priority than IndexNow. Smart rotation auto-cycles compare → tool → alternative → category so the operator never has to think "what did I push yesterday."
-
-**Required Vercel env vars:** `BING_WEBMASTER_API_KEY`, `CRON_SECRET`.
-
----
-
-## 3. Refresh latest-updates (`/api/cron/refresh-latest-updates`)
-
-| Field | Value |
-|---|---|
-| Schedule | Daily 02:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `tools` (top 50 by `last_full_refresh_at ASC` — staleness-first) + vendor changelog + Reddit/HN/blog signal |
-| Writes | `tools.latest_updates` JSONB + `tools.latest_updates_at` |
-| Failure mode | Per-tool DeepSeek synthesis fails → tool keeps prior `latest_updates`. Logged to `docs/preflight/latest-updates-needs-review.txt`. Cron continues with remaining tools. |
-| Verification | `select count(*) from tools where latest_updates_at >= now() - interval '24 hours'` → should be ~50 per day |
-| Recovery | If `latest_updates_at` not advancing: check Vercel logs for DeepSeek 5xx storms (DeepSeek API outage). Re-fire on demand: `curl -H "Authorization: Bearer $CRON_SECRET" https://rightaichoice.com/api/cron/refresh-latest-updates` |
-
-**Why it exists:** keeps the "Latest from {Tool}" section under "Our Take" current. Top 50 tools daily; whole catalog refreshed weekly via the Sunday `refresh-latest-full` (TODO if not yet scheduled).
-
----
-
-## 4. Calculate viability (`/api/cron/calculate-viability`)
-
-| Field | Value |
-|---|---|
-| Schedule | Mon 04:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `tools.last_full_refresh_at`, `tools.recent_changes`, `tools.pricing_history`, `tools.review_count` |
-| Writes | `tools.viability_score` (0-100), `tools.viability_breakdown` JSONB |
-| Failure mode | Algorithmic — no external API. If it errors, the bug is in `lib/viability/calculate.ts`. No transient failures. |
-| Verification | `select count(*) from tools where viability_score is null and is_published = true` → should be 0 |
-| Recovery | If scores drift unrealistically (cluster around 50): manually inspect `lib/viability/calculate.ts` weighting. May need re-tuning if vendor behavior changes. |
-
-**Why it exists:** powers the "Viability Score" badge + `/viability/at-risk` route + 7O.1 outreach filter (skip vendors with viability < 30).
-
----
-
-## 5. Refresh FAQs (`/api/cron/refresh-faqs`)
-
-| Field | Value |
-|---|---|
-| Schedule | Mon 05:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `tools` with `faqs_long_tail` older than 90 days |
-| Writes | `tools.faqs_long_tail` JSONB array |
-| Failure mode | Per-tool DeepSeek failure → keeps prior FAQs |
-| Verification | `select count(*) from tools where faqs_long_tail is not null` → should grow weekly |
-| Recovery | Same as latest-updates: DeepSeek outage is the only realistic failure mode. Manually re-fire route. |
-
----
-
-## 6. Re-submit GSC sitemap (`/api/cron/resubmit-sitemap-gsc`)
-
-| Field | Value |
-|---|---|
-| Schedule | Mon 06:00 UTC |
-| Trigger | Vercel cron |
-| Reads | `GSC_OAUTH_REFRESH_TOKEN` env var |
-| Writes | PUT to `https://www.googleapis.com/webmasters/v3/sites/.../sitemaps/sitemap-index.xml` |
-| Failure mode | 401 if refresh token expired or revoked. 404 if sitemap URL doesn't exist (it does). |
-| Verification | GSC dashboard → Sitemaps → `sitemap-index.xml` row → "Last read" date should advance weekly |
-| Recovery | If 401: re-run `npm run gsc:oauth:bootstrap` locally to mint a new refresh token, then update `GSC_OAUTH_REFRESH_TOKEN` in Vercel env |
-
-**Required Vercel env vars:** `GSC_OAUTH_CLIENT_ID`, `GSC_OAUTH_CLIENT_SECRET`, `GSC_OAUTH_REFRESH_TOKEN`, `CRON_SECRET`. Optional: `GSC_SITE_URL`, `GSC_SITEMAP_URL`.
-
----
-
-## 4. Refresh tools — daily 200+ contract (`/api/cron/refresh-tools`)
-
-| Field | Value |
-|---|---|
-| Schedule | **Hourly (`0 * * * *`)** |
-| Trigger | Vercel cron |
-| Reads | 10 stalest `tools` per fire, by `last_verified_at ASC NULLS FIRST` |
-| Writes | 9 SEO-load-bearing fields (tagline, description, editorial_verdict, our_views, pricing_type, features[], integrations[], best_for[], not_for[]) + `last_verified_at` + `github_stars`; audit row in `refresh_logs` |
-| Failure mode | Per-tool: validation fail → keep prior data (single-corrective-retry first), log to `refresh_logs.status='failed'`. Overall: 300s timeout caps each fire at ~12 tools. |
-| Verification | `select count(*) from tools where last_verified_at >= now() - interval '24 hours' and is_published = true` → ≥ 200 |
-| Recovery | If 24h count < 100: check Vercel cron logs for DEEPSEEK_API_KEY errors or scraping failures. Fire `?batch=20` manually 5× to clear backlog. |
-
-**Phase 8 freshness contract:** 24 fires × 10 tools = 240 refreshes/day. The full ~1,176 catalog cycles in ~5 days — every tool re-verified at least weekly. Full SOP docs: [`sop-freshness-contract.md`](sop-freshness-contract.md).
-
-**LLM:** DeepSeek V3 (migrated from Claude Sonnet 4.6 on 2026-05-16). Anthropic key remains for fallback. **Cost: ~$15/mo** (was $150 under Claude).
-
----
-
-## 5. Ingest new tools — TRACTION-GATED (`/api/cron/ingest-tools`)
-
-| Field | Value |
-|---|---|
-| Schedule | **01:00 + 13:00 UTC daily** |
-| Trigger | Vercel cron |
-| Reads | Discovery sources via `lib/cron/discover.ts` (Product Hunt, Futurepedia, GitHub trending, etc.); existing `tools.slug` for dedup. Then per-candidate HN Algolia + Reddit JSON probe. |
-| Writes | New `tools` rows (`is_published=true`) + `ingestion_logs` per stage + IndexNow ping per inserted slug |
-| Failure mode | Per-candidate: enrichment fail → logged + skipped. Traction-hard gate fail → `gated` with `traction-hard:hn=X/reddit=Y/score=Z` reason. Soft criteria < 3/5 → gated. |
-| Verification | `select count(*) from tools where created_at >= now() - interval '24 hours'` → 10-50 (lower bound is correct on quiet days) |
-| Recovery | If 0 inserts for 2+ days: check `ingestion_logs.error_message` — most likely "traction-hard" rejections (gate too strict) or discovery source down. Threshold tunable in `lib/cron/traction-probe.ts`. |
-
-**Phase 8 traction contract (2026-05-16):**
-- Hard gate: must have any one of (HN ≥ 30 points last 30d) OR (≥ 3 Reddit threads last 30d) OR (composite score ≥ 80)
-- Soft gate: ≥ 3 of 5 plan criteria (was ≥ 2)
-- Yield: 10-50/day (signal-dependent)
-
-**Cost:** ~$0.50/day ($15/mo) DeepSeek + free HN/Reddit probes.
-
----
-
-## 6. Refresh compare editorials — cascade (`/api/cron/refresh-compare-editorials`)
-
-| Field | Value |
-|---|---|
-| Schedule | **Daily 08:00 UTC** |
-| Trigger | Vercel cron |
-| Reads | `v_stale_comparisons` view (any compare where MAX(tool.last_verified_at) > compare.last_reviewed_at), top 20 by staleness DESC |
-| Writes | `tool_comparisons.{tldr, verdict, feature_analysis, pricing_analysis, use_cases, faqs, last_reviewed_at}` via DeepSeek synthesis |
-| Failure mode | Per-compare: DeepSeek validation fail → keep prior editorial, log in result. Doesn't bump `last_reviewed_at` (so it re-attempts next day). |
-| Verification | `select count(*) from tool_comparisons where last_reviewed_at >= now() - interval '24 hours' and is_editorial = true` → 15-25 |
-| Recovery | If `v_stale_comparisons` count > 1000: backlog isn't draining. Bump `?batch=40` (needs maxDuration bump) or fire twice daily in vercel.json. |
-
-**Why it exists:** Compare pages already render LIVE pricing/integrations/ratings from tools.* (zero lag). But the editorial verdict + feature-analysis text in `tool_comparisons.*` is pre-generated and goes out of sync when tools change. This cascade re-syncs it within ~24-48h of any tool refresh.
-
-**Cost:** ~$0.10/day ($3/mo) DeepSeek.
-
----
-
-## 8. Scrape sentiment (`/api/cron/scrape-sentiment`)
-
-| Field | Value |
-|---|---|
-| Schedule | Sun 04:00 UTC |
-| Trigger | Vercel cron |
-| Reads | Top N published tools + Reddit + HN + G2 |
-| Writes | `tool_sentiment_cache` rows per tool |
-| Failure mode | Reddit/HN/G2 rate-limit → backoff + partial success |
-| Verification | `select count(distinct tool_id) from tool_sentiment_cache where created_at >= now() - interval '7 days'` |
-| Recovery | If empty week-over-week: source sites likely rate-limited or blocked. Inspect `lib/sentiment-scraper.ts` for fetch behavior. |
-
----
-
-## 9. Discover tutorials (`/api/cron/discover-tutorials`)
-
-| Field | Value |
-|---|---|
-| Schedule | Sun 05:00 UTC |
-| Trigger | Vercel cron |
-| Reads | Top N tools + YouTube search |
-| Writes | `tool_tutorials` rows per tool |
-| Failure mode | YouTube API quota exhausted → partial success |
-| Verification | `select count(*) from tool_tutorials where created_at >= now() - interval '7 days'` |
-| Recovery | YouTube API key rotation in Google Cloud Console; bump per-day quota if needed. |
-
----
-
-## 10. Generate editorials (`/api/cron/generate-editorials`)
-
-| Field | Value |
-|---|---|
-| Schedule | Sun 06:00 UTC |
-| Trigger | Vercel cron |
-| Reads | Existing `tool_comparisons` rows where `is_editorial = false` but match new editorial criteria |
-| Writes | New `tool_comparisons` rows with `is_editorial = true` + full DeepSeek synthesis |
-| Failure mode | DeepSeek validation fail → row skipped |
-| Verification | `select count(*) from tool_comparisons where is_editorial = true and created_at >= now() - interval '7 days'` |
-| Recovery | Manual full run: `npm run compare:apply` (covers any backlog from cron failures) |
-
----
-
-## Manual / quarterly pipelines
-
-### Monthly: Phase 4 SOP full refresh
-
-- **When**: 1st of every month
-- **Command**: `cd rightaichoice && caffeinate -dims npm run refresh:apply -- --force 2>&1 | tee logs/sop-$(date +%Y-%m-%d).log &`
-- **Cost**: ~$10 DeepSeek
-- **Time**: 6-8h unattended
-- **Runbook**: `docs/operations/sop-1-monthly-refresh.md`
-
-### Monthly: Latest-updates full catalog refresh
-
-- **When**: same day as SOP refresh
-- **Command**: `npm run latest:apply -- --all`
-- **Cost**: ~$5
-- **Time**: ~3h
-- **Runbook**: `docs/operations/sop-2-weekly-latest.md`
-
-### Monthly: Bing Webmaster direct submission (operator-driven, separate from daily cron)
-
-- **When**: as needed when daily cron rotation finishes a pass
-- **Command**: `npm run bing:submit -- --tools` (or other flag)
-- **Runbook**: `docs/operations/sop-4-bing-direct-submission.md`
-
----
-
-## Health-check matrix (run every Monday morning)
-
-For every pipeline above, paste the **Verification** query into Supabase SQL editor. Expected results:
-
-| Pipeline | Expected | Yellow flag | Red flag |
+## 2. Full inventory — every pipeline in schedule order
+
+Authoritative trigger sources: **`vercel.json` → crons** (Vercel, GET) and
+**`.github/workflows/*.yml`** (GitHub Actions, POST/script). Live status: `/admin/health`
++ `pipeline_runs`. All Vercel crons require `CRON_SECRET`; GH jobs require the Supabase +
+DeepSeek secrets in repo settings.
+
+### A. Vercel Crons (`vercel.json`) — lightweight, run on Vercel
+
+| Schedule (UTC) | Pipeline | What it does |
+|---|---|---|
+| `*/10` | `poll-gh-actions` | Mirror GitHub Actions run status into `pipeline_runs` |
+| `*/15` | `new-signup-alert` | Email/Slack any new auth.users not yet alerted |
+| `*/30` | `alert-failed-pipelines` | Scan `pipeline_runs`; alert on failures/stalls |
+| `0 * * * *` (hourly) | `cascade-hubs` | **Propagation engine** — revalidate pages whose tools changed + IndexNow ping |
+| `7,37 * * * *` | `onboard-tools` | Fast onboard of queued candidate tools (2×/hr) |
+| `17,47 * * * *` | `onboard-tools?mode=sop` | Premium gated onboard SOP on draft tools (2×/hr) |
+| `30 0 * * *` | `calculate-viability` | Recompute Viability Score, 300 stalest/day |
+| `15 3 * * *` | `cleanup-user-events` | Prune old raw analytics events |
+| `0 4 * * *` | `scrape-sentiment` | Refresh sentiment cache (paid Sentiment Checker) |
+| `0 9 * * *` | `submit-urls-bing` | Bing direct-API URL submission (smart rotation) |
+| `45 23 * * *` | `refresh-freshness-view` | Rebuild the `pages_freshness` materialized view |
+| `55 23 * * *` | `snapshot-daily-updates` | Snapshot the day's tool updates for the digest |
+| `0 6 * * 1` | `resubmit-sitemap-gsc` | Tell Google to re-fetch the sitemap index (Mon) |
+| `30 6 * * 1` | `snapshot-gsc` | Pull GSC performance into our DB (Mon) |
+| `0 7 * * 1` | `triage-gsc` | Flag GSC coverage/indexing regressions (Mon) |
+| `0 8 * * 1` | `email-weekly-digest` | Weekly digest email (Mon) |
+| `30 8 * * 1` | `seo-impact` | Attribute SEO movement to shipped changes (Mon) |
+| `0 10 * * 2` | `indexnow-unindexed` | IndexNow ping for still-unindexed URLs (Tue) |
+
+### B. GitHub Actions — heavy jobs (minutes–hours), write to the same DB
+
+| Schedule (UTC) | Workflow · job | What it does | Cost |
 |---|---|---|---|
-| 1 IndexNow | Vercel log 200 OK | Repeated 4xx | 3+ days no log |
-| 2 Bing direct | `bing_submit_state.last_run_utc` ≈ today | last_run > 2d old | last_run > 7d old or `lifetime_runs` flat for 7d |
-| 3 Latest-updates | 50+ rows refreshed/day | <30/day | 0/day |
-| 4 Viability | 0 nulls on published tools | <50 nulls | 100+ nulls |
-| 5 FAQs | Counts growing weekly | Flat | Decreasing |
-| 6 GSC sitemap | "Last read" advancing | >14d stale | 401 in Vercel logs |
-| 7 Refresh tools | min(last_full_refresh_at) advances 15/wk | <10/wk | <5/wk |
-| 8 Sentiment | 50+ tools refreshed/wk | <20/wk | 0/wk |
-| 9 Tutorials | 30+ new rows/wk | <10/wk | 0/wk |
-| 10 Editorials | New compares/wk | Flat | 0 + bug in script |
-
-**Track this in `/admin/daily` as a future-state addition.** Today it lives only in this doc.
+| `0 2` + `0 14` | freshness-batch · **refresh-tools** | **Lite refresh** — 9 core editorial fields, 500 stalest/fire, news-grounded (B1) | ~$0.0016/tool, ~$48/mo |
+| `0 3` | freshness-batch · **refresh-latest-updates** | Mine news/changelog/HN/Reddit → `latest_updates`; change-detector skips unchanged | ~$40/mo |
+| `0 4` | freshness-batch · **ingest-tools** | Discover + traction-gate + onboard new tools | ~$30/mo |
+| `0 5` | freshness-batch · **cascade-editorials** | Regenerate stale compare prose (news-grounded, B1) | ~$10/mo |
+| `40 5` | freshness-batch · **backfill-logos** | Fetch/verify/rehost logos for tools missing one (no LLM) | $0 |
+| `0 6` | freshness-batch · **full-refresh** | **Deep 22-field SOP** — 300 stalest/day → whole catalog every field ≤7 days (B2) | ~$50–90/mo |
+| `0 6 */2` | cron-pipelines · refresh-faqs | Regenerate stale FAQs (curl → Vercel route) | small |
+| `30 1 *` | cron-pipelines · calculate-viability (alt trigger) | Same viability route, GH-driven backstop | — |
+| `0 5 * * 1` | cron-pipelines · generate-editorials | Backfill new editorial comparisons (Mon) | small |
+| `0 7 * * 2,5` | cron-pipelines · discover-tutorials | YouTube tutorial discovery (Tue/Fri) | small |
+| `0 1 * * 0` | cron-pipelines · submit-indexnow | Bulk IndexNow submission (Sun) | $0 |
+| `15 1 * * *` | sync-mentions | Rebuild `page_tool_mentions` (code + blog frontmatter + db-join) — the map that drives propagation | $0 |
+| `0 8 * * *` | tracking-watchdog | Verify analytics event registry + tracking health | $0 |
+| `0 21 * * *` | nightly-verify | Build + Playwright smoke of key routes | $0 (CI mins) |
+| manual | retry-failed-tools | Re-run refresh for an explicit slug list | per-run |
 
 ---
 
-## Adding a new automated pipeline — checklist
+## 3. The catalog-freshness system (how a tool change reaches every page)
 
-Whenever a new cron/automation gets added, copy this checklist into the PR:
+This is the heart of the product and the most-asked "how does it work". Four moving parts:
 
-- [ ] Created the route at `app/api/cron/<name>/route.ts`
-- [ ] Used `validateCronSecret(request)` for auth (matches existing pattern)
-- [ ] **Exported `GET` (Vercel Cron invokes via GET) — export BOTH `GET` and `POST`** so it works whether triggered by Vercel cron (GET) or GitHub Actions/manual curl (POST). A POST-only route silently never fires as a Vercel cron. See Critical Gotcha #1.
-- [ ] Added `export const maxDuration = 60` (or 300 if Pro tier + slow job)
-- [ ] Added schedule line to `vercel.json` under `crons` (or a job in `cron-pipelines.yml` if sub-daily / weekly — Vercel Hobby only runs daily crons)
-- [ ] Added a section to THIS doc (`sop-pipelines-master.md`) with all 7 SOP fields
-- [ ] Updated the Health-check matrix above
-- [ ] Verified locally with `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/<name>`
-- [ ] Confirmed required env vars are listed AND set in Vercel project settings
+1. **Capture** — two refreshers keep `tools.*` current:
+   - *Lite* (`refresh-tools`, 2×/day): 9 core editorial fields, fast/cheap, news-grounded.
+   - *Deep* (`full-refresh`, daily cohort): all 22 fields incl. FAQs, workflow scenarios,
+     pricing-tier guides, migrations — whole catalog every ≤7 days. Also sets `is_wrapper`.
+   - *News* (`refresh-latest-updates`, daily): fills `tools.latest_updates` from the open
+     web. **Both refreshers now read this news and let it override stale vendor copy** —
+     the Phase 11 root fix for "why is the data old?".
+2. **Map** — `sync-mentions` (nightly) builds `page_tool_mentions`: every (tool → page)
+   relationship across tool/compare/category/best/role/stack/blog (~30k rows).
+3. **Mark** — a DB trigger on `tools` calls `propagate_freshness()`, which stamps every
+   mapped page in `pages_freshness` as "needs refresh".
+4. **Refresh** — `cascade-hubs` (hourly) reads `pages_freshness`, `revalidatePath()`s each
+   changed page, and pings IndexNow. Compare prose re-gens via `cascade-editorials`.
+
+**Page types and how they update:**
+- Tool / compare / category / best / for / stack pages → query `tools.*` **live** → update
+  the instant the cascade revalidates them.
+- Compare editorial prose → regenerated by `cascade-editorials` (news-grounded).
+- **Blog posts (static MDX)** → were the gap. Now use the live `<ToolFact slug field>`
+  component (Phase 11 B3) so inline facts (pricing, models) re-read the DB on revalidation
+  instead of staying frozen as prose. The cascade already revalidates the 16 mapped blog
+  pages on a tool change.
+
+---
+
+## 4. Observability, cost & health-checks
+
+- **Every pipeline logs one `pipeline_runs` row** (status, items, duration, tokens, $).
+  GH bulk scripts use `runScriptedPipeline`; Vercel routes use `cronRoute`. (Phase 11 B5
+  closed the gap where GH bulk runs never logged + scrape-blocked tools were miscounted as
+  succeeded.)
+- **Cost** is recorded per run (`estimated_cost_usd`, from DeepSeek token usage). Was $0
+  across the board before Phase 11 — now real. Check spend:
+  `select pipeline_key, sum(estimated_cost_usd) from pipeline_runs where started_at > now() - interval '30 days' group by 1 order by 2 desc;`
+- **Failures** are caught by `alert-failed-pipelines` (every 30 min → email/Slack).
+- **Monday health-check:** open `/admin/health`; for any red pipeline, find it in §2 and
+  follow its workflow file / route. Key sanity queries:
+  - Freshness: `select count(*) from tools where last_verified_at > now() - interval '48 hours'` (lite) and `... last_full_refresh_at > now() - interval '8 days'` (deep) — both should approach the published count.
+  - Scrape health: `select metadata->>'scrapeBlocked' from pipeline_runs where pipeline_key='refresh-tools' order by started_at desc limit 1` — a sudden jump = scraper degraded.
+  - Viability: `select count(*) from tools where viability_score is null and is_published` → 0.
+
+---
+
+## 5. The Viability Score (Phase 11 C rebuild)
+
+Measures shutdown/abandonment risk, 0–100. **Old model was broken** — it clustered every
+tool 72–90 (nothing below 72, at-risk page empty) because two signals were hardcoded
+constants and a third (`is_wrapper`) was never populated.
+
+**New 4-signal model** (`lib/cron/viability.ts`):
+
+| Signal | Weight | Source |
+|---|---|---|
+| Momentum | 40% | recency of the newest item in `latest_updates` (is it shipping?) |
+| Wrapper dependency | 30% | `is_wrapper` — now set by the deep SOP's LLM judgment |
+| Funding runway | 20% | `pricing_type` (paid/freemium = revenue) |
+| Website health | 10% | has a live site |
+
+`is_wrapper` is judged per-tool by the deep SOP ("thin wrapper over a foundation model
+with no moat?"), so it populates over the ~7-day deep cycle — at-risk fills with genuine
+thin-wrapper / stale tools as it does. Bands: ≥70 safe, 40–69 moderate, <40 at-risk.
+(C3 backlog: real per-category mortality + hyperscaler-overlap RSS monitoring.)
+
+---
+
+## 6. Adding / changing a pipeline — checklist (copy into the PR)
+
+- [ ] Route at `app/api/cron/<name>/route.ts` **exports BOTH `GET` and `POST`** (Gotcha #1)
+- [ ] Auth via `validateCronSecret(request)` / `cronRoute`
+- [ ] `export const maxDuration` set (≤300 on Vercel; heavy work → a GH Actions job instead)
+- [ ] Schedule added to `vercel.json` (daily/sub-daily light) **or** a job in a
+      `.github/workflows/*.yml` (heavy/long)
+- [ ] Wrapped in `cronRoute` / `runScriptedPipeline` so it logs to `pipeline_runs`
+- [ ] Records `ctx.recordTokens(...)` if it calls an LLM (so cost is tracked, not $0)
+- [ ] **Updated THIS doc** — inventory table (§2) + any relevant section, in schedule order
+- [ ] Updated `/admin/resources` if it changes something the team should understand
+- [ ] Env vars listed here AND set in Vercel project / GH repo secrets

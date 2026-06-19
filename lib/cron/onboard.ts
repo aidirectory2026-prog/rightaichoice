@@ -287,6 +287,10 @@ async function scoreViability(supabase: SupabaseClient, tool: PendingTool): Prom
     pricing_type: tool.pricing_type,
     website_url: tool.website_url,
     created_at: tool.created_at,
+    // Onboard scores viability (step 3) before latest_updates is mined (step 4),
+    // so momentum is neutral here; the nightly viability batch re-scores once news
+    // is captured. Pass it through if the pending tool already carries it.
+    latest_updates: (tool as unknown as { latest_updates?: unknown }).latest_updates ?? null,
   })
   const score = computeViabilityScore(signals)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
