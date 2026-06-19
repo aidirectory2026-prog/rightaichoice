@@ -1,6 +1,6 @@
 /**
  * Single source of truth for the public-facing "how many tools" number.
- * Live count (2026-05-28): 1,974 published tools. Rounded down to '2,000+'.
+ * Live count (2026-06-18): ~2,050 published tools. Rounded down to '2,000+'.
  * Flip again once the catalog crosses 2,500.
  *
  * Why a constant and not a live DB read: this string appears in client

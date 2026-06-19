@@ -71,7 +71,7 @@ const PLAN_FAQS: { question: string; answer: string; links?: { label: string; hr
   {
     question: 'What is an AI stack builder?',
     answer:
-      'An AI stack builder turns a plain-language goal into a recommended set of AI tools across the stages of your workflow. RightAIChoice draws on 2,000+ tools scored on features, price, and real-world signals to assemble the stack for you.',
+      `An AI stack builder turns a plain-language goal into a recommended set of AI tools across the stages of your workflow. RightAIChoice draws on ${TOOL_COUNT_DISPLAY} tools scored on features, price, and real-world signals to assemble the stack for you.`,
   },
   {
     question: 'Is the AI stack planner free?',
@@ -91,7 +91,7 @@ const PLAN_FAQS: { question: string; answer: string; links?: { label: string; hr
   {
     question: 'How does the planner choose tools?',
     answer:
-      'It matches each stage to the best-rated tool on independent criteria — features, pricing, integrations, and aggregated user sentiment — never pay-for-placement.',
+      'It matches each stage to the best-rated tool on independent criteria — features, pricing, integrations, and real-world signals — never pay-for-placement.',
     links: [{ label: 'How we rank tools', href: '/methodology' }],
   },
   {
@@ -117,7 +117,7 @@ const WEBAPP_JSONLD = {
     'Per-stage AI tool recommendations',
     'Pricing and total monthly cost',
     'Alternatives for every pick',
-    'Drawn from 2,000+ AI tools',
+    `Drawn from ${TOOL_COUNT_DISPLAY} AI tools`,
   ],
   provider: { '@type': 'Organization', name: 'RightAIChoice', url: 'https://rightaichoice.com' },
 }

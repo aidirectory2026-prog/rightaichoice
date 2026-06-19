@@ -50,6 +50,7 @@ import {
   itemListJsonLd,
   jsonLdScriptProps,
 } from '@/lib/seo/json-ld'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 // Phase 9 (2026-06-03) homepage SEO rebalance — see
 // docs/marketing/Phase-9-Smart-SEO-Plan/16-homepage-seo-strategy.md.
@@ -158,7 +159,7 @@ const HOMEPAGE_FAQS: {
   {
     question: 'How does RightAIChoice work, and is it free?',
     answer:
-      'RightAIChoice is an independent decision engine for AI tools. Tell us your goal and we match a recommended stack from 2,000+ tools, scored on real-world signals, features, and cost. It is free to use.',
+      `RightAIChoice is an independent decision engine for AI tools. Tell us your goal and we match a recommended stack from ${TOOL_COUNT_DISPLAY} tools, scored on real-world signals, features, and cost. It is free to use.`,
     links: [{ label: 'How we rank tools', href: '/methodology' }],
   },
 ]
@@ -213,7 +214,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="mt-5 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              The tool that ranks #1 isn&apos;t always the one that&apos;s right for you. Describe your goal — we match the AI stack that fits, compared on real features, current pricing, and total cost across 2,000+ tools.
+              The tool that ranks #1 isn&apos;t always the one that&apos;s right for you. Describe your goal — we match the AI stack that fits, compared on real features, current pricing, and total cost across {TOOL_COUNT_DISPLAY} tools.
             </p>
 
             {/* Goal input → planner (textarea + chips inside the component) */}
@@ -226,7 +227,7 @@ export default async function HomePage() {
                 source="home_hero"
                 variant="card"
                 headline="One AI tool every Friday"
-                sub="A 60-second editorial pick from across 2,000+ tools we track. Independent, no funnel."
+                sub={`A 60-second editorial pick from across ${TOOL_COUNT_DISPLAY} tools we track. Independent, no funnel.`}
               />
             </div>
 
@@ -516,7 +517,7 @@ export default async function HomePage() {
                 Independent &amp; editorial — no pay-for-placement
               </span>
               <span className="hidden text-zinc-700 sm:inline">·</span>
-              <span className="text-sm text-zinc-400">2,000+ AI tools tracked &amp; updated weekly</span>
+              <span className="text-sm text-zinc-400">{TOOL_COUNT_DISPLAY} AI tools tracked &amp; updated weekly</span>
               <span className="hidden text-zinc-700 sm:inline">·</span>
               <Link href="/methodology" className="text-sm text-emerald-400 hover:text-emerald-300">
                 How we rank tools →

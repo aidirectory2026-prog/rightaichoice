@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 // Dept D (fable 5 review) — site-wide default OG image. The root metadata
 // declared `summary_large_image` but no image existed anywhere, so every
@@ -42,7 +43,7 @@ export default function OgImage() {
           Find the best AI tools for what you&apos;re building
         </div>
         <div style={{ marginTop: 24, fontSize: 32, color: '#a1a1aa' }}>
-          Matched to your goal, not search rank · 2,000+ tools · real pricing
+          Matched to your goal, not search rank · {TOOL_COUNT_DISPLAY} tools · real pricing
         </div>
       </div>
     ),

@@ -16,6 +16,7 @@ import { getCategories } from '@/lib/data/categories'
 import { faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { ChevronDown } from 'lucide-react'
 import type { PricingType, Platform, SkillLevel } from '@/types'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 // Phase 9 (2026-06-04) advanced SEO. The critical fix is the canonical: the
 // directory takes ?category/?pricing/?skill_level/?platform/?has_api/?search/
@@ -26,11 +27,11 @@ import type { PricingType, Platform, SkillLevel } from '@/types'
 export const metadata: Metadata = {
   title: 'Browse All AI Tools — Directory & Comparison',
   description:
-    'Browse and compare 2,000+ AI tools by category, pricing, and real-world signals. Filter by what you need, or describe your goal and get a recommended AI stack.',
+    `Browse and compare ${TOOL_COUNT_DISPLAY} AI tools by category, pricing, and real-world signals. Filter by what you need, or describe your goal and get a recommended AI stack.`,
   alternates: { canonical: '/tools' },
   openGraph: {
     title: 'Browse All AI Tools — Directory & Comparison',
-    description: 'Browse and compare 2,000+ AI tools by category, pricing, and real-world signals.',
+    description: `Browse and compare ${TOOL_COUNT_DISPLAY} AI tools by category, pricing, and real-world signals.`,
     url: 'https://rightaichoice.com/tools',
     type: 'website',
   },
@@ -55,7 +56,7 @@ const TOOLS_FAQS = [
   {
     question: 'How many AI tools are listed, and how often is it updated?',
     answer:
-      'The directory tracks 2,000+ AI tools and is refreshed continuously as pricing, features, and new tools change.',
+      `The directory tracks ${TOOL_COUNT_DISPLAY} AI tools and is refreshed continuously as pricing, features, and new tools change.`,
   },
 ]
 

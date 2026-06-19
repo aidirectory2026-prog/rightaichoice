@@ -13,6 +13,7 @@ import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newslette
 import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
 import { OAuthContinueBanner } from "@/components/cta/oauth-continue-banner";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
+import { TOOL_COUNT_DISPLAY } from "@/lib/copy/tool-count";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
     template: "%s | RightAIChoice",
   },
   description:
-    "Find and compare the best AI tools for your goal — the one that ranks #1 isn't always right for you. Describe what you're building and get a personalized AI stack with real features, current pricing, costs, and alternatives across 2,000+ tools.",
+    `Find and compare the best AI tools for your goal — the one that ranks #1 isn't always right for you. Describe what you're building and get a personalized AI stack with real features, current pricing, costs, and alternatives across ${TOOL_COUNT_DISPLAY} tools.`,
   keywords: [
     "best AI tools",
     "AI tools",

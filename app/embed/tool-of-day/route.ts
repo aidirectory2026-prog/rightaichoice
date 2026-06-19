@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { htmlEscape, widgetShell } from '@/lib/embed/widget'
+import { TOOL_COUNT_DISPLAY } from '@/lib/copy/tool-count'
 
 // Phase 7O.4 (2026-05-16): "Tool of the Day" embed widget.
 //
@@ -51,7 +52,7 @@ export async function GET() {
     body = `<div class="rac-widget">
   <div class="rac-pill">Tool of the day</div>
   <div class="rac-title">RightAIChoice</div>
-  <div class="rac-sub">Independent picks across 2,000+ AI tools.</div>
+  <div class="rac-sub">Independent picks across ${TOOL_COUNT_DISPLAY} AI tools.</div>
   <a class="rac-cta" href="https://rightaichoice.com/tools?utm_source=embed&utm_medium=tool_of_day" target="_blank" rel="noopener">Browse tools →</a>
 </div>`
   } else {
