@@ -217,23 +217,26 @@ export default function MethodologyPage() {
             </p>
             <ul className="space-y-2 text-sm text-zinc-300 leading-relaxed list-disc pl-5">
               <li>
-                <strong className="text-white">Pricing re-verification:</strong> rolling 90-day cycle on every tool,
-                accelerated to 14 days after any pricing-change signal in the vendor&apos;s blog or RSS.
+                <strong className="text-white">Core profile refresh — every 2–3 days:</strong> each tool&apos;s
+                description, editorial verdict, features, integrations, pricing type, and best/not-for are
+                re-synthesized on a rolling 2–3 day cycle — grounded in the vendor&apos;s current site <em>plus</em>
+                fresh third-party news. When the news contradicts a dated vendor page (a new model version, a price
+                change), the news wins. The last-verified timestamp is surfaced on every tool page.
               </li>
               <li>
-                <strong className="text-white">Features and integrations:</strong> verified at the time the page is
-                written and re-checked on the same 90-day cycle, with the most recent verification timestamp surfaced
-                on the tool page.
+                <strong className="text-white">Full-depth refresh — every ~7 days:</strong> the complete profile —
+                FAQs, pricing-tier guides, workflow scenarios, migration notes, limitations — is regenerated for every
+                tool on a weekly cycle.
               </li>
               <li>
-                <strong className="text-white">FAQ refresh:</strong> auto-generated FAQs are regenerated every 48
-                hours from current Reddit, ProductHunt, and G2 signal so the questions reflect what real users are
-                asking right now.
+                <strong className="text-white">Latest news — daily:</strong> a daily sweep of changelogs, tech press,
+                and community signal feeds each tool&apos;s &ldquo;Latest from&rdquo; section, so headline launches and
+                pricing moves surface within a day.
               </li>
               <li>
-                <strong className="text-white">Editorial verdict refresh:</strong> reviewed annually at minimum, and
-                immediately after any vendor event that changes the product&apos;s position (acquisition, major
-                pricing change, headline feature ship).
+                <strong className="text-white">Propagation everywhere:</strong> when a tool&apos;s data changes, every
+                page that mentions it — its own page, comparisons, category and best-of pages, and articles —
+                re-renders automatically, so nothing across the site contradicts itself.
               </li>
               <li>
                 <strong className="text-white">Spotting our own errors:</strong> every tool page has a
