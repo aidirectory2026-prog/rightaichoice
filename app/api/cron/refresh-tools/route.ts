@@ -22,14 +22,28 @@ const handler = cronRoute({ pipelineKey: 'refresh-tools' }, async (ctx, request)
   const supabase = getAdminClient()
   const result = await runRefresh(supabase, batchSize)
 
-  type RefreshResult = { processed?: number; refreshed?: number; failed?: number; slugs?: string[] }
+  type RefreshResult = {
+    processed?: number
+    refreshed?: number
+    failed?: number
+    slugs?: string[]
+    scrapeBlocked?: number
+    preserved?: number
+  }
   const r = result as RefreshResult
   ctx.recordItems({
     processed: r.processed ?? batchSize,
     succeeded: r.refreshed,
     failed: r.failed,
   })
-  ctx.recordMetadata({ batchSize, slugs: r.slugs?.slice(0, 20) })
+  // Phase 11 B5 — surface scrape outcome so a scraper degradation is visible even
+  // though blocked-but-regenerated tools still count as succeeded (not failed).
+  ctx.recordMetadata({
+    batchSize,
+    slugs: r.slugs?.slice(0, 20),
+    scrapeBlocked: r.scrapeBlocked ?? 0,
+    preserved: r.preserved ?? 0,
+  })
 
   return { ...result, batchSize }
 })

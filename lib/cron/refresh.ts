@@ -38,6 +38,13 @@ interface RefreshResult {
   processed: number
   refreshed: number
   failed: number
+  // Phase 11 B5 (2026-06-18) — scrape-outcome observability. `scrapeBlocked` =
+  // refreshed via the profile+news fallback because the vendor page was
+  // 403/SPA-blocked; `preserved` = skipped (no scrape AND no news). A spike in
+  // scrapeBlocked is the signal that went unseen for months (the scraper silently
+  // degrading on the flagships) — now surfaced to pipeline_runs metadata.
+  scrapeBlocked: number
+  preserved: number
 }
 
 const SYSTEM_PROMPT = `You are an editorial analyst at RightAIChoice, a decision engine for AI tools. You write punchy, specific, SEO-optimized copy that ranks on Google for buyer-intent queries. Never write generic marketing fluff. Always anchor in real features + real pricing from the sources provided (the current profile, the latest news, and the vendor page when available).
@@ -280,6 +287,9 @@ async function processTools(
         const parsed = await synthesize(tool, pageText, scrapeOk)
         Object.assign(updateData, parsed)
         fieldsUpdated = Object.keys(parsed)
+        if (!scrapeOk) result.scrapeBlocked++ // regenerated via profile+news fallback
+      } else {
+        result.preserved++ // no scrape AND no news — nothing fresh to add
       }
 
       if (githubStars !== null) {
@@ -328,7 +338,7 @@ export async function runRefresh(
   batchSize = 10,
 ): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
-  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0 }
 
   // Phase 10 S5 — tier-aware, SLA-driven selection.
   //   1) DAILY tier (the top-150): refresh any that are "due" (>20h since last
@@ -389,7 +399,7 @@ export async function runRefreshForSlugs(
   opts?: { includeUnpublished?: boolean },
 ): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
-  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0 }
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0 }
 
   if (slugs.length === 0) {
     console.log(`[refresh:${runId}] no slugs provided`)

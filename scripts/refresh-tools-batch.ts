@@ -25,6 +25,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getAdminClient } from '../lib/cron/supabase-admin'
 import { runRefresh, runRefreshForSlugs } from '../lib/cron/refresh'
+import { runScriptedPipeline } from '../lib/pipelines/with-logging'
 
 function readSlugList(path: string): string[] {
   const raw = readFileSync(resolve(process.cwd(), path), 'utf8')
@@ -52,10 +53,21 @@ async function main() {
     }
     const slugs = readSlugList(path)
     console.log(`[refresh:batch] retry mode — ${slugs.length} slugs from ${path}`)
-    const result = await runRefreshForSlugs(supabase, slugs)
+    // Phase 11 B5 — log the GH bulk path to pipeline_runs (it bypassed the Vercel
+    // cronRoute, so the path that does most of the work was invisible to alerts).
+    const result = await runScriptedPipeline(
+      { source: 'gh_actions', pipelineKey: 'refresh-tools' },
+      async (ctx) => {
+        const r = await runRefreshForSlugs(supabase, slugs)
+        ctx.recordItems({ processed: r.processed, succeeded: r.refreshed, failed: r.failed })
+        ctx.recordMetadata({ mode: 'slugs', requested: slugs.length, scrapeBlocked: r.scrapeBlocked, preserved: r.preserved })
+        if (r.failed > 0 && r.refreshed > 0) ctx.setStatus('partial')
+        return r
+      },
+    )
     const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
     console.log(
-      `[refresh:batch] done in ${elapsed}s — processed=${result.processed} refreshed=${result.refreshed} failed=${result.failed}`,
+      `[refresh:batch] done in ${elapsed}s — processed=${result.processed} refreshed=${result.refreshed} failed=${result.failed} (scrapeBlocked=${result.scrapeBlocked} preserved=${result.preserved})`,
     )
     if (result.processed > 0 && result.refreshed === 0) {
       console.error(`⚠ All ${result.processed} retry attempts failed — investigate`)
@@ -77,11 +89,21 @@ async function main() {
   }
 
   console.log(`[refresh:batch] starting nightly run, batchSize=${batchSize}`)
-  const result = await runRefresh(supabase, batchSize)
+  // Phase 11 B5 — log the nightly GH bulk run to pipeline_runs.
+  const result = await runScriptedPipeline(
+    { source: 'gh_actions', pipelineKey: 'refresh-tools' },
+    async (ctx) => {
+      const r = await runRefresh(supabase, batchSize)
+      ctx.recordItems({ processed: r.processed, succeeded: r.refreshed, failed: r.failed })
+      ctx.recordMetadata({ mode: 'nightly', batchSize, scrapeBlocked: r.scrapeBlocked, preserved: r.preserved })
+      if (r.failed > 0 && r.refreshed > 0) ctx.setStatus('partial')
+      return r
+    },
+  )
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
 
   console.log(
-    `[refresh:batch] done in ${elapsed}s — refreshed=${result.refreshed} failed=${result.failed}`,
+    `[refresh:batch] done in ${elapsed}s — refreshed=${result.refreshed} failed=${result.failed} (scrapeBlocked=${result.scrapeBlocked} preserved=${result.preserved})`,
   )
 
   // Phase 9c hotfix (2026-05-17): only fail when literally zero

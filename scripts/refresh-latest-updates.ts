@@ -53,6 +53,7 @@ import { fetchNewsMentions } from '../lib/cron/scrape-news'
 import { searchHN } from '../lib/cron/scrape-hn'
 import { searchReddit } from '../lib/cron/scrape-reddit'
 import { synthesizeLatestUpdates, type SignalInput } from '../lib/cron/latest-updates'
+import { runScriptedPipeline } from '../lib/pipelines/with-logging'
 
 const PROGRESS_FILE = join(process.cwd(), 'scripts', '.latest-updates-progress.json')
 const REVIEW_LOG = join(process.cwd(), 'docs', 'preflight', 'latest-updates-needs-review.txt')
@@ -381,6 +382,12 @@ async function main() {
     return
   }
 
+  // Phase 11 B5 — log the nightly news-refresh GH run to pipeline_runs. This
+  // pipeline FEEDS the latest_updates that B1's editorial refresh now depends on;
+  // if it silently stalls, freshness degrades catalog-wide — so it must be visible.
+  await runScriptedPipeline(
+    { source: 'gh_actions', pipelineKey: 'refresh-latest-updates' },
+    async (ctx) => {
   const progress = loadProgress()
   const todo = cohort.filter((t) => !progress.processed.includes(t.slug))
   console.log(`Resuming (day ${progress.day}): ${progress.processed.length} done, ${todo.length} remaining\n`)
@@ -436,6 +443,23 @@ async function main() {
       console.log(`  · ${f.slug}: ${f.error.slice(0, 120)}`)
     }
   }
+
+      ctx.recordItems({
+        processed: progress.processed.length + progress.failed.length,
+        succeeded: progress.processed.length,
+        failed: progress.failed.length,
+      })
+      ctx.recordMetadata({
+        cohort: cohort.length,
+        synthesized: tally.synthesized,
+        skipped_unchanged: tally.skipped_unchanged,
+        skipped_no_signal: tally.skipped_no_signal,
+      })
+      // Partial when some tools failed but others succeeded — a non-fatal
+      // degradation that should be visible without paging as a hard failure.
+      if (progress.failed.length > 0 && progress.processed.length > 0) ctx.setStatus('partial')
+    },
+  )
 }
 
 main().catch((err) => {
