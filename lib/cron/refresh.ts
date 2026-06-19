@@ -40,7 +40,7 @@ interface RefreshResult {
   failed: number
 }
 
-const SYSTEM_PROMPT = `You are an editorial analyst at RightAIChoice, a decision engine for AI tools. You write punchy, specific, SEO-optimized copy that ranks on Google for buyer-intent queries. Never write generic marketing fluff. Always anchor in real features + real pricing from the page content provided.
+const SYSTEM_PROMPT = `You are an editorial analyst at RightAIChoice, a decision engine for AI tools. You write punchy, specific, SEO-optimized copy that ranks on Google for buyer-intent queries. Never write generic marketing fluff. Always anchor in real features + real pricing from the sources provided (the current profile, the latest news, and the vendor page when available).
 
 Return STRICT JSON matching this schema:
 {
@@ -83,31 +83,70 @@ function renderLatestNews(latestUpdates: unknown): string {
     .join('\n')
 }
 
-function buildPrompt(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): string {
-  return `Refresh editorial metadata for this AI tool.
+// Phase 11 B1.2 (2026-06-18): the prompt now always carries the existing profile
+// as a base, and adapts to whether the vendor page actually scraped. When the
+// scrape is blocked (403 / JS-only SPA — the flagships), we refresh from the
+// existing profile + LATEST NEWS + the model's well-established knowledge of the
+// tool, with an honesty guard, instead of freezing stale content forever.
+function buildPrompt(tool: ToolRow, pageText: string, scrapeOk: boolean): string {
+  const arr = (a: unknown) => (Array.isArray(a) && a.length ? (a as string[]).join('; ') : '(none)')
 
-Tool: ${toolName}
-Website: ${websiteUrl}
+  const seedSection = `## CURRENT PROFILE ON FILE (your starting point — keep what's still accurate, correct what's outdated)
+Tagline: ${tool.tagline ?? '(none)'}
+Description: ${tool.description ?? '(none)'}
+Pricing type: ${tool.pricing_type ?? '(unknown)'}
+Features: ${arr(tool.features)}
+Integrations: ${arr(tool.integrations)}
+Best for: ${arr(tool.best_for)}
+Not for: ${arr(tool.not_for)}
+Existing verdict: ${tool.editorial_verdict ?? '(none)'}`
 
-Website content (first 12000 chars):
+  const scrapeSection = scrapeOk
+    ? `## VENDOR PAGE CONTENT (scraped today; first 12000 chars)
 """
 ${pageText.slice(0, 12000)}
-"""
+"""`
+    : `## VENDOR PAGE CONTENT
+(the vendor site could not be retrieved today — it is bot-protected or JavaScript-only. Do NOT treat this as "no information"; refresh from the CURRENT PROFILE, the LATEST NEWS, and your own knowledge of this widely-documented tool.)`
+
+  const priority = scrapeOk
+    ? `PRIORITY ORDER for facts:
+1. LATEST NEWS — the MOST current source; OVERRIDES the profile or the page whenever they conflict (newer model versions, price changes, launches, deprecations).
+2. VENDOR PAGE CONTENT — current as of today's scrape.
+3. CURRENT PROFILE — fallback for anything the above don't cover.
+Never invent features, integrations, or pricing tiers absent from all three above.`
+    : `The vendor page is unavailable, so refresh from these instead:
+1. LATEST NEWS — apply every relevant update.
+2. CURRENT PROFILE — keep every fact that is still accurate.
+3. Your own well-established knowledge of this well-known tool — USE IT to correct facts in the CURRENT PROFILE that are clearly outdated (superseded model versions, old context-window sizes, retired pricing tiers, renamed products).
+HONESTY GUARD: state only facts you are confident are current and well-established. If you are unsure of a specific number (an exact price or limit), describe it qualitatively or omit it — never guess a specific you cannot stand behind. Do not fabricate integrations or features.
+STALE-SPECIFIC RULE: do NOT copy a specific number out of the CURRENT PROFILE (context-window size, price, model version, parameter count) unless you are confident it is still current. A stale specific is worse than a qualitative description — if you cannot confirm the current value, write e.g. "a large context window for long documents" rather than restating "100k tokens", and "competitive paid tiers" rather than a price you can't verify.`
+
+  return `Refresh editorial metadata for this AI tool.
+
+Tool: ${tool.name}
+Website: ${tool.website_url}
+
+${seedSection}
+
+${scrapeSection}
 
 ## LATEST NEWS / COMMUNITY SIGNAL (independently sourced — last ~90 days)
-${renderLatestNews(latestUpdates)}
+${renderLatestNews(tool.latest_updates)}
 
-Synthesize per the schema. PRIORITY ORDER for facts:
-1. LATEST NEWS above — the MOST current source; it OVERRIDES stale vendor copy whenever they conflict (newer model versions, price changes, recent launches, deprecations).
-2. Website content above — current as of today's scrape.
-Never invent features, integrations, or pricing tiers not present in EITHER source above. If a field can't be filled with high confidence, return a safe minimum (only what the sources list; empty array if none).`
+Synthesize per the schema. ${priority}
+If a field still can't be filled with high confidence, return a safe minimum (only what the sources support; empty array if none).`
 }
 
-async function callDeepSeek(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): Promise<string> {
+async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, correction?: string): Promise<string> {
   // Retry only the network round-trip: DeepSeek 5xx / 429 (rate_limited) and
   // transient fetch failures are classified transient by withRetry and re-tried
   // with backoff. A 4xx-other or malformed body still fails through to the
   // per-tool catch in processTools, which records it in refresh_logs.
+  const base = buildPrompt(tool, pageText, scrapeOk)
+  const userContent = correction
+    ? `${base}\n\n---\nYour previous response failed schema validation: ${correction}\nReturn corrected STRICT JSON of the exact shape — no prose, no code fences.`
+    : base
   const json = await withRetry(async () => {
     const res = await fetch(DEEPSEEK_URL, {
       method: 'POST',
@@ -121,7 +160,7 @@ async function callDeepSeek(toolName: string, websiteUrl: string, pageText: stri
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildPrompt(toolName, websiteUrl, pageText, latestUpdates) },
+          { role: 'user', content: userContent },
         ],
       }),
     })
@@ -136,17 +175,12 @@ async function callDeepSeek(toolName: string, websiteUrl: string, pageText: stri
   return json.choices[0]?.message?.content ?? ''
 }
 
-async function synthesize(toolName: string, websiteUrl: string, pageText: string, latestUpdates: unknown): Promise<RefreshOut> {
+async function synthesize(tool: ToolRow, pageText: string, scrapeOk: boolean): Promise<RefreshOut> {
   // Single corrective retry on validation fail — same pattern as the
   // monthly Phase 4 SOP. Reduces transient validation failures by ~70%.
   let correction: string | undefined
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const raw = await callDeepSeek(
-      toolName,
-      websiteUrl,
-      correction ? `${pageText}\n\nPrev attempt failed: ${correction}. Return strict JSON.` : pageText,
-      latestUpdates,
-    )
+    const raw = await callDeepSeek(tool, pageText, scrapeOk, correction)
     const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
     try {
       return refreshSchema.parse(JSON.parse(stripped))
@@ -172,6 +206,18 @@ type ToolRow = {
   // refresh stops reasserting stale facts (e.g. "100k context") from the vendor
   // homepage + DeepSeek training when newer reality exists.
   latest_updates: unknown
+  // Phase 11 B1.2 (2026-06-18): existing profile fields, passed as the base for the
+  // refresh. Essential for the scrape-blocked path — flagships (claude.ai, x.ai,
+  // perplexity.ai, gemini SPA) return 403/JS-shell, so without seed the refresh
+  // either preserves stale content forever or has nothing to ground on.
+  tagline: string | null
+  description: string | null
+  pricing_type: string | null
+  features: string[] | null
+  integrations: string[] | null
+  best_for: string[] | null
+  not_for: string[] | null
+  editorial_verdict: string | null
 }
 
 async function processTools(
@@ -213,18 +259,25 @@ async function processTools(
         }
       }
 
-      // Phase 10 #53 — only overwrite editorial fields when the vendor page
-      // actually loaded. A failed scrape used to still call synthesize(), which
-      // produced an AI "baseline" hallucinated from no input and clobbered
-      // hand-curated content. On failure we preserve existing content and just
-      // advance freshness (+ stars), so the tool isn't stuck or retried forever.
+      // Phase 11 B1.2 (2026-06-18) — regenerate the editorial whenever we have
+      // something fresh to ground on: a good scrape, OR captured news
+      // (latest_updates). Phase 10 #53 used to preserve-and-skip on any scrape
+      // failure (to avoid hallucinating from no input) — but the flagships
+      // (claude.ai, x.ai, perplexity.ai, gemini SPA) are permanently 403/JS-blocked,
+      // so "preserve" froze them with stale facts ("100k context") forever despite
+      // the hourly cron claiming "refreshed". buildPrompt now grounds the no-scrape
+      // path in the existing profile + news + model knowledge (with an honesty
+      // guard), so we refresh instead of freeze. Only a tool with NO scrape AND NO
+      // news is still preserved (nothing fresh to add — don't churn/risk drift).
+      const hasNews = Array.isArray(tool.latest_updates) && tool.latest_updates.length > 0
+      const shouldSynthesize = scrapeOk || hasNews
       const updateData: Record<string, unknown> = {
         last_verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
       let fieldsUpdated: string[] = []
-      if (scrapeOk) {
-        const parsed = await synthesize(tool.name, tool.website_url, pageText, tool.latest_updates)
+      if (shouldSynthesize) {
+        const parsed = await synthesize(tool, pageText, scrapeOk)
         Object.assign(updateData, parsed)
         fieldsUpdated = Object.keys(parsed)
       }
@@ -251,7 +304,9 @@ async function processTools(
         tool_slug: tool.slug,
         status: 'refreshed',
         fields_updated: fieldsUpdated,
-        error_message: scrapeOk ? null : 'scrape_failed: editorial fields preserved',
+        error_message: shouldSynthesize
+          ? (scrapeOk ? null : 'scrape_blocked: regenerated from profile + news + model knowledge')
+          : 'scrape_failed + no news: editorial preserved',
         duration_ms: duration,
       } as never)
     } catch (e) {
@@ -285,7 +340,7 @@ export async function runRefresh(
   const dailyDueCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString()
   const { data: dailyDue, error: dailyErr } = await supabase
     .from('tools')
-    .select('id, slug, name, website_url, github_url, latest_updates')
+    .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
     .eq('is_published', true)
     .eq('refresh_tier', 'daily')
     .or(`last_verified_at.is.null,last_verified_at.lt.${dailyDueCutoff}`)
@@ -299,7 +354,7 @@ export async function runRefresh(
   if (remaining > 0) {
     const { data: std, error: stdErr } = await supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url, latest_updates')
+      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
       .eq('is_published', true)
       .eq('refresh_tier', 'standard')
       .order('last_verified_at', { ascending: true, nullsFirst: true })
@@ -347,7 +402,7 @@ export async function runRefreshForSlugs(
     const chunk = slugs.slice(i, i + CHUNK)
     let q = supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url, latest_updates')
+      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
       .in('slug', chunk)
     if (!opts?.includeUnpublished) q = q.eq('is_published', true)
     const { data: tools, error } = await q
