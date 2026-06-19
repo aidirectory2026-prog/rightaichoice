@@ -60,6 +60,7 @@ async function main() {
       async (ctx) => {
         const r = await runRefreshForSlugs(supabase, slugs)
         ctx.recordItems({ processed: r.processed, succeeded: r.refreshed, failed: r.failed })
+        ctx.recordTokens('deepseek', 'deepseek-chat', { in: r.deepseekTokensIn, out: r.deepseekTokensOut })
         ctx.recordMetadata({ mode: 'slugs', requested: slugs.length, scrapeBlocked: r.scrapeBlocked, preserved: r.preserved })
         if (r.failed > 0 && r.refreshed > 0) ctx.setStatus('partial')
         return r
@@ -95,6 +96,7 @@ async function main() {
     async (ctx) => {
       const r = await runRefresh(supabase, batchSize)
       ctx.recordItems({ processed: r.processed, succeeded: r.refreshed, failed: r.failed })
+      ctx.recordTokens('deepseek', 'deepseek-chat', { in: r.deepseekTokensIn, out: r.deepseekTokensOut })
       ctx.recordMetadata({ mode: 'nightly', batchSize, scrapeBlocked: r.scrapeBlocked, preserved: r.preserved })
       if (r.failed > 0 && r.refreshed > 0) ctx.setStatus('partial')
       return r

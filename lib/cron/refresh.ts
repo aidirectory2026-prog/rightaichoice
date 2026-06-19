@@ -45,6 +45,11 @@ interface RefreshResult {
   // degrading on the flagships) — now surfaced to pipeline_runs metadata.
   scrapeBlocked: number
   preserved: number
+  // Phase 11 (2026-06-18) — real cost tracking. DeepSeek returns token usage per
+  // call; accumulate it so the route/script can recordTokens() and the in-app cost
+  // tracker shows actual $ instead of $0 (the gap that hid spend until now).
+  deepseekTokensIn: number
+  deepseekTokensOut: number
 }
 
 const SYSTEM_PROMPT = `You are an editorial analyst at RightAIChoice, a decision engine for AI tools. You write punchy, specific, SEO-optimized copy that ranks on Google for buyer-intent queries. Never write generic marketing fluff. Always anchor in real features + real pricing from the sources provided (the current profile, the latest news, and the vendor page when available).
@@ -145,7 +150,9 @@ Synthesize per the schema. ${priority}
 If a field still can't be filled with high confidence, return a safe minimum (only what the sources support; empty array if none).`
 }
 
-async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, correction?: string): Promise<string> {
+type UsageSink = (tokensIn: number, tokensOut: number) => void
+
+async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, correction: string | undefined, onUsage: UsageSink): Promise<string> {
   // Retry only the network round-trip: DeepSeek 5xx / 429 (rate_limited) and
   // transient fetch failures are classified transient by withRetry and re-tried
   // with backoff. A 4xx-other or malformed body still fails through to the
@@ -177,17 +184,21 @@ async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, 
       const tag = res.status === 429 ? 'rate limit' : `HTTP ${res.status}`
       throw new Error(`DeepSeek ${tag} (${res.status}): ${body.slice(0, 300)}`)
     }
-    return (await res.json()) as { choices: Array<{ message: { content: string } }> }
+    return (await res.json()) as {
+      choices: Array<{ message: { content: string } }>
+      usage?: { prompt_tokens?: number; completion_tokens?: number }
+    }
   })
+  if (json.usage) onUsage(json.usage.prompt_tokens ?? 0, json.usage.completion_tokens ?? 0)
   return json.choices[0]?.message?.content ?? ''
 }
 
-async function synthesize(tool: ToolRow, pageText: string, scrapeOk: boolean): Promise<RefreshOut> {
+async function synthesize(tool: ToolRow, pageText: string, scrapeOk: boolean, onUsage: UsageSink): Promise<RefreshOut> {
   // Single corrective retry on validation fail — same pattern as the
   // monthly Phase 4 SOP. Reduces transient validation failures by ~70%.
   let correction: string | undefined
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const raw = await callDeepSeek(tool, pageText, scrapeOk, correction)
+    const raw = await callDeepSeek(tool, pageText, scrapeOk, correction, onUsage)
     const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
     try {
       return refreshSchema.parse(JSON.parse(stripped))
@@ -284,7 +295,10 @@ async function processTools(
       }
       let fieldsUpdated: string[] = []
       if (shouldSynthesize) {
-        const parsed = await synthesize(tool, pageText, scrapeOk)
+        const parsed = await synthesize(tool, pageText, scrapeOk, (tIn, tOut) => {
+          result.deepseekTokensIn += tIn
+          result.deepseekTokensOut += tOut
+        })
         Object.assign(updateData, parsed)
         fieldsUpdated = Object.keys(parsed)
         if (!scrapeOk) result.scrapeBlocked++ // regenerated via profile+news fallback
@@ -338,7 +352,7 @@ export async function runRefresh(
   batchSize = 10,
 ): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
-  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0 }
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0, deepseekTokensIn: 0, deepseekTokensOut: 0 }
 
   // Phase 10 S5 — tier-aware, SLA-driven selection.
   //   1) DAILY tier (the top-150): refresh any that are "due" (>20h since last
@@ -399,7 +413,7 @@ export async function runRefreshForSlugs(
   opts?: { includeUnpublished?: boolean },
 ): Promise<RefreshResult> {
   const runId = crypto.randomUUID()
-  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0 }
+  const result: RefreshResult = { runId, processed: 0, refreshed: 0, failed: 0, scrapeBlocked: 0, preserved: 0, deepseekTokensIn: 0, deepseekTokensOut: 0 }
 
   if (slugs.length === 0) {
     console.log(`[refresh:${runId}] no slugs provided`)

@@ -29,12 +29,19 @@ const handler = cronRoute({ pipelineKey: 'refresh-tools' }, async (ctx, request)
     slugs?: string[]
     scrapeBlocked?: number
     preserved?: number
+    deepseekTokensIn?: number
+    deepseekTokensOut?: number
   }
   const r = result as RefreshResult
   ctx.recordItems({
     processed: r.processed ?? batchSize,
     succeeded: r.refreshed,
     failed: r.failed,
+  })
+  // Phase 11 — record real DeepSeek spend so the in-app cost tracker stops showing $0.
+  ctx.recordTokens('deepseek', 'deepseek-chat', {
+    in: r.deepseekTokensIn ?? 0,
+    out: r.deepseekTokensOut ?? 0,
   })
   // Phase 11 B5 — surface scrape outcome so a scraper degradation is visible even
   // though blocked-but-regenerated tools still count as succeeded (not failed).
