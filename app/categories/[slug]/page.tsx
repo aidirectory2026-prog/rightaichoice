@@ -293,7 +293,7 @@ async function CategoryResults({
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `Best ${categoryName} AI Tools`,
-    description: `The best ${categoryName} AI tools — compared by features, pricing, and community reviews.`,
+    description: `The best ${categoryName} AI tools — compared by features, current pricing, and real-world signals.`,
     url: `https://rightaichoice.com/categories/${slug}`,
     numberOfItems: total,
     ...(tools.length > 0 && {
