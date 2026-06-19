@@ -645,6 +645,11 @@ async function onboardOne(
       .update({ is_published: true } as never)
       .eq('id', tool.id)
       .eq('is_published', false)
+      // Phase 11 D — NEVER (re)publish a merged duplicate. Without this guard the
+      // onboard lanes treat an unpublished merged tool as a "draft" and re-publish
+      // it, silently undoing the merge cleanup (caught in re-verification: 5 of the
+      // 73 unpublished merges came back within an hour).
+      .is('merged_into', null)
       .select('id')
     if (pubErr) {
       res.errors.push(`publish: ${pubErr.message}`)
@@ -779,6 +784,8 @@ export async function runOnboardSop(
   const result: OnboardResult = { runId, processed: 0, onboarded: 0, published: 0, results: [] }
 
   let q = supabase.from('tools').select(ONBOARD_SELECT).eq('is_published', false)
+  // Phase 11 D — never treat a merged duplicate as a draft to onboard/publish.
+  q = q.is('merged_into', null)
   if (opts.slugs && opts.slugs.length > 0) q = q.in('slug', opts.slugs)
   // Phase 10 #66 — skip drafts that have failed too many times (unless an
   // operator explicitly targets them by slug).
