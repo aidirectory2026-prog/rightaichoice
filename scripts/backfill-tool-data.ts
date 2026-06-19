@@ -45,6 +45,7 @@ import { dirname, join } from 'path'
 import { z } from 'zod'
 import { getAdminClient } from '../lib/cron/supabase-admin'
 import { fetchPageText } from '../lib/cron/scrape'
+import { estimateTokenCostUsd } from '../lib/pipelines/pricing'
 
 // Checkpoint file is per-shard so parallel workers don't trample each other.
 const PROGRESS_FILE = (() => {
@@ -195,6 +196,19 @@ const SHARDS = (() => {
   return f ? parseInt(f.split('=')[1], 10) : null
 })()
 const SKIP_SCRAPE = argv.includes('--skip-scrape')
+// Phase 11 B2 (2026-06-18): cadence-driven cohort. Selects the N stalest tools by
+// last_full_refresh_at (nulls first) instead of the full id-ordered scan, so a
+// nightly GH job can rotate the whole catalog on a fixed cadence (e.g. --cohort=300
+// daily → ~2,100/week → every 22-field deep field current within ~7 days).
+const COHORT = (() => {
+  const f = argv.find((a) => a.startsWith('--cohort='))
+  return f ? Math.max(1, parseInt(f.split('=')[1], 10) || 0) : null
+})()
+
+// Phase 11 — real cost tracking. DeepSeek returns per-call token usage; accumulate
+// across the run so we can log one pipeline_runs row with the true $ cost.
+let sopTokensIn = 0
+let sopTokensOut = 0
 
 if (!DRY_RUN && !APPLY) {
   console.error('Specify either --dry-run or --apply.')
@@ -584,7 +598,14 @@ async function callDeepSeek(tool: ToolRow, scraped: string, correction?: string)
     const body = await res.text()
     throw new Error(`DeepSeek API error ${res.status}: ${body.slice(0, 300)}`)
   }
-  const json = (await res.json()) as { choices: Array<{ message: { content: string } }> }
+  const json = (await res.json()) as {
+    choices: Array<{ message: { content: string } }>
+    usage?: { prompt_tokens?: number; completion_tokens?: number }
+  }
+  if (json.usage) {
+    sopTokensIn += json.usage.prompt_tokens ?? 0
+    sopTokensOut += json.usage.completion_tokens ?? 0
+  }
   return json.choices[0]?.message?.content ?? ''
 }
 
@@ -866,6 +887,8 @@ async function writeAtomically(
 
 // ── Main loop ───────────────────────────────────────────────────────────────
 
+const runStartMs = Date.now()
+
 async function main() {
   console.log(`\n${DRY_RUN ? '[DRY-RUN] ' : '[APPLY] '}Phase 4 SOP — full tool refresh.\n`)
 
@@ -889,6 +912,24 @@ async function main() {
       process.exit(1)
     }
     allRows = (data ?? []) as unknown as ToolRow[]
+  } else if (COHORT) {
+    // Phase 11 B2 — cadence cohort: the N stalest tools by last_full_refresh_at
+    // (never-refreshed first). The DB ordering IS the rotation queue, so we skip
+    // the checkpoint file (a re-run just picks the next-stalest, never re-does
+    // a tool that was just refreshed to now). Placeholder rows hydrated per-tool.
+    const { data, error } = await supabase
+      .from('tools')
+      .select('id, slug')
+      .eq('is_published', true)
+      .order('last_full_refresh_at', { ascending: true, nullsFirst: true })
+      .order('id', { ascending: true })
+      .limit(COHORT)
+    if (error) {
+      console.error('DB read failed:', error.message)
+      process.exit(1)
+    }
+    const lightRows = (data ?? []) as Array<{ id: string; slug: string }>
+    allRows = lightRows.map((r) => ({ ...r, name: '', tagline: null, description: null, website_url: '', pricing_type: null, pricing_details: null, features: null, integrations: null, use_cases: null, best_for: null, not_for: null, limitations: null, editorial_verdict: null, our_views: null, view_count: null, last_full_refresh_at: null, docs_url: null, github_url: null, changelog_url: null, tutorial_urls: null, community_links: null, latest_updates: null })) as unknown as ToolRow[]
   } else {
     // Initial lightweight scan — only id + slug, used for sharding and
     // checkpoint filtering. Full rows are fetched lazily per-tool below.
@@ -922,7 +963,7 @@ async function main() {
     process.exit(1)
   }
 
-  let candidates = ONE_SLUG ? allRows : allRows.filter((r) => !checkpoint.has(r.slug))
+  let candidates = ONE_SLUG || COHORT ? allRows : allRows.filter((r) => !checkpoint.has(r.slug))
   // Shard partitioning: deterministic split by slug hash so parallel workers
   // never collide on the same tool. --shard=N --shards=M → this worker
   // processes rows where (hash(slug) % M) === N.
@@ -1036,7 +1077,39 @@ async function main() {
   } else {
     console.log(`Apply: ${ok} refreshed, ${failed} failed. Checkpoint: ${checkpoint.size} processed total.`)
   }
+  const sopCostUsd = estimateTokenCostUsd('deepseek-chat', sopTokensIn, sopTokensOut)
+  console.log(
+    `DeepSeek: ${sopTokensIn} in / ${sopTokensOut} out tokens — est. $${sopCostUsd.toFixed(4)}`,
+  )
   console.log('──────────────────────────────────────────\n')
+
+  // Phase 11 B2/cost — log one pipeline_runs row so the automated deep-refresh is
+  // visible + its real $ cost lands in the in-app tracker (was untracked/manual).
+  if (APPLY) {
+    try {
+      await supabase.from('pipeline_runs').insert({
+        source: 'gh_actions',
+        pipeline_key: 'refresh-tool-data-full',
+        external_id: process.env.GITHUB_RUN_ID ?? null,
+        started_at: new Date(runStartMs).toISOString(),
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - runStartMs,
+        status: failed > 0 ? 'partial' : 'success',
+        items_processed: ok + failed,
+        items_succeeded: ok,
+        items_failed: failed,
+        deepseek_tokens_in: sopTokensIn,
+        deepseek_tokens_out: sopTokensOut,
+        estimated_cost_usd: Number(sopCostUsd.toFixed(4)),
+        metadata: { mode: COHORT ? 'cohort' : ONE_SLUG ? 'slug' : 'full', cohort: COHORT },
+      } as never)
+    } catch (e) {
+      // Non-fatal: the refresh work already succeeded; a logging miss shouldn't
+      // fail the job (the run summary above is the operator's fallback signal).
+      console.error('pipeline_runs log failed (non-fatal):', e instanceof Error ? e.message : e)
+    }
+  }
+
   process.exit(failed > 0 && !DRY_RUN ? 1 : 0)
 }
 

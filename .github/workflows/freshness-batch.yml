@@ -39,6 +39,12 @@ on:
     # logo_url (runtime favicon fallback covers the rest), so re-running
     # never overwrites or churns existing logos.
     - cron: '40 5 * * *'
+    # Phase 11 B2 — deep 22-field SOP, 300 stalest tools daily 06:00 UTC.
+    # Whole catalog's every field refreshed within ~7 days (weekly cadence).
+    # The lite refresh-tools job keeps the 9 core editorial fields ≤2-3 days;
+    # this layer refreshes the 13 density fields (FAQs, workflow scenarios,
+    # pricing-tier guides, migrations, hidden costs) on top.
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       pipeline:
@@ -51,6 +57,7 @@ on:
           - ingest-tools-batch
           - cascade-batch
           - backfill-logos
+          - full-refresh
           - all
       batch_size:
         description: 'Override default batch size (optional, blank = pipeline default)'
@@ -226,4 +233,44 @@ jobs:
             npx tsx scripts/backfill-logos.ts --apply --limit="$BATCH_SIZE"
           else
             npx tsx scripts/backfill-logos.ts --apply
+          fi
+
+  # ── Deep 22-field refresh — 300 stalest tools daily 06:00 UTC (Phase 11 B2) ──
+  # The lite refresh-tools job keeps the 9 core editorial fields ≤2-3 days; this
+  # runs the full Phase 4 SOP (all 22 fields, incl. FAQs, workflow scenarios,
+  # pricing-tier guides, migrations, hidden costs) on a stalest-by-last_full_refresh_at
+  # cohort → whole catalog cycles in ~7 days. DeepSeek-only (built-in scraper, no
+  # Apify); cost lands in pipeline_runs (pipeline_key=refresh-tool-data-full).
+  full-refresh:
+    if: >-
+      github.event.schedule == '0 6 * * *' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'full-refresh' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    # Stalest-first cohort with no row locking — never run two of these at once
+    # (a second would re-pick the same stalest tools = wasted DeepSeek spend).
+    concurrency:
+      group: refresh-tool-data-full
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Deep refresh (Phase 4 SOP, stalest cohort)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          # Optional override via the dispatch input; defaults to 300/day (~7-day cycle).
+          COHORT: ${{ github.event.inputs.batch_size }}
+        run: |
+          if [ -n "$COHORT" ]; then
+            npx tsx scripts/backfill-tool-data.ts --apply --cohort="$COHORT"
+          else
+            npx tsx scripts/backfill-tool-data.ts --apply --cohort=300
           fi
