@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '@/actions/auth'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
+import { continueAsGuest } from '@/lib/auth/guest-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { Logo } from '@/components/shared/logo'
 import { analytics } from '@/lib/analytics'
@@ -21,7 +22,15 @@ export default function SignupPage() {
     const at = value.lastIndexOf('@')
     if (emailEnteredRef.current || at <= 0 || at === value.length - 1) return
     emailEnteredRef.current = true
+    // Domain-only analytics (PII rule) …
     analytics.signupEmailEntered(value.slice(at + 1).toLowerCase(), 'email', 'signup_page')
+    // … plus capture the full email so a lead isn't lost if they don't finish
+    // signing up. Best-effort, fire-and-forget.
+    void fetch('/api/leads/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: value, source: 'signup_page' }),
+    }).catch(() => {})
   }
 
   if (state?.success) {
@@ -150,6 +159,19 @@ export default function SignupPage() {
         >
           {pending ? 'Creating account...' : 'Create account'}
         </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              analytics.signupMethodSelected('guest', 'signup_page')
+              continueAsGuest(nextParam || null)
+            }}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            or continue as guest
+          </button>
+        </div>
 
         <p className="text-center text-xs text-zinc-500">
           By signing up you agree to our{' '}

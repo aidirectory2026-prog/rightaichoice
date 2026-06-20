@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from '@/actions/auth'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
+import { continueAsGuest } from '@/lib/auth/guest-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { Logo } from '@/components/shared/logo'
 
@@ -12,6 +13,8 @@ const AUTH_ERRORS: Record<string, string> = {
   auth_callback_failed: 'Authentication failed. Please try again.',
   oauth_failed: 'Google sign-in failed. Please try again.',
   confirmation_failed: 'Email confirmation failed. The link may have expired.',
+  verify_failed: 'That verification link is invalid or expired. Sign in and resend it from your profile.',
+  guest_failed: 'Could not start a guest session. Please try Google or email.',
 }
 
 export default function LoginPage() {
@@ -107,6 +110,16 @@ export default function LoginPage() {
           {pending ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
+
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => continueAsGuest(nextParam || null)}
+          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          or continue as guest
+        </button>
+      </div>
 
       <p className="text-center text-sm text-zinc-500">
         Don&apos;t have an account?{' '}

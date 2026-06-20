@@ -19,8 +19,9 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Sparkles, ArrowRight } from 'lucide-react'
+import { X, Sparkles, ArrowRight, Mail } from 'lucide-react'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
+import { continueAsGuest } from '@/lib/auth/guest-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { analytics } from '@/lib/analytics'
 import { persistPlanIntent, stashPendingIntent } from '@/lib/cta/persist-intent'
@@ -147,6 +148,37 @@ export function PlanSignupModal({
     if (redirectOnSkip) router.push(nextUrl())
   }
 
+  // Phase 11 (2026-06-21): "Continue with email" → the full signup form, with
+  // the typed goal preserved (stash + keepalive persist survive the navigation).
+  function handleEmail() {
+    analytics.signupMethodSelected('email', 'plan_signup_modal')
+    if (typedGoal.trim()) {
+      stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
+      void persistPlanIntent({
+        typed_goal: typedGoal,
+        source_surface: sourceSurface,
+        signup_outcome: 'unknown',
+        page_path: effectivePagePath(),
+      })
+    }
+    router.push(`/signup?next=${encodeURIComponent(nextUrl())}`)
+  }
+
+  // Phase 11: "Continue as guest" → a REAL anonymous account (saves their stack),
+  // not the old no-op skip. Persist the goal (keepalive) before the session swap.
+  function handleGuest() {
+    analytics.signupMethodSelected('guest', 'plan_signup_modal')
+    if (typedGoal.trim()) {
+      void persistPlanIntent({
+        typed_goal: typedGoal,
+        source_surface: sourceSurface,
+        signup_outcome: 'skipped',
+        page_path: effectivePagePath(),
+      })
+    }
+    void continueAsGuest(nextUrl())
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200"
@@ -198,16 +230,31 @@ export function PlanSignupModal({
             </svg>
             Continue with LinkedIn
           </button>
+          <button
+            type="button"
+            onClick={handleEmail}
+            className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition-colors"
+          >
+            <Mail className="h-4 w-4" aria-hidden />
+            Continue with email
+          </button>
         </div>
 
-        <div className="mt-5 flex items-center justify-center">
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={handleGuest}
+            className="group inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            Continue as guest
+            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" aria-hidden />
+          </button>
           <button
             type="button"
             onClick={handleSkip}
-            className="group inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
           >
-            Skip & continue as guest
-            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" aria-hidden />
+            Skip for now
           </button>
         </div>
 

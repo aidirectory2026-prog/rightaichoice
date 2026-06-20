@@ -23,6 +23,7 @@ import { Footer } from '@/components/layout/footer'
 import { ToolCard } from '@/components/tools/tool-card'
 import { BadgeList } from '@/components/profile/badge-list'
 import { EditProfileForm } from '@/components/profile/edit-profile-form'
+import { VerifyEmailBanner } from '@/components/profile/verify-email-banner'
 import {
   getProfile,
   getUserBadges,
@@ -72,6 +73,11 @@ export default async function DashboardPage() {
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+          {/* Unverified-email prompt — only for email accounts not yet verified
+              (hidden for OAuth users + guests, and once verified). */}
+          {user.email && !(profile as { email_verified?: boolean }).email_verified && (
+            <VerifyEmailBanner email={user.email} />
+          )}
           {/* Header card */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

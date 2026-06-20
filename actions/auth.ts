@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { safeNext } from '@/lib/auth/safe-next'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { issueAndSendVerification, createVerificationToken, sendVerificationEmail } from '@/lib/auth/email-verification'
 
 /**
  * Phase 7 Step 53 (BUG-011, BUG-013): action returns the non-secret fields
@@ -46,26 +48,57 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     }
   }
 
-  // Phase 7 redirect-back: thread `next` into the email-confirmation link so
-  // /auth/confirm honors it. User clicks the email link → /auth/confirm
-  // verifies the token → redirects to `next` instead of /dashboard.
-  const confirmUrl = new URL('/auth/confirm', process.env.NEXT_PUBLIC_APP_URL)
-  if (next !== '/dashboard') confirmUrl.searchParams.set('next', next)
-
-  const { error } = await supabase.auth.signUp({
+  // Phase 11 (2026-06-21): instant signup. "Confirm email" is OFF in Supabase,
+  // so signUp returns a session immediately — the user is logged in right away
+  // (no "check your email" wall, the old drop point). We then run our OWN
+  // verification layer: the account shows as unverified until they click the
+  // link we email, which they can do now or later from their profile.
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { username },
-      emailRedirectTo: confirmUrl.toString(),
-    },
+    options: { data: { username } },
   })
 
   if (error) {
     return { error: error.message, values: { username, email } }
   }
 
-  return { success: 'Check your email to confirm your account.' }
+  const userId = data.user?.id
+  if (userId && process.env.NEXT_PUBLIC_APP_URL) {
+    // Fire the verification email; never block signup on it.
+    await issueAndSendVerification(userId, email, process.env.NEXT_PUBLIC_APP_URL).catch(() => {})
+    // This email converted from a lead (if it was captured pre-submit).
+    try {
+      await getAdminClient()
+        .from('email_leads')
+        .upsert({ email, source: 'signup', converted: true } as never, { onConflict: 'email' })
+    } catch {
+      /* lead bookkeeping is best-effort */
+    }
+  }
+
+  // Logged in now — go where they intended (or the dashboard).
+  revalidatePath('/', 'layout')
+  redirect(next)
+}
+
+// ─── Resend Email Verification ───────────────────────────────────────────────
+
+/** Re-send the verification link to the currently signed-in user's email. */
+export async function resendVerification(): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { ok: false, error: 'You need to be signed in with an email.' }
+
+  // Already verified? No-op success (the UI hides the prompt anyway).
+  const admin = getAdminClient()
+  const { data: prof } = await admin.from('profiles').select('email_verified').eq('id', user.id).single()
+  if ((prof as { email_verified?: boolean } | null)?.email_verified) return { ok: true }
+
+  if (!process.env.NEXT_PUBLIC_APP_URL) return { ok: false, error: 'Server misconfigured.' }
+  const raw = await createVerificationToken(user.id, user.email)
+  const sent = await sendVerificationEmail(user.email, raw, process.env.NEXT_PUBLIC_APP_URL)
+  return sent.ok ? { ok: true } : { ok: false, error: 'Could not send the email — please try again.' }
 }
 
 // ─── Sign In ────────────────────────────────────────────────────────────────
