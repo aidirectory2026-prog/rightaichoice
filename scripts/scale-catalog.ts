@@ -36,6 +36,7 @@ import { getAdminClient } from '../lib/cron/supabase-admin'
 import { discoverTools } from '../lib/cron/discover'
 import { dedup } from '../lib/cron/dedup'
 import { enrichTool, type EnrichedToolData } from '../lib/cron/enrich'
+import { CATEGORIZE_SYSTEM_PROMPT, CATEGORIZE_RULES } from '../lib/cron/categorize-rules'
 
 // Phase 8.h (2026-05-25) — switched off Anthropic per user memory rule.
 // DeepSeek is used for both enrichment (lib/cron/enrich.ts) and category
@@ -100,7 +101,13 @@ async function predictCategories(
     console.error(`[predict-cat] ${name} — DEEPSEEK_API_KEY missing`)
     return []
   }
-  const prompt = `Pick 1-3 category slugs for this AI tool. Return ONLY slugs from the provided list — never invent.
+  // Phase 11 (2026-06-20): use the shared categorize rules (definitions +
+  // disambiguation) so a bulk scale-up classifies tools to the same standard as
+  // the live onboarding path — no more bare-slug "pick 1-3" over-assignment.
+  const prompt = `${CATEGORIZE_RULES}
+
+Valid categories (use ONLY these slugs):
+${validSlugs.map((s) => `- ${s}`).join('\n')}
 
 Tool: ${name}
 Tagline: ${enriched.tagline}
@@ -108,10 +115,7 @@ Description: ${enriched.description.slice(0, 800)}
 Features: ${(enriched.features ?? []).slice(0, 8).join(', ')}
 Best for: ${(enriched.best_for ?? []).slice(0, 5).join(', ')}
 
-Valid category slugs (pick from these only):
-${validSlugs.join(', ')}
-
-Return JSON: {"slugs": ["slug-1", "slug-2"]}`
+Return JSON: {"slugs": ["primary-slug", ...]}  (1 slug for a focused tool; only add more for genuinely multi-domain tools)`
 
   try {
     const res = await fetch(DEEPSEEK_URL, {
@@ -123,9 +127,10 @@ Return JSON: {"slugs": ["slug-1", "slug-2"]}`
       body: JSON.stringify({
         model: DEEPSEEK_CATEGORY_MODEL,
         max_tokens: 200,
+        temperature: 0,
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: 'You assign categories to AI tools. Reply with strict JSON only.' },
+          { role: 'system', content: CATEGORIZE_SYSTEM_PROMPT },
           { role: 'user', content: prompt },
         ],
       }),
