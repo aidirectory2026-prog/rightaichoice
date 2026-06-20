@@ -556,25 +556,21 @@ export async function getTopInCategory(
         return clone
       }) as NonNullable<typeof rawPool>
       if (data && data.length > 0) {
+        // Phase 11 (2026-06-20): this is the honest "Popular in {category}"
+        // pool — rank by popularity (view_count, already ordered by the query).
+        // The un-indexed (SEO) signal is now only a tiebreaker between siblings
+        // with equal view_count, so a low-relevance un-indexed tool is no longer
+        // forced into the lead slots (which previously made these picks look
+        // arbitrary when surfaced next to genuine alternatives).
         const unindexed = await getLinkBoostToolSlugs()
-        // Promote un-indexed siblings into the first slots while keeping
-        // the relative view_count order within each tier. Result: ~half
-        // of the `limit` slots tend to be un-indexed when there are
-        // enough candidates, while a popular cluster never returns 0
-        // recognizable picks.
-        const needHelp = data.filter((t) => unindexed.has(t.slug))
-        const alreadyIndexed = data.filter((t) => !unindexed.has(t.slug))
-        const interleaved: typeof data = []
-        let i = 0
-        let j = 0
-        // Lead with 2 un-indexed picks (if available), then alternate.
-        while (interleaved.length < limit && (i < needHelp.length || j < alreadyIndexed.length)) {
-          const wantUnindexed = interleaved.length < 2 || interleaved.length % 2 === 0
-          if (wantUnindexed && i < needHelp.length) interleaved.push(needHelp[i++])
-          else if (j < alreadyIndexed.length) interleaved.push(alreadyIndexed[j++])
-          else if (i < needHelp.length) interleaved.push(needHelp[i++])
-        }
-        return interleaved.slice(0, limit)
+        const ranked = [...data].sort((a, b) => {
+          const av = (a as { view_count?: number }).view_count ?? 0
+          const bv = (b as { view_count?: number }).view_count ?? 0
+          if (bv !== av) return bv - av
+          return (unindexed.has((b as { slug: string }).slug) ? 1 : 0) -
+            (unindexed.has((a as { slug: string }).slug) ? 1 : 0)
+        })
+        return ranked.slice(0, limit)
       }
     }
   }
@@ -699,30 +695,16 @@ export async function getAlternativeTools(
       }
       score += wordOverlap
 
-      // Phase 9 B4 (2026-05-28): un-indexed tiebreaker, now driven by
-      // the real GSC URL Inspection signal (gsc_url_inspections) instead
-      // of a view_count=0 proxy.
-      //
-      // Un-indexed (any of: discovered-not-indexed, crawled-not-indexed,
-      // unknown-to-Google, dup-without-canonical) gets +1. Already-
-      // indexed tools get a small penalty scaled by view_count, capped
-      // at -1. Tools not yet inspected fall back to the view_count
-      // proxy. Cap at ±1 keeps this strictly a tiebreaker — a single
-      // shared identity tag is worth 10pts.
+      // Phase 11 (2026-06-20): RELEVANCE FIRST. The un-indexed (SEO) signal
+      // and popularity are NO LONGER added into `score` — doing so let an
+      // un-indexed but less-relevant tool outrank a more-relevant one in
+      // "Alternatives to X", which read as absurd. They are now pure
+      // tiebreakers applied only AFTER relevance score is equal (see sort
+      // below). `score` is now exclusively tag/tagline relevance.
       const viewCount = row.view_count ?? 0
-      if (unindexedSlugs.has(row.slug)) {
-        score += 1
-      } else if (unindexedSlugs.size > 0) {
-        // The cache is loaded (we have data) and this slug isn't in
-        // the un-indexed set → treat as indexed.
-        score += Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
-      } else {
-        // Cache miss / empty (e.g. table not yet populated). Fall back
-        // to the view_count proxy so the function still works.
-        score += viewCount === 0 ? 1 : Math.max(-1, 1 - Math.log10(viewCount + 1) * 0.5)
-      }
+      const unindexed = unindexedSlugs.has(row.slug)
 
-      return { row, score, sharedIdentity, sharedAnyTag, candTagSetRaw }
+      return { row, score, unindexed, viewCount, sharedIdentity, sharedAnyTag, candTagSetRaw }
     })
     .filter((x) => {
       // LLM whitelist gate (highest precedence). When source is a general-
@@ -747,7 +729,14 @@ export async function getAlternativeTools(
       }
       return x.sharedAnyTag.length >= 1 || x.score >= 5
     })
-    .sort((a, b) => b.score - a.score)
+    // Relevance score first; un-indexed (SEO crawl-priority) then popularity
+    // break ties only between equally-relevant candidates.
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        (b.unindexed ? 1 : 0) - (a.unindexed ? 1 : 0) ||
+        b.viewCount - a.viewCount,
+    )
     .slice(0, limit)
     .map((x) => {
       const candNameLower = x.row.name.trim().toLowerCase()

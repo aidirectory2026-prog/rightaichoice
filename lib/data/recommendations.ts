@@ -48,11 +48,14 @@ export async function getRecommendations(
   const toolsContext = candidates
     .map(
       (t, i) =>
+        // Phase 11 (2026-06-20): ratings/review counts are not yet a real
+        // catalog-wide signal (all 0), so we do NOT feed "0/5 (0 reviews)" to
+        // the model — it's noise that misrepresents the data. Ranking is on
+        // use-case fit, pricing, skill level, categories and tags.
         `${i + 1}. ${t.name} (slug: ${t.slug})
    Tagline: ${t.tagline}
    Pricing: ${t.pricing_type}
    Skill level: ${t.skill_level}
-   Rating: ${t.avg_rating}/5 (${t.review_count} reviews)
    Categories: ${t.categories.join(', ')}
    Tags: ${t.tags.join(', ')}
    Description: ${t.description.slice(0, 150)}`

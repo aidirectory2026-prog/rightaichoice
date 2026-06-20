@@ -1026,36 +1026,57 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   deduped. Section hides only when both pools are empty
                   (truly uncategorized + no strict ranker hits). */}
               {(() => {
+                // Phase 11 (2026-06-20): "Alternatives to X" now shows ONLY the
+                // genuine relevance-ranked alternatives — we no longer pad it with
+                // arbitrary popular siblings from a (possibly catch-all) category,
+                // which read as absurd ("Alternatives to <niche tool>: Monday.com").
+                // Category siblings get their own honest "Popular in {category}"
+                // block so the page stays useful without mislabeling.
                 const TARGET = 3
                 const strictIds = new Set(alternatives.map((a) => a.id))
-                const padding = categorySiblings
+                const popular = categorySiblings
                   .filter((s) => !strictIds.has(s.id))
-                  .slice(0, Math.max(0, TARGET - alternatives.length))
-                const items = [...alternatives, ...padding]
-                if (items.length === 0) return null
-                const hasCurated = alternatives.length > 0
+                  .slice(0, TARGET)
+                const categoryName = categories[0]?.name as string | undefined
+                if (alternatives.length === 0 && popular.length === 0) return null
                 return (
-                  <section>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-white">
-                        Alternatives to {tool.name}
-                      </h2>
-                      {hasCurated && (
-                        <Link
-                          href={`/tools/${tool.slug}/alternatives`}
-                          className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                        >
-                          View all
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {items.map((alt) => (
-                        <ToolCard key={alt.id} tool={alt as React.ComponentProps<typeof ToolCard>['tool']} />
-                      ))}
-                    </div>
-                  </section>
+                  <>
+                    {alternatives.length > 0 && (
+                      <section>
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-lg font-semibold text-white">
+                            Alternatives to {tool.name}
+                          </h2>
+                          <Link
+                            href={`/tools/${tool.slug}/alternatives`}
+                            className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                          >
+                            View all
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {alternatives.slice(0, TARGET).map((alt) => (
+                            <ToolCard key={alt.id} tool={alt as React.ComponentProps<typeof ToolCard>['tool']} />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                    {/* Show "Popular in {category}" only to fill the page when we
+                        don't already have a full set of genuine alternatives. */}
+                    {popular.length > 0 && alternatives.length < TARGET && (
+                      <section>
+                        <h2 className="text-lg font-semibold text-white mb-4">
+                          {categoryName ? `Popular in ${categoryName}` : 'Popular AI tools'}
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {popular.slice(0, Math.max(TARGET - alternatives.length, 0) || TARGET).map((alt) => (
+                            <ToolCard key={alt.id} tool={alt as React.ComponentProps<typeof ToolCard>['tool']} />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                  </>
                 )
               })()}
 
