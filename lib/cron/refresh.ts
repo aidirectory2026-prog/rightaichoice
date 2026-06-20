@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchPageText } from './scrape'
 import { withRetry } from '@/lib/pipelines/with-logging'
+import { EDITORIAL_VOICE } from '@/lib/copy/editorial-voice'
 import { z } from 'zod'
 
 // Phase 8 freshness contract (2026-05-16):
@@ -78,7 +79,9 @@ SEO rules:
 - features should be search-able terms (developers, marketers Google them)
 - best_for/not_for read like sub-headers buyers will scan
 - our_views uses long-tail keywords naturally — never stuff
-- NO prose, NO markdown fences, JUST the JSON object.`
+- NO prose, NO markdown fences, JUST the JSON object.
+
+${EDITORIAL_VOICE}`
 
 // Phase 11 B1 (2026-06-18): render the tool's captured latest_updates as a compact
 // bulleted news block. Mirrors scripts/backfill-tool-data.ts so the hourly refresh

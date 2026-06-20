@@ -1,6 +1,7 @@
 import { callDeepSeek, stripJsonFences } from '@/lib/plan/deepseek'
 import type { AllScrapeResults } from '@/lib/scrapers'
 import { sourceLabel } from '@/lib/scrapers/source-labels'
+import { EDITORIAL_VOICE } from '@/lib/copy/editorial-voice'
 
 // DeepSeek (deepseek-chat, JSON mode) — Phase 9 Workstream S1 (2026-06-01).
 // Switched off Anthropic Haiku: (1) "use DeepSeek everywhere" — the data
@@ -108,7 +109,9 @@ Rules:
 - Pros and cons must be specific and based on real user feedback
 - Sentiment scores should reflect actual community opinion, not tool marketing
 - Each pro/con should be a single clear sentence, max 15 words
-- Themes should capture the dominant narratives in community discussion`
+- Themes should capture the dominant narratives in community discussion
+
+${EDITORIAL_VOICE}`
 
 /**
  * Takes scraped data from all sources + tool metadata, and synthesizes
