@@ -28,21 +28,27 @@ export function OAuthContinueBanner() {
     try { raw = sessionStorage.getItem('oauth_return_to') } catch { /* private mode */ }
     if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw === window.location.pathname) return
 
-    if (user) {
-      // Signed in with a pending return path → go straight to the CTA.
-      // router.replace is a side effect (not setState), so it's fine here.
+    // BUGFIX (2026-06-21): only ever surface this banner for a user who is
+    // ACTUALLY signed in. Previously the not-signed-in branch still rendered a
+    // "You're signed in 🎉" banner whenever a stale `oauth_return_to` lingered —
+    // e.g. the user clicked "Continue with Google", abandoned the consent
+    // screen, and came back. The stash survived, so we falsely told them they
+    // were logged in. If there's no resolved session, the round-trip didn't
+    // complete: clear the stale path and show nothing.
+    if (!user) {
       try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
-      router.replace(raw)
       return
     }
-    // Session not resolved server-side on this render → offer a manual link
-    // (guaranteed, no timing dependency). Deferred so we don't call setState
-    // synchronously in the effect body. Becomes a no-op once `user` flips.
+
+    // Signed in with a pending return path → go straight to the CTA, with a
+    // deferred manual-link fallback in case router.replace lags.
+    try { sessionStorage.removeItem('oauth_return_to') } catch { /* ignore */ }
+    router.replace(raw)
     const id = setTimeout(() => setTo(raw), 0)
     return () => clearTimeout(id)
   }, [user, router])
 
-  if (!to || user) return null
+  if (!to || !user) return null
 
   const label = to.includes('/sentiment') ? 'Continue to your scan' : 'Continue where you left off'
   const clear = () => {
