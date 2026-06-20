@@ -58,6 +58,7 @@ import { fetchNewsMentions } from './scrape-news'
 import { searchHN } from './scrape-hn'
 import { searchReddit } from './scrape-reddit'
 import { synthesizeLatestUpdates, type SignalInput } from './latest-updates'
+import { CATEGORIZE_SYSTEM_PROMPT, CATEGORIZE_RULES, renderCategoryList } from './categorize-rules'
 import type { EnrichedToolData } from './enrich'
 // Phase 9 D2 — gated SOP premium steps (reuse over rebuild).
 import { resolveAndStoreLogo } from './logo'
@@ -191,9 +192,17 @@ async function predictCategories(
   name: string,
   enriched: Pick<EnrichedToolData, 'tagline' | 'description' | 'features' | 'best_for'>,
   validSlugs: string[],
+  categoryDefs?: string,
 ): Promise<string[]> {
   if (!process.env.DEEPSEEK_API_KEY) return []
-  const prompt = `Pick 1-3 category slugs for this AI tool. Return ONLY slugs from the provided list — never invent.
+  // Phase 11 (2026-06-20): use the shared categorize rules (definitions +
+  // disambiguation) so the live onboarding path and the bulk re-classifier judge
+  // tools by the exact same standard. `categoryDefs` carries slug: name —
+  // description; when only bare slugs are available we still pass them through.
+  const prompt = `${CATEGORIZE_RULES}
+
+Valid categories (use ONLY these slugs):
+${categoryDefs ?? validSlugs.map((s) => `- ${s}`).join('\n')}
 
 Tool: ${name}
 Tagline: ${enriched.tagline ?? ''}
@@ -201,10 +210,7 @@ Description: ${(enriched.description ?? '').slice(0, 800)}
 Features: ${(enriched.features ?? []).slice(0, 8).join(', ')}
 Best for: ${(enriched.best_for ?? []).slice(0, 5).join(', ')}
 
-Valid category slugs (pick from these only):
-${validSlugs.join(', ')}
-
-Return JSON: {"slugs": ["slug-1", "slug-2"]}`
+Return JSON: {"slugs": ["primary-slug", ...]}  (1 slug for a focused tool; only add more for genuinely multi-domain tools)`
 
   const res = await fetch(DEEPSEEK_URL, {
     method: 'POST',
@@ -215,9 +221,10 @@ Return JSON: {"slugs": ["slug-1", "slug-2"]}`
     body: JSON.stringify({
       model: DEEPSEEK_CATEGORY_MODEL,
       max_tokens: 200,
+      temperature: 0,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: 'You assign categories to AI tools. Reply with strict JSON only.' },
+        { role: 'system', content: CATEGORIZE_SYSTEM_PROMPT },
         { role: 'user', content: prompt },
       ],
     }),
@@ -245,6 +252,16 @@ async function categorizeTool(
     .limit(1)
   if (existing && existing.length > 0) return existing.length
 
+  // Phase 11: fetch the full category rows once so the classifier sees real
+  // definitions (slug: name — description), not just bare slugs, and so we can
+  // resolve slugs → ids locally without a second round-trip.
+  const { data: allCats } = await supabase
+    .from('categories')
+    .select('id, slug, name, description')
+  const catDefRows = (allCats ?? []) as { id: string; slug: string; name: string; description: string | null }[]
+  const categoryDefs = renderCategoryList(catDefRows)
+  const slugToId = new Map(catDefRows.map((c) => [c.slug, c.id]))
+
   const cats = await predictCategories(
     tool.name,
     {
@@ -254,15 +271,12 @@ async function categorizeTool(
       best_for: tool.best_for ?? [],
     },
     validSlugs,
+    categoryDefs,
   )
   if (cats.length === 0) return 0
 
   // Resolve slugs → category ids, then insert join rows (ON CONFLICT no-op).
-  const { data: catRows } = await supabase
-    .from('categories')
-    .select('id, slug')
-    .in('slug', cats)
-  const ids = ((catRows ?? []) as { id: string; slug: string }[]).map((c) => c.id)
+  const ids = cats.map((s) => slugToId.get(s)).filter((id): id is string => Boolean(id))
   if (ids.length === 0) return 0
 
   const { error } = await supabase
