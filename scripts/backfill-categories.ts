@@ -14,6 +14,7 @@
  */
 
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { CATEGORIZE_SYSTEM_PROMPT, CATEGORIZE_RULES } from '@/lib/cron/categorize-rules'
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 const DEEPSEEK_MODEL = 'deepseek-chat'
@@ -98,12 +99,18 @@ async function classifyBatch(
     )
     .join('\n\n')
 
-  const systemPrompt = `You are a precise classifier for an AI-tool decision engine. Map each tool to the 1–3 categories from a FIXED list that best describe its primary purpose. Pick the most specific applicable categories; do not over-assign. Use ONLY slugs from the provided list — never invent slugs. Return STRICT JSON only.`
+  // Phase 11 (2026-06-20): use the shared categorize rules so this matches the
+  // live path and the bulk re-classifier. A genuine non-tool (parked domain,
+  // directory of other tools) correctly returns an empty slug list; every real
+  // tool gets its closest category so it stays browsable.
+  const systemPrompt = CATEGORIZE_SYSTEM_PROMPT
 
-  const userPrompt = `The 15 valid categories (slug: name — description):
+  const userPrompt = `${CATEGORIZE_RULES}
+
+The valid categories (slug: name — description):
 ${categoryList}
 
-Classify each of these tools. For each, choose 1–3 category SLUGS from the list above that best fit its core function.
+Classify each tool below.
 
 Tools:
 ${toolList}
@@ -111,13 +118,12 @@ ${toolList}
 Return a STRICT JSON object of this exact shape (no markdown, no prose):
 {
   "assignments": [
-    { "id": "<tool id exactly as given>", "slugs": ["<valid-slug>", ...] }
+    { "id": "<tool id exactly as given>", "slugs": ["primary-slug", ...] }
   ]
 }
-Rules:
-- "slugs" must contain 1 to 3 entries, each EXACTLY one of the 15 valid slugs above.
-- Include every tool id exactly once.
-- No commentary, valid JSON only.`
+- "slugs": ordered by relevance, primary first; 1 for a focused tool, more only for genuinely multi-domain tools.
+- Use an EMPTY array only for something that is not a real working AI tool.
+- Include every tool id exactly once. Valid JSON only.`
 
   const res = await fetch(DEEPSEEK_URL, {
     method: 'POST',

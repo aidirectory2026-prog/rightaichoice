@@ -193,7 +193,6 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 
 async function main() {
   if (!process.env.DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY missing')
-  const startedAt = new Date().toISOString()
 
   console.log('[reclassify] loading categories…')
   const { data: catData, error: catErr } = await supabase
@@ -288,26 +287,11 @@ async function main() {
   for (const ex of examples) console.log(`    - ${ex}`)
   console.log('──────────────────────────────────────────\n')
 
-  // Best-effort pipeline_runs log (table may reject unknown columns silently → ignore).
-  if (APPLY) {
-    await supabase.from('pipeline_runs').insert({
-      source: 'script',
-      pipeline_key: 'reclassify-categories',
-      status: failed > processed / 2 ? 'error' : 'success',
-      started_at: startedAt,
-      finished_at: new Date().toISOString(),
-      items_processed: processed,
-      items_succeeded: changed + unchanged,
-      items_failed: failed,
-      deepseek_tokens_in: tokIn,
-      deepseek_tokens_out: tokOut,
-      estimated_cost_usd: costUsd,
-      metadata: { changed, cleared, unchanged, limit: LIMIT || null },
-    } as never).then(
-      () => {},
-      (e: unknown) => console.warn('[reclassify] pipeline_runs log skipped:', e instanceof Error ? e.message : e),
-    )
-  }
+  // NOTE: this is a MANUAL, one-off corrective pass — not a recurring pipeline —
+  // so it deliberately does NOT write to `pipeline_runs` (whose `source` is
+  // constrained to vercel_cron/gh_actions for scheduled jobs). The console
+  // summary above + the Phase 11 build log are this run's record. New tools are
+  // kept correct going forward by the live onboarding path (lib/cron/onboard.ts).
 }
 
 main().catch((err) => {
