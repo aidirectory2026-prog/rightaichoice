@@ -135,14 +135,19 @@ export default async function RootLayout({
                 {children}
                 <CompareTray />
               </CompareProvider>
+              {/* Phase 9 — global Plan Your Stack CTA. Hidden on excluded paths
+                  (footer URLs, auth, admin, planner itself) via isEligibleForCTA.
+                  MUST stay INSIDE <WizardProvider>: it renders <PlanCTAButton>,
+                  which calls useWizard(). Mounted outside the provider it threw
+                  "useWizard must be used within WizardProvider" on the client
+                  (after mount) and crashed the page tree on every eligible page,
+                  incl. tool pages. */}
+              <PlanCTASticky />
             </WizardProvider>
           </AuthProvider>
         </MixpanelProvider>
         <MobileNav />
         <MobileNewsletterSticky />
-        {/* Phase 9 — global Plan Your Stack CTA. Hidden on excluded paths
-            (footer URLs, auth, admin, planner itself) via isEligibleForCTA. */}
-        <PlanCTASticky />
         {/* 9.A.3 — independent THIRD tracking source. Vercel Web Analytics is
             edge-collected and far harder to ad-block than Mixpanel (which our
             data shows loses ~most client events), so it's the cross-check
