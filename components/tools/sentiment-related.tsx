@@ -14,19 +14,31 @@ function titleize(slug: string): string {
   return slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
-const FAQS = (toolName: string) => [
+type Faq = { q: string; a: string }
+
+// Fallback FAQ when the tool hasn't been scanned yet (no dynamic FAQs cached).
+const FALLBACK_FAQS = (toolName: string): Faq[] => [
   { q: `Where does the ${toolName} sentiment come from?`, a: `We sweep the open web in real time — social media, community forums, review sites, video reviews and public discussions — then synthesize what real users actually say into one honest report.` },
   { q: 'How current is the data?', a: `Every scan runs live, right when you click — so it reflects what people are saying now, not a stale cache. Each report also lists the actual recent mentions behind it.` },
   { q: 'Is it unbiased?', a: `Yes. We don't take vendor input for these reports — the verdict is built from independent user opinion, including the complaints and red flags marketing pages leave out.` },
-  { q: 'How much does it cost?', a: `Your first 3 scans are free with an account — no card needed. After that it's a small one-time fee per scan (₹20 in India, $1 internationally). No subscription.` },
-  { q: 'Can I download the report?', a: `Yes — every report can be downloaded as a clean, shareable file with the full verdict, praise, gripes, quotes and live mentions.` },
+  { q: 'Can I download the report?', a: `Yes — every report downloads as a polished, shareable PDF with the full verdict, scores, themes, quotes and live mentions.` },
+]
+
+// Two generic "about the checker" reassurance FAQs appended after the dynamic,
+// tool-specific ones (kept for trust + SEO breadth).
+const GENERIC_FAQS = (): Faq[] => [
+  { q: 'How current is this report?', a: `Each scan runs live the moment you click — it reflects what people are saying now, and every report lists the dated mentions behind it.` },
+  { q: 'Can I download it?', a: `Yes — download the full report as a polished, shareable PDF.` },
 ]
 
 export function SentimentRelated({
-  toolName, toolSlug, alternatives, compares, category,
+  toolName, toolSlug, alternatives, compares, category, faqs = [],
 }: {
-  toolName: string; toolSlug: string; alternatives: AltTool[]; compares: Compare[]; category: Category
+  toolName: string; toolSlug: string; alternatives: AltTool[]; compares: Compare[]; category: Category; faqs?: Faq[]
 }) {
+  // Dynamic, tool-specific FAQs from the last scan + 2 generic ones; fall back to
+  // the generic template only when the tool has never been scanned.
+  const faqList: Faq[] = faqs.length > 0 ? [...faqs, ...GENERIC_FAQS()] : FALLBACK_FAQS(toolName)
   const otherFromCompare = (slug: string) => {
     const parts = slug.split('-vs-')
     return parts.find((p) => p !== toolSlug) ?? parts[parts.length - 1]
@@ -93,11 +105,11 @@ export function SentimentRelated({
         </section>
       )}
 
-      {/* FAQ */}
+      {/* FAQ — dynamic, tool-specific pain points + reassurance */}
       <section>
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white"><HelpCircle className="h-5 w-5 text-emerald-400" /> Frequently asked</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-white"><HelpCircle className="h-5 w-5 text-emerald-400" /> {faqs.length > 0 ? `${toolName} — questions buyers ask` : 'Frequently asked'}</h2>
         <div className="mt-4 space-y-3">
-          {FAQS(toolName).map((f) => (
+          {faqList.map((f) => (
             <div key={f.q} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
               <h3 className="text-sm font-semibold text-white">{f.q}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.a}</p>

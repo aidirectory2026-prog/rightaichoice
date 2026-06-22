@@ -591,6 +591,24 @@ export async function getTopInCategory(
   return data ?? []
 }
 
+// Phase 12 Bug-3 (2026-06-23) — fetch published tools by id, preserving the
+// requested order. Used by the sentiment page to surface a tool's REAL
+// competitors (from its comparison pairs) as the primary "alternatives", instead
+// of broad same-category siblings.
+export async function getToolsByIds(ids: string[]) {
+  if (!ids.length) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select('id, name, slug, tagline, logo_url')
+    .in('id', ids)
+    .eq('is_published', true)
+  if (!data) return []
+  const order = new Map(ids.map((id, i) => [id, i]))
+  return [...(data as Array<{ id: string; name: string; slug: string; tagline: string | null; logo_url: string | null }>)]
+    .sort((a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999))
+}
+
 export async function getAlternativeTools(
   toolId: string,
   categoryIds: string[],

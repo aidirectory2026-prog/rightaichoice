@@ -25,6 +25,77 @@ function getIp(req: Request): string | undefined {
 
 export type LiveMention = { source: string; title: string; snippet: string; date: string | null; url: string | null; score: number | null }
 
+// ── Phase 12 Bug-3 — heuristic relevance + dedupe ──────────────────────────
+// The broad keyword sources (Reddit/HN/YouTube/Bluesky/Stack Overflow/Lemmy)
+// can return coincidental matches on generic tool names. Drop posts that don't
+// actually reference THIS tool (no name token + no domain match) and dedupe.
+// The precise sources (Trustpilot/App Store/Product Hunt/GitHub) were matched by
+// domain/slug/exact name already, so they bypass the token filter.
+const PRECISE_SOURCES = new Set(['trustpilot', 'appstore', 'producthunt', 'github'])
+const NAME_STOP = new Set(['the', 'app', 'ai', 'io', 'inc', 'labs', 'pro', 'studio', 'cloud', 'get', 'use', 'try'])
+
+function domainRoot(url?: string | null): string {
+  if (!url) return ''
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').split('.')[0].toLowerCase()
+  } catch {
+    return ''
+  }
+}
+
+function isRelevantPost(
+  p: { source: string; title?: string; body: string; url?: string | null },
+  nameTokens: string[],
+  brand: string,
+): boolean {
+  if (PRECISE_SOURCES.has(p.source)) return true
+  const text = `${p.title ?? ''} ${p.body ?? ''}`.toLowerCase()
+  if (brand && (text.replace(/[^a-z0-9]/g, '').includes(brand) || domainRoot(p.url) === brand)) return true
+  const distinctive = nameTokens.filter((t) => !NAME_STOP.has(t))
+  if (distinctive.length === 0) return true // a generic-only name — can't filter safely, keep it
+  return distinctive.some((t) => text.includes(t))
+}
+
+/** Filter every source's posts to genuine, de-duplicated mentions of this tool. */
+function filterRelevantScrape(
+  scrape: Awaited<ReturnType<typeof scrapeAllSources>>,
+  toolName: string,
+): Awaited<ReturnType<typeof scrapeAllSources>> {
+  const nameTokens = toolName.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((t) => t.length >= 3)
+  const brand = toolName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const all = scrape.all.map((r) => {
+    const seen = new Set<string>()
+    const posts = r.posts.filter((p) => {
+      const key = p.url ? p.url : `${p.title ?? ''}|${(p.body ?? '').slice(0, 80)}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return isRelevantPost(p, nameTokens, brand)
+    })
+    return { ...r, posts }
+  })
+  const totalPosts = all.reduce((n, r) => n + r.posts.length, 0)
+  return { ...scrape, all, totalPosts }
+}
+
+export type SourceBreakdown = { source: string; label: string; count: number; positivity: number | null }
+
+/** Per-source mention counts (from the filtered scrape) + the model's per-source
+ *  positivity (0-1, keyed by the human label) — drives the sources footer + the
+ *  per-source sentiment bar chart, and is itself the provenance signal. */
+function buildSourceBreakdown(
+  scrape: Awaited<ReturnType<typeof scrapeAllSources>>,
+  breakdown: Record<string, number> | undefined,
+): SourceBreakdown[] {
+  return scrape.all
+    .filter((r) => r.posts.length > 0)
+    .map((r) => {
+      const label = sourceLabel(r.source)
+      const pos = breakdown?.[label]
+      return { source: r.source, label, count: r.posts.length, positivity: typeof pos === 'number' ? pos : null }
+    })
+    .sort((a, b) => b.count - a.count)
+}
+
 /** Top real posts across all sources — the "live mentions" feed (recency-first). */
 function buildMentions(scrape: Awaited<ReturnType<typeof scrapeAllSources>>): LiveMention[] {
   return scrape.all
@@ -114,11 +185,15 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   const searchId: string | undefined = searchRow?.id
 
   try {
-    const scrape = await scrapeAllSources(tool.name, {
+    const rawScrape = await scrapeAllSources(tool.name, {
       website: tool.website_url,
       budgetMs: SCAN_BUDGET_MS,
       includeReviewSites: true,
     })
+    // Phase 12 Bug-3 — drop coincidental/off-topic + duplicate posts before
+    // synthesis AND the live-mentions feed, so the report only reflects genuine
+    // mentions of this tool.
+    const scrape = filterRelevantScrape(rawScrape, tool.name)
 
     const report = await Promise.race([
       synthesizeReport(
@@ -144,7 +219,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     // Attach the real "live mentions" feed so the report shows actual posts,
     // not just the synthesis — stored inside result jsonb (no schema change).
     const mentions = buildMentions(scrape)
-    const fullReport = { ...report, mentions }
+    const source_breakdown = buildSourceBreakdown(scrape, report.sentiment_breakdown)
+    const fullReport = { ...report, mentions, source_breakdown }
 
     if (searchId) {
       await admin
@@ -169,6 +245,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         sentiment_score: report.sentiment_score,
         sentiment_breakdown: report.sentiment_breakdown,
         themes: report.themes,
+        faqs: report.faqs,
         best_for: report.best_for,
         not_for: report.not_for,
         pricing_analysis: report.pricing_analysis,

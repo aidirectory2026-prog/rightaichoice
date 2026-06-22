@@ -12,18 +12,24 @@ import {
   Sparkles, Loader2, ShieldCheck, Zap, Lock, Download, ArrowLeft, ArrowRight,
   MessageSquareText, Flame, ThumbsUp, ThumbsDown, Quote, AlertTriangle, Radar, ExternalLink,
   Gauge, TrendingUp, TrendingDown, Activity, Users, UserMinus, BookOpen, ShieldAlert,
+  HelpCircle, Database,
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { GoogleIcon } from '@/components/shared/google-icon'
 import { analytics } from '@/lib/analytics'
+import { SourceIcon } from '@/components/tools/source-icon'
+import { SentimentDonut, SourceSentimentBars, ThemeBars, MomentumSparkline } from '@/components/tools/sentiment-charts'
+import { overallPositivity } from '@/lib/sentiment/chart-geometry'
+import type { SentimentPdfData } from '@/components/tools/sentiment-report-pdf'
 
 type Pricing = { currency: 'INR' | 'USD'; gateway: 'razorpay' | 'paypal'; amountMinor: number; amountDisplay: string; country: string }
 type Mention = { source: string; title: string; snippet: string; date: string | null; url: string | null; score: number | null }
+type SourceBreak = { source: string; label: string; count: number; positivity: number | null }
 type Report = {
   ai_verdict: string
   bottom_line?: string
-  standout_quotes?: { text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed' }[]
+  standout_quotes?: { text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed'; date?: string }[]
   scorecard?: { overall: number; value: number; ease_of_use: number; support: number; reliability: number; performance: number }
   red_flags?: { title: string; detail: string; severity: 'low' | 'medium' | 'high' }[]
   momentum?: { direction: 'rising' | 'steady' | 'cooling'; summary: string; drivers: string[] }
@@ -31,12 +37,14 @@ type Report = {
   cons: string[]
   sentiment_score: 'positive' | 'mixed' | 'negative'
   sentiment_breakdown?: Record<string, number>
-  themes?: { theme: string; sources: string[] }[]
+  themes?: { theme: string; sources: string[]; sentiment?: 'positive' | 'mixed' | 'critical' }[]
+  faqs?: { q: string; a: string }[]
   best_for?: string[]
   not_for?: string[]
   learning_curve?: { time_to_start?: string; skill_level?: string; hurdles?: string[] }
   community_buzz?: { volume?: string; trend?: string; topics?: string[] }
   pricing_analysis?: { hidden_costs?: string[]; verdict?: string }
+  source_breakdown?: SourceBreak[]
   mentions?: Mention[]
 }
 type Status = {
@@ -131,7 +139,6 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
 
   useEffect(() => {
     analytics.sentimentCardViewed(toolSlug)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshStatus()
   }, [toolSlug, refreshStatus])
 
@@ -167,13 +174,20 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
     } catch { setError('Network error. Please try again.'); setPhase('idle') }
   }, [user, toolSlug, status, refreshStatus])
 
-  const download = useCallback(() => {
+  const download = useCallback(async () => {
     if (!report) return
-    const blob = new Blob([buildReportHtml(report, toolName, resultMeta)], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = `${toolSlug}-sentiment-report.html`
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+    try {
+      // react-pdf is heavy → dynamic-import only on click (keeps it out of the bundle).
+      const { downloadSentimentPdf } = await import('@/components/tools/sentiment-report-pdf')
+      await downloadSentimentPdf(report as unknown as SentimentPdfData, toolName, toolSlug)
+    } catch {
+      // Never leave the user empty-handed — fall back to the standalone HTML file.
+      const blob = new Blob([buildReportHtml(report, toolName, resultMeta)], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = `${toolSlug}-sentiment-report.html`
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+    }
   }, [report, toolName, resultMeta, toolSlug])
 
   const payRazorpay = useCallback(async () => {
@@ -395,62 +409,119 @@ const SEVERITY_PILL: Record<'low' | 'medium' | 'high', string> = {
 function ReportBody({ report, toolName, meta, onDownload }: {
   report: Report; toolName: string; meta: { sources: string[]; mention_count: number } | null; onDownload: () => void
 }) {
-  const tone = report.sentiment_score === 'positive' ? 'from-emerald-500 to-emerald-400'
-    : report.sentiment_score === 'negative' ? 'from-red-500 to-red-400' : 'from-amber-500 to-emerald-500'
-  const breakdown = report.sentiment_breakdown ? Object.values(report.sentiment_breakdown).filter((v) => typeof v === 'number') : []
-  const positivity = breakdown.length ? Math.round((breakdown.reduce((a, b) => a + b, 0) / breakdown.length) * 100) : null
   const mentions = report.mentions ?? []
+  const positivity = overallPositivity(report.sentiment_breakdown, report.sentiment_score)
+  const sourceBreak = report.source_breakdown ?? []
+  const mentionDates = mentions.map((m) => m.date)
+  const datedTs = mentionDates.map((d) => (d ? Date.parse(d) : NaN)).filter((t) => !Number.isNaN(t))
+  const latest = datedTs.length ? new Date(Math.max(...datedTs)) : null
+  const oldest = datedTs.length ? new Date(Math.min(...datedTs)) : null
+  const sourcesCount = sourceBreak.length || (meta?.sources?.length ?? 0)
+  const dataPoints = meta?.mention_count ?? mentions.length
+  const fmt = (d: Date | null) => (d ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null)
+  const fmtStr = (s?: string | null) => { if (!s) return null; const t = Date.parse(s); return Number.isNaN(t) ? null : fmt(new Date(t)) }
+  const scoreColorText = report.sentiment_score === 'positive' ? 'text-emerald-400' : report.sentiment_score === 'negative' ? 'text-red-400' : 'text-amber-400'
 
+  // The order below is engagement-first AND mobile-first: on phones it reads
+  // top-to-bottom as verdict → score → themes → praise/gripes → quotes →
+  // mentions, so the visual hook always leads.
   return (
     <div className="space-y-5">
-      {/* Sentiment pulse dashboard */}
-      <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Sentiment pulse</p>
-            <p className={`text-3xl font-extrabold capitalize ${report.sentiment_score === 'positive' ? 'text-emerald-400' : report.sentiment_score === 'negative' ? 'text-red-400' : 'text-amber-400'}`}>{report.sentiment_score}</p>
+      {/* 1 · Verdict hero — donut + sentiment + bottom line + key stats + PDF */}
+      <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
+        <div className="flex flex-col items-center gap-6 sm:flex-row">
+          <SentimentDonut positivity={positivity} />
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <p className="text-xs uppercase tracking-wide text-zinc-500">The verdict on {toolName}</p>
+            <p className={`text-2xl font-extrabold capitalize sm:text-3xl ${scoreColorText}`}>{report.sentiment_score} sentiment</p>
+            {report.bottom_line && <p className="mt-2 text-sm font-medium leading-relaxed text-emerald-100">{report.bottom_line}</p>}
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-zinc-500 sm:justify-start">
+              <span><span className="font-semibold text-white">{dataPoints}</span> mentions analysed</span>
+              <span><span className="font-semibold text-white">{sourcesCount}</span> sources</span>
+              {latest && <span>latest <span className="font-semibold text-white">{fmt(latest)}</span></span>}
+            </div>
           </div>
-          <div className="flex gap-6 text-center">
-            <div><p className="text-2xl font-bold text-white">{meta?.mention_count ?? mentions.length}</p><p className="text-[11px] text-zinc-500">data points</p></div>
-            <div><p className="text-2xl font-bold text-white">{report.community_buzz?.volume ?? '—'}</p><p className="text-[11px] text-zinc-500">buzz volume</p></div>
-            <div><p className="text-2xl font-bold capitalize text-white">{report.community_buzz?.trend ?? '—'}</p><p className="text-[11px] text-zinc-500">trend</p></div>
-          </div>
-          <button onClick={onDownload} className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-white hover:bg-zinc-800"><Download className="h-3.5 w-3.5" /> Download report</button>
         </div>
-        {positivity !== null && (
-          <div className="mt-4"><div className="mb-1 flex justify-between text-[11px] text-zinc-500"><span>Overall positivity</span><span>{positivity}%</span></div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800"><div className={`h-full rounded-full bg-gradient-to-r ${tone}`} style={{ width: `${positivity}%` }} /></div></div>
-        )}
-        {report.bottom_line && <div className="mt-4 rounded-lg border-l-4 border-emerald-500 bg-emerald-950/30 px-4 py-3 text-sm font-medium text-emerald-100">{report.bottom_line}</div>}
+        <div className="mt-5 flex justify-center sm:justify-end">
+          <button onClick={onDownload} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-emerald-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400"><Download className="h-4 w-4" /> Download PDF</button>
+        </div>
       </div>
 
+      {/* 2 · Scorecard + sentiment by source (per-source bars = provenance) */}
       {report.scorecard && <Scorecard s={report.scorecard} />}
+      {sourceBreak.length > 0 && (
+        <Block icon={<Database className="h-4 w-4" />} title="Sentiment by source">
+          <p className="-mt-1 mb-3 text-xs text-zinc-500">How positive each platform&apos;s chatter is — and how much of it there is.</p>
+          <SourceSentimentBars items={sourceBreak} />
+        </Block>
+      )}
 
-      <Block icon={<Flame className="h-4 w-4" />} title="The verdict">
+      {/* 3 · The honest verdict */}
+      <Block icon={<Flame className="h-4 w-4" />} title="The honest verdict">
         <p className="text-sm leading-relaxed text-zinc-300">{report.ai_verdict}</p>
       </Block>
 
+      {/* 4 · Recurring themes (moved up) — frequency bars */}
+      {report.themes && report.themes.length > 0 && (
+        <Block icon={<Radar className="h-4 w-4" />} title="What everyone keeps saying">
+          <p className="-mt-1 mb-3 text-xs text-zinc-500">The points that keep coming up — wider bar = raised across more platforms.</p>
+          <ThemeBars themes={report.themes} />
+        </Block>
+      )}
+
+      {/* 5 · Momentum + sparkline from real mention dates */}
       {report.momentum && (
-        <Block icon={momentumIcon(report.momentum.direction)} title="Sentiment momentum" accent={momentumAccent(report.momentum.direction)}>
-          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${momentumPill(report.momentum.direction)}`}>{momentumLabel(report.momentum.direction)}</span>
+        <Block icon={momentumIcon(report.momentum.direction)} title="Where the buzz is heading" accent={momentumAccent(report.momentum.direction)}>
+          <div className="flex flex-wrap items-center gap-4">
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${momentumPill(report.momentum.direction)}`}>{momentumLabel(report.momentum.direction)}</span>
+            {datedTs.length >= 3 && <div className="min-w-[160px] flex-1"><MomentumSparkline dates={mentionDates} /></div>}
+          </div>
           <p className="mt-3 text-sm leading-relaxed text-zinc-300">{report.momentum.summary}</p>
           {report.momentum.drivers && report.momentum.drivers.length > 0 && (
-            <ul className="mt-3 space-y-1.5">
-              {report.momentum.drivers.map((d, i) => <li key={i} className="flex gap-2 text-sm text-zinc-400"><span className="text-zinc-600">›</span>{d}</li>)}
-            </ul>
+            <ul className="mt-3 space-y-1.5">{report.momentum.drivers.map((d, i) => <li key={i} className="flex gap-2 text-sm text-zinc-400"><span className="text-zinc-600">›</span>{d}</li>)}</ul>
           )}
         </Block>
       )}
 
-      {/* Live mentions feed — the real-time, data-rich, distinct section */}
+      {/* 6 · Praise / Gripes */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Block icon={<ThumbsUp className="h-4 w-4" />} title="What users love">
+          <ul className="space-y-2 text-sm text-zinc-300">{report.pros.map((p, i) => <li key={i} className="flex gap-2"><span className="text-emerald-400">+</span>{p}</li>)}</ul>
+        </Block>
+        <Block icon={<ThumbsDown className="h-4 w-4" />} title="What frustrates them" accent="text-red-400">
+          <ul className="space-y-2 text-sm text-zinc-300">{report.cons.map((c, i) => <li key={i} className="flex gap-2"><span className="text-red-400">−</span>{c}</li>)}</ul>
+        </Block>
+      </div>
+
+      {/* 7 · In their words — quote wall with source icon + date */}
+      {report.standout_quotes && report.standout_quotes.length > 0 && (
+        <Block icon={<Quote className="h-4 w-4" />} title="In their words">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {report.standout_quotes.map((q, i) => {
+              const tone = q.sentiment === 'positive' ? 'border-emerald-900/50 bg-emerald-950/10' : q.sentiment === 'critical' ? 'border-red-900/50 bg-red-950/10' : 'border-zinc-800 bg-zinc-900/40'
+              return (
+                <blockquote key={i} className={`rounded-xl border ${tone} p-4 text-sm italic text-zinc-300`}>
+                  &ldquo;{q.text}&rdquo;
+                  <span className="mt-2.5 flex items-center gap-1.5 not-italic text-xs text-zinc-500">
+                    <SourceIcon source={q.source} size={14} withLabel />
+                    {fmtStr(q.date) && <span>· {fmtStr(q.date)}</span>}
+                  </span>
+                </blockquote>
+              )
+            })}
+          </div>
+        </Block>
+      )}
+
+      {/* 8 · Live mentions — relevance-filtered, recency, icon + date + link */}
       {mentions.length > 0 && (
-        <Block icon={<MessageSquareText className="h-4 w-4" />} title={`Live mentions (${mentions.length})`}>
+        <Block icon={<MessageSquareText className="h-4 w-4" />} title="Straight from the community">
           <div className="space-y-3">
             {mentions.map((m, i) => (
               <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5">
                 <div className="mb-1 flex items-center gap-2 text-[11px]">
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">{m.source}</span>
-                  {m.date && <span className="text-zinc-500">{timeAgo(m.date)}</span>}
+                  <SourceIcon source={m.source} size={16} withLabel />
+                  {m.date && <span className="text-zinc-500">· {timeAgo(m.date)}</span>}
                   {typeof m.score === 'number' && m.score > 0 && <span className="text-zinc-600">▲ {m.score}</span>}
                   {m.url && <a href={m.url} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300">view <ExternalLink className="h-3 w-3" /></a>}
                 </div>
@@ -462,15 +533,24 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         </Block>
       )}
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Block icon={<ThumbsUp className="h-4 w-4" />} title="The praise">
-          <ul className="space-y-2 text-sm text-zinc-300">{report.pros.map((p, i) => <li key={i} className="flex gap-2"><span className="text-emerald-400">+</span>{p}</li>)}</ul>
+      {/* 9 · Watch-outs */}
+      {report.red_flags && report.red_flags.length > 0 && (
+        <Block icon={<ShieldAlert className="h-4 w-4" />} title="Watch-outs before you commit" accent="text-red-400">
+          <div className="space-y-3">
+            {report.red_flags.map((f, i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5">
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SEVERITY_PILL[f.severity] ?? SEVERITY_PILL.low}`}>{f.severity}</span>
+                  <p className="text-sm font-semibold text-white">{f.title}</p>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.detail}</p>
+              </div>
+            ))}
+          </div>
         </Block>
-        <Block icon={<ThumbsDown className="h-4 w-4" />} title="The gripes" accent="text-red-400">
-          <ul className="space-y-2 text-sm text-zinc-300">{report.cons.map((c, i) => <li key={i} className="flex gap-2"><span className="text-red-400">−</span>{c}</li>)}</ul>
-        </Block>
-      </div>
+      )}
 
+      {/* 10 · Who it's for / who should skip */}
       {((report.best_for && report.best_for.length > 0) || (report.not_for && report.not_for.length > 0)) && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {report.best_for && report.best_for.length > 0 && (
@@ -486,46 +566,7 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         </div>
       )}
 
-      {report.standout_quotes && report.standout_quotes.length > 0 && (
-        <Block icon={<Quote className="h-4 w-4" />} title={`Community quote wall (${report.standout_quotes.length})`}>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {report.standout_quotes.map((q, i) => {
-              const tone = q.sentiment === 'positive' ? 'border-emerald-900/50 bg-emerald-950/10' : q.sentiment === 'critical' ? 'border-red-900/50 bg-red-950/10' : 'border-zinc-800 bg-zinc-900/40'
-              const dot = q.sentiment === 'positive' ? 'bg-emerald-400' : q.sentiment === 'critical' ? 'bg-red-400' : 'bg-zinc-500'
-              return (
-                <blockquote key={i} className={`relative rounded-xl border ${tone} p-4 pr-6 text-sm italic text-zinc-300`}>
-                  <span className={`absolute right-3 top-3 h-2 w-2 rounded-full ${dot}`} title={q.sentiment ?? 'mixed'} />
-                  &ldquo;{q.text}&rdquo;
-                  <span className="mt-2 block not-italic text-xs text-zinc-500">— {q.source}</span>
-                </blockquote>
-              )
-            })}
-          </div>
-        </Block>
-      )}
-
-      {report.themes && report.themes.length > 0 && (
-        <Block icon={<Radar className="h-4 w-4" />} title="Recurring themes">
-          <div className="flex flex-wrap gap-2">{report.themes.slice(0, 8).map((t, i) => <span key={i} className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-300">{t.theme}</span>)}</div>
-        </Block>
-      )}
-
-      {report.red_flags && report.red_flags.length > 0 && (
-        <Block icon={<ShieldAlert className="h-4 w-4" />} title="Red flags & dealbreakers" accent="text-red-400">
-          <div className="space-y-3">
-            {report.red_flags.map((f, i) => (
-              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5">
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SEVERITY_PILL[f.severity] ?? SEVERITY_PILL.low}`}>{f.severity}</span>
-                  <p className="text-sm font-semibold text-white">{f.title}</p>
-                </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.detail}</p>
-              </div>
-            ))}
-          </div>
-        </Block>
-      )}
-
+      {/* 11 · Learning curve + hidden costs */}
       {report.learning_curve && (report.learning_curve.time_to_start || report.learning_curve.skill_level || (report.learning_curve.hurdles && report.learning_curve.hurdles.length > 0)) && (
         <Block icon={<BookOpen className="h-4 w-4" />} title="Learning curve" accent="text-blue-400">
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -545,9 +586,42 @@ function ReportBody({ report, toolName, meta, onDownload }: {
         </Block>
       )}
 
-      <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <button onClick={onDownload} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-bold text-emerald-950 hover:bg-emerald-400"><Download className="h-4 w-4" /> Download full report</button>
-        <p className="text-xs text-zinc-500">Save this {toolName} sentiment report as a shareable file.</p>
+      {/* 12 · Dynamic, in-depth FAQs */}
+      {report.faqs && report.faqs.length > 0 && (
+        <Block icon={<HelpCircle className="h-4 w-4" />} title="Real questions, real answers">
+          <div className="space-y-2.5">
+            {report.faqs.map((f, i) => (
+              <details key={i} className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-4" {...(i === 0 ? { open: true } : {})}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-white marker:content-['']">
+                  {f.q}
+                  <span className="shrink-0 text-zinc-600 transition group-open:rotate-180">⌄</span>
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </Block>
+      )}
+
+      {/* 13 · Where this came from — sources footer (provenance + recency) */}
+      {sourceBreak.length > 0 && (
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-500"><Database className="h-3.5 w-3.5" /> Where this came from</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sourceBreak.map((s) => (
+              <span key={s.source} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+                <SourceIcon source={s.source} size={14} /> {s.label} <span className="text-zinc-600">· {s.count}</span>
+              </span>
+            ))}
+          </div>
+          {(oldest || latest) && <p className="mt-3 text-[11px] text-zinc-600">Mentions dated {fmt(oldest)}–{fmt(latest)} · synthesized {new Date().toLocaleDateString()}</p>}
+        </div>
+      )}
+
+      {/* Download CTA */}
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-600/30 bg-gradient-to-br from-emerald-950/30 to-zinc-950 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
+        <p className="text-sm text-zinc-300">Keep the full <span className="font-semibold text-white">{toolName}</span> sentiment report — a polished, shareable PDF.</p>
+        <button onClick={onDownload} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-bold text-emerald-950 hover:bg-emerald-400"><Download className="h-4 w-4" /> Download PDF</button>
       </div>
     </div>
   )

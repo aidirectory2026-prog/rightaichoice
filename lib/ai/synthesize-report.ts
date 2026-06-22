@@ -16,7 +16,12 @@ export type SynthesizedReport = {
   ai_verdict: string
   /** Premium report extras (Phase 9 S6 redesign) — optional for back-compat. */
   bottom_line?: string
-  standout_quotes?: Array<{ text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed' }>
+  // Phase 12 Bug-3 (2026-06-23): quotes now carry a date so the report can show
+  // recency + the platform they came from.
+  standout_quotes?: Array<{ text: string; source: string; sentiment?: 'positive' | 'critical' | 'mixed'; date?: string }>
+  // Phase 12 Bug-3: dynamic, in-depth, high-value buyer FAQs grounded in the
+  // scraped data — replaces the old static generic FAQ block.
+  faqs?: Array<{ q: string; a: string }>
   /** Phase 9 S8 depth pass — optional for back-compat with older cached reports. */
   scorecard?: {
     overall: number
@@ -36,7 +41,10 @@ export type SynthesizedReport = {
   cons: string[]
   sentiment_score: 'positive' | 'mixed' | 'negative'
   sentiment_breakdown: Record<string, number>
-  themes: Array<{ theme: string; sources: string[] }>
+  // Phase 12 Bug-3: themes ordered most-recurring first, tagged with the dominant
+  // sentiment so the report can render them as tinted frequency bars (weight =
+  // number of platforms that voiced it).
+  themes: Array<{ theme: string; sources: string[]; sentiment?: 'positive' | 'mixed' | 'critical' }>
   best_for: string[]
   not_for: string[]
   pricing_analysis: {
@@ -82,11 +90,22 @@ function buildScrapeContext(results: AllScrapeResults): string {
   for (const result of results.all) {
     if (result.posts.length === 0) continue
 
-    const postTexts = result.posts
+    // Phase 12 Bug-3 — newest first + carry the date into the context so the model
+    // can prioritise recent reality and judge momentum/themes by recency (dates
+    // used to be dropped entirely before synthesis).
+    const ordered = [...result.posts].sort((a, b) => {
+      const da = a.date ? Date.parse(a.date) : 0
+      const db = b.date ? Date.parse(b.date) : 0
+      return (Number.isNaN(db) ? 0 : db) - (Number.isNaN(da) ? 0 : da)
+    })
+
+    const postTexts = ordered
       .slice(0, 12)
       .map((p, i) => {
+        const d = p.date ? p.date.slice(0, 10) : ''
         const parts = [
           `[${i + 1}]`,
+          d ? `(${d})` : '',
           p.title ? `T: ${p.title}` : '',
           `C: ${p.body.slice(0, 300)}`,
         ].filter(Boolean)
@@ -148,13 +167,13 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
   "bottom_line": "One punchy sentence — the single most important takeaway a buyer needs.",
   "scorecard": {"overall": 0-100, "value": 0-100, "ease_of_use": 0-100, "support": 0-100, "reliability": 0-100, "performance": 0-100},
   "momentum": {"direction": "rising" | "steady" | "cooling", "summary": "2 sentences on whether community sentiment/buzz is trending up, holding, or cooling recently — and the why behind it", "drivers": ["specific recent driver of the shift", "another driver"]},
-  "standout_quotes": [{"text": "A representative, paraphrased real user opinion, 1-2 sentences", "source": "the kind of source, e.g. 'a developer in a community thread' or 'a reviewer'", "sentiment": "positive" | "critical" | "mixed"}],
+  "standout_quotes": [{"text": "A representative, paraphrased real user opinion, 1-2 sentences", "source": "the platform it came from, exactly one of the COMMUNITY DATA section names (e.g. 'Reddit', 'Hacker News')", "sentiment": "positive" | "critical" | "mixed", "date": "the YYYY-MM-DD shown next to the post you drew it from, or omit if unknown"}],
   "red_flags": [{"title": "Short dealbreaker name", "detail": "1-2 sentences: the concrete risk and exactly who it bites", "severity": "low" | "medium" | "high"}],
   "pros": ["6-8 specific strengths grounded in real user feedback, max 18 words each"],
   "cons": ["6-8 specific weaknesses/complaints grounded in real user feedback, max 18 words each"],
   "sentiment_score": "positive" | "mixed" | "negative",
   "sentiment_breakdown": {"<source>": 0.0-1.0 for EACH source that appears in the COMMUNITY DATA above (use the exact source name from each section header, e.g. "Hacker News", "Stack Overflow", "GitHub", "Reddit", "Product Hunt", "App Store", "Bluesky", "Lemmy", "YouTube"); include only sources that actually have data},
-  "themes": [{"theme": "Key community narrative", "sources": ["the source names that voiced this theme, matching the section headers"]}],
+  "themes": [{"theme": "Key community narrative (a recurring, specific point people keep raising)", "sources": ["the source names that voiced this theme, matching the section headers"], "sentiment": "positive" | "mixed" | "critical"}],
   "best_for": ["Specific user segment 1", "Specific user segment 2", "Specific use case"],
   "not_for": ["Specific user segment who should avoid", "Specific use case it's bad for"],
   "pricing_analysis": {
@@ -172,7 +191,8 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
     "skill_level": "beginner" | "intermediate" | "advanced",
     "hurdles": ["Specific hurdle users mention"]
   },
-  "integration_insights": [{"tool": "Zapier/Slack/etc", "sentiment": "positive" | "mixed" | "negative", "note": "Brief insight"}]
+  "integration_insights": [{"tool": "Zapier/Slack/etc", "sentiment": "positive" | "mixed" | "negative", "note": "Brief insight"}],
+  "faqs": [{"q": "A real, high-value question a serious buyer would ask about ${tool.name}", "a": "A substantive, specific, 2-4 sentence answer grounded in the community data + the tool info above"}]
 }
 
 For sentiment_breakdown, use 0.0-1.0 where 1.0 is fully positive, keyed by the EXACT source names from the COMMUNITY DATA section headers. Only include sources that actually returned data — never invent a source that isn't in the data above.
@@ -180,6 +200,9 @@ For scorecard, every field is an integer 0-100 grounded in the actual sentiment 
 For red_flags, surface 3-5 genuine dealbreakers/risks from real complaints — these are about reliability, support, lock-in, churn, data/safety, NOT the pricing hidden_costs (keep those separate).
 For standout_quotes, return 6-8 quotes that mix genuine praise and genuine criticism so the reader sees both sides.
 For momentum, judge the recent trajectory of opinion, not the all-time average.
+RECENCY: each post is tagged with its date — weight recent posts more heavily and let newer reality override older takes when they conflict. IGNORE any post that is clearly not about ${tool.name} itself (a coincidental keyword match, a different product with a similar name, or generic off-topic chatter).
+For themes, order them MOST-RECURRING FIRST (the points raised across the most sources / most often), make each a specific recurring point (not a vague category), and tag each with its dominant sentiment.
+For faqs, write 6-8 of the highest-value questions a serious buyer actually asks about ${tool.name} — a mix across: is it worth it, who should and shouldn't use it, the real free-tier limits, hidden costs, how it compares to its closest competitor, reliability/uptime at scale, the true learning curve, and the biggest recurring complaint. Each answer must be specific, honest, and 2-4 sentences grounded in the data above — never generic filler.
 Make every section deep, specific and decision-useful — this is a paid report; thin or generic output is a failure.
 If you don't have enough data for a section, provide your best assessment based on available info and the tool's characteristics.
 Return ONLY the JSON — no markdown fences, no explanation.`
@@ -242,6 +265,12 @@ Return ONLY the JSON — no markdown fences, no explanation.`
     report.sentiment_breakdown = {}
   }
   if (!Array.isArray(report.themes)) report.themes = []
+  if (report.themes.length > 10) report.themes = report.themes.slice(0, 10)
+  // Phase 12 Bug-3 — dynamic FAQs: guard + bound.
+  if (!Array.isArray(report.faqs)) report.faqs = []
+  report.faqs = report.faqs
+    .filter((f) => f && typeof f.q === 'string' && typeof f.a === 'string' && f.q.trim() && f.a.trim())
+    .slice(0, 8)
   if (!Array.isArray(report.best_for)) report.best_for = []
   if (!Array.isArray(report.not_for)) report.not_for = []
   if (!report.pricing_analysis || typeof report.pricing_analysis !== 'object') {
