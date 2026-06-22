@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { fetchAllPages } from '@/lib/data/_pagination'
 import { sanitizeLike } from '@/lib/data/_sanitize'
 import type { ToolFilters } from '@/types'
@@ -168,7 +169,9 @@ export async function getToolBySlug(slug: string) {
 }
 
 export async function getFeaturedTools(limit = 6) {
-  const supabase = await createClient()
+  // Cowork QA: public data — cookie-free admin client so the homepage can be
+  // statically cached (createClient() reads cookies → forces dynamic render).
+  const supabase = getAdminClient() as Awaited<ReturnType<typeof createClient>>
 
   const { data } = await supabase
     .from('tools')

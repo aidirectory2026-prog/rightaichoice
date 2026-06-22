@@ -166,7 +166,9 @@ export async function getEditorialComparisonsForTool(toolId: string) {
  * Fetch top editorial comparisons for the homepage hero rail.
  */
 export async function getFeaturedEditorialComparisons(limit = 6) {
-  const supabase = await createClient()
+  // Cowork QA: public data — cookie-free admin client so the homepage can be
+  // statically cached (createClient() reads cookies → forces dynamic render).
+  const supabase = getAdminClient() as Awaited<ReturnType<typeof createClient>>
 
   const { data, error } = await supabase
     .from('tool_comparisons')
