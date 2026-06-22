@@ -1,12 +1,10 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 import { useDebouncedTextTracking } from '@/lib/hooks/use-debounced-text-tracking'
-import { useAuth } from '@/components/providers/auth-provider'
-import { PlanSignupModal } from '@/components/cta/plan-signup-modal'
+import { useWizard } from '@/components/providers/wizard-provider'
 
 const MIN_CHARS = 10
 
@@ -43,17 +41,14 @@ const CHIPS: Array<{ label: string; intent: string }> = [
 ]
 
 export function GoalInput() {
-  const router = useRouter()
-  const { user } = useAuth()
+  const { openWizard } = useWizard()
   const [goal, setGoal] = useState('')
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [usedChip, setUsedChip] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [signupOpen, setSignupOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const trimmed = goal.trim()
-  const canSubmit = trimmed.length >= MIN_CHARS && !submitting
+  const canSubmit = trimmed.length >= MIN_CHARS
 
   // Phase 8.g.11.b — capture every typed pause in the goal input.
   // capturePolicy='text' so the actual goal text rides along (user-explicit
@@ -97,14 +92,16 @@ export function GoalInput() {
     // exposes a generic track() — see Phase 5 follow-ups in plan.md.
     void usedChip
 
-    // Phase 9 — Anonymous users see the signup modal first (skippable);
-    // known users navigate straight through.
-    if (!user?.id) {
-      setSignupOpen(true)
-      return
-    }
-    setSubmitting(true)
-    router.push(`/plan?q=${encodeURIComponent(trimmed)}&source=homepage`)
+    // Phase 12 Bug-1 — open the stepped full-screen wizard, carrying the typed
+    // goal. The hero already collected the goal, so jump straight to the first
+    // question (startAtStep:'skill'). The wizard handles intake + the signup
+    // gate + navigation to the results, for both anon and known users.
+    openWizard({
+      initialGoal: trimmed,
+      sourceSurface: 'homepage',
+      startAtStep: 'skill',
+      originalPagePath: '/',
+    })
   }
 
   return (
@@ -133,8 +130,8 @@ export function GoalInput() {
           aria-label="Plan my stack"
           className="rai-cta-shimmer rai-arrow-nudge flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-base font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:hover:bg-zinc-800 min-h-[52px]"
         >
-          {submitting ? 'Building your stack…' : 'Plan My Stack'}
-          {!submitting && <ArrowRight data-arrow className="h-4 w-4" />}
+          Plan My Stack
+          <ArrowRight data-arrow className="h-4 w-4" />
         </button>
 
         {trimmed.length > 0 && trimmed.length < MIN_CHARS && (
@@ -147,7 +144,7 @@ export function GoalInput() {
             existing-tools question in the intake modal, so it's not a
             surprise interruption mid-flow. */}
         <p className="text-[11px] text-zinc-500 text-center">
-          Already use some AI tools? We'll ask in the next step and build the stack <em>around</em> them.
+          Already use some AI tools? We&apos;ll ask in the next step and build the stack <em>around</em> them.
         </p>
       </form>
 
@@ -163,15 +160,6 @@ export function GoalInput() {
           </button>
         ))}
       </div>
-
-      {/* Phase 9 — Anonymous-user signup gate before /plan navigation.
-          Skippable; typed goal is persisted to plan_intents either way. */}
-      <PlanSignupModal
-        open={signupOpen}
-        onClose={() => setSignupOpen(false)}
-        typedGoal={trimmed}
-        sourceSurface="homepage"
-      />
     </div>
   )
 }

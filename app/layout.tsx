@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { CompareProvider } from "@/components/providers/compare-provider";
+import { WizardProvider } from "@/components/providers/wizard-provider";
 import { MixpanelProvider } from "@/components/providers/mixpanel-provider";
 import { ClarityProvider } from "@/components/providers/clarity-provider";
 import { GlobalInteractionTracker } from "@/components/analytics/global-interaction-tracker";
@@ -129,10 +130,12 @@ export default async function RootLayout({
           <FormAnalyticsTracker />
           <WebVitalsTracker />
           <AuthProvider>
-            <CompareProvider>
-              {children}
-              <CompareTray />
-            </CompareProvider>
+            <WizardProvider>
+              <CompareProvider>
+                {children}
+                <CompareTray />
+              </CompareProvider>
+            </WizardProvider>
           </AuthProvider>
         </MixpanelProvider>
         <MobileNav />

@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 }
 
 type PageProps = {
-  searchParams: Promise<{ q?: string; source?: string; from?: string }>
+  searchParams: Promise<{ q?: string; source?: string; from?: string; ready?: string }>
 }
 
 type CtaSurface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
@@ -125,6 +125,10 @@ const WEBAPP_JSONLD = {
 export default async function PlanPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const initialQuery = sp.q ?? ''
+  // Phase 12 Bug-1 — the stepped wizard lands here with &ready=1 once the goal +
+  // profile are collected and the signup gate shown; ProjectPlanner then runs
+  // the plan directly instead of re-opening the intake/signup modals.
+  const autoRun = sp.ready === '1'
 
   // Phase 9 (2026-05-28) — CTA provenance carried in the URL by
   // PlanCTAButton (?source=sticky_bar&from=/tools/leena-ai). Used by the
@@ -209,6 +213,7 @@ export default async function PlanPage({ searchParams }: PageProps) {
               initialQuery={initialQuery}
               isLoggedIn={!!user}
               sourceSurface={sourceSurface}
+              autoRun={autoRun}
               {...(originalPagePath ? { originalPagePath } : {})}
             />
           </div>

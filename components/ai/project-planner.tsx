@@ -124,6 +124,7 @@ export function ProjectPlanner({
   isLoggedIn = false,
   sourceSurface,
   originalPagePath,
+  autoRun = false,
 }: {
   initialQuery?: string
   isLoggedIn?: boolean
@@ -135,6 +136,10 @@ export function ProjectPlanner({
    *  plan_intents.source_path so attribution points back to the content
    *  page rather than /plan or /auth/callback. */
   originalPagePath?: string
+  /** Phase 12 Bug-1 — arrived from the stepped wizard (/plan?...&ready=1): the
+   *  goal + profile are already collected and the signup gate already shown, so
+   *  run the plan immediately and skip the intake + signup modals entirely. */
+  autoRun?: boolean
 }) {
   const [query, setQuery] = useState(initialQuery ?? '')
   const [plan, setPlan] = useState<Plan | null>(null)
@@ -400,7 +405,15 @@ export function ProjectPlanner({
   useEffect(() => {
     if (initialQuery && !didAutoSubmit.current) {
       didAutoSubmit.current = true
-      handleSubmit(initialQuery)
+      if (autoRun) {
+        // Phase 12 Bug-1 — came from the stepped wizard: profile already saved,
+        // signup gate already shown. Run the plan directly (no re-gate).
+        const saved = loadProfile()
+        if (saved) setProfile(saved)
+        void runPlan(initialQuery, saved)
+      } else {
+        handleSubmit(initialQuery)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

@@ -20,8 +20,8 @@
  */
 
 import { type ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
+import { useWizard } from '@/components/providers/wizard-provider'
 
 type Surface = 'sticky_bar' | 'inline_card' | 'navbar' | 'homepage' | 'plan_page'
 
@@ -35,17 +35,15 @@ type Props = {
 }
 
 export function PlanCTAButton({ surface, pagePath, children }: Props) {
-  const router = useRouter()
+  const { openWizard } = useWizard()
 
   function handleClick() {
     analytics.planCtaClicked({ surface, page_path: pagePath })
-    // Build /plan URL with provenance. `source` survives to plan_intents
-    // via the planner's submit handler; `from` becomes the eventual
-    // source_path so attribution points back to /tools/leena-ai rather
-    // than /plan or /auth/callback.
-    const params = new URLSearchParams({ source: surface })
-    if (pagePath) params.set('from', pagePath)
-    router.push(`/plan?${params.toString()}`)
+    // Phase 12 Bug-1 — open the stepped wizard in place (was: navigate to /plan).
+    // No goal is typed yet on a content-page CTA, so start at the goal screen.
+    // `surface` + `pagePath` flow into plan_intents (source_surface / source_path)
+    // exactly as before; the wizard navigates to /plan?…&ready=1 at the end.
+    openWizard({ sourceSurface: surface, startAtStep: 'goal', originalPagePath: pagePath })
   }
 
   return <>{children({ onClick: handleClick })}</>
