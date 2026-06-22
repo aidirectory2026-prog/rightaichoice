@@ -4,9 +4,8 @@ import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from '@/actions/auth'
-import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { continueAsGuest } from '@/lib/auth/guest-client'
-import { GoogleIcon } from '@/components/shared/google-icon'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { Logo } from '@/components/shared/logo'
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -38,16 +37,10 @@ export default function LoginPage() {
         </p>
       )}
 
-      {/* Phase 9 S2: client-side OAuth init (reliable PKCE — see
-          lib/auth/oauth-client.ts). Replaces the flaky server-action flow. */}
-      <button
-        type="button"
-        onClick={() => signInWithOAuthClient('google', nextParam || null)}
-        className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      {/* Google sign-in on our own origin (GIS + signInWithIdToken) so the Google
+          screen shows rightaichoice.com, not the Supabase project ref. Falls back
+          to the classic redirect automatically if GIS is unavailable. */}
+      <GoogleSignInButton next={nextParam || null} />
 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-zinc-800" />

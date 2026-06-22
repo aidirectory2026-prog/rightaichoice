@@ -8,9 +8,8 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { syncMyProfile } from '@/actions/auth'
-import { GoogleIcon } from '@/components/shared/google-icon'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { Sparkles, Mail, Loader2 } from 'lucide-react'
 
 export function GuestUpgrade() {
@@ -51,15 +50,10 @@ export function GuestUpgrade() {
           </p>
 
           {mode === 'idle' ? (
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => signInWithOAuthClient('google', '/dashboard')}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition-colors"
-              >
-                <GoogleIcon />
-                Continue with Google
-              </button>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="sm:max-w-[240px]">
+                <GoogleSignInButton next="/dashboard" />
+              </div>
               <button
                 type="button"
                 onClick={() => setMode('email')}

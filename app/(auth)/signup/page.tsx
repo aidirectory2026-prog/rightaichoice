@@ -4,9 +4,8 @@ import { useActionState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '@/actions/auth'
-import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { continueAsGuest } from '@/lib/auth/guest-client'
-import { GoogleIcon } from '@/components/shared/google-icon'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { Logo } from '@/components/shared/logo'
 import { analytics } from '@/lib/analytics'
 
@@ -58,26 +57,14 @@ export default function SignupPage() {
         <p className="text-sm text-zinc-400">Join the community of AI explorers</p>
       </div>
 
-      {/* Phase 7 Step 53 (BUG-012): Google CTA is a plain button, not a
-          second `<form>`. Two `<form>` elements with submit buttons used to
-          let keyboard Tab from the heading land on the OAuth submit BEFORE
-          the username field, and any "submit the first form on the page"
-          script triggered OAuth instead of the email/password form.
-          Phase 9 S2: client-side OAuth init (reliable PKCE — see
-          lib/auth/oauth-client.ts). */}
-      <button
-        type="button"
-        onClick={() => {
-          // 10.7c.6 — which method users ATTEMPT (signup_completed shows
-          // which converts).
-          analytics.signupMethodSelected('google', 'signup_page')
-          signInWithOAuthClient('google', nextParam || null)
-        }}
-        className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      {/* Google sign-in on our own origin (GIS + signInWithIdToken) so the Google
+          screen shows rightaichoice.com, not the Supabase project ref. Falls back
+          to the classic redirect automatically if GIS is unavailable. The
+          beforeSession hook preserves the signup-method analytics. */}
+      <GoogleSignInButton
+        next={nextParam || null}
+        beforeSession={() => analytics.signupMethodSelected('google', 'signup_page')}
+      />
 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-zinc-800" />

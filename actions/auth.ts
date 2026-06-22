@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { safeNext } from '@/lib/auth/safe-next'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { issueAndSendVerification, createVerificationToken, sendVerificationEmail } from '@/lib/auth/email-verification'
+import { headers } from 'next/headers'
+import { serverAnalytics } from '@/lib/mixpanel-server'
 
 /**
  * Phase 7 Step 53 (BUG-011, BUG-013): action returns the non-secret fields
@@ -145,6 +147,34 @@ export async function syncMyProfile(): Promise<{ ok: boolean }> {
   if (user.email && !verifiedByProvider && !p.email_verified && process.env.NEXT_PUBLIC_APP_URL) {
     await issueAndSendVerification(user.id, user.email, process.env.NEXT_PUBLIC_APP_URL).catch(() => {})
   }
+  return { ok: true }
+}
+
+// ─── Finalize a Google ID-token sign-in (GIS / signInWithIdToken) ─────────────
+
+/**
+ * Parity with /auth/callback for the no-redirect Google flow: fire the
+ * authoritative signup/login analytics and refresh the profile. Called from the
+ * client right after signInWithIdToken() succeeds.
+ */
+export async function finalizeGoogleSignIn(): Promise<{ ok: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+  try {
+    const h = await headers()
+    const ip =
+      h.get('cf-connecting-ip') ??
+      h.get('x-real-ip') ??
+      h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      undefined
+    const isFresh = Date.now() - new Date(user.created_at ?? 0).getTime() < 30_000
+    if (isFresh) await serverAnalytics.signupCompleted(user.id, 'google', ip)
+    else await serverAnalytics.loginCompleted(user.id, 'google', ip)
+  } catch {
+    /* analytics never blocks auth */
+  }
+  await syncMyProfile().catch(() => {})
   return { ok: true }
 }
 

@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation'
 import { X, Sparkles, ArrowRight, Mail } from 'lucide-react'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
 import { continueAsGuest } from '@/lib/auth/guest-client'
-import { GoogleIcon } from '@/components/shared/google-icon'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { analytics } from '@/lib/analytics'
 import { persistPlanIntent, stashPendingIntent } from '@/lib/cta/persist-intent'
 
@@ -129,6 +129,25 @@ export function PlanSignupModal({
     void signInWithOAuthClient(provider === 'google' ? 'google' : 'linkedin_oidc', nextUrl())
   }
 
+  // Google now goes through GIS (signInWithIdToken) — no Supabase redirect — so
+  // this runs the SAME intent-stash/analytics handleOAuth did, minus the redirect
+  // (GoogleSignInButton creates the session). The auth-provider's anon→known
+  // transition then persists the typed goal with completed_google on /plan, exactly
+  // as before (pending intent is read from sessionStorage on the next page).
+  function beforeGoogleSignIn() {
+    analytics.planSignupModalOAuthClicked({ provider: 'google' })
+    if (typedGoal.trim()) {
+      stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
+      void persistPlanIntent({
+        typed_goal: typedGoal,
+        source_surface: sourceSurface,
+        signup_outcome: 'unknown',
+        page_path: effectivePagePath(),
+      })
+    }
+    sessionStorage.setItem('plan_signup_provider', 'google')
+  }
+
   function handleSkip() {
     analytics.planSignupModalSkipped({ typed_goal_char_count: typedGoal.length })
     if (typedGoal.trim()) {
@@ -212,14 +231,7 @@ export function PlanSignupModal({
         </div>
 
         <div className="mt-6 space-y-2.5">
-          <button
-            type="button"
-            onClick={() => handleOAuth('google')}
-            className="w-full flex items-center justify-center gap-2.5 rounded-lg bg-white hover:bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-900 transition-colors"
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
+          <GoogleSignInButton next={nextUrl()} beforeSession={beforeGoogleSignIn} />
           <button
             type="button"
             onClick={() => handleOAuth('linkedin')}
