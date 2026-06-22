@@ -3,9 +3,12 @@
 Complete documentation for every automated pipeline that keeps RightAIChoice fresh
 without manual intervention.
 
-> **CURRENT STATE — updated 2026-06-18 (Phase 11 *Website & Content Optimisation*).** This README is the
-> authoritative, up-to-date inventory. The per-topic files `01-09` in this folder are older deep-dives
-> (April 2026) and are partially stale — trust the tables below for schedules/engines.
+> **CURRENT STATE — re-verified 2026-06-23 against live `vercel.json`, `.github/workflows/`, and
+> `cron.job`.** Two drifts corrected: Vercel crons **17 → 18** (added the Phase 11.1 `new-signup-alert`
+> that was running but undocumented) and pg_cron **7/8 → 10** (added `event-rollups-hourly` +
+> `bot-behavioral-classifier`). This README is the authoritative, up-to-date inventory. The per-topic
+> files `01-09` in this folder are older deep-dives (April 2026) and are partially stale — trust the
+> tables below for schedules/engines.
 >
 > **Phase 11 changes (2026-06-18) — see the changelog at the bottom:** the **stale-data root cause** is
 > fixed — the refresh now feeds fresh `latest_updates` news into the editorial prompt (so it stops
@@ -89,10 +92,11 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 
 ---
 
-## 1) Vercel Crons (`vercel.json`) — 17 jobs
+## 1) Vercel Crons (`vercel.json`) — 18 jobs
 
 | Path | Schedule (UTC) | Purpose |
 |------|----------------|---------|
+| `/api/cron/new-signup-alert` | `*/15 * * * *` | **(Phase 11.1)** New-signup alert — finds accounts in `auth.users` with no `signup_alerts_sent` row (brand-new signups), emails you a digest (Resend) + optional Slack, records them so they're never re-alerted. Reads `auth.users` directly, so it catches a signup even if its analytics event never fired. |
 | `/api/cron/cascade-hubs` | `0 * * * *` (hourly) | Freshness cascade — ISR-revalidate changed pages + IndexNow ping. **(Phase 10: revived; verified live 2026-06-10. Fable-5 Dept C: `maxDuration` 60→300 — a full 500-page pass exceeded 60s.)** |
 | `/api/cron/onboard-tools` | `7,37 * * * *` | Fast lane — finish onboarding already-published tools. |
 | `/api/cron/onboard-tools?mode=sop` | `17,47 * * * *` | **(Phase 10)** Draft gate — publish `is_published=false` tools only once all quality gates pass. **(Fable-5 Dept C: 240s time-budget.) (Cowork QA fix: the failed-attempt counter now keys on `published`, not `onboarded` — a draft that ran the SOP fine but couldn't clear a HARD gate used to sit at the front of the oldest-first queue forever, starving the other ~68 drafts. Now it hits `MAX_ONBOARD_ATTEMPTS` and is skipped so the queue advances. Description HARD gate eased 300→250 chars.)** |
@@ -132,10 +136,12 @@ throttles `*/10`/`*/30` schedules) and moved to Vercel crons above; their jobs r
 manual `workflow_dispatch`.
 Other workflows: `sync-mentions.yml`, `retry-failed-tools.yml`, `tracking-watchdog.yml`.
 
-## 3) pg_cron (Supabase) — maintenance & monitoring — 7 jobs
+## 3) pg_cron (Supabase) — maintenance & monitoring — 10 jobs
 
 | Job | Schedule (UTC) | Purpose |
 |-----|----------------|---------|
+| `event-rollups-hourly` | `10 * * * *` | Roll up the last 3 days of `user_events` into `event_rollup_daily`/`dau_rollup_daily` (`compute_event_rollups(3)`) so the admin dashboards read pre-aggregated counts. |
+| `bot-behavioral-classifier` | `45 19 * * *` | Nightly `classify_bot_behavior()` — re-tags events as bot from BEHAVIOR (not just UA), catching stealth-headless traffic the UA regex misses. |
 | `tracking-invariants-nightly` | `30 19 * * *` | Analytics-tracking invariant checks. |
 | `rate-limit-prune` | `0 * * * *` | **(Phase 10)** Prune expired `rate_limit_counters`. |
 | `pipeline-stuck-sweep` | `*/15 * * * *` | **(Phase 10)** Mark dead `running` rows → `timeout` (15 min Vercel / 210 min GH thresholds). |
