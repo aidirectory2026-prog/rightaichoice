@@ -1,52 +1,59 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { cookies } from 'next/headers'
 import { Clock } from 'lucide-react'
-import { getToolsBySlugs } from '@/lib/data/tools'
 
 const COOKIE_NAME = 'rac_recent'
 
+type RecentTool = { id: string; name: string; slug: string; tagline: string | null; logo_url: string | null }
+
 /**
- * Phase 6.4 (2026-05-11): server component that reads the 'rac_recent'
- * cookie set by <RecordRecentView> on tool pages, fetches the matching
- * tool rows in cookie order, and renders a compact rail. Renders null
- * (no section, no header) when the cookie is empty or all entries are
- * stale/unpublished — first-time visitors don't see a sad "no recent
- * tools" placeholder.
+ * Phase 6.4 → Cowork QA: client island. Reads the `rac_recent` cookie that
+ * <RecordRecentView> sets (client-side, not httpOnly), then fetches the matching
+ * tool cards from /api/tools/recently-viewed and renders a compact rail. Renders
+ * null when there's nothing to show.
  *
- * Mount on homepage + /tools index. Self-fetches; pass `excludeSlug`
- * if you want to hide a specific slug (e.g. when mounted on a tool
- * detail page that's already in the cookie).
+ * Why client-side now: the previous server component read cookies(), which forced
+ * the WHOLE homepage to render dynamically (no edge cache, ~1s TTFB). As a client
+ * island the page stays statically cached and the rail hydrates here.
  */
-export async function RecentlyViewed({
-  limit = 5,
-  excludeSlug,
-}: {
-  limit?: number
-  excludeSlug?: string
-}) {
-  const cookieStore = await cookies()
-  const raw = cookieStore.get(COOKIE_NAME)?.value
-  if (!raw) return null
+export function RecentlyViewed({ limit = 5, excludeSlug }: { limit?: number; excludeSlug?: string }) {
+  const [tools, setTools] = useState<RecentTool[]>([])
 
-  let slugs: string[] = []
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw))
-    if (Array.isArray(parsed)) {
-      slugs = parsed
-        .filter((s): s is string => typeof s === 'string')
-        .filter((s) => s !== excludeSlug)
-        .slice(0, limit)
+  useEffect(() => {
+    let active = true
+    let slugs: string[] = []
+    try {
+      const raw = document.cookie
+        .split('; ')
+        .find((c) => c.startsWith(`${COOKIE_NAME}=`))
+        ?.split('=')[1]
+      if (raw) {
+        const parsed = JSON.parse(decodeURIComponent(raw))
+        if (Array.isArray(parsed)) {
+          slugs = parsed
+            .filter((s): s is string => typeof s === 'string')
+            .filter((s) => s !== excludeSlug)
+            .slice(0, limit)
+        }
+      }
+    } catch {
+      slugs = []
     }
-  } catch {
-    // Malformed cookie — silently render nothing rather than crashing
-    // the homepage. The tool-page client component will overwrite with
-    // a clean value next time the user visits any tool page.
-    return null
-  }
+    if (slugs.length === 0) return
 
-  if (slugs.length === 0) return null
+    fetch(`/api/tools/recently-viewed?slugs=${encodeURIComponent(slugs.join(','))}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d && Array.isArray(d.tools)) setTools(d.tools)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [limit, excludeSlug])
 
-  const tools = await getToolsBySlugs(slugs)
   if (tools.length === 0) return null
 
   return (
@@ -57,10 +64,7 @@ export async function RecentlyViewed({
             <Clock className="h-4 w-4 text-zinc-500" />
             Recently viewed
           </h2>
-          <Link
-            href="/tools"
-            className="text-xs text-zinc-500 hover:text-white transition-colors"
-          >
+          <Link href="/tools" className="text-xs text-zinc-500 hover:text-white transition-colors">
             Browse all →
           </Link>
         </div>
@@ -73,8 +77,6 @@ export async function RecentlyViewed({
             >
               <div className="flex items-center gap-2">
                 {tool.logo_url ? (
-                  // Logos can be hot-linked or self-hosted; either way we
-                  // lazy-load via the browser default.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={tool.logo_url}
@@ -90,9 +92,7 @@ export async function RecentlyViewed({
                 </span>
               </div>
               {tool.tagline && (
-                <p className="mt-2 line-clamp-2 text-xs text-zinc-500 leading-snug">
-                  {tool.tagline}
-                </p>
+                <p className="mt-2 line-clamp-2 text-xs text-zinc-500 leading-snug">{tool.tagline}</p>
               )}
             </Link>
           ))}
