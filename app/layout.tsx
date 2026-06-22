@@ -11,7 +11,6 @@ import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
 import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
-import { OAuthContinueBanner } from "@/components/cta/oauth-continue-banner";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import { TOOL_COUNT_DISPLAY } from "@/lib/copy/tool-count";
 import { Analytics } from "@vercel/analytics/next";
@@ -131,7 +130,6 @@ export default async function RootLayout({
           <WebVitalsTracker />
           <AuthProvider>
             <CompareProvider>
-              <OAuthContinueBanner />
               {children}
               <CompareTray />
             </CompareProvider>
