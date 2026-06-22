@@ -122,7 +122,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 | `ingest-tools` | `0 4 * * *` | Discover + ingest new tools (insert as **draft**, traction-gated). |
 | `cascade-editorials` | `0 5 * * *` | Regenerate stale compare editorials. **(Phase 11 B1: news-grounded.)** |
 | `backfill-logos` | `40 5 * * *` | Fetch/rehost missing logos (missing-only). |
-| `full-refresh` | `0 6 * * *` | **(Phase 11 B2) Deep 22-field SOP** — `backfill-tool-data.ts --cohort=300`, the N stalest by `last_full_refresh_at`. Refreshes ALL fields (FAQs, workflow scenarios, pricing-tier guides, migrations, hidden costs) **and judges `is_wrapper`** → whole catalog every field current within ~7 days. DeepSeek-only; logs `pipeline_key=refresh-tool-data-full` with real $. Own concurrency group. |
+| `full-refresh` | `0 6 * * *` | **(Phase 11 B2; Phase 12 Bug-2 SHARDED) Deep 22-field SOP** — `backfill-tool-data.ts --cohort=300 --shard=i --shards=3`, the N stalest by `last_full_refresh_at`, run as a **3-shard matrix** (hash-partitioned by slug). Refreshes ALL fields (FAQs, workflow scenarios, pricing-tier guides, migrations, hidden costs) **and judges `is_wrapper`** → whole catalog every field current within ~7 days. **Phase 12 Bug-2:** un-sharded `--cohort=300` took ~64s/tool (19-URL scrape) → ~5.3h > the 300-min timeout, so it was killed every night and froze 71% of the catalog ~27 days. Now scrape trimmed 19→5 URLs (~30s/tool) + 3 shards (~100 each, ~50 min) → reliably completes; logs a `running` row at START so a timeout is visible. DeepSeek-only; `pipeline_key=refresh-tool-data-full` with real $. Per-shard concurrency group. |
 
 **`.github/workflows/cron-pipelines.yml`** (lightweight curl-to-Vercel):
 `refresh-faqs` (`0 6 */2 * *`), `generate-editorials` (`0 5 * * 1`), `discover-tutorials`
@@ -141,7 +141,8 @@ Other workflows: `sync-mentions.yml`, `retry-failed-tools.yml`, `tracking-watchd
 | `pipeline-stuck-sweep` | `*/15 * * * *` | **(Phase 10)** Mark dead `running` rows → `timeout` (15 min Vercel / 210 min GH thresholds). |
 | `pipeline-heartbeat` | `7 * * * *` | **(Phase 10; Cowork QA expanded — migration 165)** Alert if a previously-working pipeline goes silent. Now **11 keys**: cascade-hubs 3h, onboard-tools 3h, poll-gh-actions 2h, cron-pipelines 6h, freshness-batch 30h, + the daily crons scrape-sentiment / calculate-viability / cleanup-user-events / refresh-freshness-view / snapshot-daily-updates / submit-urls-bing (28h each). A key only alerts once it has a success history, so newly-added keys can't false-alarm. |
 | `refresh-top-tools-weekly` | `0 5 * * 1` | **(Phase 10)** Re-rank the data-driven half of the daily-150 tier. |
-| `freshness-sla-monitor` | `0 */2 * * *` | **(Phase 10)** Alert if any daily-tier tool >24h or >25 published tools >3d. |
+| `freshness-sla-monitor` | `0 */2 * * *` | **(Phase 10)** Alert if any daily-tier tool >24h or >25 published tools >3d (watches the LITE `last_verified_at`). |
+| `deep-refresh-sla-monitor` | `0 12 * * *` | **(Phase 12 Bug-2, migration 170)** Alert if >25% of published tools have `last_full_refresh_at` >10d — the watcher for the DEEP refresh that was missing (the deep job stalled for weeks unseen). |
 | `draft-stuck-alert` | `23 * * * *` | **(Phase 10)** Alert if a non-merged draft is stuck unpublished >48h. |
 
 ---
@@ -239,6 +240,36 @@ dependency 30% (the real `is_wrapper`, now judged per-tool by the deep SOP's LLM
 + Website 10%. `is_wrapper` populates over the ~7-day deep cycle, so the at-risk page fills with genuine
 thin-wrapper / stale tools. Bands: ≥70 safe, 40–69 moderate, <40 at-risk. (C3 backlog: real per-category
 mortality + hyperscaler-overlap RSS monitoring.)
+
+## Changelog — Phase 12 Bug-2 (Real-time freshness), 2026-06-22
+
+**Root cause of persistent stale data (found with live DB evidence, not the docs):** the lite
+refresh + news + cascade were all HEALTHY (`last_verified_at` ≤2 days, news ≤7 days, page backlog ~24),
+but the **deep 22-field refresh (`refresh-tool-data-full`) was silently broken**: it scraped **19
+URLs/tool → ~64s/tool**, so `--cohort=300` needed ~5.3h but GitHub's job timeout is **300 min** → it was
+**killed every night** after ~260 tools, **never logged a success row**, and couldn't be seen by any
+monitor. Result: **71% of the catalog (~1,414 tools) was last deep-refreshed 2026-05-26 (~27 days)**;
+**311 paid tools had no structured pricing tiers at all**. And `pricing_details` (the pricing tables
+users read) was written ONLY by that broken deep job — the lite refresh wrote `pricing_type` but not the
+tiers. Fixes:
+
+- **FAST lane — structured pricing on the daily lite refresh.** `lib/cron/refresh.ts` now synthesizes
+  `pricing_details` (the `{plan, price, features}` tiers) too, grounded in a dedicated **`/pricing` page
+  scrape** + news, with an honesty guard (empty tiers rather than a guessed price; `contact` tools → []).
+  So the pricing tables stay **≤2-3 days fresh catalog-wide** instead of being gated behind the deep job.
+- **HEAVY lane — the deep refresh now actually completes (sharded).** `full-refresh` in
+  `freshness-batch.yml` is a **3-shard matrix** (`--shard=i --shards=3`, hash-partitioned by slug in
+  `backfill-tool-data.ts`), ~100 tools/shard; the per-tool scrape is **trimmed 19→5 URLs** (homepage,
+  /pricing, /changelog, /release-notes, /docs) → ~30s/tool → each shard ~50 min, well under timeout.
+  Whole catalog still cycles ~7 days, but now COMPLETING. The script also **logs a `running` row at
+  START** (was end-only), so a timeout is visible as a stuck run, not silence.
+- **Observability (migration 170).** New **`deep-refresh-sla-monitor`** (pg_cron, daily) alerts when
+  >25% of published tools have `last_full_refresh_at` >10 days (the watcher that was missing);
+  `refresh-tool-data-full` added to `pipeline-heartbeat` (36h). Reuses the `alert-failed-pipelines` path.
+- **Plan My Stack — read-time cache invalidation.** `app/api/plan/route.ts` now busts a cached plan the
+  moment any tool it recommended was re-verified after the plan was built (was a blind 24h TTL), so a
+  pricing/data refresh shows immediately. (Inline pricing tiers inside the plan card = deferred follow-up;
+  the plan's pricing badge is now fresh and each tool links to its fresh tier table.)
 
 ## Changelog — Phase 11 (Website & Content Optimisation), 2026-06-18
 

@@ -401,26 +401,21 @@ async function scrapeVendor(websiteUrl: string): Promise<{ text: string; status:
   // / pricing changes typically land FIRST: changelog, release notes,
   // "what's new", blog. Adding these surfaces GPT-5.5-class updates
   // that haven't propagated to the homepage yet.
+  // Phase 12 Bug-2 (2026-06-22): trimmed from 19 candidate URLs to the 5
+  // highest-value ones. At 19 fetches/tool the deep job ran ~64s/tool, so
+  // cohort=300 blew past GitHub's 300-min timeout every night and never
+  // completed (71% of the catalog froze ~27 days). These 5 carry the
+  // load-bearing facts (homepage + the authoritative /pricing + the
+  // change/release surfaces + /docs); the long tail (/integrations,
+  // /features, /guides, /help, /academy…) is covered by the FAST lite refresh
+  // (features/integrations ≤2 days) + the news pipeline, so dropping them cuts
+  // per-tool time + DeepSeek input tokens ~60% without losing the key fields.
   const candidates = [
     websiteUrl,
     `${origin}/pricing`,
-    `${origin}/integrations`,
-    `${origin}/features`,
     `${origin}/changelog`,
     `${origin}/release-notes`,
-    `${origin}/releases`,
-    `${origin}/whats-new`,
-    `${origin}/blog`,
     `${origin}/docs`,
-    `${origin}/documentation`,
-    `${origin}/tutorials`,
-    `${origin}/guides`,
-    `${origin}/help`,
-    `${origin}/support`,
-    `${origin}/academy`,
-    `${origin}/resources`,
-    `${origin}/learn`,
-    `${origin}/getting-started`,
   ]
 
   const chunks: string[] = []
@@ -991,6 +986,32 @@ async function main() {
     `Total published: ${allRows.length} | already processed: ${checkpoint.size} | will process this run: ${toProcess.length}\n`
   )
 
+  // Phase 12 Bug-2 — log a 'running' row at START (not only at the end). The deep
+  // job used to time out before its single end-of-run insert, leaving NO
+  // pipeline_runs trace → the multi-week stall was invisible. A start row means a
+  // killed run shows as a stuck 'running' (swept to 'timeout' by pipeline-stuck-sweep)
+  // and the new last_full_refresh_at SLA monitor + heartbeat can see it.
+  let runRowId: string | null = null
+  if (APPLY) {
+    try {
+      const { data } = await supabase
+        .from('pipeline_runs')
+        .insert({
+          source: 'gh_actions',
+          pipeline_key: 'refresh-tool-data-full',
+          external_id: process.env.GITHUB_RUN_ID ?? null,
+          started_at: new Date(runStartMs).toISOString(),
+          status: 'running',
+          metadata: { mode: COHORT ? 'cohort' : ONE_SLUG ? 'slug' : 'full', cohort: COHORT, shard: SHARD, shards: SHARDS, planned: toProcess.length },
+        } as never)
+        .select('id')
+        .single()
+      runRowId = (data as { id?: string } | null)?.id ?? null
+    } catch (e) {
+      console.error('pipeline_runs start-log failed (non-fatal):', e instanceof Error ? e.message : e)
+    }
+  }
+
   let ok = 0
   let failed = 0
 
@@ -1095,23 +1116,31 @@ async function main() {
   // Phase 11 B2/cost — log one pipeline_runs row so the automated deep-refresh is
   // visible + its real $ cost lands in the in-app tracker (was untracked/manual).
   if (APPLY) {
+    const finalRow = {
+      source: 'gh_actions',
+      pipeline_key: 'refresh-tool-data-full',
+      external_id: process.env.GITHUB_RUN_ID ?? null,
+      started_at: new Date(runStartMs).toISOString(),
+      finished_at: new Date().toISOString(),
+      duration_ms: Date.now() - runStartMs,
+      status: failed > 0 ? 'partial' : 'success',
+      items_processed: ok + failed,
+      items_succeeded: ok,
+      items_failed: failed,
+      deepseek_tokens_in: sopTokensIn,
+      deepseek_tokens_out: sopTokensOut,
+      estimated_cost_usd: Number(sopCostUsd.toFixed(4)),
+      metadata: { mode: COHORT ? 'cohort' : ONE_SLUG ? 'slug' : 'full', cohort: COHORT, shard: SHARD, shards: SHARDS },
+    }
     try {
-      await supabase.from('pipeline_runs').insert({
-        source: 'gh_actions',
-        pipeline_key: 'refresh-tool-data-full',
-        external_id: process.env.GITHUB_RUN_ID ?? null,
-        started_at: new Date(runStartMs).toISOString(),
-        finished_at: new Date().toISOString(),
-        duration_ms: Date.now() - runStartMs,
-        status: failed > 0 ? 'partial' : 'success',
-        items_processed: ok + failed,
-        items_succeeded: ok,
-        items_failed: failed,
-        deepseek_tokens_in: sopTokensIn,
-        deepseek_tokens_out: sopTokensOut,
-        estimated_cost_usd: Number(sopCostUsd.toFixed(4)),
-        metadata: { mode: COHORT ? 'cohort' : ONE_SLUG ? 'slug' : 'full', cohort: COHORT },
-      } as never)
+      // Phase 12 Bug-2 — close out the 'running' start row (update by id) so a
+      // completed run has exactly one row; only insert fresh if the start-log
+      // failed (keeps the prior behaviour as a fallback).
+      if (runRowId) {
+        await supabase.from('pipeline_runs').update(finalRow as never).eq('id', runRowId)
+      } else {
+        await supabase.from('pipeline_runs').insert(finalRow as never)
+      }
     } catch (e) {
       // Non-fatal: the refresh work already succeeded; a logging miss shouldn't
       // fail the job (the run summary above is the operator's fallback signal).

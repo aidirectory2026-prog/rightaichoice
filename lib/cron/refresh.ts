@@ -26,6 +26,20 @@ const refreshSchema = z.object({
   editorial_verdict: z.string().max(500),
   our_views: z.string().max(1800),
   pricing_type: z.enum(['free', 'freemium', 'paid', 'contact']),
+  // Phase 12 Bug-2 (2026-06-22) — structured pricing tiers moved onto the FAST
+  // lane. Previously written ONLY by the deep 22-field SOP (which had stalled →
+  // 71% of tools' tiers ~27 days stale; 311 paid tools had no tiers at all). The
+  // lite refresh runs 2×/day catalog-wide, so emitting pricing_details here keeps
+  // the pricing tables users read ≤2-3 days fresh. Shape MUST match the deep SOP +
+  // tool-page render: [{plan, price, features[]}].
+  pricing_details: z
+    .array(z.object({
+      plan: z.string().min(1).max(60),
+      price: z.string().min(1).max(60),
+      features: z.array(z.string().max(160)).max(8).default([]),
+    }))
+    .max(8)
+    .default([]),
   features: z.array(z.string().max(120)).max(15),
   integrations: z.array(z.string().max(80)).max(15),
   best_for: z.array(z.string().max(180)).max(5),
@@ -62,11 +76,18 @@ Return STRICT JSON matching this schema:
   "editorial_verdict": "2-3 sentence opinionated buyer-first take. Under 500 chars. Specific, not generic.",
   "our_views": "5-8 paragraph long-form editorial in our voice (800-1800 chars). Include: when to pick this, when to pass, comparison to closest alternative, real-world usage caveats.",
   "pricing_type": "free | freemium | paid | contact",
+  "pricing_details": [{"plan": "Free | Pro | Team | Enterprise | exact tier name", "price": "$0/mo | $20/mo | Custom | exact published price", "features": ["3-8 concrete capabilities for this tier"]}],
   "features": ["8-15 feature strings, ≤120 chars each, concrete (verbs + nouns, not adjectives)"],
   "integrations": ["8-15 named integrations (Slack, Notion, GitHub, etc.). Skip generic categories."],
   "best_for": ["3-5 ideal use-cases / personas, ≤180 chars each"],
   "not_for": ["3-5 anti-fit scenarios, ≤180 chars each. Be honest — list real limitations."]
 }
+
+PRICING ACCURACY (pricing_details — buyers trust this most, so never guess):
+- pricing_details = the published pricing tiers, ordered cheapest→priciest (0-8 items), each {plan, price, features}. Empty array [] for contact-sales-only tools with no visible tier list.
+- Ground tiers in this priority: the VENDOR PRICING PAGE first, then LATEST NEWS (a reported price change WINS over a stale page), then the current profile's tiers, then well-established knowledge.
+- Only list a tier + price you can confirm from the sources above. If you cannot confirm the current pricing, return [] rather than restating a price you can't stand behind — a missing tier list is better than a wrong one.
+- Keep pricing_type consistent with the tiers (e.g. a $0 tier + paid tiers → "freemium"; only paid tiers → "paid"; sales-only → "contact").
 
 FRESHNESS PRIORITY (most important rule — the whole point of this refresh):
 - The user prompt includes a LATEST NEWS section with dated, independently-sourced updates (changelog / tech-press / community signal).
@@ -103,13 +124,20 @@ function renderLatestNews(latestUpdates: unknown): string {
 // scrape is blocked (403 / JS-only SPA — the flagships), we refresh from the
 // existing profile + LATEST NEWS + the model's well-established knowledge of the
 // tool, with an honesty guard, instead of freezing stale content forever.
-function buildPrompt(tool: ToolRow, pageText: string, scrapeOk: boolean): string {
+function pricingTiersSummary(details: unknown): string {
+  const tiers = Array.isArray(details) ? (details as Array<{ plan?: string; price?: string }>) : []
+  if (!tiers.length) return '(none on file)'
+  return tiers.map((t) => `${t.plan ?? '?'} = ${t.price ?? '?'}`).join('; ')
+}
+
+function buildPrompt(tool: ToolRow, pageText: string, scrapeOk: boolean, pricingText: string): string {
   const arr = (a: unknown) => (Array.isArray(a) && a.length ? (a as string[]).join('; ') : '(none)')
 
   const seedSection = `## CURRENT PROFILE ON FILE (your starting point — keep what's still accurate, correct what's outdated)
 Tagline: ${tool.tagline ?? '(none)'}
 Description: ${tool.description ?? '(none)'}
 Pricing type: ${tool.pricing_type ?? '(unknown)'}
+Pricing tiers on file: ${pricingTiersSummary(tool.pricing_details)}
 Features: ${arr(tool.features)}
 Integrations: ${arr(tool.integrations)}
 Best for: ${arr(tool.best_for)}
@@ -123,6 +151,16 @@ ${pageText.slice(0, 12000)}
 """`
     : `## VENDOR PAGE CONTENT
 (the vendor site could not be retrieved today — it is bot-protected or JavaScript-only. Do NOT treat this as "no information"; refresh from the CURRENT PROFILE, the LATEST NEWS, and your own knowledge of this widely-documented tool.)`
+
+  // Phase 12 Bug-2 — dedicated pricing-page scrape so pricing_details is grounded
+  // in the real tier list, not inferred from the marketing homepage.
+  const pricingSection = pricingText
+    ? `## VENDOR PRICING PAGE (scraped today; first 6000 chars — the authoritative source for pricing_details)
+"""
+${pricingText.slice(0, 6000)}
+"""`
+    : `## VENDOR PRICING PAGE
+(could not be retrieved — derive pricing_details from the vendor page content above, the LATEST NEWS, the pricing tiers on file, and well-established knowledge, honouring the honesty guard. Return [] if you cannot confirm current tiers.)`
 
   const priority = scrapeOk
     ? `PRIORITY ORDER for facts:
@@ -146,6 +184,8 @@ ${seedSection}
 
 ${scrapeSection}
 
+${pricingSection}
+
 ## LATEST NEWS / COMMUNITY SIGNAL (independently sourced — last ~90 days)
 ${renderLatestNews(tool.latest_updates)}
 
@@ -155,12 +195,12 @@ If a field still can't be filled with high confidence, return a safe minimum (on
 
 type UsageSink = (tokensIn: number, tokensOut: number) => void
 
-async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, correction: string | undefined, onUsage: UsageSink): Promise<string> {
+async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, pricingText: string, correction: string | undefined, onUsage: UsageSink): Promise<string> {
   // Retry only the network round-trip: DeepSeek 5xx / 429 (rate_limited) and
   // transient fetch failures are classified transient by withRetry and re-tried
   // with backoff. A 4xx-other or malformed body still fails through to the
   // per-tool catch in processTools, which records it in refresh_logs.
-  const base = buildPrompt(tool, pageText, scrapeOk)
+  const base = buildPrompt(tool, pageText, scrapeOk, pricingText)
   const userContent = correction
     ? `${base}\n\n---\nYour previous response failed schema validation: ${correction}\nReturn corrected STRICT JSON of the exact shape — no prose, no code fences.`
     : base
@@ -173,7 +213,9 @@ async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, 
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,
-        max_tokens: 4096,
+        // Phase 12 Bug-2 — bumped 4096→5000 to fit the added pricing_details tiers
+        // alongside the existing long-form fields (description + our_views).
+        max_tokens: 5000,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
@@ -196,12 +238,12 @@ async function callDeepSeek(tool: ToolRow, pageText: string, scrapeOk: boolean, 
   return json.choices[0]?.message?.content ?? ''
 }
 
-async function synthesize(tool: ToolRow, pageText: string, scrapeOk: boolean, onUsage: UsageSink): Promise<RefreshOut> {
+async function synthesize(tool: ToolRow, pageText: string, scrapeOk: boolean, pricingText: string, onUsage: UsageSink): Promise<RefreshOut> {
   // Single corrective retry on validation fail — same pattern as the
   // monthly Phase 4 SOP. Reduces transient validation failures by ~70%.
   let correction: string | undefined
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const raw = await callDeepSeek(tool, pageText, scrapeOk, correction, onUsage)
+    const raw = await callDeepSeek(tool, pageText, scrapeOk, pricingText, correction, onUsage)
     const stripped = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
     try {
       return refreshSchema.parse(JSON.parse(stripped))
@@ -234,11 +276,27 @@ type ToolRow = {
   tagline: string | null
   description: string | null
   pricing_type: string | null
+  // Phase 12 Bug-2 — current tiers passed as the seed so the model corrects vs
+  // a fresh /pricing scrape rather than starting blank.
+  pricing_details: unknown
   features: string[] | null
   integrations: string[] | null
   best_for: string[] | null
   not_for: string[] | null
   editorial_verdict: string | null
+}
+
+// Phase 12 Bug-2 — best-effort fetch of the vendor's /pricing page so the lite
+// refresh grounds pricing_details in the real tier list. Non-fatal: an empty
+// string just falls back to homepage + news + profile in the prompt.
+async function fetchPricingText(websiteUrl: string): Promise<string> {
+  try {
+    const origin = new URL(websiteUrl).origin
+    const txt = await fetchPageText(`${origin}/pricing`)
+    return txt.trim().length >= 100 ? txt : ''
+  } catch {
+    return ''
+  }
 }
 
 async function processTools(
@@ -260,6 +318,11 @@ async function processTools(
       } catch {
         // scrape failed — handled below (do NOT overwrite editorial fields).
       }
+
+      // Phase 12 Bug-2 — pull the dedicated /pricing page so pricing_details is
+      // grounded in the real tiers. Only worth the fetch when we'll synthesize.
+      const hasNewsEarly = Array.isArray(tool.latest_updates) && tool.latest_updates.length > 0
+      const pricingText = (scrapeOk || hasNewsEarly) ? await fetchPricingText(tool.website_url) : ''
 
       // GitHub stars — cheap side-fetch, doesn't affect main payload.
       // Phase 10 #64 — authenticate (lifts the 60/hr unauthenticated cap so a
@@ -298,7 +361,7 @@ async function processTools(
       }
       let fieldsUpdated: string[] = []
       if (shouldSynthesize) {
-        const parsed = await synthesize(tool, pageText, scrapeOk, (tIn, tOut) => {
+        const parsed = await synthesize(tool, pageText, scrapeOk, pricingText, (tIn, tOut) => {
           result.deepseekTokensIn += tIn
           result.deepseekTokensOut += tOut
         })
@@ -367,7 +430,7 @@ export async function runRefresh(
   const dailyDueCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString()
   const { data: dailyDue, error: dailyErr } = await supabase
     .from('tools')
-    .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
+    .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, pricing_details, features, integrations, best_for, not_for, editorial_verdict')
     .eq('is_published', true)
     .eq('refresh_tier', 'daily')
     .or(`last_verified_at.is.null,last_verified_at.lt.${dailyDueCutoff}`)
@@ -381,7 +444,7 @@ export async function runRefresh(
   if (remaining > 0) {
     const { data: std, error: stdErr } = await supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
+      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, pricing_details, features, integrations, best_for, not_for, editorial_verdict')
       .eq('is_published', true)
       .eq('refresh_tier', 'standard')
       .order('last_verified_at', { ascending: true, nullsFirst: true })
@@ -429,7 +492,7 @@ export async function runRefreshForSlugs(
     const chunk = slugs.slice(i, i + CHUNK)
     let q = supabase
       .from('tools')
-      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, features, integrations, best_for, not_for, editorial_verdict')
+      .select('id, slug, name, website_url, github_url, latest_updates, tagline, description, pricing_type, pricing_details, features, integrations, best_for, not_for, editorial_verdict')
       .in('slug', chunk)
     if (!opts?.includeUnpublished) q = q.eq('is_published', true)
     const { data: tools, error } = await q

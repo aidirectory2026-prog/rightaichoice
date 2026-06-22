@@ -248,10 +248,22 @@ jobs:
        (github.event.inputs.pipeline == 'full-refresh' || github.event.inputs.pipeline == 'all'))
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    # Stalest-first cohort with no row locking — never run two of these at once
-    # (a second would re-pick the same stalest tools = wasted DeepSeek spend).
+    # Phase 12 Bug-2 (2026-06-22) — SHARDED. The single un-sharded cohort=300 job
+    # took ~64s/tool (19-URL scrape) → ~5.3h > the 300-min timeout, so it was
+    # KILLED every night before finishing or logging → 71% of the catalog froze
+    # ~27 days (incl. structured pricing tiers). Now 3 parallel shards each handle
+    # ~1/3 of the stalest-300 (hash-partitioned by slug in backfill-tool-data.ts),
+    # ~100 tools/shard at the trimmed 5-URL scrape (~30s/tool ≈ 50 min) → reliably
+    # under timeout. Whole catalog still cycles in ~7 days (owner's weekly heavy
+    # lane), but now actually COMPLETES and logs a start+end pipeline_runs row.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    # Per-shard concurrency group — disjoint shards may run together, but a given
+    # shard never overlaps itself (e.g. a slow run still going at the next fire).
     concurrency:
-      group: refresh-tool-data-full
+      group: refresh-tool-data-full-shard-${{ matrix.shard }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -261,16 +273,19 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci --no-audit --no-fund
-      - name: Deep refresh (Phase 4 SOP, stalest cohort)
+      - name: Deep refresh (Phase 4 SOP, sharded stalest cohort)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          # Optional override via the dispatch input; defaults to 300/day (~7-day cycle).
+          # Optional override via the dispatch input; defaults to 300/day total
+          # (~7-day cycle), split across the 3 shards. Each shard re-selects the
+          # same stalest COHORT then keeps its hash-partition, so the 3 together
+          # cover the cohort exactly once.
           COHORT: ${{ github.event.inputs.batch_size }}
         run: |
           if [ -n "$COHORT" ]; then
-            npx tsx scripts/backfill-tool-data.ts --apply --cohort="$COHORT"
+            npx tsx scripts/backfill-tool-data.ts --apply --cohort="$COHORT" --shard=${{ matrix.shard }} --shards=3
           else
-            npx tsx scripts/backfill-tool-data.ts --apply --cohort=300
+            npx tsx scripts/backfill-tool-data.ts --apply --cohort=300 --shard=${{ matrix.shard }} --shards=3
           fi

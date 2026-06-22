@@ -534,17 +534,39 @@ export async function POST(request: Request) {
               .maybeSingle()
             if (cached) {
               const age = Date.now() - new Date(cached.created_at).getTime()
-              if (age < CACHE_TTL_MS) {
-                const payload = cached.payload as {
-                  title: string
-                  summary: string
-                  stages: PlanStage[]
-                  monthlyCostUsd?: number
-                  setupOrder?: string[]
-                  timeToFirstValue?: string
-                  riskNote?: string | null
-                  integratesWithExisting?: Array<{ existingTool: string; atStages: string[] }>
+              const payload = cached.payload as {
+                title: string
+                summary: string
+                stages: PlanStage[]
+                monthlyCostUsd?: number
+                setupOrder?: string[]
+                timeToFirstValue?: string
+                riskNote?: string | null
+                integratesWithExisting?: Array<{ existingTool: string; atStages: string[] }>
+              }
+              // Phase 12 Bug-2 — read-time invalidation: a cached plan is stale the
+              // moment any tool it recommended was re-verified AFTER the plan was
+              // built, so a price/data refresh shows up immediately instead of being
+              // masked for up to 24h. One cheap query; regenerates (re-pays LLM)
+              // ONLY when the underlying data actually changed.
+              const cachedAtMs = new Date(cached.created_at).getTime()
+              let dataStale = false
+              try {
+                const slugs = [...new Set(payload.stages.flatMap((s) => s.tools.map((t) => t.slug)).filter(Boolean))]
+                if (slugs.length) {
+                  const { data: freshRows } = await supabase
+                    .from('tools')
+                    .select('slug, last_verified_at')
+                    .in('slug', slugs)
+                  dataStale = (freshRows ?? []).some(
+                    (r: { last_verified_at: string | null }) =>
+                      r.last_verified_at != null && new Date(r.last_verified_at).getTime() > cachedAtMs,
+                  )
                 }
+              } catch {
+                // On error, treat as fresh — never block a plan on the freshness check.
+              }
+              if (age < CACHE_TTL_MS && !dataStale) {
                 // Emit outline + enriched instantly from cache. Client hides
                 // WaitingState as soon as `outline` arrives, so this is a
                 // sub-200ms round trip for repeat queries.
