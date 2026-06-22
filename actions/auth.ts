@@ -25,6 +25,17 @@ type AuthState = {
 // `minLength={PASSWORD_MIN}` so the two policies can never drift again.
 const PASSWORD_MIN = 8
 
+/** Best-effort client IP from request headers (for server-side analytics). */
+async function clientIpFromHeaders(): Promise<string | undefined> {
+  const h = await headers()
+  return (
+    h.get('cf-connecting-ip') ??
+    h.get('x-real-ip') ??
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    undefined
+  )
+}
+
 // Phase 7 Step 57 (BUG-020): `safeNext` lives in lib/auth/safe-next.ts so the
 // /auth/callback and /auth/confirm route handlers can share the same guard.
 // Was previously inlined here, leaving the route handlers vulnerable to
@@ -94,6 +105,19 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     }
   }
 
+  // Authoritative signup_completed. With instant signup (Confirm-email OFF) there's
+  // no email-confirmation click, so /auth/callback's type=signup path never runs —
+  // this is now the ONLY fire point for email signups. Server-side, deterministic
+  // insert_id dedupes if it ever double-fires.
+  if (userId) {
+    try {
+      const ip = await clientIpFromHeaders()
+      await serverAnalytics.signupCompleted(userId, 'email', ip)
+    } catch {
+      /* analytics never blocks signup */
+    }
+  }
+
   // Logged in now — go where they intended (or the dashboard).
   revalidatePath('/', 'layout')
   redirect(next)
@@ -127,6 +151,19 @@ export async function syncMyProfile(): Promise<{ ok: boolean }> {
   const verifiedByProvider = providers.includes('google') || providers.includes('linkedin_oidc')
   const meta = (user.user_metadata ?? {}) as { full_name?: string; name?: string; avatar_url?: string; picture?: string }
   const update: Record<string, unknown> = {}
+  const wasGuest = p.username?.startsWith('guest_') ?? false
+
+  // A guest who just upgraded IN PLACE to an email account (still a guest_ handle
+  // here, no provider, now has an email) is a real signup — track it. Only this
+  // path reaches syncMyProfile with a guest_ handle (Google upgrades create a
+  // fresh account tracked by finalizeGoogleSignIn), so no double-count.
+  if (wasGuest && user.email && !verifiedByProvider) {
+    try {
+      await serverAnalytics.signupCompleted(user.id, 'email', await clientIpFromHeaders())
+    } catch {
+      /* analytics never blocks the upgrade */
+    }
+  }
 
   // Replace a guest_ handle with a real, unique one derived from the email.
   if (p.username?.startsWith('guest_') && user.email) {
@@ -206,10 +243,22 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
   const password = formData.get('password') as string
   const next = safeNext(formData.get('next'))
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     return { error: error.message, values: { email } }
+  }
+
+  // Authoritative login_completed for the email/password path (Google/magic-link
+  // fire it in /auth/callback or finalizeGoogleSignIn; password login had no fire
+  // point before — a tracking gap).
+  if (data.user?.id) {
+    try {
+      const ip = await clientIpFromHeaders()
+      await serverAnalytics.loginCompleted(data.user.id, 'email', ip)
+    } catch {
+      /* analytics never blocks login */
+    }
   }
 
   revalidatePath('/', 'layout')
