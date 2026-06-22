@@ -68,6 +68,8 @@ type Props = {
 export function GoogleSignInButton({ next, beforeSession }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [mode, setMode] = useState<'init' | 'gis' | 'fallback' | 'busy'>('init')
+  // Diagnostic surfaced on-screen so a non-GIS failure is visible, not silent.
+  const [reason, setReason] = useState<string>('')
 
   const safeNext = useCallback(() => {
     if (!next || !next.startsWith('/') || next.startsWith('//')) return '/dashboard'
@@ -95,22 +97,30 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
         await finalizeGoogleSignIn().catch(() => {})
         window.location.href = safeNext()
       } catch (e) {
-        // Token rejected (e.g. Client ID not yet added to Supabase) → degrade to
-        // the classic redirect so the user still gets in.
-        console.error('Google ID-token sign-in failed; falling back:', e)
-        fallback()
+        // Surface the real reason instead of silently redirecting — that's what
+        // hid the failure before. The classic button is still available below.
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error('Google ID-token sign-in failed:', e)
+        setReason(`sign-in: ${msg}`)
+        setMode('fallback')
       }
     },
-    [beforeSession, safeNext, fallback],
+    [beforeSession, safeNext],
   )
 
   useEffect(() => {
     let cancelled = false
+    const timer = setTimeout(() => {
+      // GIS never finished initializing (slow/blocked network) → fall back.
+      if (!cancelled) setMode((m) => (m === 'init' ? 'fallback' : m))
+    }, 6000)
     ;(async () => {
       try {
         await loadGis()
-        if (cancelled || !ref.current || !window.google?.accounts?.id) {
-          if (!cancelled) setMode('fallback')
+        if (cancelled) return
+        if (!ref.current || !window.google?.accounts?.id) {
+          setReason('google-script: not available (blocked by browser/extension?)')
+          setMode('fallback')
           return
         }
         const [rawNonce, hashedNonce] = await makeNonce()
@@ -120,11 +130,12 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
             if (resp?.credential) void onCredential(rawNonce, resp.credential)
           },
           nonce: hashedNonce,
-          ux_mode: 'popup',
           use_fedcm_for_prompt: true,
         })
+        // IMPORTANT: the container must be VISIBLE here — GIS cannot render into a
+        // display:none element (that was the bug). It's only hidden in fallback/busy.
         const width = Math.min(ref.current.offsetWidth || 360, 400)
-        ref.current.replaceChildren() // clear safely before re-rendering
+        ref.current.replaceChildren()
         window.google.accounts.id.renderButton(ref.current, {
           type: 'standard',
           theme: 'filled_black',
@@ -135,11 +146,14 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
           width,
         })
         if (!cancelled) setMode('gis')
-      } catch {
-        if (!cancelled) setMode('fallback')
+      } catch (e) {
+        if (!cancelled) {
+          setReason(`gis-init: ${e instanceof Error ? e.message : String(e)}`)
+          setMode('fallback')
+        }
       }
     })()
-    return () => { cancelled = true }
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [onCredential])
 
   // Fallback / loading button — matches the app's existing Google button style.
@@ -156,9 +170,18 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
 
   return (
     <div className="w-full">
-      {/* GIS injects its themed button here when available. */}
-      <div ref={ref} className={`flex w-full justify-center ${mode === 'gis' ? '' : 'hidden'}`} />
-      {(mode === 'init' || mode === 'fallback' || mode === 'busy') && ClassicButton}
+      {/* GIS injects its themed button here. Kept VISIBLE during init + gis so the
+          button can render; only hidden once we know we're falling back. */}
+      <div
+        ref={ref}
+        className={`w-full justify-center ${mode === 'fallback' || mode === 'busy' ? 'hidden' : 'flex min-h-[40px]'}`}
+      />
+      {(mode === 'fallback' || mode === 'busy') && ClassicButton}
+      {reason && (
+        <p className="mt-1.5 text-[11px] leading-snug text-amber-400/80">
+          Quick Google sign-in unavailable — {reason}
+        </p>
+      )}
     </div>
   )
 }
