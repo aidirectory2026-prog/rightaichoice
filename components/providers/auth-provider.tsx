@@ -9,6 +9,7 @@ import { linkPlanIntentsToUser, readPendingIntent, clearPendingIntent, persistPl
 type User = {
   id: string
   email: string
+  is_anonymous: boolean
 } | null
 
 type Profile = {
@@ -50,12 +51,12 @@ export function AuthProvider({
     const supabase = createClient()
     let active = true
 
-    async function resolve(uid: string | null, email: string | null) {
+    async function resolve(uid: string | null, email: string | null, isAnon: boolean) {
       if (!uid) {
         if (active) { setUser(null); setProfile(null) }
         return
       }
-      if (active) setUser({ id: uid, email: email ?? '' })
+      if (active) setUser({ id: uid, email: email ?? '', is_anonymous: isAnon })
       const { data } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url, is_admin')
@@ -66,11 +67,11 @@ export function AuthProvider({
 
     supabase.auth
       .getUser()
-      .then(({ data }) => resolve(data.user?.id ?? null, data.user?.email ?? null))
+      .then(({ data }) => resolve(data.user?.id ?? null, data.user?.email ?? null, data.user?.is_anonymous ?? false))
       .catch(() => { if (active) { setUser(null); setProfile(null) } })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      void resolve(session?.user?.id ?? null, session?.user?.email ?? null)
+      void resolve(session?.user?.id ?? null, session?.user?.email ?? null, session?.user?.is_anonymous ?? false)
     })
 
     return () => {

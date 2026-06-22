@@ -24,6 +24,7 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { BadgeList } from '@/components/profile/badge-list'
 import { EditProfileForm } from '@/components/profile/edit-profile-form'
 import { VerifyEmailBanner } from '@/components/profile/verify-email-banner'
+import { GuestUpgrade } from '@/components/profile/guest-upgrade'
 import {
   getProfile,
   getUserBadges,
@@ -73,9 +74,12 @@ export default async function DashboardPage() {
       <Navbar />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-          {/* Unverified-email prompt — only for email accounts not yet verified
-              (hidden for OAuth users + guests, and once verified). */}
-          {user.email && !(profile as { email_verified?: boolean }).email_verified && (
+          {/* Guests: clear path to a real account (instead of a confusing
+              machine-named dead-end). */}
+          {user.is_anonymous && <GuestUpgrade />}
+          {/* Unverified-email prompt — only for real email accounts not yet
+              verified (hidden for OAuth users + guests, and once verified). */}
+          {!user.is_anonymous && user.email && !(profile as { email_verified?: boolean }).email_verified && (
             <VerifyEmailBanner email={user.email} />
           )}
           {/* Header card */}
@@ -99,9 +103,11 @@ export default async function DashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-xl font-bold text-white truncate">
-                    {profile.full_name || profile.username}
+                    {user.is_anonymous ? 'Guest' : profile.full_name || profile.username}
                   </h1>
-                  <p className="text-sm text-zinc-500 truncate">@{profile.username}</p>
+                  <p className="text-sm text-zinc-500 truncate">
+                    {user.is_anonymous ? 'Not saved — create an account to keep your work' : `@${profile.username}`}
+                  </p>
                   {profile.is_admin && (
                     <span className="inline-block mt-1 text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-2 py-0.5">
                       Admin

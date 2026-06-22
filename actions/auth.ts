@@ -60,7 +60,22 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   })
 
   if (error) {
-    return { error: error.message, values: { username, email } }
+    // Friendly, actionable message for the most common case.
+    const msg = /already registered|already exists|already been registered/i.test(error.message)
+      ? 'An account with this email already exists. Please sign in instead.'
+      : error.message
+    return { error: msg, values: { username, email } }
+  }
+
+  // Belt-and-suspenders: in some configurations Supabase doesn't error on an
+  // existing email but returns a decoy user with no session / empty identities
+  // (email-enumeration protection). Catch that too so signup never silently
+  // redirects nowhere (which is what made it feel broken / pushed users to guest).
+  if (!data.session || (data.user && (data.user.identities?.length ?? 0) === 0)) {
+    return {
+      error: 'An account with this email already exists. Please sign in instead.',
+      values: { username, email },
+    }
   }
 
   const userId = data.user?.id
@@ -80,6 +95,57 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
   // Logged in now — go where they intended (or the dashboard).
   revalidatePath('/', 'layout')
   redirect(next)
+}
+
+// ─── Guest upgrade: sync the profile after a guest becomes a real account ─────
+
+/**
+ * After an anonymous (guest) user upgrades — via linkIdentity (Google) or
+ * updateUser (email) — their profile row is still the one created at guest time
+ * (a `guest_…` handle, no name, email_verified=false). Refresh it from the now-
+ * permanent auth user: give them a real unique handle, pull name/avatar, and set
+ * verification (Google-verified → true; email-just-added → false + send the link).
+ * Safe to call on any login — it's a no-op once the profile is already real.
+ */
+export async function syncMyProfile(): Promise<{ ok: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+
+  const admin = getAdminClient()
+  const { data: prof } = await admin
+    .from('profiles')
+    .select('username, full_name, avatar_url, email_verified')
+    .eq('id', user.id)
+    .single()
+  if (!prof) return { ok: false }
+  const p = prof as { username: string; full_name: string | null; avatar_url: string | null; email_verified: boolean }
+
+  const providers = (user.app_metadata?.providers as string[] | undefined) ?? []
+  const verifiedByProvider = providers.includes('google') || providers.includes('linkedin_oidc')
+  const meta = (user.user_metadata ?? {}) as { full_name?: string; name?: string; avatar_url?: string; picture?: string }
+  const update: Record<string, unknown> = {}
+
+  // Replace a guest_ handle with a real, unique one derived from the email.
+  if (p.username?.startsWith('guest_') && user.email) {
+    let base = (user.email.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9_]/g, '')
+    if (base.length < 2) base = 'user'
+    const { data: clash } = await admin
+      .from('profiles').select('id').eq('username', base).neq('id', user.id).maybeSingle()
+    update.username = clash ? `${base}_${user.id.replace(/-/g, '').slice(0, 6)}` : base
+  }
+  if (!p.full_name && (meta.full_name || meta.name)) update.full_name = meta.full_name ?? meta.name
+  if (!p.avatar_url && (meta.avatar_url || meta.picture)) update.avatar_url = meta.avatar_url ?? meta.picture
+  if (user.email && verifiedByProvider && !p.email_verified) update.email_verified = true
+
+  if (Object.keys(update).length > 0) {
+    await admin.from('profiles').update(update as never).eq('id', user.id)
+  }
+  // Email added but not provider-verified → send our verification link.
+  if (user.email && !verifiedByProvider && !p.email_verified && process.env.NEXT_PUBLIC_APP_URL) {
+    await issueAndSendVerification(user.id, user.email, process.env.NEXT_PUBLIC_APP_URL).catch(() => {})
+  }
+  return { ok: true }
 }
 
 // ─── Resend Email Verification ───────────────────────────────────────────────

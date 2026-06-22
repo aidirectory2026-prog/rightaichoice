@@ -112,7 +112,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                {profile?.username ?? 'Dashboard'}
+                {user?.is_anonymous ? 'Guest' : profile?.username ?? 'Dashboard'}
               </Link>
             </>
           ) : (
@@ -225,7 +225,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3.5 py-2 text-sm font-medium text-white"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                {profile?.username ?? 'Dashboard'}
+                {user?.is_anonymous ? 'Guest' : profile?.username ?? 'Dashboard'}
               </Link>
             ) : (
               <>

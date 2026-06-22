@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { serverAnalytics } from '@/lib/mixpanel-server'
 import { safeNext } from '@/lib/auth/safe-next'
+import { syncMyProfile } from '@/actions/auth'
 
 // Handles both Google OAuth redirect and email magic-link/reset redirects.
 // Supabase sends ?code=... for OAuth and ?token_hash=...&type=... for email flows.
@@ -53,6 +54,9 @@ export async function GET(request: Request) {
           await serverAnalytics.loginCompleted(user.id, 'google', ip)
         }
       }
+      // If this OAuth was a guest UPGRADE (linkIdentity), refresh the stale
+      // guest_ profile from the now-permanent Google identity. No-op otherwise.
+      await syncMyProfile().catch(() => {})
       return NextResponse.redirect(`${origin}${next}`)
     }
     // Phase 9 S2 diag: log enough to tell a missing-verifier (PKCE) failure
