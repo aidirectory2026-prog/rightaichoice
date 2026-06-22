@@ -12,6 +12,7 @@ import { CompareTray } from "@/components/compare/compare-tray";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MobileNewsletterSticky } from "@/components/newsletter/mobile-newsletter-sticky";
 import { PlanCTASticky } from "@/components/cta/plan-cta-sticky";
+import { SafeBoundary } from "@/components/ui/safe-boundary";
 import { websiteJsonLd, organizationJsonLd, founderPersonJsonLd, jsonLdScriptProps } from "@/lib/seo/json-ld";
 import { TOOL_COUNT_DISPLAY } from "@/lib/copy/tool-count";
 import { Analytics } from "@vercel/analytics/next";
@@ -124,16 +125,23 @@ export default async function RootLayout({
         <link rel="me" href="https://www.linkedin.com/company/rightaichoice" />
         <link rel="me" href="https://github.com/aidirectory2026-prog/rightaichoice" />
         <link rel="me" href="https://www.linkedin.com/in/tanmayverma99" />
-        <ClarityProvider />
+        {/* Every NON-ESSENTIAL global widget below is wrapped in <SafeBoundary>:
+            these are siblings of the page content in the React tree, so an
+            uncaught throw in any one of them would unmount everything → a blank
+            page (exactly what a misplaced PlanCTASticky did to tool/compare
+            pages). The boundary contains each failure to that one widget; the
+            page content itself is still covered by app/error.tsx. Providers are
+            intentionally NOT wrapped — they supply context the page depends on. */}
+        <SafeBoundary name="clarity"><ClarityProvider /></SafeBoundary>
         <MixpanelProvider>
-          <GlobalInteractionTracker />
-          <FormAnalyticsTracker />
-          <WebVitalsTracker />
+          <SafeBoundary name="interaction-tracker"><GlobalInteractionTracker /></SafeBoundary>
+          <SafeBoundary name="form-tracker"><FormAnalyticsTracker /></SafeBoundary>
+          <SafeBoundary name="web-vitals"><WebVitalsTracker /></SafeBoundary>
           <AuthProvider>
             <WizardProvider>
               <CompareProvider>
                 {children}
-                <CompareTray />
+                <SafeBoundary name="compare-tray"><CompareTray /></SafeBoundary>
               </CompareProvider>
               {/* Phase 9 — global Plan Your Stack CTA. Hidden on excluded paths
                   (footer URLs, auth, admin, planner itself) via isEligibleForCTA.
@@ -142,19 +150,19 @@ export default async function RootLayout({
                   "useWizard must be used within WizardProvider" on the client
                   (after mount) and crashed the page tree on every eligible page,
                   incl. tool pages. */}
-              <PlanCTASticky />
+              <SafeBoundary name="plan-cta-sticky"><PlanCTASticky /></SafeBoundary>
             </WizardProvider>
           </AuthProvider>
         </MixpanelProvider>
-        <MobileNav />
-        <MobileNewsletterSticky />
+        <SafeBoundary name="mobile-nav"><MobileNav /></SafeBoundary>
+        <SafeBoundary name="mobile-newsletter"><MobileNewsletterSticky /></SafeBoundary>
         {/* 9.A.3 — independent THIRD tracking source. Vercel Web Analytics is
             edge-collected and far harder to ad-block than Mixpanel (which our
             data shows loses ~most client events), so it's the cross-check
             counter in /admin/insights/reconciliation. Speed Insights gives
             real-user Core Web Vitals (SEO/ranking guardrail). */}
-        <Analytics />
-        <SpeedInsights />
+        <SafeBoundary name="vercel-analytics"><Analytics /></SafeBoundary>
+        <SafeBoundary name="speed-insights"><SpeedInsights /></SafeBoundary>
       </body>
     </html>
   );
