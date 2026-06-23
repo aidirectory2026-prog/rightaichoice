@@ -10,7 +10,6 @@ import type { ScrapeResult, ScrapedPost } from './types'
 
 const OAUTH_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token'
 const OAUTH_API = 'https://oauth.reddit.com'
-const PUBLIC_API = 'https://www.reddit.com'
 const USER_AGENT = 'web:RightAIChoice:v1.0 (by /u/rightaichoice)'
 
 const TARGET_SUBREDDITS = [
@@ -87,27 +86,36 @@ function mapChildren(children: RedditChild[], into: ScrapedPost[]) {
 }
 
 /**
- * Search Reddit for opinions about a tool. Uses OAuth when configured (reliable
- * in production), else the public endpoint. Searches all of Reddit + a few
- * high-signal subreddits in parallel. Never throws — failures return an
+ * Search Reddit for opinions about a tool. Never throws — failures return an
  * error-tagged empty result.
+ *
+ * Two paths:
+ *  - OAuth (preferred): if REDDIT_CLIENT_ID/SECRET are set, hit oauth.reddit.com —
+ *    full, current, reliable. Auto-used the moment creds exist.
+ *  - PullPush (keyless fallback): when there are NO creds, the tokenless
+ *    reddit.com JSON endpoint 403s from datacenter IPs (Vercel) → 0 results.
+ *    Phase 12 Bug-3.2 (2026-06-23): fall back to the free, keyless PullPush
+ *    Reddit search API (api.pullpush.io, a maintained Pushshift successor),
+ *    which works from any IP. This makes Reddit data flow with ZERO setup —
+ *    no Reddit app, no API key — and silently upgrades to the official API if
+ *    creds are ever added.
  */
 export async function scrapeReddit(toolName: string): Promise<ScrapeResult> {
+  const token = await getAppToken().catch(() => null)
+  return token ? scrapeRedditOAuth(toolName, token) : scrapeRedditPullPush(toolName)
+}
+
+async function scrapeRedditOAuth(toolName: string, token: string): Promise<ScrapeResult> {
   const posts: ScrapedPost[] = []
   try {
-    const token = await getAppToken().catch(() => null)
-    const base = token ? OAUTH_API : PUBLIC_API
-    const headers: Record<string, string> = { 'User-Agent': USER_AGENT }
-    if (token) headers.Authorization = `Bearer ${token}`
-
+    const headers: Record<string, string> = { 'User-Agent': USER_AGENT, Authorization: `Bearer ${token}` }
     const query = encodeURIComponent(`"${toolName}"`)
 
-    const mainRes = await fetch(
-      `${base}/search?q=${query}&sort=relevance&limit=25&t=year`,
-      { headers },
-    )
+    const mainRes = await fetch(`${OAUTH_API}/search?q=${query}&sort=relevance&limit=25&t=year`, { headers })
     if (!mainRes.ok) {
-      return { source: 'reddit', posts: [], error: `HTTP ${mainRes.status}${token ? '' : ' (no OAuth creds)'}`, scrapedAt: new Date().toISOString() }
+      // Token but API rejected (rate limit / transient) — try the keyless path
+      // rather than returning nothing.
+      return scrapeRedditPullPush(toolName)
     }
     const data = await mainRes.json()
     mapChildren((data?.data?.children ?? []) as RedditChild[], posts)
@@ -115,10 +123,7 @@ export async function scrapeReddit(toolName: string): Promise<ScrapeResult> {
     const subResults = await Promise.all(
       TARGET_SUBREDDITS.slice(0, 4).map(async (sub) => {
         try {
-          const subRes = await fetch(
-            `${base}/r/${sub}/search?q=${query}&restrict_sr=on&sort=relevance&limit=5&t=year`,
-            { headers },
-          )
+          const subRes = await fetch(`${OAUTH_API}/r/${sub}/search?q=${query}&restrict_sr=on&sort=relevance&limit=5&t=year`, { headers })
           if (!subRes.ok) return [] as RedditChild[]
           const subData = await subRes.json()
           return (subData?.data?.children ?? []) as RedditChild[]
@@ -131,11 +136,99 @@ export async function scrapeReddit(toolName: string): Promise<ScrapeResult> {
 
     return { source: 'reddit', posts: posts.slice(0, 30), scrapedAt: new Date().toISOString() }
   } catch (err) {
-    return {
-      source: 'reddit',
-      posts: [],
-      error: err instanceof Error ? err.message : 'Unknown error',
-      scrapedAt: new Date().toISOString(),
-    }
+    return { source: 'reddit', posts: [], error: err instanceof Error ? err.message : 'Unknown error', scrapedAt: new Date().toISOString() }
   }
+}
+
+// ── Keyless fallback: PullPush (free, no API key, works from datacenter IPs) ──
+const PULLPUSH = 'https://api.pullpush.io/reddit/search/submission/'
+
+type PullPushPost = {
+  title?: string
+  selftext?: string
+  author?: string
+  created_utc?: number
+  score?: number
+  num_comments?: number
+  permalink?: string
+  url?: string
+  subreddit?: string
+}
+
+// Product-discussion cues. A generic-word tool name ("Cursor", "Linear",
+// "Notion") keyword-matches CSS / English noise ("cursor: pointer", "linear
+// gradient", "the notion of"); we keep a keyless-path post only if it pairs the
+// name with one of these (or is in the tool's own subreddit).
+const PRODUCT_CUES = [
+  'app', 'tool', 'software', 'saas', ' ai', 'ai ', 'ide', 'editor', 'extension', 'plugin',
+  'pricing', 'price', 'subscription', 'paid', 'free tier', 'plan', 'tier', 'alternative',
+  'review', 'using', ' use', 'used', 'feature', 'workflow', 'integration', 'api', 'dashboard',
+  'login', 'sync', 'export', 'template', 'automation', ' vs ', 'experience', 'recommend',
+  'switch', 'crash', 'bug', 'support', 'onboard', 'setup', 'interface', 'ux', 'self-host',
+]
+
+// Curated tech / SaaS / AI subreddits where genuine tool discussion lives.
+// CRITICAL: an unscoped PullPush query sorted by score surfaces viral OFF-topic
+// posts that merely contain the word (a game post for "Cursor", world-news for
+// "Perplexity"). Scoping each query to these communities keeps only real
+// product discussion (verified: q=Cursor in r/programming → "How Cursor Indexes
+// Codebases", "My Experience with Cursor").
+const PP_SUBS = ['programming', 'webdev', 'SaaS', 'artificial', 'ChatGPT', 'productivity', 'startups', 'software']
+
+async function ppFetch(toolName: string, sub: string): Promise<PullPushPost[]> {
+  const q = encodeURIComponent(`"${toolName}"`)
+  const url = `${PULLPUSH}?q=${q}&subreddit=${encodeURIComponent(sub)}&size=8&sort=desc&sort_type=score`
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
+    if (!res.ok) return []
+    const json = (await res.json()) as { data?: PullPushPost[] }
+    return json.data ?? []
+  } catch {
+    return []
+  }
+}
+
+async function scrapeRedditPullPush(toolName: string): Promise<ScrapeResult> {
+  // Fan out across the curated tech subs + the tool's OWN subreddit (r/<brand>,
+  // where it exists — that's the richest, on-topic source). Each call is
+  // independent; a slow/empty one doesn't sink the rest.
+  const brand = toolName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const subs = [...PP_SUBS, brand].filter((s, i, a) => s.length > 1 && a.indexOf(s) === i)
+  const batches = await Promise.all(subs.map((sub) => ppFetch(toolName, sub)))
+  const raw = batches.flat().sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+
+  const nameLower = toolName.toLowerCase()
+  const nameWb = new RegExp(`\\b${nameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+  const posts: ScrapedPost[] = []
+  const seen = new Set<string>()
+  for (const p of raw) {
+    const title = (p.title ?? '').trim()
+    let body = (p.selftext ?? '').trim()
+    if (body === '[removed]' || body === '[deleted]') body = ''
+    if (!title && !body) continue // nothing usable (removed link post)
+
+    // Relevance gate: in the tool's OWN subreddit (r/<brand>), or the name +
+    // a product cue co-occur. Drops generic-word false matches.
+    const text = `${title} ${body}`.toLowerCase()
+    const inBrandSub = brand.length >= 3 && !!p.subreddit && p.subreddit.toLowerCase().includes(brand)
+    // Outside the tool's own sub, demand the name in the TITLE (word-boundary, so
+    // "notions" / "linear gradient" / incidental body mentions don't match) AND a
+    // product cue — high precision for a paid report.
+    const onTopic = nameWb.test(title) && PRODUCT_CUES.some((c) => text.includes(c))
+    if (!inBrandSub && !onTopic) continue
+
+    const link = p.permalink ? `https://reddit.com${p.permalink}` : p.url
+    if (link && seen.has(link)) continue
+    if (link) seen.add(link)
+    posts.push({
+      source: 'reddit',
+      title,
+      body: body.slice(0, 1500),
+      author: p.author && p.author !== '[deleted]' ? p.author : undefined,
+      date: p.created_utc ? new Date(p.created_utc * 1000).toISOString() : undefined,
+      score: typeof p.score === 'number' ? p.score : undefined,
+      url: link,
+    })
+  }
+  return { source: 'reddit', posts: posts.slice(0, 30), scrapedAt: new Date().toISOString() }
 }
