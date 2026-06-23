@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
-import { GoogleIcon } from '@/components/shared/google-icon'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { analytics } from '@/lib/analytics'
 import { SourceIcon } from '@/components/tools/source-icon'
 import { SentimentDonut, SourceSentimentBars, ThemeBars, MomentumSparkline } from '@/components/tools/sentiment-charts'
@@ -291,9 +291,14 @@ export function SentimentReportPage({ toolSlug, toolName }: { toolSlug: string; 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
           <h2 className="text-lg font-semibold text-white">Create a free account to unlock your {freeLimit} scans</h2>
           <p className="mt-1 text-sm text-zinc-400">Takes a few seconds — no card, no spam.</p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:max-w-md">
-            <button onClick={() => signInWithOAuthClient('google', typeof window !== 'undefined' ? window.location.pathname : null)} className="flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"><GoogleIcon /> Continue with Google</button>
-            <button onClick={() => signInWithOAuthClient('linkedin_oidc', typeof window !== 'undefined' ? window.location.pathname : null)} className="flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800">Continue with LinkedIn</button>
+          {/* Phase 12 Bug-3.3 — Google now via GIS (signInWithIdToken) so the
+              Google screen shows "rightaichoice.com", not the Supabase project
+              ref. The old button here called signInWithOAuthClient('google')
+              directly = the Supabase redirect = the "<ref>.supabase.co" screen.
+              LinkedIn has no GIS equivalent, so it stays on the redirect. */}
+          <div className="mt-4 flex flex-col gap-2.5 sm:max-w-sm">
+            <GoogleSignInButton next={typeof window !== 'undefined' ? window.location.pathname : null} />
+            <button onClick={() => signInWithOAuthClient('linkedin_oidc', typeof window !== 'undefined' ? window.location.pathname : null)} className="flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800">Continue with LinkedIn</button>
           </div>
         </div>
       )}
