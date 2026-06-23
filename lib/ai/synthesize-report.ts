@@ -172,7 +172,7 @@ Synthesize ALL the above into a DETAILED, premium, paid-quality report. Be speci
   "pros": ["6-8 specific strengths grounded in real user feedback, max 18 words each"],
   "cons": ["6-8 specific weaknesses/complaints grounded in real user feedback, max 18 words each"],
   "sentiment_score": "positive" | "mixed" | "negative",
-  "sentiment_breakdown": {"<source>": 0.0-1.0 for EACH source that appears in the COMMUNITY DATA above (use the exact source name from each section header, e.g. "Hacker News", "Stack Overflow", "GitHub", "Reddit", "Product Hunt", "App Store", "Bluesky", "Lemmy", "YouTube"); include only sources that actually have data},
+  "sentiment_breakdown": {"<source>": 0.0-1.0 for EACH source that appears in the COMMUNITY DATA above (use the exact source name from each section header, e.g. "Hacker News", "Stack Overflow", "GitHub", "Reddit", "Product Hunt", "App Store", "Bluesky", "Lemmy", "YouTube", "Tech Press"); include only sources that actually have data},
   "themes": [{"theme": "Key community narrative (a recurring, specific point people keep raising)", "sources": ["the source names that voiced this theme, matching the section headers"], "sentiment": "positive" | "mixed" | "critical"}],
   "best_for": ["Specific user segment 1", "Specific user segment 2", "Specific use case"],
   "not_for": ["Specific user segment who should avoid", "Specific use case it's bad for"],

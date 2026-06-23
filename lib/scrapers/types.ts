@@ -15,6 +15,7 @@ export type SentimentSource =
   | 'stackoverflow'
   | 'github'
   | 'lemmy'
+  | 'news'
   | 'g2'
   | 'trustpilot'
   | 'google'

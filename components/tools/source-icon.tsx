@@ -19,6 +19,7 @@ const META: Record<string, { label: string; color: string; glyph: string }> = {
   stackoverflow: { label: 'Stack Overflow', color: '#f48024', glyph: 'SO' },
   github: { label: 'GitHub', color: '#9aa4af', glyph: 'GH' },
   lemmy: { label: 'Lemmy', color: '#14b8a6', glyph: 'L' },
+  news: { label: 'Tech Press', color: '#6366f1', glyph: 'PR' },
   trustpilot: { label: 'Trustpilot', color: '#00b67a', glyph: 'TP' },
   g2: { label: 'G2', color: '#ff492c', glyph: 'G2' },
   google: { label: 'Google', color: '#4285f4', glyph: 'G' },

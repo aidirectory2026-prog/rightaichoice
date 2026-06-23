@@ -7,6 +7,7 @@ import { scrapeBluesky } from './bluesky'
 import { scrapeStackOverflow } from './stackoverflow'
 import { scrapeGitHub } from './github-signals'
 import { scrapeLemmy } from './lemmy'
+import { scrapeNews } from './news'
 import { scrapeTrustpilot } from './dataforseo'
 import type { ScrapeResult, SentimentSource } from './types'
 
@@ -32,6 +33,7 @@ export type AllScrapeResults = {
   stackoverflow: ScrapeResult
   github: ScrapeResult
   lemmy: ScrapeResult
+  news: ScrapeResult
   trustpilot: ScrapeResult
   // legacy (retired) — always empty, retained for back-compat
   twitter: ScrapeResult
@@ -75,7 +77,7 @@ export async function scrapeAllSources(
   const budget = options?.budgetMs ?? 40_000
   const includeReviews = options?.includeReviewSites ?? true
 
-  const [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot] = await Promise.all([
+  const [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, news, trustpilot] = await Promise.all([
     withBudget('reddit', scrapeReddit(toolName), budget),
     withBudget('hn', scrapeHN(toolName), budget),
     withBudget('youtube', scrapeYouTube(toolName), budget),
@@ -90,16 +92,18 @@ export async function scrapeAllSources(
     withBudget('stackoverflow', scrapeStackOverflow(toolName), budget),
     withBudget('github', scrapeGitHub(toolName), budget),
     withBudget('lemmy', scrapeLemmy(toolName), budget),
+    // Phase 12 Bug-3.1 — tech-press (free RSS): a recognizable, credible source.
+    withBudget('news', scrapeNews(toolName), budget),
     includeReviews
       ? withBudget('trustpilot', scrapeTrustpilot(toolName, options?.website, Math.min(budget, 30_000)), budget)
       : Promise.resolve(EMPTY('trustpilot')),
   ])
 
   const results = {
-    reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot,
+    reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, news, trustpilot,
     twitter: EMPTY('twitter'), quora: EMPTY('quora'), g2: EMPTY('g2'),
   }
-  const all = [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, trustpilot]
+  const all = [reddit, hn, youtube, producthunt, appstore, bluesky, stackoverflow, github, lemmy, news, trustpilot]
 
   const sourcesSucceeded: string[] = []
   const sourcesFailed: string[] = []

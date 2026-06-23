@@ -14,6 +14,7 @@ const SOURCE_LABELS: Record<SentimentSource, string> = {
   stackoverflow: 'Stack Overflow',
   github: 'GitHub',
   lemmy: 'Lemmy',
+  news: 'Tech Press',
   g2: 'G2',
   trustpilot: 'Trustpilot',
   google: 'Google',

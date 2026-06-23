@@ -31,7 +31,7 @@ export type LiveMention = { source: string; title: string; snippet: string; date
 // actually reference THIS tool (no name token + no domain match) and dedupe.
 // The precise sources (Trustpilot/App Store/Product Hunt/GitHub) were matched by
 // domain/slug/exact name already, so they bypass the token filter.
-const PRECISE_SOURCES = new Set(['trustpilot', 'appstore', 'producthunt', 'github'])
+const PRECISE_SOURCES = new Set(['trustpilot', 'appstore', 'producthunt', 'github', 'news'])
 const NAME_STOP = new Set(['the', 'app', 'ai', 'io', 'inc', 'labs', 'pro', 'studio', 'cloud', 'get', 'use', 'try'])
 
 function domainRoot(url?: string | null): string {

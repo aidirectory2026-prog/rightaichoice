@@ -416,8 +416,13 @@ function ReportBody({ report, toolName, meta, onDownload }: {
   const datedTs = mentionDates.map((d) => (d ? Date.parse(d) : NaN)).filter((t) => !Number.isNaN(t))
   const latest = datedTs.length ? new Date(Math.max(...datedTs)) : null
   const oldest = datedTs.length ? new Date(Math.min(...datedTs)) : null
-  const sourcesCount = sourceBreak.length || (meta?.sources?.length ?? 0)
+  // We sweep this many sources on every scan; some return nothing for a given
+  // tool, so we say "swept N · found M" — thoroughness, honestly (never fake a
+  // source we didn't actually pull from).
+  const SWEPT = 11
+  const found = sourceBreak.length || (meta?.sources?.length ?? 0)
   const dataPoints = meta?.mention_count ?? mentions.length
+  const thin = dataPoints > 0 && dataPoints < 5
   const fmt = (d: Date | null) => (d ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null)
   const fmtStr = (s?: string | null) => { if (!s) return null; const t = Date.parse(s); return Number.isNaN(t) ? null : fmt(new Date(t)) }
   const scoreColorText = report.sentiment_score === 'positive' ? 'text-emerald-400' : report.sentiment_score === 'negative' ? 'text-red-400' : 'text-amber-400'
@@ -437,9 +442,14 @@ function ReportBody({ report, toolName, meta, onDownload }: {
             {report.bottom_line && <p className="mt-2 text-sm font-medium leading-relaxed text-emerald-100">{report.bottom_line}</p>}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-zinc-500 sm:justify-start">
               <span><span className="font-semibold text-white">{dataPoints}</span> mentions analysed</span>
-              <span><span className="font-semibold text-white">{sourcesCount}</span> sources</span>
+              <span>swept <span className="font-semibold text-white">{SWEPT}</span> sources · found on <span className="font-semibold text-white">{found}</span></span>
               {latest && <span>latest <span className="font-semibold text-white">{fmt(latest)}</span></span>}
             </div>
+            {thin && (
+              <p className="mt-2 text-[11px] leading-relaxed text-amber-400/90">
+                Public discussion on {toolName} is still limited — this report reflects everything we could find across {SWEPT} platforms.
+              </p>
+            )}
           </div>
         </div>
         <div className="mt-5 flex justify-center sm:justify-end">
@@ -449,9 +459,9 @@ function ReportBody({ report, toolName, meta, onDownload }: {
 
       {/* 2 · Scorecard + sentiment by source (per-source bars = provenance) */}
       {report.scorecard && <Scorecard s={report.scorecard} />}
-      {sourceBreak.length > 0 && (
+      {sourceBreak.length >= 3 && (
         <Block icon={<Database className="h-4 w-4" />} title="Sentiment by source">
-          <p className="-mt-1 mb-3 text-xs text-zinc-500">How positive each platform&apos;s chatter is — and how much of it there is.</p>
+          <p className="-mt-1 mb-3 text-xs text-zinc-500">We swept {SWEPT} platforms and found active discussion on {found} — here&apos;s how positive each is, and how much of it there is.</p>
           <SourceSentimentBars items={sourceBreak} />
         </Block>
       )}
