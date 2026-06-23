@@ -1348,7 +1348,7 @@ export const analytics = {
   signupEmailEntered(emailDomain: string, methodIntent: 'email' | 'google' | 'github', source: string) {
     capture('signup_email_entered', { email_domain: emailDomain, method_intent: methodIntent, source })
   },
-  signupMethodSelected(method: 'email' | 'google' | 'github' | 'guest', source: string) {
+  signupMethodSelected(method: 'email' | 'google' | 'github' | 'guest' | 'linkedin', source: string) {
     capture('signup_method_selected', { method, source })
   },
 
