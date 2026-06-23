@@ -68,8 +68,6 @@ type Props = {
 export function GoogleSignInButton({ next, beforeSession }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [mode, setMode] = useState<'init' | 'gis' | 'fallback' | 'busy'>('init')
-  // Diagnostic surfaced on-screen so a non-GIS failure is visible, not silent.
-  const [reason, setReason] = useState<string>('')
 
   const safeNext = useCallback(() => {
     if (!next || !next.startsWith('/') || next.startsWith('//')) return '/dashboard'
@@ -97,11 +95,10 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
         await finalizeGoogleSignIn().catch(() => {})
         window.location.href = safeNext()
       } catch (e) {
-        // Surface the real reason instead of silently redirecting — that's what
-        // hid the failure before. The classic button is still available below.
-        const msg = e instanceof Error ? e.message : String(e)
-        console.error('Google ID-token sign-in failed:', e)
-        setReason(`sign-in: ${msg}`)
+        // GIS sign-in failed — fall back to the classic redirect button (still
+        // shown below). Logged for debugging, NOT surfaced on-screen (the amber
+        // "unavailable" note read like an error on customer-facing pages).
+        console.warn('[google-signin] id-token sign-in failed, using redirect fallback:', e)
         setMode('fallback')
       }
     },
@@ -119,7 +116,7 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
         await loadGis()
         if (cancelled) return
         if (!ref.current || !window.google?.accounts?.id) {
-          setReason('google-script: not available (blocked by browser/extension?)')
+          console.warn('[google-signin] GIS unavailable (blocked by browser/extension?), using redirect fallback')
           setMode('fallback')
           return
         }
@@ -148,7 +145,7 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
         if (!cancelled) setMode('gis')
       } catch (e) {
         if (!cancelled) {
-          setReason(`gis-init: ${e instanceof Error ? e.message : String(e)}`)
+          console.warn('[google-signin] GIS init failed, using redirect fallback:', e)
           setMode('fallback')
         }
       }
@@ -177,11 +174,6 @@ export function GoogleSignInButton({ next, beforeSession }: Props) {
         className={`w-full justify-center ${mode === 'fallback' || mode === 'busy' ? 'hidden' : 'flex min-h-[40px]'}`}
       />
       {(mode === 'fallback' || mode === 'busy') && ClassicButton}
-      {reason && (
-        <p className="mt-1.5 text-[11px] leading-snug text-amber-400/80">
-          Quick Google sign-in unavailable — {reason}
-        </p>
-      )}
     </div>
   )
 }
