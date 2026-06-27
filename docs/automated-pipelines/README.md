@@ -50,6 +50,8 @@ supporting detail this README links to:
 - **`01`–`10`** — original per-pipeline deep-dives (April 2026; partially stale — trust this README for
   schedules/engines, the deep-dives for code-level internals). `06-manual-runs.md` = on-demand triggers;
   `09-shared-modules.md` = shared infra.
+- **`11-geo-and-authority.md`** — **(Phase 13, 2026-06-27)** GEO citation tracking + authority/directory
+  engine + the self-refreshing `/llms.*` + `/state-of-ai-tools` data surfaces.
 
 ---
 
@@ -92,7 +94,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 
 ---
 
-## 1) Vercel Crons (`vercel.json`) — 18 jobs
+## 1) Vercel Crons (`vercel.json`) — 20 jobs
 
 | Path | Schedule (UTC) | Purpose |
 |------|----------------|---------|
@@ -110,6 +112,8 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 | `/api/cron/resubmit-sitemap-gsc` | `0 6 * * 1` | Resubmit sitemap to GSC. |
 | `/api/cron/snapshot-gsc` | `30 6 * * 1` | Weekly GSC snapshot. |
 | `/api/cron/triage-gsc` | `0 7 * * 1` | GSC diff → weekly action triage. |
+| `/api/cron/track-geo-citations` | `15 7 * * 1` | **(Phase 13 D3.4)** GEO citation scoreboard — asks a web-searching AI (free Gemini engine; Anthropic/Perplexity/OpenAI scaffolded) the target prompts in `lib/geo/target-prompts.ts` and writes one row per `(date, engine, prompt)` to `geo_citation_snapshots`: are we cited, rank, competitors, share-of-voice. The GEO analogue of `snapshot-gsc`. Surfaced at `/admin/ai-citations`. Gracefully records `partial` (no false alert) if no engine key is set. See `11-geo-and-authority.md`. |
+| `/api/cron/authority-check` | `30 7 * * 1` | **(Phase 13 D2.4)** Backlink monitor — re-fetches each submitted/live directory listing in `directory_submissions`, detects a link back to rightaichoice.com, and logs confirmed backlinks into `referring_domains` (channel `other`, note `directory:<key>`) → `/admin/authority`. See `11-geo-and-authority.md`. |
 | `/api/cron/email-weekly-digest` | `0 8 * * 1` | Operator weekly digest email. |
 | `/api/cron/seo-impact` | `30 8 * * 1` | Weekly SEO impact report. |
 | `/api/cron/refresh-freshness-view` | `45 23 * * *` | Refresh the freshness materialized view. |
@@ -246,6 +250,28 @@ dependency 30% (the real `is_wrapper`, now judged per-tool by the deep SOP's LLM
 + Website 10%. `is_wrapper` populates over the ~7-day deep cycle, so the at-risk page fills with genuine
 thin-wrapper / stale tools. Bands: ≥70 safe, 40–69 moderate, <40 at-risk. (C3 backlog: real per-category
 mortality + hyperscaler-overlap RSS monitoring.)
+
+## Changelog — Phase 13 (GEO & SEO upgrades), 2026-06-27
+
+Added **2 Vercel crons** (17→… well, 18→20 incl. the Phase-11 backfill) and **2 operator scripts**, plus
+turned the static `public/llms*.txt` into **self-refreshing routes**. Full detail in
+[`11-geo-and-authority.md`](./11-geo-and-authority.md) and the phase docs in
+`docs/Phase 13 (GEO AND SEO upgrades)/`.
+
+- **`track-geo-citations`** (Vercel cron, Mon 07:15 UTC) — GEO citation scoreboard → `geo_citation_snapshots`
+  → `/admin/ai-citations`. Free Gemini engine (Google Search grounding); Anthropic/Perplexity/OpenAI
+  scaffolded behind their keys. Baseline run 2026-06-27: **0/12 prompts cited us**.
+- **`authority-check`** (Vercel cron, Mon 07:30 UTC) — directory backlink monitor → `referring_domains` →
+  `/admin/authority`.
+- **Operator scripts (on-demand, pipeline_runs-logged):** `geo:track[:dry]` (same as the cron, manual);
+  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`).
+- **Self-refreshing data surfaces (ISR routes, not crons):** `/llms.txt`, `/llms-full.txt`, `/llms.jsonl`,
+  and `/state-of-ai-tools` now regenerate from the live DB hourly/daily (replacing the static, stale
+  `public/llms*.txt`). They carry a live freshness banner — our core GEO signal.
+- **New tables:** `geo_citation_snapshots` (migration 172), `directory_submissions` (migration 173).
+- **No conversion-funnel automation was built this phase.** D4 was a read-only funnel *diagnosis* (leak =
+  ~0.2% plan-CTA click-rate; affiliate out-clicks are the real money path). Recommended fixes are scoped
+  for a later phase — nothing automated shipped, so there is nothing funnel-related to register here.
 
 ## Changelog — Phase 12 Bug-2 (Real-time freshness), 2026-06-22
 
