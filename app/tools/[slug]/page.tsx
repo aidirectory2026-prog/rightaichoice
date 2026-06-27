@@ -45,6 +45,7 @@ import { TutorialLink } from '@/components/tools/tutorial-link'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 // Phase 3 density-replacement sections
 import { SkipIfLine } from '@/components/tools/skip-if-line'
+import { CollapsibleProse } from '@/components/tools/collapsible-prose'
 import { CostCalculator } from '@/components/tools/cost-calculator'
 import { HiddenCosts } from '@/components/tools/hidden-costs'
 import { PricingPowerMatch } from '@/components/tools/pricing-power-match'
@@ -593,25 +594,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 )
               })()}
 
-              {/* Long-form editorial reasoning behind the verdict */}
-              {tool.our_views && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-cyan-400" />
-                    Behind the Verdict
-                  </h2>
-                  <div className="prose prose-invert prose-zinc prose-sm max-w-none">
-                    <p className="text-zinc-400 leading-relaxed whitespace-pre-line">
-                      {tool.our_views}
-                    </p>
-                  </div>
-                  {tool.our_views_generated_at && (
-                    <p className="mt-2 text-xs text-zinc-600">
-                      Last updated: {new Date(tool.our_views_generated_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </p>
-                  )}
-                </section>
-              )}
+              {/* Bug-4.1 (2026-06-27): "Behind the Verdict" long-form prose used
+                  to open here, right under the Editorial Verdict — a wall of
+                  300–800 words before any scannable content. It now renders
+                  lower down as a CollapsibleProse (after Key Features + About),
+                  so the page opens with structured/visual signal instead. */}
 
               {/* Phase 3: Skip-if line (closes the verdict band — single sentence) */}
               <SkipIfLine toolName={tool.name} text={tool.skip_if} />
@@ -720,20 +707,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Description */}
-              <section>
-                <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
-                <div className="prose prose-invert prose-zinc prose-sm max-w-none">
-                  <p className="text-zinc-400 leading-relaxed whitespace-pre-line">
-                    {tool.description}
-                  </p>
-                </div>
-              </section>
-
-              {/* Phase 9 — inline Plan-Your-Stack CTA, after the About block.
-                  Places the strongest conversion ask above-the-fold for users
-                  who scrolled past the description. Context-aware copy. */}
-              <PlanCTAInline context={tool.name} />
+              {/* Bug-4.1 (2026-06-27): engagement-first reorder. Key Features
+                  (scannable, structured) now comes BEFORE the long-form prose;
+                  About + Behind-the-Verdict are demoted into CollapsibleProse so
+                  the page no longer opens with a wall of text. Full prose stays
+                  in the DOM (visual line-clamp only) for SEO/GEO extraction. */}
 
               {/* Features */}
               {tool.features && tool.features.length > 0 && (
@@ -755,6 +733,32 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </ul>
                 </section>
               )}
+
+              {/* About {tool} — collapsible (demoted below Key Features) */}
+              <CollapsibleProse title={`About ${tool.name}`} text={tool.description} />
+
+              {/* Behind the Verdict — collapsible (demoted from the top of page) */}
+              <CollapsibleProse
+                title="Behind the Verdict"
+                icon={<Eye className="h-5 w-5 text-cyan-400" />}
+                text={tool.our_views}
+                footer={
+                  tool.our_views_generated_at ? (
+                    <p className="mt-2 text-xs text-zinc-600">
+                      Last updated:{' '}
+                      {new Date(tool.our_views_generated_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  ) : null
+                }
+              />
+
+              {/* Phase 9 — inline Plan-Your-Stack CTA, after the About block.
+                  Places the strongest conversion ask above-the-fold for users
+                  who scrolled past the description. Context-aware copy. */}
+              <PlanCTAInline context={tool.name} />
 
               {/* Phase 4.5 audit fix (2026-05-09): Integrations moved from
                   here to AFTER PricingPlansComparison so the rendered order
