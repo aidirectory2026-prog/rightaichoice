@@ -142,3 +142,54 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   Anthropic account has no credit; the cheapest fix is a free Google Gemini key, or a small top-up. Your
   call which._
 - **Status: built + schema live; blocked on engine credentials (founder decision).**
+
+### 2026-06-27 — D3.4 follow-up: free Gemini citation engine implemented
+- **What:** Implemented the `gemini` engine (founder chose the free path) so the GEO tracker can
+  collect real citation data at $0.
+- **Why:** Anthropic key has no credit; Gemini's free tier + Google Search grounding returns the
+  sources it grounded on — a faithful, free citation signal.
+- **How:** `lib/geo/citation-engines.ts` — `GeminiEngine` calls `generativelanguage.googleapis.com`
+  (`gemini-2.5-flash`, configurable via `GEO_GEMINI_MODEL`) with the `google_search` grounding tool,
+  reads `groundingMetadata.groundingChunks`, and **resolves the Vertex redirect URIs to their real
+  domains** (falling back to the chunk title) so our/competitor matching works. Enabled automatically
+  once `GEMINI_API_KEY` is set. Commit `e0fa397`.
+- **Verification:** `tsc --noEmit` clean. Cannot run live until the founder adds a free
+  `GEMINI_API_KEY` (https://aistudio.google.com/apikey) — the engine reports `isEnabled()=false`
+  without it, and the runner exits with a clear "engine not enabled — missing API key" message
+  (verified that guard path).
+- **Residual risk:** Gemini grounding chunk shape can vary; redirect resolution has an 8s timeout +
+  title fallback. Will validate end-to-end on the first live run once the key is added.
+- _Plain language: I wired up Google's free AI so our citation scoreboard can run at no cost. It turns
+  on the instant you paste a free Google API key into the project's settings — then it'll start
+  recording, every run, whether Gemini names us when people ask the questions we want to win._
+- **Status: built; awaiting free GEMINI_API_KEY to run.**
+
+### 2026-06-27 — D3.2: the citable dataset (live /llms.txt, /llms-full.txt, /llms.jsonl)
+- **What:** Turned our LLM-facing dataset from a **stale static file** ("Generated 2026-05-28") into
+  **three live, DB-generated endpoints** that lead with a loud, real freshness banner — our single
+  biggest GEO differentiator made legible to AIs.
+- **Why:** LLMs weight recency and structure. Our automation re-verifies ~all tools weekly, but the old
+  `public/llms*.txt` were frozen snapshots that hid that. Now every fetch shows the true, current
+  freshness and exposes structured records LLMs/RAG can ingest and cite.
+- **How (commit `e0fa397`, worktree branch `phase13-geo-seo`):**
+  - `lib/geo/llms-dataset.ts` — one DB read → builders for the concise manifest, the full markdown dump,
+    and a **schema.org JSON-Lines** feed (Dataset header + one `SoftwareApplication` per tool with
+    name, canonical URL, categories, pricing, viability score, and per-tool `dateModified`).
+  - `app/llms.txt/route.ts`, `app/llms-full.txt/route.ts`, `app/llms.jsonl/route.ts` — dynamic route
+    handlers (ISR `revalidate=3600`, cookie-free admin read, same caching pattern as `feed.xml`).
+  - Removed the shadowing static `public/llms.txt` + `public/llms-full.txt`.
+- **Verification:** `tsc --noEmit` clean. Ran the builder live against the DB: **1,998 tools loaded;
+  freshness banner = "1998 published · 1996 (100%) re-verified in last 7 days · 1998 within 30 days";**
+  `/llms.jsonl` = 1,999 lines (valid Dataset header + 1,998 valid SoftwareApplication records);
+  `/llms-full.txt` = 513 KB / 9,998 lines; category joins correct (e.g. Webflow → Design & UI,
+  Developer Infrastructure, viability 95). (Route handlers are thin wrappers over this verified builder
+  and reuse the proven dotted-folder + ISR pattern already live for `app/feed.xml`.)
+- **Residual risk:** Routes verified at the builder level, not yet hit on a deployed URL — confirm
+  `/llms.txt` etc. serve 200 after the branch deploys (preview). Follow-up: point the `Dataset` JSON-LD
+  (`lib/seo/json-ld.ts`) at `/llms.jsonl` so AIs discover the structured feed (deferred to avoid
+  touching shared SEO code mid-stream).
+- _Plain language: the page we publish for AIs to read is now generated fresh from our live database
+  and shouts our best fact at the top — "1,996 of 1,998 tools re-checked in the last 7 days." No other
+  directory can say that. I also added a clean machine-readable data file (/llms.jsonl) that AI systems
+  can ingest directly. Verified it produces correct, current data._
+- **Status: built + verified against live DB; routes pending preview-deploy smoke test.**
