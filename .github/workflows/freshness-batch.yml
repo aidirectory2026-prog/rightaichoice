@@ -45,6 +45,10 @@ on:
     # this layer refreshes the 13 density fields (FAQs, workflow scenarios,
     # pricing-tier guides, migrations, hidden costs) on top.
     - cron: '0 6 * * *'
+    # Phase 12 Bug-4.6 — Resources & Guides link-health sweep, weekly Sun 07:00
+    # UTC. HTTP-only (no DeepSeek); probes every tool's external resource links
+    # and writes tools.dead_links so the page never shows a dead link.
+    - cron: '0 7 * * 0'
   workflow_dispatch:
     inputs:
       pipeline:
@@ -58,6 +62,7 @@ on:
           - cascade-batch
           - backfill-logos
           - full-refresh
+          - check-link-health
           - all
       batch_size:
         description: 'Override default batch size (optional, blank = pipeline default)'
@@ -289,3 +294,30 @@ jobs:
           else
             npx tsx scripts/backfill-tool-data.ts --apply --cohort=300 --shard=${{ matrix.shard }} --shards=3
           fi
+
+  # ── Resources & Guides link-health sweep — weekly Sun 07:00 UTC (Bug-4.6) ──
+  # HTTP-only (no DeepSeek/Apify): probes every published tool's external
+  # resource links (docs, changelog, github, website, tutorials, community) and
+  # writes tools.dead_links. The tool page filters those out of Resources &
+  # Guides + the sidebar; a tool with no live resources skips the section.
+  # Conservative — only clear 404/410 + DNS failures count as dead.
+  check-link-health:
+    if: >-
+      github.event.schedule == '0 7 * * 0' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.pipeline == 'check-link-health' || github.event.inputs.pipeline == 'all'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Sweep resource links
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx tsx scripts/check-link-health.ts

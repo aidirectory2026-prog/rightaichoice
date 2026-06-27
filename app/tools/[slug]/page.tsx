@@ -207,6 +207,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
     getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
   ])
 
+  // Bug-4.6 (2026-06-27): URLs the link-health checker confirmed dead. Both the
+  // main "Resources & Guides" list and the sidebar "Resources" links filter
+  // against this so no tool page surfaces a 404 link.
+  const deadLinkSet = new Set((tool.dead_links as string[] | null) ?? [])
+
   const skillLabels: Record<string, string> = {
     beginner: 'Beginner-friendly',
     intermediate: 'Intermediate',
@@ -920,14 +925,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   github_url / community links / website. Worst case: a single
                   Visit Website card so every tool has SOMETHING actionable here. */}
               {(() => {
-                const enriched = Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []
-                const bare = Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []
+                // Bug-4.6 (2026-06-27): drop links our link-health checker
+                // (scripts/check-link-health.ts) confirmed dead, so the
+                // Resources section never shows a 404. If nothing live remains,
+                // the section is skipped entirely.
+                const deadSet = deadLinkSet
+                const urlOf = (it: string | { url?: string | null }) => (typeof it === 'string' ? it : it?.url ?? '')
+                const enriched = (Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []).filter((it) => !deadSet.has(urlOf(it)))
+                const bare = (Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []).filter((u) => !deadSet.has(u))
                 let items: Array<string | { url: string; title?: string | null; description?: string | null }> = enriched.length > 0 ? enriched : bare
                 if (items.length === 0) {
                   // Synthesize a resources list from sibling URL fields
                   const cl = (tool.community_links ?? {}) as Record<string, unknown>
                   const fallback: string[] = []
-                  const add = (u: unknown) => { if (typeof u === 'string' && /^https?:\/\//.test(u) && !fallback.includes(u)) fallback.push(u) }
+                  const add = (u: unknown) => { if (typeof u === 'string' && /^https?:\/\//.test(u) && !fallback.includes(u) && !deadSet.has(u)) fallback.push(u) }
                   add(tool.docs_url)
                   add(tool.changelog_url)
                   add(tool.github_url)
@@ -1217,12 +1228,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     href={tool.website_url}
                     icon={<Globe className="h-4 w-4" />}
                     label="Official Website"
+                    deadSet={deadLinkSet}
                   />
                   {tool.docs_url && (
                     <ResourceLink
                       href={tool.docs_url}
                       icon={<BookOpen className="h-4 w-4" />}
                       label="Documentation"
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {tool.github_url && (
@@ -1234,6 +1247,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                           ? `GitHub (${formatNumber(tool.github_stars)} stars)`
                           : 'GitHub Repository'
                       }
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {tool.changelog_url && (
@@ -1241,6 +1255,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       href={tool.changelog_url}
                       icon={<Calendar className="h-4 w-4" />}
                       label="Changelog"
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {(() => {
@@ -1257,6 +1272,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.g2_url}
                             icon={<Star className="h-4 w-4" />}
                             label={cl.g2_rating ? `G2 (${cl.g2_rating.toFixed(1)}★)` : 'G2 reviews'}
+                            deadSet={deadLinkSet}
                           />
                         )}
                         {cl.producthunt_url && (
@@ -1264,6 +1280,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.producthunt_url}
                             icon={<TrendingUp className="h-4 w-4" />}
                             label="Product Hunt"
+                            deadSet={deadLinkSet}
                           />
                         )}
                         {Array.isArray(cl.reddit_threads) && cl.reddit_threads[0] && (
@@ -1271,6 +1288,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.reddit_threads[0]}
                             icon={<MessagesSquare className="h-4 w-4" />}
                             label={cl.reddit_threads.length > 1 ? `Reddit (${cl.reddit_threads.length} threads)` : 'Reddit thread'}
+                            deadSet={deadLinkSet}
                           />
                         )}
                       </>
@@ -1323,11 +1341,15 @@ function ResourceLink({
   href,
   icon,
   label,
+  deadSet,
 }: {
   href: string
   icon: React.ReactNode
   label: string
+  deadSet?: Set<string>
 }) {
+  // Bug-4.6: skip a link the health checker confirmed dead (or an empty href).
+  if (!href || deadSet?.has(href)) return null
   return (
     <a
       href={href}
