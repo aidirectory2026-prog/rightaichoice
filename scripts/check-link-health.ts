@@ -23,6 +23,7 @@
 export {}
 
 import { getAdminClient } from '../lib/cron/supabase-admin'
+import { fetchAllPages } from '../lib/data/_pagination'
 
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
@@ -130,13 +131,18 @@ async function main() {
   const runStart = Date.now()
   console.log(`[link-health] shard ${SHARD}/${SHARDS} dry=${DRY}`)
 
-  const { data, error } = await sb
-    .from('tools')
-    .select('id, slug, docs_url, changelog_url, github_url, website_url, tutorial_urls, tutorial_links, community_links, dead_links')
-    .eq('is_published', true)
-  if (error) throw error
+  // Paginate — PostgREST caps a single .select() at 1,000 rows, so without this
+  // a >1,000-tool catalog is silently half-swept (the catalog is ~2,000).
+  const allTools = await fetchAllPages<ToolRow>((from, to) =>
+    sb
+      .from('tools')
+      .select('id, slug, docs_url, changelog_url, github_url, website_url, tutorial_urls, tutorial_links, community_links, dead_links')
+      .eq('is_published', true)
+      .order('slug', { ascending: true })
+      .range(from, to)
+  )
 
-  let tools = (data as unknown as ToolRow[]).filter((t) => hash(t.slug) % SHARDS === SHARD % SHARDS)
+  let tools = allTools.filter((t) => hash(t.slug) % SHARDS === SHARD % SHARDS)
   if (Number.isFinite(LIMIT)) tools = tools.slice(0, LIMIT)
   console.log(`[link-health] ${tools.length} tools in shard`)
 
