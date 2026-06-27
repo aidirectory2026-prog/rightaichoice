@@ -185,3 +185,48 @@ Post-fix baseline `docs/admin/baselines/post-phase2.json` vs pre-fix baseline, p
 - 0 errors, 0 nondeterministic across both runs.
 - F9 RPCs verified exact vs raw GROUP BY (top searches 10/10 rows, top tools 8/8, refresh mix 6701=6701 / 715=715); old caps proven lossy (search_logs 5,552 > 2,000 cap).
 - Fix-status ledger: F1 ✓ wired · F2 ✓ · F3 ✓ (navbar+homepage; ~10 plain /plan content links flagged for surface-enum follow-up) · F4 ✓ · F5 → Phase 4 (by design) · F6 ✓ · F7 ✓ (backfill + nightly classifier) · F8 ✓ honest display (full instrumentation deferred — zero recordTokens call sites exist) · F9 ✓ · F10 ✓ · F11 ✓ · F12 ✓ · F13 → when payments go live. Bonus root-causes: search_result_clicked already wired (low traffic is real); tool_saved zero is TRUE data (no saves since mirror began 2026-05-20).
+
+---
+
+# Audit 2026-06-28 — invariant-driven deep pass (Opus 4.8)
+
+Owner asked for a full re-audit ("numbers not matching across screens"). The system's own nightly
+invariant suite (`run_tracking_invariants` → `tracking_health`) was already flagging the bugs; root-caused
+each on the live DB and fixed all three. **Result: 13/13 invariants PASS (verified twice).**
+
+### ❌→✅ I9 schema_violation_rate — was 12.24% (FAIL, threshold 5%)
+Root cause: the Clarity bridge registers `clarity_playback_url` as a super-prop (alongside
+`clarity_session_id`), so it rides in `properties` on every event — but it was missing from
+`BASE_CONTEXT_PROP_KEYS`, so it reached each event's STRICT schema and tripped `Unrecognized key`. Hit
+`engaged_time_heartbeat`/`scroll_depth_reached`/`page_viewed`/`web_vitals`/etc. Second mismatch:
+`signup_method_selected.method` enum lacked `linkedin`+`guest` (added to the emitter in Bug-3.4).
+Fix: `lib/analytics-schema.ts` (commit `af011a7`). Verified by replaying 1,000 real invalid rows → 1000/1000
+pass. Backfilled 2,341 stale `schema_valid=false` tags (precise: only rows whose issues were entirely the
+two fixed errors). I9 → 0.00%. Residual ~0.05% (12 rows/30d) of unrelated edge cases (`form_id` sent as an
+object on 2 rows) — sub-threshold, noted for later.
+
+### ❌→✅ I13a/I13b rollup reconciliation — was 8 divergent days (FAIL)
+Root cause: `compute_event_rollups` recomputed only the trailing 3 IST days hourly, but the recon checks
+30; any in-window raw change older than 3 days left the frozen rollup stale (raw was LOWER — early-era
+dedup/corrections). `cleanup-user-events` deletes at 90d (outside the window, not the cause). Fix
+(migration 176): widen the hourly recompute 3→33 days + make the DAU rollup DELETE+INSERT idempotent (was
+upsert-only) + one-time rebuild. I13a/I13b → 0. NOTE: only `/admin/resources/trust` reads the rollup;
+the KPI dashboards read raw `user_events`, so this never produced a wrong number on a metric screen.
+
+### ⚠️→✅ I4 funnel_monotonicity — was 1 (WARN)
+Root cause (NOT a missing fire): a visitor who logs in MID-journey gets a new Mixpanel distinct_id (anon
+`$device:…` → user_id), so `plan_started` landed under the anon id and `plan_completed` under the user_id
+— a funnel grouped by raw distinct_id splits one journey. Happens for EVERY anon→known conversion. Fix
+(migration 175): session-stitch identity (the per-tab `session_id` survives the Mixpanel identify swap) in
+BOTH `run_tracking_invariants` (I4) and `insights_funnel_users`. I4 → 0; funnel returns monotonic.
+
+### "Numbers don't match across screens" — the by-design part (NOT bugs)
+- **Mixpanel UI vs /admin**: structural — Mixpanel strips ~20% more as bots + loses 20-40% to ad-blockers;
+  admin reads the more-complete Supabase mirror. `/admin/insights/reconciliation` explains this.
+- **Retroactive bot reclassification** (`bot-behavioral-classifier`, nightly): the same past window shows a
+  lower human count tomorrow than today.
+- **"Right Now" pulse** is now-anchored to IST midnight and IGNORES the filter bar — a filtered "today"
+  card legitimately differs.
+
+### Healthy (confirmed): dedup (0 dup/null insert_id), server-resolved user_id, DAU/IST-boundary recon,
+session coverage, no orphan event names.

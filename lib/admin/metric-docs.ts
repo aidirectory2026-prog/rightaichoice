@@ -323,7 +323,12 @@ const docs = {
       'Four direct PostgREST counts on user_events (plan_started / plan_intake_submitted / plan_completed / plan_results_tool_clicked), window >= start AND < end, humans-only unless toggled, optional filters via the applyFilters() mirror. Step-over-step % = step ÷ previous step.',
     whyTrusted:
       'Same getPlanFunnel the audited insights page has always used — pinned-week values frozen in the baseline snapshot oracle; the direct-select path is verifier-covered; every step event has a schema + synthetic recipe (plan_results_tool_clicked permanently at 0 was exactly the class of bug the registry CI guard now prevents).',
-    caveats: ['Counts events, not unique users — one person restarting the flow counts twice.', EPOCHS.mirror, EPOCHS.botRecall],
+    caveats: [
+      'Counts events, not unique users — one person restarting the flow counts twice.',
+      'Identity (2026-06-28): the per-user funnel RPC (insights_funnel_users) + the I4 invariant now session-stitch anon→known journeys — a visitor who logs in MID-flow keeps one identity (plan_started fired under the anon $device id, plan_completed under the user_id, unified by the per-tab session_id). Without this, every mid-journey login looked like a "completed with no start".',
+      EPOCHS.mirror,
+      EPOCHS.botRecall,
+    ],
   },
   funnel_plan_acquisition: {
     key: 'funnel_plan_acquisition',
