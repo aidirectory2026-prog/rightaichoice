@@ -229,3 +229,40 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   — while rivals like Futurepedia showed up. That's our starting line; every GEO upgrade now has a number
   to move._
 - **Status: done (D3.4 complete). Loop is live and automated.**
+
+### 2026-06-27 — D2.1: directory submission engine (authority + GEO consensus)
+- **What:** Built the off-site authority engine's first piece — a pipeline of high-authority **free**
+  directories to submit RightAIChoice to, with an operator workflow + automated backlink detection.
+  Authority is the #1 blocker to ranking, and these directories are also the cross-source sources LLMs
+  read before citing a brand (so this doubles as the GEO consensus play).
+- **Why:** Median page-1 site ≈ 900 referring domains; we have ~0. Directories give dofollow links AND
+  entity/consensus signal. Founder chose free/organic + automation-prepares / operator-approves-sends.
+- **How (commit `af0e5da`, branch `phase13-geo-seo`):**
+  - `supabase/migrations/173_directory_submissions.sql` (+ rollback) — **purely additive** new table
+    (after a first version that altered `referring_domains` was correctly denied by the prod-migration
+    guard; redesigned to log directory backlinks via the existing `other` channel + a `directory:` note,
+    touching no shared table). **Applied live + verified.**
+  - `lib/authority/directory-targets.ts` — 19 curated free directories (Product Hunt, G2, Capterra,
+    Crunchbase, There's An AI For That, Futurepedia, AlternativeTo, SaaSHub, Toolify, Trustpilot, …)
+    with tier/DA/dofollow/category metadata; mirrors the `best-pages.ts` config pattern.
+  - `lib/authority/submission-kit.ts` — canonical brand copy at multiple lengths so the operator pastes
+    **identical** name/description everywhere (consistency = the consensus signal LLMs reward).
+  - `lib/authority/backlink-check.ts` — fetch + regex-detect a link back to rightaichoice.com.
+  - `scripts/authority-directories.ts` + npm `authority:seed|next|mark|check|status` — operator CLI;
+    `--check` auto-logs confirmed backlinks into `referring_domains` (feeds the existing dashboard) and
+    is wrapped in `runScriptedPipeline` (pipeline_runs logging).
+  - `lib/authority/admin-queries.ts` + a **directory-pipeline panel on `/admin/authority`** (extends the
+    existing page; service-role read): pipeline counts, backlinks-confirmed, next-to-submit table, in-progress strip.
+- **Verification:** `tsc --noEmit` clean. Migration applied (`{success:true}`). `authority:seed` inserted
+  **19** rows; `authority:status` shows `queued 19`; `authority:next` prints the prioritized list (G2 DA92
+  top) + the paste-ready kit; admin read model verified live (19 targets, counts correct, G2 first).
+- **Residual risk:** Directory submissions are human/CAPTCHA forms — the engine prepares + tracks, the
+  operator submits (by design). Backlink detection is link-presence (regex), not dofollow-vs-nofollow
+  verification. Admin panel verified at query level, render pending preview deploy.
+- _Plain language: I built the system that gets us listed on the big directories — both to earn the
+  backlinks Google needs to stop burying us, AND because those exact sites (G2, Product Hunt, Futurepedia…)
+  are what the AIs read before deciding who to recommend. It hands you a ranked to-do list and the exact
+  text to paste (same everywhere — that consistency is what makes AIs trust us), tracks what's submitted,
+  and automatically checks when a directory starts linking back to us. 19 targets are queued and ready;
+  the submitting itself is the human step (those forms are CAPTCHA-gated on purpose)._
+- **Status: done (D2.1). Engine ready; operator submission is the next manual action.**

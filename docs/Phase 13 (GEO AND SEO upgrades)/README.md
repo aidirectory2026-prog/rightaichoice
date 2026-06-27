@@ -37,9 +37,10 @@ Avg position ~45 · page-1 share 3.2% · compares 34% indexed · ~110 human view
 - [x] D0 — `../rac-phase13` worktree + branch
 - [x] D3.4 — GEO citation tracker + free Gemini engine + weekly cron + /admin panel (baseline: 0/12 cited)
 - [x] D3.2 — live citable dataset (/llms.txt, /llms-full.txt, /llms.jsonl) — verified vs DB
+- [x] D2.1 — directory submission engine + /admin/authority pipeline panel (19 targets queued)
 - [ ] D3.1 — citation-worthy page structure
 - [ ] D3.3 — Bing-first push
-- [ ] D2 — authority engine
+- [ ] D2.2–D2.4 — digital-PR engine, entity/Wikidata consensus, backlink monitoring
 - [ ] D4 — conversion
 - [ ] D1 — recovery & depth (deferred: ongoing page work elsewhere)
 - [ ] Deploy `phase13-geo-seo` → preview, smoke-test /llms.* routes + /admin/ai-citations panel
