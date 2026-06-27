@@ -34,8 +34,18 @@ Avg position ~45 · page-1 share 3.2% · compares 34% indexed · ~110 human view
 
 ## Resume checkpoint
 - [x] D0 — docs folder + baseline (2026-06-27)
-- [ ] D0 — `../rac-phase13` worktree + branch
-- [ ] D1 — recovery & depth
-- [ ] D2 — authority engine
-- [ ] D3 — GEO citation engine
-- [ ] D4 — conversion
+- [x] D0 — `../rac-phase13` worktree + branch
+- [x] D3.4 — GEO citation tracker + free Gemini engine + weekly cron + /admin panel (baseline: 0/12 cited)
+- [x] D3.2 — live citable dataset (/llms.txt, /llms-full.txt, /llms.jsonl) — verified vs DB
+- [x] D2.1 — directory submission engine + /admin/authority pipeline panel (19 targets queued)
+- [x] D2.2 — "State of AI Tools" data report (/state-of-ai-tools) — verified vs DB
+- [x] D2.3 — entity dataset feeds (datasetJsonLd → /llms.jsonl) + operator entity playbook
+- [x] D2.4 — weekly backlink-monitor cron (/api/cron/authority-check)
+- [x] D3.1 — satisfied by Phase-9 structure + the new report (no template edits — collision-avoidance)
+- [x] D3.3 — satisfied by existing Bing/IndexNow crons + new sitemap entry
+- [x] D4 — funnel diagnosed (leak = 0.2% plan-CTA CTR; affiliate out-clicks = real money path); fixes scoped for follow-up
+- [ ] D1 — deferred (active page work in another session)
+- [ ] Operator: open PR, deploy, submit directories, entity steps — see end-of-round guide
+- [ ] D1 — recovery & depth (deferred: ongoing page work elsewhere)
+- [ ] Deploy `phase13-geo-seo` → preview, smoke-test /llms.* routes + /admin/ai-citations panel
+- [ ] Add Anthropic/Perplexity/OpenAI engines for multi-engine GEO coverage (later)
