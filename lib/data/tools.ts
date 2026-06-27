@@ -240,6 +240,28 @@ export async function getIntegrationLinks(names: string[]): Promise<Map<string, 
   return out
 }
 
+// Phase 12 Bug-4.9 (2026-06-27): given a list of tool slugs (e.g. the picks a
+// curated stack references), return the subset that resolve to a LIVE, published,
+// non-merged tool page. Stack pages use this to avoid linking a referenced pick
+// to a 404 `/tools/{slug}` when that tool isn't in our catalog (very common —
+// stacks cite real products like Buffer/TurboTax we may not list) or was merged
+// away. Slugs not in the returned set should render as plain text, not links.
+export async function getLiveToolSlugs(slugs: string[]): Promise<Set<string>> {
+  const out = new Set<string>()
+  const uniq = [...new Set(slugs.map((s) => s.trim()).filter(Boolean))]
+  if (uniq.length === 0) return out
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tools')
+    .select('slug, merged_into')
+    .eq('is_published', true)
+    .in('slug', uniq)
+  for (const r of (data ?? []) as { slug: string; merged_into: string | null }[]) {
+    if (!r.merged_into) out.add(r.slug)
+  }
+  return out
+}
+
 export async function searchTools(query: string) {
   const supabase = await createClient()
   const term = query.trim()

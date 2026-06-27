@@ -1,8 +1,38 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import type { StackStage } from '@/lib/data/stacks'
 
-export function StackStageCard({ stage, index }: { stage: StackStage; index: number }) {
+// Bug-4.9: only link a pick to /tools/{slug} when that slug is a live published
+// tool (passed in via `liveSlugs`); otherwise render the name as plain text so
+// the stack never emits a 404 internal link for a tool we don't list.
+function PickName({
+  name,
+  slug,
+  live,
+  className,
+}: {
+  name: string
+  slug: string
+  live: boolean
+  className: string
+}) {
+  if (!live) return <span className={className}>{name}</span>
+  return (
+    <Link href={`/tools/${slug}`} className={`${className} transition-colors`}>
+      {name}
+    </Link>
+  )
+}
+
+export function StackStageCard({
+  stage,
+  index,
+  liveSlugs,
+}: {
+  stage: StackStage
+  index: number
+  liveSlugs?: Set<string>
+}) {
+  const isLive = (slug: string) => liveSlugs?.has(slug) ?? true
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
       {/* Stage header */}
@@ -23,12 +53,12 @@ export function StackStageCard({ stage, index }: { stage: StackStage; index: num
           <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 rounded px-1.5 py-0.5">
             Best Pick
           </span>
-          <Link
-            href={`/tools/${stage.bestPick.slug}`}
-            className="text-sm font-semibold text-white hover:text-emerald-400 transition-colors"
-          >
-            {stage.bestPick.name}
-          </Link>
+          <PickName
+            name={stage.bestPick.name}
+            slug={stage.bestPick.slug}
+            live={isLive(stage.bestPick.slug)}
+            className="text-sm font-semibold text-white hover:text-emerald-400"
+          />
           <span className="text-xs text-zinc-500 ml-auto">{stage.bestPick.pricing}</span>
         </div>
         <p className="text-sm text-zinc-400 leading-relaxed">{stage.bestPick.reason}</p>
@@ -49,12 +79,12 @@ export function StackStageCard({ stage, index }: { stage: StackStage; index: num
           <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Alternatives</span>
           {stage.alternatives.map((alt) => (
             <div key={alt.slug} className="flex items-start gap-3 rounded-lg bg-zinc-900/50 p-3">
-              <Link
-                href={`/tools/${alt.slug}`}
-                className="text-sm font-medium text-zinc-300 hover:text-emerald-400 transition-colors shrink-0"
-              >
-                {alt.name}
-              </Link>
+              <PickName
+                name={alt.name}
+                slug={alt.slug}
+                live={isLive(alt.slug)}
+                className="text-sm font-medium text-zinc-300 hover:text-emerald-400 shrink-0"
+              />
               <p className="text-xs text-zinc-500 flex-1">{alt.reason}</p>
               <span className="text-xs text-zinc-600 shrink-0">{alt.pricing}</span>
             </div>

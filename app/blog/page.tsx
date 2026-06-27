@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Calendar, User, Tag } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { getAllPosts } from '@/lib/data/blog'
 import { breadcrumbJsonLd } from '@/lib/seo/json-ld'
+import { BlogList } from '@/components/blog/blog-list'
 
 export const metadata: Metadata = {
   title: 'Blog — AI Tools Guides, Comparisons & Industry Analysis',
@@ -49,43 +48,16 @@ export default function BlogIndexPage() {
               No posts yet. Check back soon.
             </p>
           ) : (
-            <div className="mt-10 space-y-8">
-              {posts.map((post) => (
-                <article
-                  key={post.slug}
-                  className="group rounded-xl border border-zinc-800 bg-zinc-900/30 p-6 hover:border-zinc-700 transition-colors"
-                >
-                  <Link href={`/blog/${post.slug}`}>
-                    <h2 className="text-xl font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                      {post.title}
-                    </h2>
-                  </Link>
-                  <p className="mt-2 text-sm text-zinc-400 line-clamp-2">
-                    {post.description}
-                  </p>
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      {post.author}
-                    </span>
-                    {post.categories.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Tag className="h-3.5 w-3.5" />
-                        {post.categories.join(', ')}
-                      </span>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
+            <BlogList
+              posts={posts.map((p) => ({
+                slug: p.slug,
+                title: p.title,
+                description: p.description,
+                publishedAt: p.publishedAt,
+                author: p.author,
+                categories: p.categories,
+              }))}
+            />
           )}
         </div>
       </main>

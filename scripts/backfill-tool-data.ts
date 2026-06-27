@@ -465,7 +465,7 @@ A. EDITORIAL
 - is_wrapper (boolean): TRUE only if this tool is essentially a thin wrapper over a third-party foundation model (OpenAI/Anthropic/Google/etc.) — a chat or prompt UI with little proprietary technology, data, or workflow, that could be replicated in a weekend and is at high risk if the model provider ships the feature natively. FALSE for tools with a proprietary model, a real data moat, deep multi-step workflow/automation, non-LLM core value, or significant engineering beyond prompting. When genuinely unsure, return FALSE (don't flag established products as wrappers).
 
 B. STRUCTURED
-- features (8-15 items): each 8-200 chars. Concrete capability names ("AI-assisted drafting", "Stripe integration", "Custom domains"). NOT marketing taglines.
+- features (8-15 items, each 8-200 chars): concrete capability names ("AI-assisted drafting", "Stripe integration", "Custom domains"), NOT marketing taglines. Be EXHAUSTIVE about distinct capabilities and especially MODALITIES — explicitly include any the tool actually supports: voice / voice conversation, vision / image understanding, image generation, audio / music, video, real-time / streaming, mobile apps (iOS/Android), browser extension, desktop app, API / SDK, offline mode, team collaboration, on-prem / self-host. Mine the scraped /features, /changelog, /release-notes AND the latest news for capabilities the static homepage omits (e.g. a "voice mode" that shipped in a recent release) — a real capability mentioned ANYWHERE in the inputs MUST appear here. Never list a capability the tool does not genuinely have.
 - integrations (0-15 items): ONLY integrations the vendor actually documents in the scraped content (its /integrations, marketplace, or docs pages). Use the integration's common product name ("Slack", "Notion", "Zapier", "Google Drive"). Do NOT guess or infer, do NOT include generic categories ("CRM", "databases", "cloud storage"), the tool's own name, programming languages, or aspirational / "coming soon" integrations. If none are clearly documented in the scrape, return an empty array — an empty list is better than a wrong one.
 - use_cases (0-8 items, ≤220 chars each): concrete user scenarios.
 - best_for (0-5 items): personas / company stages this fits — short labels.
@@ -652,6 +652,14 @@ function sanitizeNestedArrays(obj: Record<string, unknown>): void {
   // this lets us drop the overflow silently instead of forcing a retry)
   if (Array.isArray(obj.integrations) && (obj.integrations as unknown[]).length > 25) {
     obj.integrations = (obj.integrations as string[]).slice(0, 25)
+  }
+
+  // Bug-4.4 / C1: thin-feature coverage signal. A real product almost always
+  // has 6+ distinct capabilities; fewer usually means the synthesis missed
+  // modalities mentioned only in the changelog/news (the "Claude voice mode"
+  // class of bug). Log it so the nightly run surfaces under-covered tools.
+  if (Array.isArray(obj.features) && (obj.features as unknown[]).length < 6) {
+    console.warn(`  ⚠ thin features (${(obj.features as unknown[]).length}) — may be missing capabilities/modalities`)
   }
 
   // Phase 8.h+ depth fields — coerce null → [] / {} so .default() kicks in,

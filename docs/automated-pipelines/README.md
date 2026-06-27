@@ -50,6 +50,8 @@ supporting detail this README links to:
 - **`01`–`10`** — original per-pipeline deep-dives (April 2026; partially stale — trust this README for
   schedules/engines, the deep-dives for code-level internals). `06-manual-runs.md` = on-demand triggers;
   `09-shared-modules.md` = shared infra.
+- **`11-geo-and-authority.md`** — **(Phase 13, 2026-06-27)** GEO citation tracking + authority/directory
+  engine + the self-refreshing `/llms.*` + `/state-of-ai-tools` data surfaces.
 
 ---
 
@@ -92,7 +94,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 
 ---
 
-## 1) Vercel Crons (`vercel.json`) — 18 jobs
+## 1) Vercel Crons (`vercel.json`) — 20 jobs
 
 | Path | Schedule (UTC) | Purpose |
 |------|----------------|---------|
@@ -110,6 +112,8 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 | `/api/cron/resubmit-sitemap-gsc` | `0 6 * * 1` | Resubmit sitemap to GSC. |
 | `/api/cron/snapshot-gsc` | `30 6 * * 1` | Weekly GSC snapshot. |
 | `/api/cron/triage-gsc` | `0 7 * * 1` | GSC diff → weekly action triage. |
+| `/api/cron/track-geo-citations` | `15 7 * * 1` | **(Phase 13 D3.4)** GEO citation scoreboard — asks a web-searching AI (free Gemini engine; Anthropic/Perplexity/OpenAI scaffolded) the target prompts in `lib/geo/target-prompts.ts` and writes one row per `(date, engine, prompt)` to `geo_citation_snapshots`: are we cited, rank, competitors, share-of-voice. The GEO analogue of `snapshot-gsc`. Surfaced at `/admin/ai-citations`. Gracefully records `partial` (no false alert) if no engine key is set. See `11-geo-and-authority.md`. |
+| `/api/cron/authority-check` | `30 7 * * 1` | **(Phase 13 D2.4)** Backlink monitor — re-fetches each submitted/live directory listing in `directory_submissions`, detects a link back to rightaichoice.com, and logs confirmed backlinks into `referring_domains` (channel `other`, note `directory:<key>`) → `/admin/authority`. See `11-geo-and-authority.md`. |
 | `/api/cron/email-weekly-digest` | `0 8 * * 1` | Operator weekly digest email. |
 | `/api/cron/seo-impact` | `30 8 * * 1` | Weekly SEO impact report. |
 | `/api/cron/refresh-freshness-view` | `45 23 * * *` | Refresh the freshness materialized view. |
@@ -127,6 +131,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 | `cascade-editorials` | `0 5 * * *` | Regenerate stale compare editorials. **(Phase 11 B1: news-grounded.)** |
 | `backfill-logos` | `40 5 * * *` | Fetch/rehost missing logos (missing-only). |
 | `full-refresh` | `0 6 * * *` | **(Phase 11 B2; Phase 12 Bug-2 SHARDED) Deep 22-field SOP** — `backfill-tool-data.ts --cohort=300 --shard=i --shards=3`, the N stalest by `last_full_refresh_at`, run as a **3-shard matrix** (hash-partitioned by slug). Refreshes ALL fields (FAQs, workflow scenarios, pricing-tier guides, migrations, hidden costs) **and judges `is_wrapper`** → whole catalog every field current within ~7 days. **Phase 12 Bug-2:** un-sharded `--cohort=300` took ~64s/tool (19-URL scrape) → ~5.3h > the 300-min timeout, so it was killed every night and froze 71% of the catalog ~27 days. Now scrape trimmed 19→5 URLs (~30s/tool) + 3 shards (~100 each, ~50 min) → reliably completes; logs a `running` row at START so a timeout is visible. DeepSeek-only; `pipeline_key=refresh-tool-data-full` with real $. Per-shard concurrency group. |
+| `check-link-health` | `0 7 * * 0` (weekly, Sun) | **(Phase 12 Bug-4.6)** `check-link-health.ts` — HTTP-only (no DeepSeek): probes every published tool's external resource links (docs/changelog/github/website/tutorials/community) and writes `tools.dead_links`. The tool page filters dead URLs out of Resources & Guides + the sidebar; a tool with no live resources skips the section. **Conservative** — only a clear 404/410 or a DNS/connection failure on BOTH HEAD and GET counts as dead (401/403/429/timeouts/5xx are kept, to avoid hiding bot-blocked-but-live links). Self-healing both ways (a revived link drops out next run). Covers newly onboarded tools automatically. `pipeline_key=check-link-health`. |
 
 **`.github/workflows/cron-pipelines.yml`** (lightweight curl-to-Vercel):
 `refresh-faqs` (`0 6 */2 * *`), `generate-editorials` (`0 5 * * 1`), `discover-tutorials`
@@ -135,6 +140,12 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 throttles `*/10`/`*/30` schedules) and moved to Vercel crons above; their jobs remain for
 manual `workflow_dispatch`.
 Other workflows: `sync-mentions.yml`, `retry-failed-tools.yml`, `tracking-watchdog.yml`.
+
+**On-demand audits (run manually / periodically, not crons):** `npm run stacks:audit`
+(`scripts/audit-stacks.ts`, **Phase 12 Bug-4.9**) — resolves every curated stack's tool slugs against live
+DB health (published / merged / viability) and flags stacks whose picks are non-viable; the stack page
+already renders missing/merged picks as plain text (no 404) via `getLiveToolSlugs`. `npm run links:check:dry`
+(**Bug-4.6**) — dry-run of the link-health sweep for spot-checks.
 
 ## 3) pg_cron (Supabase) — maintenance & monitoring — 10 jobs
 
@@ -246,6 +257,53 @@ dependency 30% (the real `is_wrapper`, now judged per-tool by the deep SOP's LLM
 + Website 10%. `is_wrapper` populates over the ~7-day deep cycle, so the at-risk page fills with genuine
 thin-wrapper / stale tools. Bands: ≥70 safe, 40–69 moderate, <40 at-risk. (C3 backlog: real per-category
 mortality + hyperscaler-overlap RSS monitoring.)
+
+## Changelog — Phase 12 Bug-4 (Tool-page overhaul + platform health), 2026-06-27
+
+Tool-page overhaul delivered as rolling sub-bugs (full detail in
+`Phase 12 (user journey bugs)/build-log.md`). Pipeline-relevant changes:
+
+- **New automation `check-link-health` (Bug-4.6)** — weekly GH Actions job (Sun 07:00 UTC) +
+  `scripts/check-link-health.ts` + `npm run links:check[:dry]`. Probes every published tool's external
+  resource links and writes `tools.dead_links` (migration 173) so the tool page never shows a dead
+  Resources/Guides link. Covers newly onboarded tools automatically (it sweeps the whole published set).
+  `pipeline_key=check-link-health` in `pipeline_runs`.
+- **New on-demand audit `audit-stacks` (Bug-4.9)** — `npm run stacks:audit` resolves curated-stack picks
+  against live tool health. The stack page now renders missing/merged picks as plain text (no 404) via the
+  new `getLiveToolSlugs()`.
+- **Durable data-correctness via existing pipelines (Bug-4.3/4.4)** — NO new automation; the synthesis
+  prompts in `backfill-tool-data.ts` + `lib/cron/refresh.ts` were tightened (exhaustive feature/modality
+  coverage incl. voice/vision/etc., friendlier hidden-costs, documented-only integrations). Because the
+  onboarding SOP (`onboard.ts`) and the nightly lite/full refresh both call these, **every new tool and
+  every refresh inherits the corrected synthesis automatically** — the self-healing guarantee.
+- **Not added to `pipeline-heartbeat`:** `check-link-health` is weekly, so the 28–30h heartbeat thresholds
+  would false-alarm; a missed weekly sweep is non-critical (only delays dead-link detection). Revisit if a
+  weekly-aware monitor is added.
+- ⚠️ **Operational note (2026-06-27):** DeepSeek API returned **402 Insufficient Balance** during this work
+  — the data-synthesis pipelines (refresh/onboard/categorize) are paused until the key is topped up. The
+  Bug-4.3/4.4 prompt fixes won't repopulate the catalog until then.
+
+## Changelog — Phase 13 (GEO & SEO upgrades), 2026-06-27
+
+Added **2 Vercel crons** (17→… well, 18→20 incl. the Phase-11 backfill) and **2 operator scripts**, plus
+turned the static `public/llms*.txt` into **self-refreshing routes**. Full detail in
+[`11-geo-and-authority.md`](./11-geo-and-authority.md) and the phase docs in
+`docs/Phase 13 (GEO AND SEO upgrades)/`.
+
+- **`track-geo-citations`** (Vercel cron, Mon 07:15 UTC) — GEO citation scoreboard → `geo_citation_snapshots`
+  → `/admin/ai-citations`. Free Gemini engine (Google Search grounding); Anthropic/Perplexity/OpenAI
+  scaffolded behind their keys. Baseline run 2026-06-27: **0/12 prompts cited us**.
+- **`authority-check`** (Vercel cron, Mon 07:30 UTC) — directory backlink monitor → `referring_domains` →
+  `/admin/authority`.
+- **Operator scripts (on-demand, pipeline_runs-logged):** `geo:track[:dry]` (same as the cron, manual);
+  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`).
+- **Self-refreshing data surfaces (ISR routes, not crons):** `/llms.txt`, `/llms-full.txt`, `/llms.jsonl`,
+  and `/state-of-ai-tools` now regenerate from the live DB hourly/daily (replacing the static, stale
+  `public/llms*.txt`). They carry a live freshness banner — our core GEO signal.
+- **New tables:** `geo_citation_snapshots` (migration 172), `directory_submissions` (migration 174 — renumbered from 173 to avoid colliding with main's `173_link_health.sql`).
+- **No conversion-funnel automation was built this phase.** D4 was a read-only funnel *diagnosis* (leak =
+  ~0.2% plan-CTA click-rate; affiliate out-clicks are the real money path). Recommended fixes are scoped
+  for a later phase — nothing automated shipped, so there is nothing funnel-related to register here.
 
 ## Changelog — Phase 12 Bug-2 (Real-time freshness), 2026-06-22
 

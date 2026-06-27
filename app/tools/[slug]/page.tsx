@@ -46,13 +46,14 @@ import { TutorialLink } from '@/components/tools/tutorial-link'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 // Phase 3 density-replacement sections
 import { CollapsibleProse } from '@/components/tools/collapsible-prose'
+import { LimitationsList } from '@/components/tools/limitations-list'
+import { RevealOnScroll } from '@/components/ui/reveal-on-scroll'
 import { CostCalculator } from '@/components/tools/cost-calculator'
 import { HiddenCosts } from '@/components/tools/hidden-costs'
 import { PricingPowerMatch } from '@/components/tools/pricing-power-match'
 import { WorkflowFit } from '@/components/tools/workflow-fit'
 import { SetupTimeline } from '@/components/tools/setup-timeline'
 import { MigrationPaths } from '@/components/tools/migration-paths'
-import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
 import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
 import { getToolBySlug, getAlternativeTools, getTopInCategory, getIntegrationLinks } from '@/lib/data/tools'
@@ -208,6 +209,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
     getEditorialComparisonsForTool(tool.id).catch(() => [] as Awaited<ReturnType<typeof getEditorialComparisonsForTool>>),
   ])
 
+  // Bug-4.6 (2026-06-27): URLs the link-health checker confirmed dead. Both the
+  // main "Resources & Guides" list and the sidebar "Resources" links filter
+  // against this so no tool page surfaces a 404 link.
+  const deadLinkSet = new Set((tool.dead_links as string[] | null) ?? [])
+
   const skillLabels: Record<string, string> = {
     beginner: 'Beginner-friendly',
     intermediate: 'Intermediate',
@@ -293,6 +299,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
     ...(tool.logo_url && { image: tool.logo_url }),
     ...(tool.github_url && { codeRepository: tool.github_url }),
     ...(tool.docs_url && { documentation: tool.docs_url }),
+    // Bug-4.11 (2026-06-27): freshness signals. dateModified (last verified) and
+    // datePublished (added) help Google + AI answer engines prefer current pages
+    // and surface "updated" recency, reinforcing our real-time-data positioning.
+    ...(tool.last_verified_at && { dateModified: new Date(tool.last_verified_at).toISOString() }),
+    ...(tool.created_at && { datePublished: new Date(tool.created_at).toISOString() }),
   }
 
   return (
@@ -722,27 +733,52 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* Features */}
               {tool.features && tool.features.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-emerald-400" />
-                    Key Features
-                  </h2>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {tool.features.map((feature: string, i: number) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
-                      >
-                        <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                <RevealOnScroll>
+                  <section>
+                    <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-emerald-400" />
+                      Key Features
+                    </h2>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {tool.features.map((feature: string, i: number) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
+                        >
+                          <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </RevealOnScroll>
               )}
 
-              {/* About {tool} — collapsible (demoted below Key Features) */}
-              <CollapsibleProse title={`About ${tool.name}`} text={tool.description} />
+              {/* About {tool} — key-facts chips + collapsible prose (Bug-4.1/4.7).
+                  The chips give an instant, scannable summary above the prose. */}
+              <section>
+                <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[
+                    pricingLabel(tool.pricing_type),
+                    skillLabels[tool.skill_level] ?? tool.skill_level,
+                    tool.has_api ? 'API available' : 'No API',
+                    ...(Array.isArray(tool.platforms) && tool.platforms.length > 0
+                      ? [tool.platforms.map((p: string) => platformLabels[p] ?? p).join(' · ')]
+                      : []),
+                  ]
+                    .filter(Boolean)
+                    .map((fact, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full border border-zinc-700 bg-zinc-800/50 px-3 py-1 text-xs font-medium text-zinc-300"
+                      >
+                        {fact}
+                      </span>
+                    ))}
+                </div>
+                <CollapsibleProse title="" text={tool.description} />
+              </section>
 
               {/* Behind the Verdict — collapsible (demoted from the top of page) */}
               <CollapsibleProse
@@ -835,17 +871,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Limitations — honest constraints (from tool.limitations) */}
+              {/* Limitations — honest constraints (from tool.limitations).
+                  Bug-4.7: rendered as icon-led gotcha cards (LimitationsList). */}
               {tool.limitations && (
-                <section className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-5">
-                  <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-400" />
-                    Limitations
-                  </h2>
-                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
-                    {tool.limitations}
-                  </p>
-                </section>
+                <RevealOnScroll>
+                  <section className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-5">
+                    <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-400" />
+                      Limitations
+                    </h2>
+                    <LimitationsList text={tool.limitations} />
+                  </section>
+                </RevealOnScroll>
               )}
 
               {/* Phase 3 — Pricing & cost band */}
@@ -897,15 +934,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 
-              {/* Phase 3 — Adoption-friction band: setup, migration, recent changes
-                  — all three answer "what's the commitment / what risk am I taking" */}
+              {/* Phase 3 — Adoption-friction band: setup, migration
+                  — both answer "what's the commitment / what risk am I taking" */}
               <SetupTimeline toolName={tool.name} text={tool.setup_time_text} />
               <MigrationPaths
                 toolName={tool.name}
                 migrationIn={tool.migration_in}
                 migrationOut={tool.migration_out}
               />
-              <RecentChanges toolName={tool.name} changes={tool.recent_changes} />
+              {/* Bug-4.5 (2026-06-27): the standalone "Recent changes" section was
+                  removed — it overlapped the "What's new in {tool}" feed above.
+                  One consolidated release/change surface now (release-notes only,
+                  skipped when there's nothing real to show). */}
 
               {/* Topics moved to right rail (Phase 3c) — they were redundant with
                   Categories which already lives in the rail, and they broke the
@@ -918,14 +958,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   github_url / community links / website. Worst case: a single
                   Visit Website card so every tool has SOMETHING actionable here. */}
               {(() => {
-                const enriched = Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []
-                const bare = Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []
+                // Bug-4.6 (2026-06-27): drop links our link-health checker
+                // (scripts/check-link-health.ts) confirmed dead, so the
+                // Resources section never shows a 404. If nothing live remains,
+                // the section is skipped entirely.
+                const deadSet = deadLinkSet
+                const urlOf = (it: string | { url?: string | null }) => (typeof it === 'string' ? it : it?.url ?? '')
+                const enriched = (Array.isArray(tool.tutorial_links) ? tool.tutorial_links as Array<{url: string; title?: string | null; description?: string | null}> : []).filter((it) => !deadSet.has(urlOf(it)))
+                const bare = (Array.isArray(tool.tutorial_urls) ? tool.tutorial_urls as string[] : []).filter((u) => !deadSet.has(u))
                 let items: Array<string | { url: string; title?: string | null; description?: string | null }> = enriched.length > 0 ? enriched : bare
                 if (items.length === 0) {
                   // Synthesize a resources list from sibling URL fields
                   const cl = (tool.community_links ?? {}) as Record<string, unknown>
                   const fallback: string[] = []
-                  const add = (u: unknown) => { if (typeof u === 'string' && /^https?:\/\//.test(u) && !fallback.includes(u)) fallback.push(u) }
+                  const add = (u: unknown) => { if (typeof u === 'string' && /^https?:\/\//.test(u) && !fallback.includes(u) && !deadSet.has(u)) fallback.push(u) }
                   add(tool.docs_url)
                   add(tool.changelog_url)
                   add(tool.github_url)
@@ -1215,12 +1261,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     href={tool.website_url}
                     icon={<Globe className="h-4 w-4" />}
                     label="Official Website"
+                    deadSet={deadLinkSet}
                   />
                   {tool.docs_url && (
                     <ResourceLink
                       href={tool.docs_url}
                       icon={<BookOpen className="h-4 w-4" />}
                       label="Documentation"
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {tool.github_url && (
@@ -1232,6 +1280,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                           ? `GitHub (${formatNumber(tool.github_stars)} stars)`
                           : 'GitHub Repository'
                       }
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {tool.changelog_url && (
@@ -1239,6 +1288,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       href={tool.changelog_url}
                       icon={<Calendar className="h-4 w-4" />}
                       label="Changelog"
+                      deadSet={deadLinkSet}
                     />
                   )}
                   {(() => {
@@ -1255,6 +1305,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.g2_url}
                             icon={<Star className="h-4 w-4" />}
                             label={cl.g2_rating ? `G2 (${cl.g2_rating.toFixed(1)}★)` : 'G2 reviews'}
+                            deadSet={deadLinkSet}
                           />
                         )}
                         {cl.producthunt_url && (
@@ -1262,6 +1313,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.producthunt_url}
                             icon={<TrendingUp className="h-4 w-4" />}
                             label="Product Hunt"
+                            deadSet={deadLinkSet}
                           />
                         )}
                         {Array.isArray(cl.reddit_threads) && cl.reddit_threads[0] && (
@@ -1269,6 +1321,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                             href={cl.reddit_threads[0]}
                             icon={<MessagesSquare className="h-4 w-4" />}
                             label={cl.reddit_threads.length > 1 ? `Reddit (${cl.reddit_threads.length} threads)` : 'Reddit thread'}
+                            deadSet={deadLinkSet}
                           />
                         )}
                       </>
@@ -1321,11 +1374,15 @@ function ResourceLink({
   href,
   icon,
   label,
+  deadSet,
 }: {
   href: string
   icon: React.ReactNode
   label: string
+  deadSet?: Set<string>
 }) {
+  // Bug-4.6: skip a link the health checker confirmed dead (or an empty href).
+  if (!href || deadSet?.has(href)) return null
   return (
     <a
       href={href}
