@@ -103,7 +103,7 @@ directory-targets ──seed──► directory_submissions
 ```
 
 ### Database tables
-- **`directory_submissions`** (migration 173, RLS service-role only): `directory_key, directory_name,
+- **`directory_submissions`** (migration 174, RLS service-role only): `directory_key, directory_name,
   directory_url, submit_url, authority_tier, da_estimate, pricing, dofollow, category, status
   (queued|submitted|live|rejected|skipped), submitted_at, live_url, backlink_detected, last_checked_at`.
 - **`referring_domains`** (migration 084, existing) — write target for confirmed backlinks.

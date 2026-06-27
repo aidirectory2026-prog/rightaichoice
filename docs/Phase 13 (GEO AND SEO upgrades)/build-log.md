@@ -238,7 +238,8 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
 - **Why:** Median page-1 site ≈ 900 referring domains; we have ~0. Directories give dofollow links AND
   entity/consensus signal. Founder chose free/organic + automation-prepares / operator-approves-sends.
 - **How (commit `af0e5da`, branch `phase13-geo-seo`):**
-  - `supabase/migrations/173_directory_submissions.sql` (+ rollback) — **purely additive** new table
+  - `supabase/migrations/174_directory_submissions.sql` (+ rollback; renumbered from 173 — main has a
+    `173_link_health.sql` from a parallel session) — **purely additive** new table
     (after a first version that altered `referring_domains` was correctly denied by the prod-migration
     guard; redesigned to log directory backlinks via the existing `other` channel + a `directory:` note,
     touching no shared table). **Applied live + verified.**
