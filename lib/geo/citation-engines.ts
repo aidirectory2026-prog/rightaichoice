@@ -123,6 +123,88 @@ function pushUnique(arr: string[], v: string): void {
   if (!arr.includes(v)) arr.push(v)
 }
 
+// ── gemini (free tier + Google Search grounding) ─────────────────────────────
+//
+// Enable by creating a FREE key at https://aistudio.google.com/apikey and setting
+// GEMINI_API_KEY. Gemini's google_search grounding returns the sources it used to
+// ground the answer — those are our "cited" set. Grounding URIs are Vertex redirect
+// links, so we resolve each to its final domain (falling back to the chunk title).
+
+const GEMINI_MODEL = process.env.GEO_GEMINI_MODEL || 'gemini-2.5-flash'
+
+class GeminiEngine implements CitationEngine {
+  id = 'gemini' as const
+
+  isEnabled(): boolean {
+    return !!process.env.GEMINI_API_KEY
+  }
+
+  async run(prompt: string): Promise<EngineResult> {
+    const key = process.env.GEMINI_API_KEY
+    if (!key) throw new Error('GEMINI_API_KEY not set')
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }],
+      }),
+    })
+    if (!resp.ok) {
+      throw new Error(`gemini ${resp.status}: ${(await resp.text()).slice(0, 300)}`)
+    }
+    const data = (await resp.json()) as Record<string, unknown>
+    const candidates = (data.candidates as Array<Record<string, unknown>>) ?? []
+    const cand = candidates[0] ?? {}
+    const parts =
+      ((cand.content as Record<string, unknown>)?.parts as Array<Record<string, unknown>>) ?? []
+    const answer = parts
+      .map((p) => p.text)
+      .filter((t): t is string => typeof t === 'string')
+      .join('')
+
+    const grounding = (cand.groundingMetadata as Record<string, unknown>) ?? {}
+    const chunks = (grounding.groundingChunks as Array<Record<string, unknown>>) ?? []
+    const rawSources = chunks.map((c) => {
+      const web = (c.web as Record<string, unknown>) ?? {}
+      return { uri: web.uri as string | undefined, title: web.title as string | undefined }
+    })
+    const resolved = await resolveGroundingSources(rawSources)
+
+    const usage = (data.usageMetadata as Record<string, unknown>) ?? {}
+    return {
+      // Gemini grounding chunks are the sources it used to ground the answer ≈ cited.
+      citedUrls: resolved,
+      retrievedUrls: resolved,
+      answerExcerpt: answer.slice(0, 600),
+      model: GEMINI_MODEL,
+      tokensIn: (usage.promptTokenCount as number) ?? 0,
+      tokensOut: (usage.candidatesTokenCount as number) ?? 0,
+    }
+  }
+}
+
+/** Gemini grounding URIs are Vertex redirects — resolve each to its final URL; fall back to the title. */
+async function resolveGroundingSources(
+  sources: Array<{ uri?: string; title?: string }>,
+): Promise<string[]> {
+  const out: string[] = []
+  for (const s of sources) {
+    let resolved = s.title || s.uri || ''
+    if (s.uri && /grounding-api-redirect|vertexaisearch/.test(s.uri)) {
+      try {
+        const r = await fetch(s.uri, { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(8000) })
+        if (r.url) resolved = r.url
+      } catch {
+        // keep the title fallback
+      }
+    }
+    if (resolved && !out.includes(resolved)) out.push(resolved)
+  }
+  return out
+}
+
 // ── Scaffolded engines (disabled until keys are added) ───────────────────────
 
 class DisabledEngine implements CitationEngine {
@@ -142,9 +224,9 @@ class DisabledEngine implements CitationEngine {
 
 export const ENGINES: Record<EngineId, CitationEngine> = {
   claude_websearch: new ClaudeWebSearchEngine(),
+  gemini: new GeminiEngine(),
   perplexity: new DisabledEngine('perplexity', 'PERPLEXITY_API_KEY'),
   openai: new DisabledEngine('openai', 'OPENAI_API_KEY'),
-  gemini: new DisabledEngine('gemini', 'GEMINI_API_KEY'),
 }
 
 export function getEngine(id: EngineId): CitationEngine {
