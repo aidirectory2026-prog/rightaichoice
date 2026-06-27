@@ -118,7 +118,18 @@ export function LatestUpdatesSection({
   items: LatestUpdateItem[] | null | undefined
   updatedAt: string | null | undefined
 }) {
-  const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items])
+  // Bug-4.5 (2026-06-27): "What's new" should be the tool's own release signal,
+  // not a press/social digest. Restrict to vendor-published sources (changelog +
+  // official blog) and drop news / Hacker News / Reddit / Twitter mentions
+  // (community chatter already lives in the Sentiment section). If that leaves
+  // nothing, the section is skipped entirely (see the empty check below).
+  const safeItems = useMemo(
+    () =>
+      (Array.isArray(items) ? items : []).filter(
+        (i) => i.source === 'changelog' || i.source === 'blog'
+      ),
+    [items]
+  )
   const headerStamp = formatHeaderTimestamp(updatedAt)
   const recap = useMemo(() => buildRecap(safeItems), [safeItems])
   // Types actually present, in canonical order — drives the filter chips.
@@ -139,30 +150,17 @@ export function LatestUpdatesSection({
     return best?.key ?? null
   }, [safeItems])
 
-  // Empty state: section still renders so the page-flow stays consistent.
-  if (safeItems.length === 0) {
-    return (
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Radio className="h-5 w-5 text-emerald-400" />
-            Latest from {toolName}
-          </h2>
-        </div>
-        <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 p-6 text-sm text-zinc-500">
-          We&apos;re gathering recent updates for {toolName} from changelogs,
-          press, Hacker News, and social. Check back in a day or two.
-        </div>
-      </section>
-    )
-  }
+  // Bug-4.5 (2026-06-27): when there's no real release/changelog signal, SKIP
+  // the section entirely instead of showing a "check back later" placeholder.
+  // An honest absence reads better than a perpetual empty promise.
+  if (safeItems.length === 0) return null
 
   return (
     <section className="mt-8">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <Radio className="h-5 w-5 text-emerald-400" />
-          Latest from {toolName}
+          What&apos;s new in {toolName}
         </h2>
         {headerStamp && <span className="text-xs text-zinc-500" suppressHydrationWarning>Updated {headerStamp}</span>}
       </div>

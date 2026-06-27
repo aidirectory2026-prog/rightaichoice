@@ -52,7 +52,6 @@ import { PricingPowerMatch } from '@/components/tools/pricing-power-match'
 import { WorkflowFit } from '@/components/tools/workflow-fit'
 import { SetupTimeline } from '@/components/tools/setup-timeline'
 import { MigrationPaths } from '@/components/tools/migration-paths'
-import { RecentChanges } from '@/components/tools/recent-changes'
 import { StackPairings } from '@/components/tools/stack-pairings'
 import { PricingPlansComparison } from '@/components/tools/pricing-plans-comparison'
 import { getToolBySlug, getAlternativeTools, getTopInCategory, getIntegrationLinks } from '@/lib/data/tools'
@@ -897,15 +896,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <HiddenCosts toolName={tool.name} hiddenCosts={tool.hidden_costs} />
               <PricingPowerMatch toolName={tool.name} text={tool.pricing_power_text} />
 
-              {/* Phase 3 — Adoption-friction band: setup, migration, recent changes
-                  — all three answer "what's the commitment / what risk am I taking" */}
+              {/* Phase 3 — Adoption-friction band: setup, migration
+                  — both answer "what's the commitment / what risk am I taking" */}
               <SetupTimeline toolName={tool.name} text={tool.setup_time_text} />
               <MigrationPaths
                 toolName={tool.name}
                 migrationIn={tool.migration_in}
                 migrationOut={tool.migration_out}
               />
-              <RecentChanges toolName={tool.name} changes={tool.recent_changes} />
+              {/* Bug-4.5 (2026-06-27): the standalone "Recent changes" section was
+                  removed — it overlapped the "What's new in {tool}" feed above.
+                  One consolidated release/change surface now (release-notes only,
+                  skipped when there's nothing real to show). */}
 
               {/* Topics moved to right rail (Phase 3c) — they were redundant with
                   Categories which already lives in the rail, and they broke the
