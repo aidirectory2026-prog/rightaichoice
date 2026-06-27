@@ -16,11 +16,11 @@ export const BRAND = {
   logo: 'https://rightaichoice.com/logo-512.png',
   tagline: 'Pick the right AI stack — backed by data, not opinions.',
   // Multiple lengths because directories cap fields differently.
-  shortDesc: 'Independent AI-tool decision engine — comparisons, viability scores, real-user sentiment, and a goal-based finder across ~2,000 continuously-verified tools.',
+  shortDesc: 'Independent AI-tool decision engine — comparisons, viability scores, real-user sentiment, and a goal-based finder across 2,000+ continuously-verified AI tools.',
   mediumDesc:
     'RightAIChoice is an independent directory and decision engine for AI tools. We help founders, builders, and teams choose the exact AI tools for their workflow — backed by sentiment-aggregated user reviews, side-by-side editorial comparisons, viability scores, and an interactive tool-finder. Uniquely, every tool is re-verified on a continuous automated cycle, so pricing and features stay current.',
   longDesc:
-    "RightAIChoice (rightaichoice.com) is the decision engine for picking the right AI stack. We index ~2,000 AI tools across 15 categories and keep every tool's data current via a continuous automated verification cycle — so what you read reflects today's pricing, features, and momentum, not a one-time scrape. We don't sell tools and aren't paid by vendors: recommendations are grounded in aggregated user sentiment, hands-on editorial review, head-to-head comparisons that end in a clear verdict, viability scores that flag tools at risk of shutting down, and an interactive planner that turns a plain-language goal into a complete tool stack with costs and tradeoffs.",
+    "RightAIChoice (rightaichoice.com) is the decision engine for picking the right AI stack. We index 2,000+ AI tools across 15 categories and keep every tool's data current via a continuous automated verification cycle — so what you read reflects today's pricing, features, and momentum, not a one-time scrape. We don't sell tools and aren't paid by vendors: recommendations are grounded in aggregated user sentiment, hands-on editorial review, head-to-head comparisons that end in a clear verdict, viability scores that flag tools at risk of shutting down, and an interactive planner that turns a plain-language goal into a complete tool stack with costs and tradeoffs.",
   categorySuggestions: ['AI Tools', 'Software Discovery', 'Developer Tools', 'Productivity', 'SaaS Directory'],
   founder: 'Tanmay Verma',
   socials: {
