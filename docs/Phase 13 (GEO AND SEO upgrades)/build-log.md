@@ -357,6 +357,32 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   session is editing, so they're written up for a dedicated follow-up rather than changed now.)_
 - **Status: diagnosis done (D4); fixes scoped for a follow-up to avoid collision with active page work.**
 
+### 2026-06-28 — D1.1: originality-density audit (read-only) — and a plan-changing finding
+- **What:** Built + ran a read-only audit scoring every published page on "original value density"
+  (proprietary data + text depth + freshness + 28d GSC impressions) → keep / enrich / consolidate.
+- **Why:** The May-2026 core update demotes thin programmatic pages; we needed to know how many of OUR
+  pages are actually thin before consolidating (D1.2).
+- **How:** `lib/seo/originality-audit.ts` (pure scoring) + `scripts/audit-originality.ts` (CLI, writes
+  `scripts/.originality-audit.json`). **New files only — no edits to tool/compare/category templates**
+  (active page work elsewhere; collision-avoidance). Designed by a background agent, then created + run
+  by the main session (the agent's sandbox was read-only). Commit `dfcaa66`.
+- **Verification:** `tsc --noEmit` clean; ran live against the full catalog.
+- **📊 FINDING (full catalog, 1,998 tools + 925 compares):** tools = **1,830 keep / 168 enrich / 0
+  consolidate**; compares = **924 keep / 0 enrich / 1 consolidate**. **Our pages are NOT thin** — every
+  tool carries real proprietary data (viability, pricing, categories, all freshly verified) and compares
+  have editorial prose. Only **1** page of ~2,900 is a consolidation candidate
+  (`/compare/heymilo-ai-vs-presto-voice`).
+- **Plan impact:** **D1.2 (data-driven consolidation / 308-redirects) is effectively a no-op** — nothing
+  to merge away (no equity to lose). The 168 "enrich" tools are borderline (rich data, zero impressions):
+  their problem is **discovery, not depth**. D1 therefore confirms the binding constraint is **authority +
+  getting found** (D2/D3), not page quality. D1.2/D1.3 de-prioritized; the 1 thin compare flagged for a
+  later cleanup pass.
+- _Plain language: I scored all ~2,900 pages to find the "thin" ones Google punishes. The answer: we
+  barely have any — basically 1. Our pages are genuinely data-rich, so there's nothing to clean up. That
+  confirms our real problem isn't the pages — it's that not enough other sites/AIs point to us yet, which
+  is exactly what the directory work fixes._
+- **Status: done (D1.1). D1.2/D1.3 de-prioritized by the data; D1 effectively closed (only authority/discovery remains, owned by D2/D3).**
+
 ---
 
 ## Phase 13 round 1 — summary (2026-06-27)
