@@ -34,6 +34,9 @@ export type AIToolResult = {
   // "⏱ 30 min to first output" tag per tool card.
   last_verified_at?: string | null
   setup_time_text?: string | null
+  // Phase 12 Bug-2 follow-up — structured pricing tiers so the plan result card
+  // can show a real "from $X/mo" starting price, not just the Free/Paid badge.
+  pricing_details?: unknown
 }
 
 // sanitizeLike now lives in ./\_sanitize so the search route + searchTools can
@@ -155,14 +158,14 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
   const SELECT_BASE = `
       id, name, slug, tagline, description, pricing_type, skill_level,
       has_api, platforms, avg_rating, review_count, website_url,
-      integrations, best_for, last_verified_at, setup_time_text,
+      integrations, best_for, last_verified_at, setup_time_text, pricing_details,
       tool_categories(categories(name)),
       tool_tags(tags(name))
     `
   const SELECT_WITH_CAT = `
       id, name, slug, tagline, description, pricing_type, skill_level,
       has_api, platforms, avg_rating, review_count, website_url,
-      integrations, best_for, last_verified_at, setup_time_text,
+      integrations, best_for, last_verified_at, setup_time_text, pricing_details,
       tool_categories(categories(name)),
       tool_tags(tags(name)), cat_filter:tool_categories!inner(categories!inner(slug))
     `
@@ -238,7 +241,7 @@ export async function searchToolsForAI(params: AISearchParams): Promise<AIToolRe
       .select(`
         id, name, slug, tagline, description, pricing_type, skill_level,
         has_api, platforms, avg_rating, review_count, website_url,
-        integrations, best_for, last_verified_at, setup_time_text,
+        integrations, best_for, last_verified_at, setup_time_text, pricing_details,
         tool_categories(categories(name)),
         tool_tags(tags(name))
       `)
@@ -324,5 +327,6 @@ function mapTool(tool: any): AIToolResult {
     best_for: tool.best_for ?? [],
     last_verified_at: tool.last_verified_at ?? null,
     setup_time_text: tool.setup_time_text ?? null,
+    pricing_details: tool.pricing_details ?? null,
   }
 }

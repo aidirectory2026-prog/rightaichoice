@@ -34,6 +34,25 @@ export function pricingLabel(type: string): string {
   return labels[type] ?? type
 }
 
+// Phase 12 Bug-2 follow-up — a concise "from $X/mo" starting price derived from
+// the structured pricing_details tiers (the cheapest tier with a real dollar
+// amount). Returns null for free-only / contact-sales-only tools (the badge
+// already says it) so the card stays clean. Preserves the tier's own price
+// string ("$20/mo", "$15/user/mo") rather than re-formatting.
+export function startingPriceLabel(details: unknown): string | null {
+  const tiers = Array.isArray(details) ? (details as Array<{ plan?: string; price?: string }>) : []
+  let best: { num: number; raw: string } | null = null
+  for (const t of tiers) {
+    const raw = (t?.price ?? '').trim()
+    const m = raw.match(/\$\s*([\d,]+(?:\.\d+)?)/)
+    if (!m) continue
+    const num = parseFloat(m[1].replace(/,/g, ''))
+    if (!Number.isFinite(num) || num <= 0) continue
+    if (!best || num < best.num) best = { num, raw }
+  }
+  return best ? `from ${best.raw}` : null
+}
+
 export function pricingColor(type: string): string {
   const colors: Record<string, string> = {
     free: 'bg-emerald-950 text-emerald-400 border border-emerald-800',

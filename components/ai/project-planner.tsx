@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
-import { pricingLabel, pricingColor } from '@/lib/utils'
+import { pricingLabel, pricingColor, startingPriceLabel } from '@/lib/utils'
 import { IntakeModal } from '@/components/ai/intake-modal'
 import { PlanSignupModal } from '@/components/cta/plan-signup-modal'
 import { PlanWaitingState } from '@/components/ai/plan-waiting-state'
@@ -41,6 +41,7 @@ type PlanTool = {
   name: string
   tagline: string
   pricing: string
+  pricingDetails?: unknown
   rating: number
   reviewCount: number
   whyThisStage: string
@@ -1062,6 +1063,14 @@ export function ProjectPlanner({
                                 >
                                   {pricingLabel(tool.pricing)}
                                 </span>
+                                {/* Phase 12 Bug-2 follow-up — real starting price from the
+                                    structured tiers, e.g. "from $20/mo" (kept fresh by the
+                                    fast-lane pricing refresh). */}
+                                {startingPriceLabel(tool.pricingDetails) && (
+                                  <span className="text-[11px] font-medium text-zinc-400">
+                                    {startingPriceLabel(tool.pricingDetails)}
+                                  </span>
+                                )}
                               </div>
 
                               <p className="text-sm text-zinc-400 mt-1 leading-relaxed">

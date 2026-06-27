@@ -32,6 +32,7 @@ type PlanTool = {
   name: string
   tagline: string
   pricing: string
+  pricingDetails?: unknown
   rating: number
   reviewCount: number
   whyThisStage: string
@@ -577,6 +578,7 @@ export async function POST(request: Request) {
                     name: t.name,
                     tagline: t.tagline,
                     pricing: t.pricing,
+                    pricingDetails: t.pricingDetails ?? null,
                     rating: t.rating,
                     reviewCount: t.reviewCount,
                     whyThisStage: '',
@@ -772,6 +774,7 @@ export async function POST(request: Request) {
               name: tool.name,
               tagline: tool.tagline,
               pricing: tool.pricing_type,
+              pricingDetails: tool.pricing_details ?? null,
               rating: tool.avg_rating,
               reviewCount: tool.review_count,
               whyThisStage: '',
@@ -891,6 +894,7 @@ Respond with ONLY a JSON object mapping "ToolName" to "reason string". Example: 
                 name: tool.name,
                 tagline: tool.tagline,
                 pricing: tool.pricing_type,
+                pricingDetails: tool.pricing_details ?? null,
                 rating: tool.avg_rating,
                 reviewCount: tool.review_count,
                 whyThisStage: reason,
