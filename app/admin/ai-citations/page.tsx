@@ -15,6 +15,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { addCitation, deleteCitation } from './actions'
+import { loadGeoCitationPanel } from '@/lib/geo/admin-queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -98,6 +99,9 @@ export default async function AiCitationsPage() {
   })
   const byEngine = (Array.isArray(engData) ? (engData as { engine: string; n: number }[]) : [])
 
+  // Phase 13 D3.4 — automated GEO tracking (geo_citation_snapshots).
+  const geo = await loadGeoCitationPanel()
+
   return (
     <div className="space-y-8">
       <div>
@@ -139,9 +143,111 @@ export default async function AiCitationsPage() {
         </div>
       )}
 
+      {/* Phase 13 D3.4 — automated GEO tracking (geo_citation_snapshots) */}
+      <section className="rounded-lg border border-indigo-900/50 bg-indigo-950/10 p-4">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-indigo-200">
+            Automated GEO tracking
+            <span className="ml-2 font-normal text-zinc-500">
+              {geo.hasData
+                ? `${ENGINE_LABEL[geo.engine ?? ''] ?? geo.engine} · latest run ${fmtDate(geo.snapshotDate)}`
+                : 'no runs yet'}
+            </span>
+          </h2>
+          <span className="text-[11px] text-zinc-500">
+            Weekly cron asks {geo.total || 'N'} target prompts through a web-searching AI and records whether we’re cited (Phase 13 D3.4).
+          </span>
+        </div>
+
+        {!geo.hasData ? (
+          <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-500">
+            No automated runs yet. Once <code className="text-zinc-300">GEMINI_API_KEY</code> is set, the weekly
+            <code className="text-zinc-300"> track-geo-citations</code> cron (or <code className="text-zinc-300">npm run geo:track</code>)
+            populates this panel.
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Kpi
+                label="Auto citation rate"
+                value={`${geo.rate}%`}
+                sub={`${geo.cited}/${geo.total} prompts`}
+                tone={geo.cited > 0 ? 'ok' : 'bad'}
+              />
+              <Kpi label="Prompts tracked" value={`${geo.total}`} />
+              <Kpi
+                label="Best rank"
+                value={
+                  geo.rows.some((r) => r.citation_rank)
+                    ? `#${Math.min(...geo.rows.filter((r) => r.citation_rank).map((r) => r.citation_rank as number))}`
+                    : '—'
+                }
+                sub="among cited domains"
+              />
+              <Kpi
+                label="Trend (rate)"
+                value={geo.trend.length ? geo.trend.map((t) => `${t.rate}%`).slice(0, 5).reverse().join(' → ') : '—'}
+              />
+            </div>
+
+            {geo.topCompetitors.length > 0 && (
+              <div className="mb-3">
+                <span className="text-[11px] uppercase tracking-wider text-zinc-500">Competitors cited this run: </span>
+                {geo.topCompetitors.map((c) => (
+                  <span key={c.domain} className="ml-1 inline-block rounded-full border border-zinc-700 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-300">
+                    {c.domain} <span className="font-semibold text-amber-300">×{c.n}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Prompt</th>
+                    <th className="px-3 py-2 text-left">Category</th>
+                    <th className="px-3 py-2 text-center">Cited</th>
+                    <th className="px-3 py-2 text-right">Rank</th>
+                    <th className="px-3 py-2 text-right">Share of voice</th>
+                    <th className="px-3 py-2 text-left">Competitors cited</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {geo.rows.map((r) => (
+                    <tr key={r.prompt_id} className={r.cited ? 'bg-emerald-950/15' : r.error ? 'bg-amber-950/15' : 'bg-rose-950/10'}>
+                      <td className="px-3 py-2 font-mono text-[11px] text-zinc-300">{r.prompt_id}</td>
+                      <td className="px-3 py-2 text-xs text-zinc-500">{r.prompt_category ?? '—'}</td>
+                      <td className="px-3 py-2 text-center text-xs">
+                        {r.error ? (
+                          <span className="text-amber-400" title={r.error}>err</span>
+                        ) : r.cited ? (
+                          <span className="text-emerald-400">✓</span>
+                        ) : r.retrieved ? (
+                          <span className="text-zinc-500" title="seen but not cited">seen</span>
+                        ) : (
+                          <span className="text-rose-400">✗</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-xs text-zinc-400">{r.citation_rank ?? '—'}</td>
+                      <td className="px-3 py-2 text-right font-mono text-xs text-zinc-400">
+                        {r.share_of_voice != null ? `${Math.round(r.share_of_voice * 100)}%` : '—'}
+                      </td>
+                      <td className="max-w-xs truncate px-3 py-2 text-xs text-zinc-500">
+                        {r.competitors.map((c) => c.domain).join(', ') || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </section>
+
       {/* Add form */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-200">Log a citation</h2>
+        <h2 className="mb-2 text-sm font-semibold text-zinc-200">Log a citation (manual)</h2>
         <form
           action={addCitation}
           className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 sm:grid-cols-2 lg:grid-cols-4"
