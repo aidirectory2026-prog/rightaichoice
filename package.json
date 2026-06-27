@@ -49,6 +49,8 @@
     "snapshot:gsc": "tsx --env-file=.env.local scripts/snapshot-gsc.ts",
     "diff:gsc:dry": "tsx --env-file=.env.local scripts/diff-gsc-snapshots.ts --dry-run",
     "diff:gsc": "tsx --env-file=.env.local scripts/diff-gsc-snapshots.ts",
+    "geo:track:dry": "tsx --env-file=.env.local scripts/track-geo-citations.ts --dry-run",
+    "geo:track": "tsx --env-file=.env.local scripts/track-geo-citations.ts --apply",
     "resubmit:merged:dry": "tsx --env-file=.env.local scripts/resubmit-merged-tool-urls.ts --dry-run",
     "resubmit:merged": "tsx --env-file=.env.local scripts/resubmit-merged-tool-urls.ts",
     "outreach:draft:dry": "tsx --env-file=.env.local scripts/outreach/draft-tool-founder-emails.ts --dry",
