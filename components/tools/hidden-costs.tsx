@@ -29,10 +29,13 @@ export function HiddenCosts({
       <p className="text-xs text-zinc-500 mb-3">
         What the public pricing page doesn&apos;t put in bold. Captured from pricing-page footnotes, contract terms, and recurring complaints.
       </p>
-      <ul className="space-y-2">
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {items.map((item, i) => (
-          <li key={i} className="text-sm text-zinc-300 leading-relaxed flex gap-2">
-            <span className="text-yellow-500 mt-1">•</span>
+          <li
+            key={i}
+            className="flex items-start gap-2.5 rounded-lg border border-yellow-900/30 bg-yellow-950/10 px-3.5 py-3 text-sm text-zinc-300 leading-relaxed"
+          >
+            <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-500 mt-0.5" />
             <span>{item}</span>
           </li>
         ))}

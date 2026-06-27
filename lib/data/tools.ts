@@ -219,11 +219,21 @@ export async function getIntegrationLinks(names: string[]): Promise<Map<string, 
   const trimmed = names.map((n) => n.trim()).filter(Boolean)
   if (trimmed.length === 0) return out
   const supabase = await createClient()
+  // Bug-4.3 / C4: match integration names case-INSENSITIVELY. The lookup map is
+  // keyed by lowercase and the page calls `.get(name.toLowerCase())`, but the
+  // fetch used a case-sensitive `.in('name', …)`, so "slack" never matched the
+  // catalog's "Slack" and the chip rendered as dead plain text. PostgREST
+  // `ilike` without wildcards is a case-insensitive equals. Skip names with
+  // characters that would break the or-filter grammar or act as LIKE wildcards
+  // (they fall back to a plain-text chip, exactly as before).
+  const safe = trimmed.filter((n) => !/[,()%_]/.test(n))
+  if (safe.length === 0) return out
+  const orFilter = safe.map((n) => `name.ilike.${n}`).join(',')
   const { data } = await supabase
     .from('tools')
     .select('name, slug')
     .eq('is_published', true)
-    .in('name', trimmed)
+    .or(orFilter)
   for (const row of (data ?? []) as { name: string; slug: string }[]) {
     out.set(row.name.toLowerCase(), row.slug)
   }

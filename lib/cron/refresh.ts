@@ -78,7 +78,7 @@ Return STRICT JSON matching this schema:
   "pricing_type": "free | freemium | paid | contact",
   "pricing_details": [{"plan": "Free | Pro | Team | Enterprise | exact tier name", "price": "$0/mo | $20/mo | Custom | exact published price", "features": ["3-8 concrete capabilities for this tier"]}],
   "features": ["8-15 feature strings, ≤120 chars each, concrete (verbs + nouns, not adjectives)"],
-  "integrations": ["8-15 named integrations (Slack, Notion, GitHub, etc.). Skip generic categories."],
+  "integrations": ["0-15 integrations the vendor ACTUALLY documents (Slack, Notion, GitHub, etc.) — common product names only. Do NOT guess/infer, skip generic categories ('CRM','databases'), the tool's own name, and 'coming soon'. Empty array if none are documented — a wrong integration is worse than none."],
   "best_for": ["3-5 ideal use-cases / personas, ≤180 chars each"],
   "not_for": ["3-5 anti-fit scenarios, ≤180 chars each. Be honest — list real limitations."]
 }

@@ -21,38 +21,54 @@ type Cadence = 'monthly' | 'yearly' | 'one-time' | 'free' | 'custom'
 type ParsedPrice = {
   amount: number | null   // null = free or contact-sales
   cadence: Cadence
+  perUnit: string | null  // "user" | "seat" | … when the price is per-seat
   raw: string
 }
+
+// Reject parses that are obviously not a real list price so the 12-month
+// projection never shows a nonsense number (Bug-4.3 / C2).
+const MAX_SANE_PRICE = 10_000_000
 
 function parsePrice(raw: string | number | undefined | null): ParsedPrice {
   // Phase 4.5 audit fix (2026-05-09): some pricing_details rows store
   // tier.price as a number (e.g. 0, 29) rather than a string ("$29/mo").
   // Without coercion the hydration call crashed with `(e ?? "").trim is
-  // not a function` on 8 production pages (adalo, cropin, designs-ai,
-  // fashable, playground-ai, researchrabbit, scispace, spline). String()
-  // coerces 0 → "0" before .trim() runs.
+  // not a function` on 8 production pages. String() coerces 0 → "0".
   const s = String(raw ?? '').trim()
-  if (!s) return { amount: null, cadence: 'custom', raw: s }
+  if (!s) return { amount: null, cadence: 'custom', perUnit: null, raw: s }
   const lower = s.toLowerCase()
-  if (lower === 'free' || lower.includes('free forever')) {
-    return { amount: 0, cadence: 'free', raw: s }
+  if (lower === 'free' || lower === '$0' || lower === '0' || lower.includes('free forever')) {
+    return { amount: 0, cadence: 'free', perUnit: null, raw: s }
   }
-  if (lower.includes('contact') || lower.includes('custom') || lower.includes('quote')) {
-    return { amount: null, cadence: 'custom', raw: s }
+  if (lower.includes('contact') || lower.includes('custom') || lower.includes('quote') || lower.includes('let’s talk') || lower.includes("let's talk")) {
+    return { amount: null, cadence: 'custom', perUnit: null, raw: s }
   }
 
   // Match the first dollar amount; tolerates "$29", "$29.99", "$29/mo", "$29 /month", "From $29"
   const match = s.match(/\$\s*([\d,]+(?:\.\d+)?)/)
-  if (!match) return { amount: null, cadence: 'custom', raw: s }
+  if (!match) return { amount: null, cadence: 'custom', perUnit: null, raw: s }
   const amount = parseFloat(match[1].replace(/,/g, ''))
+  if (!Number.isFinite(amount) || amount < 0 || amount > MAX_SANE_PRICE) {
+    return { amount: null, cadence: 'custom', perUnit: null, raw: s }
+  }
+
+  // Bug-4.3 / C2: cadence detection. A monthly token ("/mo", "per month")
+  // MUST win over the word "annually" — vendors write "$29/mo billed
+  // annually", where $29 is the MONTHLY rate, not the annual price. The old
+  // logic saw "annually" and reported a $29 annual total (12× under-count).
+  const hasMonthly = /\/\s*mo\b|\/\s*month|per\s*month|a\s*month|monthly|\bmo\b/.test(lower)
+  const hasYearly = /\/\s*yr\b|\/\s*year|per\s*year|a\s*year|annual/.test(lower)
+  const oneTime = /one[-\s]?time|lifetime/.test(lower)
 
   let cadence: Cadence = 'monthly'
-  if (lower.includes('/yr') || lower.includes('/year') || lower.includes('annually') || lower.includes('per year')) {
-    cadence = 'yearly'
-  } else if (lower.includes('one-time') || lower.includes('lifetime') || lower.includes('one time')) {
-    cadence = 'one-time'
-  }
-  return { amount, cadence, raw: s }
+  if (oneTime) cadence = 'one-time'
+  else if (hasMonthly) cadence = 'monthly'
+  else if (hasYearly) cadence = 'yearly'
+
+  const unitMatch = lower.match(/\/\s*(user|seat|member|editor|agent|host)|per\s*(user|seat|member|editor|agent|host)/)
+  const perUnit = unitMatch ? unitMatch[1] || unitMatch[2] : null
+
+  return { amount, cadence, perUnit, raw: s }
 }
 
 function annualize(parsed: ParsedPrice): number | null {
@@ -83,6 +99,7 @@ export function CostCalculator({ pricingDetails }: { pricingDetails: PricingTier
 
   const selected = parsedTiers[Math.min(selectedIdx, parsedTiers.length - 1)]
   const annual = annualize(selected.parsed)
+  const unitSuffix = selected.parsed.perUnit ? ` / ${selected.parsed.perUnit}` : ''
 
   // For monthly tiers, show what 12 months adds up to. For annual tiers,
   // surface the equivalent monthly cost so a buyer can compare like-for-like.
@@ -92,6 +109,27 @@ export function CostCalculator({ pricingDetails }: { pricingDetails: PricingTier
       monthlyEq = selected.parsed.amount / 12
     } else if (selected.parsed.cadence === 'monthly') {
       monthlyEq = selected.parsed.amount
+    }
+  }
+
+  // Bug-4.3 / C2: when the buyer is looking at a monthly tier, surface that an
+  // annual plan is cheaper than paying 12× monthly (most vendors discount the
+  // annual commitment). We compare against the cheapest annual-priced tier so
+  // the "12-month cost" isn't silently overstated.
+  let savingsNote: string | null = null
+  if (selected.parsed.cadence === 'monthly' && annual != null && annual > 0) {
+    const annualTiers = parsedTiers.filter(
+      (p) => p.parsed.cadence === 'yearly' && p.parsed.amount != null && p.parsed.amount > 0
+    )
+    const cheapest = annualTiers.reduce<typeof annualTiers[number] | null>(
+      (best, p) => (!best || (p.parsed.amount as number) < (best.parsed.amount as number) ? p : best),
+      null
+    )
+    if (cheapest && (cheapest.parsed.amount as number) < annual) {
+      const save = annual - (cheapest.parsed.amount as number)
+      savingsNote = `Annual billing${cheapest.tier.plan ? ` (${cheapest.tier.plan})` : ''} runs ${formatCurrency(
+        cheapest.parsed.amount as number
+      )}/yr — about ${formatCurrency(save)} less than paying monthly for a year.`
     }
   }
 
@@ -131,13 +169,15 @@ export function CostCalculator({ pricingDetails }: { pricingDetails: PricingTier
               ? '—'
               : annual === 0
               ? 'Free'
-              : formatCurrency(annual)}
+              : `${formatCurrency(annual)}${unitSuffix}`}
           </div>
           <div className="mt-1 text-xs text-zinc-600">
             {selected.parsed.cadence === 'one-time'
               ? 'One-time'
               : selected.parsed.cadence === 'custom'
               ? 'Contact sales for a quote'
+              : selected.parsed.perUnit
+              ? `Over 12 months, per ${selected.parsed.perUnit}`
               : 'Over 12 months'}
           </div>
         </div>
@@ -148,13 +188,19 @@ export function CostCalculator({ pricingDetails }: { pricingDetails: PricingTier
               ? '—'
               : monthlyEq === 0
               ? 'Free'
-              : formatCurrency(monthlyEq)}
+              : `${formatCurrency(monthlyEq)}${unitSuffix}`}
           </div>
           <div className="mt-1 text-xs text-zinc-600">
             {selected.parsed.cadence === 'yearly' ? 'Implied — billed annually' : selected.parsed.cadence === 'monthly' ? 'Billed monthly' : '—'}
           </div>
         </div>
       </div>
+
+      {savingsNote && (
+        <p className="mt-3 rounded-lg border border-emerald-900/40 bg-emerald-950/15 px-3 py-2 text-xs text-emerald-300">
+          {savingsNote}
+        </p>
+      )}
 
       <p className="mt-3 text-xs text-zinc-600 leading-relaxed">
         Vendor list price only. Add-on usage, seat overages, and contract minimums are surfaced under{' '}

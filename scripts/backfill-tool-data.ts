@@ -466,7 +466,7 @@ A. EDITORIAL
 
 B. STRUCTURED
 - features (8-15 items): each 8-200 chars. Concrete capability names ("AI-assisted drafting", "Stripe integration", "Custom domains"). NOT marketing taglines.
-- integrations (0-15 items): real partner / API integration names. Empty array if tool doesn't expose integrations.
+- integrations (0-15 items): ONLY integrations the vendor actually documents in the scraped content (its /integrations, marketplace, or docs pages). Use the integration's common product name ("Slack", "Notion", "Zapier", "Google Drive"). Do NOT guess or infer, do NOT include generic categories ("CRM", "databases", "cloud storage"), the tool's own name, programming languages, or aspirational / "coming soon" integrations. If none are clearly documented in the scrape, return an empty array — an empty list is better than a wrong one.
 - use_cases (0-8 items, ≤220 chars each): concrete user scenarios.
 - best_for (0-5 items): personas / company stages this fits — short labels.
 - not_for (0-4 items): personas / company stages this DOESN'T fit.
@@ -474,7 +474,7 @@ B. STRUCTURED
 
 C. PHASE 3 DENSITY (decision-critical, almost-never-published surface)
 - skip_if (≤320 chars, single sentence): "Skip [Tool] if you …" — specific not generic
-- hidden_costs (0-6 items, ≤220 chars each): overage rates, contract minimums, mid-tier paywalls. Each item a concrete dollar/behavior fact.
+- hidden_costs (0-6 items, ≤220 chars each): the pricing surprises a buyer hits AFTER signing up — overage rates, seat/usage caps, mid-tier paywalls, annual-only discounts, contract minimums, add-on fees. Write each as ONE plain-language, buyer-facing sentence that names the cost AND when it bites — e.g. "Going past 10k monthly API calls adds $0.002 per extra call, which adds up fast at high volume" or "SSO and audit logs are locked to the Enterprise tier, so security-conscious teams can't stay on Pro." Friendly and concrete, not terse clinical fragments ("Overage: $0.002/call"). Empty array only if the tool genuinely has no gotchas.
 - pricing_power_text (≤500 chars): which company stage / team size the pricing fits vs. named cheaper or more-expensive peers
 - workflow_scenarios (2-3 objects {persona, scenario, outcome}): concrete day-one flows per persona
 - setup_time_text (≤400 chars): per-persona ETA to first value
