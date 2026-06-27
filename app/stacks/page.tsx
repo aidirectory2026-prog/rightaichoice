@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, Sparkles, ChevronDown } from 'lucide-react'
+import { ArrowUpRight, Sparkles, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { STACKS } from '@/lib/data/stacks'
+import { StacksGrid } from '@/components/stacks/stacks-grid'
 import { itemListJsonLd, faqPageJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 
 // Phase 9 (2026-06-04) — advanced SEO for the AI stacks index (the pillar hub
@@ -119,29 +120,15 @@ export default function StacksIndexPage() {
 
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-16 pt-8">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">All AI stacks by goal</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {others.map((stack) => (
-              <Link
-                key={stack.slug}
-                href={`/stacks/${stack.slug}`}
-                className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
-              >
-                <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  {stack.goal}
-                </h3>
-                <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed flex-1 line-clamp-2">
-                  {stack.description}
-                </p>
-                <div className="mt-4 flex items-center justify-between text-xs">
-                  <span className="text-zinc-600">{stack.stages.length} stages</span>
-                  <span className="text-emerald-500/70">{stack.summary.paidPath}</span>
-                </div>
-                <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  View stack <ArrowRight className="h-3 w-3" />
-                </div>
-              </Link>
-            ))}
-          </div>
+          <StacksGrid
+            stacks={others.map((stack) => ({
+              slug: stack.slug,
+              goal: stack.goal,
+              description: stack.description,
+              stages: stack.stages.length,
+              paidPath: stack.summary.paidPath,
+            }))}
+          />
 
           {/* CTA */}
           <div className="mt-12 text-center">
