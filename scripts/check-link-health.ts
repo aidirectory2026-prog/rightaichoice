@@ -34,8 +34,8 @@ const getNum = (flag: string, def: number) => {
 const SHARD = getNum('--shard', 0)
 const SHARDS = getNum('--shards', 1)
 const LIMIT = getNum('--limit', Infinity)
-const CONCURRENCY = 6
-const TIMEOUT_MS = 8000
+const CONCURRENCY = 16
+const TIMEOUT_MS = 7000
 const UA = 'Mozilla/5.0 (compatible; RightAIChoiceBot/1.0; +https://rightaichoice.com)'
 
 type ToolRow = {

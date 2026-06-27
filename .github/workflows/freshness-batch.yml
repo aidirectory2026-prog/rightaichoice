@@ -301,13 +301,25 @@ jobs:
   # writes tools.dead_links. The tool page filters those out of Resources &
   # Guides + the sidebar; a tool with no live resources skips the section.
   # Conservative — only clear 404/410 + DNS failures count as dead.
+  #
+  # SHARDED (3-way matrix, hash-partitioned by slug) like full-refresh: a single
+  # unsharded run of the dead-link-heavy ~2,000-tool catalog logged ~268 min
+  # (many probes hit the full HTTP timeout), which would blow a single-job
+  # limit. 3 shards × concurrency 16 → each ~25-40 min, comfortably under budget.
   check-link-health:
     if: >-
       github.event.schedule == '0 7 * * 0' ||
       (github.event_name == 'workflow_dispatch' &&
        (github.event.inputs.pipeline == 'check-link-health' || github.event.inputs.pipeline == 'all'))
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    concurrency:
+      group: check-link-health-shard-${{ matrix.shard }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -316,8 +328,8 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci --no-audit --no-fund
-      - name: Sweep resource links
+      - name: Sweep resource links (shard ${{ matrix.shard }}/3)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: npx tsx scripts/check-link-health.ts
+        run: npx tsx scripts/check-link-health.ts --shard=${{ matrix.shard }} --shards=3
