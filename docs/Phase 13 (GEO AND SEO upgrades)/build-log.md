@@ -266,3 +266,104 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   and automatically checks when a directory starts linking back to us. 19 targets are queued and ready;
   the submitting itself is the human step (those forms are CAPTCHA-gated on purpose)._
 - **Status: done (D2.1). Engine ready; operator submission is the next manual action.**
+
+### 2026-06-27 — D2.2: "State of AI Tools" data report (linkable asset)
+- **What:** Public report at `/state-of-ai-tools` computing ORIGINAL statistics from our
+  continuously-verified catalog — the kind of proprietary data that earns editorial backlinks and that
+  LLMs quote.
+- **How (commit `4f26af1`):** `lib/geo/state-of-ai.ts` (reuses the single `loadDataset` read) +
+  `app/state-of-ai-tools/page.tsx` (answer-first TL;DR → tables → cite-this block; Article+Dataset
+  JSON-LD; ISR daily) + sitemap entry.
+- **Verification:** `tsc` clean; builder run live → 1,998 tools, 99.9% verified in 7d, **54.6% free/freemium**
+  (Freemium 47.7% / Contact 28.5% / Paid 16.9% / Free 6.9%), avg viability 85 (93.1% "strong"), biggest
+  category Marketing & SEO (105), top OSS Hugging Face 161,927★.
+- **Residual risk:** "At-risk" viability bucket is ~0% (scores skew high) — report states this honestly;
+  page render pending preview deploy.
+- _Plain language: a public stats page built from our own fresh data, with facts no competitor can
+  publish (e.g. "55% of AI tools are free or freemium"). It's bait for journalists and AIs to link/quote us._
+- **Status: done (D2.2).**
+
+### 2026-06-27 — D2.3: entity / dataset-feed consensus
+- **What:** Pointed our `Dataset` structured-data at the machine-readable feeds so AIs/knowledge-graphs
+  discover them; documented the operator entity playbook (below).
+- **How (commit `5e94eac`):** `lib/seo/json-ld.ts` — `datasetJsonLd().distribution` now lists
+  `/llms.jsonl` + `/llms-full.txt` + `/llms.txt` (was just one); `sameAs` Wikidata `Q139970688` already present.
+- **Operator entity playbook (free, manual — for the consensus signal that drives citations):**
+  1. **Wikidata** (`Q139970688`): keep label/description/official-website/logo current; add `P856`
+     (official website), `P1581` (blog), founder link. 2. **Wikipedia**: pursue a draft once we have 2–3
+     independent press mentions (notability) — the data-PR report (D2.2) is the hook. 3. **Consistent NAP**:
+     use the exact name + description from `lib/authority/submission-kit.ts` everywhere (the directory
+     engine already enforces this). 4. **Crunchbase/G2/Product Hunt profiles** (from D2.1) reinforce the
+     same entity. Consensus = the same brand described identically across many trusted sources.
+- **Verification:** `tsc` clean. The Wikidata/Wikipedia/profile steps are manual operator actions.
+- _Plain language: I told the AIs (via hidden structured data) exactly where to find our clean data file,
+  and wrote down the simple identity steps (Wikipedia/Wikidata/consistent descriptions) that make AIs
+  recognise us as a real, trusted brand worth citing._
+- **Status: code done; entity steps are in the operator guide.**
+
+### 2026-06-27 — D2.4: weekly backlink monitoring
+- **What:** Automated weekly check that detects when a directory listing starts linking back to us and
+  logs it to `referring_domains` (the existing /admin/authority dashboard).
+- **How (commit `5e94eac`):** `app/api/cron/authority-check/route.ts` (cronRoute + pipeline_runs logging) +
+  `vercel.json` schedule `Mon 07:30 UTC`. Same logic as the `authority:check` CLI.
+- **Verification:** `tsc` clean; `vercel.json` validates (20 crons, authority-check present). Will confirm
+  backlinks on the first run after listings go live.
+- _Plain language: every Monday the site automatically re-checks the directories we submitted to and
+  records any new link back to us — so authority growth shows up on the dashboard without manual checking._
+- **Status: done (D2.4).**
+
+### 2026-06-27 — D3.1 + D3.3: status (satisfied by existing work + this phase)
+- **D3.1 citation-worthy structure:** Largely DELIVERED in **Phase 9** (Quick-answer TL;DR blocks, rendered
+  FAQ, tables, FAQPage/ItemList/Breadcrumb/Article JSON-LD on tool/compare/best pages) — re-doing it is
+  explicitly out of scope per the automated-pipelines changelog. Phase 13 adds the same answer-first +
+  table + sourced/dated shape on the new `/state-of-ai-tools` report. **No edits to the contested
+  tool/compare templates** (D1 page work is active in another session — collision-avoidance). Any further
+  per-template tuning is left as a guided follow-up. **Status: satisfied; no new code (by design).**
+- **D3.3 Bing-first push:** Bing/IndexNow infra already exists (`submit-urls-bing` daily cron,
+  `indexnow-*` crons). The new GEO surfaces (`/state-of-ai-tools` added to the sitemap; `/llms.jsonl`)
+  will be picked up by those crons once the branch deploys — ChatGPT search rides Bing's index, so this
+  routes our freshest, most-citable pages into it. **Status: satisfied by existing infra + the sitemap
+  addition; operator action = ensure the sitemap is (re)submitted to Bing after deploy (existing cron does this weekly).**
+
+### 2026-06-27 — D4: conversion funnel diagnosis (read-only)
+- **What:** Diagnosed why signups/affiliate-conversions are low, from `user_events` (last 30 days).
+- **Findings (the leak is the FIRST click, not signup):**
+  | Step | 30d count (users) |
+  |---|---|
+  | page_viewed | 5,432 (4,276) |
+  | **plan CTA impression** | **4,442 (3,977)** |
+  | tool_visit_redirected (affiliate out-click) | 1,231 (717) |
+  | plan_cta_clicked | **10 (8)** ← ~0.2% of impressions |
+  | plan_started | 35 (20) |
+  | plan_completed | 6 (4) |
+  | signup_modal_shown → signup_completed | 23 → 4 |
+  - **#1 leak:** the Plan CTA is shown to ~3,977 people but clicked ~8 times (**~0.2% CTR**). The funnel
+    isn't broken downstream (once started, ~17% complete; signup modal converts ~17%) — almost nobody
+    *enters* it.
+  - **Real conversion today is affiliate out-clicks** (1,231 events / 717 users) — ~100× the signups. The
+    money path is affiliate, not signup.
+- **Recommendations (for a later build phase — not implemented now to avoid page-template collision):**
+  1. Rebuild the plan entry as a **low-friction inline goal input** on the page (type your goal → instant
+     results) instead of a CTA that opens a separate flow — the 0.2% CTR is the binding constraint.
+  2. Lean monetization into **affiliate out-clicks** (the working path): clearer "Visit / Try" CTAs,
+     track per-tool affiliate revenue, prioritize high-intent tool pages.
+  3. Defer signup-friction work — signup isn't the main leak; entry is.
+- **Verification:** counts are from a live `user_events` aggregate (quoted above).
+- _Plain language: the problem isn't sign-up — it's that the big "build my AI stack" button is seen by
+  ~4,000 people a month but clicked by ~8. The one thing actually working is people clicking out to tools
+  (~700/mo). So: make the planner start instantly on the page (no button), and double down on those
+  tool click-outs as the real money path. (I diagnosed it; the fixes touch live page templates another
+  session is editing, so they're written up for a dedicated follow-up rather than changed now.)_
+- **Status: diagnosis done (D4); fixes scoped for a follow-up to avoid collision with active page work.**
+
+---
+
+## Phase 13 round 1 — summary (2026-06-27)
+
+Shipped + verified + logged: **D3.2** (live citable dataset), **D3.4** (GEO citation loop + free Gemini +
+weekly cron + admin panel; baseline 0/12 cited), **D2.1** (directory submission engine, 19 targets +
+admin panel), **D2.2** (State of AI Tools report), **D2.3** (entity dataset feeds + playbook), **D2.4**
+(weekly backlink-monitor cron). **D3.1/D3.3** satisfied by existing Phase-9 + this phase's additions.
+**D4** diagnosed (leak = 0.2% plan-CTA click-rate; affiliate out-clicks are the real money path). **D1**
+deferred (active page work elsewhere). All code on branch `phase13-geo-seo` (PR pending merge); migrations
+172 + 173 applied live. See the operator guide at the end of this round in the chat / README.
