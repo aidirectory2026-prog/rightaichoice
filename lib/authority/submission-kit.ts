@@ -24,10 +24,14 @@ export const BRAND = {
   longDesc:
     "RightAIChoice (rightaichoice.com) is the decision engine for picking the right AI stack. We index 2,000+ AI tools across 15 categories and keep every tool's data current via a continuous automated verification cycle — so what you read reflects today's pricing, features, and momentum, not a one-time scrape. We don't sell tools and aren't paid by vendors: recommendations are grounded in aggregated user sentiment, hands-on editorial review, head-to-head comparisons that end in a clear verdict, viability scores that flag tools at risk of shutting down, and an interactive planner that turns a plain-language goal into a complete tool stack with costs and tradeoffs.",
   categorySuggestions: ['AI Tools', 'Software Discovery', 'Developer Tools', 'Productivity', 'SaaS Directory'],
+  founded: 'April 2026',
+  headquarters: 'Agra, India',
   founder: 'Tanmay Verma',
+  founderLinkedin: 'https://www.linkedin.com/in/tanmayverma99', // for the "founder" field
+  // COMPANY socials (use the company LinkedIn page on org/directory listings, not the personal profile).
   socials: {
     twitter: 'https://twitter.com/rightaichoice',
-    linkedin: 'https://www.linkedin.com/in/tanmayverma99',
+    linkedin: 'https://www.linkedin.com/company/rightaichoice',
     github: 'https://github.com/aidirectory2026-prog/rightaichoice',
     wikidata: 'https://www.wikidata.org/wiki/Q139970688',
   },
@@ -52,8 +56,9 @@ export function buildSubmissionKit(): string {
     b.longDesc,
     ``,
     `CATEGORIES: ${b.categorySuggestions.join(', ')}`,
-    `FOUNDER: ${b.founder}`,
-    `SOCIALS: ${Object.values(b.socials).join(' · ')}`,
+    `FOUNDED: ${b.founded}  ·  HQ: ${b.headquarters}`,
+    `FOUNDER: ${b.founder} — ${b.founderLinkedin}`,
+    `SOCIALS (company): ${Object.values(b.socials).join(' · ')}`,
     `PRICING: Free`,
     ``,
     `CONSISTENCY RULE: paste these values verbatim everywhere — identical name +`,
