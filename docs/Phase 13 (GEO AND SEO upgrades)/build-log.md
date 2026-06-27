@@ -370,30 +370,139 @@ deferred (active page work elsewhere). All code on branch `phase13-geo-seo` (PR 
 
 ---
 
-## 📋 Plain-language wrap-up — what we did & what you do (non-technical)
+# 📋 PHASE 13 — THE FULL STORY IN PLAIN ENGLISH
 
-### What this phase actually did
+*(This section is written for a non-technical reader. It explains the problem we set out to fix,
+everything we built, what now runs on its own, and exactly what you need to do to finish the phase.)*
 
-The goal was simple: **get found on Google again, and start getting named by AI assistants** (ChatGPT, Gemini, Perplexity) — because today neither is happening. We built three "machines," each tested against our real data and left running:
+---
 
-1. **An AI-citation scoreboard.** Every Monday it asks Google's AI the 12 questions we most want to win and writes down whether it mentions us. **The first run was brutally clear: 0 out of 12 — and rivals like Futurepedia *did* show up.** Now we can measure every improvement instead of guessing. (You can watch it under Admin → "AI Citations".)
+## 1. The problem we were solving
 
-2. **An "always-fresh" data feed for AIs.** The page we publish for AIs to read was frozen since May. It's now generated live and leads with the one fact no competitor can match: **"1,996 of our 1,998 tools were re-checked in the last 7 days."** We also added a clean machine-readable data file and a public **"State of AI Tools" report** full of original stats (e.g. *55% of AI tools are free or freemium*) — the kind of thing journalists and AIs quote and link to.
+Two things were going wrong, and we proved both with real numbers from our own database:
 
-3. **An authority machine.** Google buries us mainly because almost no other websites link to us. So we built a ranked to-do list of **19 trusted directories** (Product Hunt, G2, Capterra, Crunchbase, and more) to get listed on — with the exact text to paste — plus an automatic weekly check that records every new link we earn. These same sites are also what AIs read before deciding who to recommend, so this fixes both problems at once.
+- **Google had buried us.** Google shows our pages ~43,000 times a month, but only ~39 people click —
+  because **94% of the time we appear on page 3, 4, or 5**, where nobody looks. Worse, we were *sliding*:
+  a Google update in May 2026 specifically punished big auto-generated directory sites like ours.
+- **No AI assistant ever mentions us.** You'd tried ChatGPT, Gemini, etc. and none suggested
+  rightaichoice.com. We confirmed it precisely (see point 3 below).
 
-We also **figured out why so few people sign up**: the big "build my AI stack" button is seen by ~4,000 people a month but clicked by only ~8. The fix (make the planner start instantly on the page) is written up for a focused follow-up. The thing that *is* working: ~700 people a month click through to tools — that's our real money path.
+The single root cause behind both: **almost no other websites link to us, and we're not part of the
+"conversation" AIs read.** Our technology and our data are excellent — better than competitors — but the
+wider web doesn't vouch for us yet. This phase attacks exactly that.
 
-### What you need to do (in order)
+---
 
-1. **Publish it (5 min).** Open the link in the chat / README and click "Create pull request" → "Merge." That makes everything go live. If it shows a small conflict, just tell me and I'll fix it.
-2. **Submit to directories (~30 min/week — the #1 priority).** Run `npm run authority:next`, paste the provided text into each site (start with Product Hunt, G2, Capterra, Crunchbase), do 3–5 a week. Paste the *same* text everywhere — that consistency is what makes AIs trust us.
-3. **Tidy our "identity" (~1 hr, one-time).** Keep our Wikidata entry current; pursue a Wikipedia page once we have a couple of press mentions.
-4. **Watch the scoreboards** under Admin → "AI Citations" and "Authority" as the numbers move.
-5. **(Later) Approve the conversion fix** so the traffic we win actually converts.
+## 2. What we built — explained simply
 
-### What runs by itself now (you do nothing)
-Every Monday: AI-citation scan + backlink check + search-engine pings. Hourly/daily: the fresh AI data feed and the data report rebuild from the live database.
+We built and tested **eight pieces** (every one checked against live data and recorded above with proof).
+Here's each in plain terms:
 
-### Honest timeline
-AI citations can begin showing in **2–6 weeks** (Gemini/Perplexity) to **6–12 weeks** (ChatGPT) *after* the directory listings and report build our reputation. Google ranking gains compound over **1–3 months** as links accumulate. There's no instant version — the directories + report are the engine that gets us there.
+**① An AI-citation scoreboard *(was: D3.4)*.** A little robot that, every Monday, asks an AI assistant
+the 12 questions we most want to win (e.g. *"What's the best directory to find and compare AI tools?"*)
+and records whether the AI names us, where we rank, and which competitors it named instead. Before this,
+we were flying blind; now every improvement is measurable. **You can watch it in the admin area under
+"AI Citations."**
+
+**② The first real AI-citation measurement.** We ran that scoreboard. The result: **across all 12
+questions, the AI named ~14 sources each time and us ZERO times** — while competitors like Futurepedia and
+Aixploria did appear. Painful, but it's our honest starting line, and now it's tracked.
+
+**③ An "always-fresh" data page for AIs *(was: D3.2)*.** The page we publish for AIs to read had been
+frozen since May 28 — making us look stale. It's now rebuilt automatically from our live database and
+leads with the one fact **no competitor can claim**: *"1,996 of our 1,998 tools were re-checked in the
+last 7 days."* We also added a clean, machine-readable data file (so AI systems can swallow our whole
+catalog) and made it self-update every hour.
+
+**④ A public "State of AI Tools" report *(was: D2.2)*.** A new public page built from our unique data,
+full of original statistics nobody else can publish — for example, **55% of AI tools are free or
+freemium**, the biggest category is Marketing & SEO, and the average "viability" score is 85/100. This is
+exactly the kind of page journalists and AIs quote and link to ("according to RightAIChoice…"). It's our
+bait for earning mentions.
+
+**⑤ An authority (link-building) machine *(was: D2.1)*.** Since the core problem is "nobody links to us,"
+we built a ranked to-do list of **19 trusted, free directories** to get RightAIChoice listed on —
+Product Hunt, G2, Capterra, Crunchbase, Futurepedia, and more. The system hands you the next ones to do
+**and the exact wording to paste**, tracks what you've submitted, and (see ⑦) automatically notices when a
+directory starts linking back to us. These are also the very sites AIs read before recommending a brand —
+so this earns Google links *and* gets us into the AI conversation at the same time.
+
+**⑥ Our "official identity" wiring *(was: D2.3)*.** We told the AIs (through hidden, behind-the-scenes
+data on our site) exactly where to find our clean data, and we wrote down the simple identity steps —
+keeping our Wikidata entry current and pursuing a Wikipedia page — that make AIs treat us as a real,
+recognized organization worth citing.
+
+**⑦ An automatic backlink watcher *(was: D2.4)*.** Every Monday the site re-checks the directories we
+submitted to and records any new link back to us on the "Authority" admin dashboard — so our reputation
+growth shows up without anyone checking by hand.
+
+**⑧ A conversion diagnosis *(was: D4)*.** We dug into why so few people sign up. The finding: it isn't the
+sign-up form — it's the very first step. Our big *"build my AI stack"* button is **shown to ~4,000 people
+a month but clicked by only ~8** (a 0.2% click rate). Meanwhile, ~700 people a month *do* click through to
+tools — **that's our real money path (affiliate clicks), about 100× the sign-ups.** The recommended fix
+(make the planner start instantly on the page instead of behind a button) is written up for a focused
+follow-up, because it touches pages another work-stream is editing right now.
+
+*(Two related items — making individual tool/compare pages more "quotable," and pushing our pages into
+Bing — were already handled by earlier work plus the changes above, so they needed no new building. Page
+consolidation was intentionally paused to avoid clashing with active work happening elsewhere.)*
+
+---
+
+## 3. What now runs automatically — you do nothing
+
+- **Every Monday:** the AI-citation scoreboard runs; the backlink watcher checks for new links; our
+  sitemap is re-pinged to Google and Bing.
+- **Every hour/day:** the fresh AI data page, the machine-readable data file, and the public report all
+  rebuild themselves from the live database — so they're never stale.
+
+---
+
+## 4. YOUR STEPS TO COMPLETE THIS PHASE (in order)
+
+**Step 1 — Publish everything (5 minutes). Do this first.**
+None of the above is live until the code is merged. Open this link, click **"Create pull request,"** then
+**"Merge":**
+`https://github.com/aidirectory2026-prog/rightaichoice/compare/main...phase13-geo-seo?expand=1`
+If it shows a "conflict," don't worry — just tell me and I'll clear it in a couple of minutes. After
+merging, the site redeploys on its own and everything goes live.
+
+**Step 2 — Start getting listed on directories (~30 min/week — this is the #1 priority).**
+This is the biggest lever for both Google *and* AI mentions. It's a human task on purpose (those sites
+have "are you a robot?" checks), but we made it nearly effortless:
+- In the project, run: **`npm run authority:next`**
+- It prints the next directories to do **and the exact name + description to paste.** Start with
+  **Product Hunt, G2, Capterra, Crunchbase.**
+- **Paste the same wording everywhere** — that sameness is literally what makes AIs trust and cite us.
+- After submitting one, run **`npm run authority:mark <name>`** (e.g. `npm run authority:mark g2`).
+- Aim for 3–5 per week. The site checks for the resulting links automatically.
+
+**Step 3 — Lock in our identity (~1 hour, one-time).**
+- **Wikidata** (we already have an entry): make sure our description, website, and logo are current.
+- **Wikipedia:** worth pursuing once we have 2–3 press mentions — and the new "State of AI Tools" report
+  is exactly the kind of thing that earns those mentions.
+
+**Step 4 — Watch the scoreboards (anytime).**
+In the admin area: **"AI Citations"** (is the AI starting to name us? watch it climb from 0) and
+**"Authority"** (new links coming in). These are how we'll see the phase working.
+
+**Step 5 — Approve the conversion fix (later).**
+When you're ready, give me the go-ahead to rebuild the planner so it starts instantly on the page (the fix
+for the ~8-clicks problem) and to lean our money-making into the tool click-outs that already work.
+
+---
+
+## 5. Honest expectations (no hype)
+
+- **AI mentions:** can start appearing in **2–6 weeks** on Gemini/Perplexity and **6–12 weeks** on
+  ChatGPT — but **only after** Steps 2 & 3 build our reputation. The scoreboard will show it moving from 0.
+- **Google rankings:** improve gradually over **1–3 months** as directory links accumulate. There is no
+  instant version — the directories and the report are the engine that gets us there.
+- **The honest truth:** the machines are built and running; the remaining gains now depend mostly on
+  **Step 2 (directory submissions)** happening consistently. That's the work that converts everything we
+  built into real traffic and citations.
+
+---
+
+*Phase 13 build work is complete (D2, D3, D4 done; D1 deferred). Everything above this section is the
+detailed, dated, technical record with verification evidence for each step.*
