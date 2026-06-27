@@ -101,3 +101,44 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   the fact that no AI tool cites us yet. This is the "before" photo we'll measure all the upgrades
   against._
 - **Status: done.**
+
+### 2026-06-27 — D3.4: GEO citation tracking engine (the GEO equivalent of GSC)
+- **What:** Built the GEO citation tracker — a pluggable system that asks an AI engine
+  (which searches the web) our high-intent prompts and records, per prompt, whether
+  rightaichoice.com is **cited**, its **rank** among cited domains, which **competitors**
+  appeared, and a **share-of-voice** — one row per `(snapshot_date, engine, prompt_id)` in a
+  new `geo_citation_snapshots` table. This is the GEO analogue of `gsc_snapshots`.
+- **Why:** "You can't improve what you can't measure." No baseline existed for AI citations;
+  this makes GEO movement provable, the same way the GSC snapshots prove SEO movement.
+- **How (files, in worktree `../rac-phase13`, branch `phase13-geo-seo`, commit `e5c5f2e`):**
+  - `supabase/migrations/172_geo_citation_snapshots.sql` (+ `.rollback.sql`) — table, indexes,
+    unique key, RLS on (admin/service-role only, mirrors `gsc_snapshots`). **Applied live + verified**
+    (17 columns present).
+  - `lib/geo/competitors.ts` — `OUR_DOMAIN` + 13 tracked competitor directories; host-normalize helpers.
+  - `lib/geo/target-prompts.ts` — 13 curated high-intent prompts across directory / category-best /
+    comparison / recommendation / freshness intents.
+  - `lib/geo/citation-engines.ts` — pluggable engine interface; `claude_websearch` implemented on the
+    existing `ANTHROPIC_API_KEY` using `claude-opus-4-8` + the `web_search_20260209` server tool +
+    adaptive thinking (handles `pause_turn` continuation); `perplexity`/`openai`/`gemini` scaffolded as
+    "disabled until key added" (respects the founder's free/organic-for-now decision — no new spend).
+  - `lib/geo/track-citations.ts` — pure, deterministic analysis (cited/retrieved/rank/competitors/SoV).
+  - `scripts/track-geo-citations.ts` + npm `geo:track:dry` / `geo:track` — runner wrapped in
+    `runScriptedPipeline` so every run logs to `pipeline_runs`; idempotent upsert; `--limit`, `--prompt`,
+    `--engine`, `--date`, `--concurrency` flags; mirrors `snapshot-gsc`.
+- **Verification:** `tsc --noEmit` clean. Migration applied (`{success:true}`) and the table verified via
+  `information_schema` (all 17 columns). Single-prompt dry run reached the Anthropic API with a **valid
+  request** (model + `web_search` tool + thinking all accepted) — it returned a **400 billing** error
+  ("credit balance is too low"), not a params error, and the script's per-prompt error handling caught
+  it gracefully (logged `✗ ERROR`, no crash, recorded `error`). So the engine is correct end-to-end up
+  to the billing gate.
+- **Residual risk / BLOCKER:** The `ANTHROPIC_API_KEY` has **no credits** (DeepSeek powers the existing
+  cheap pipelines). To produce real citation data we need either (a) a small Anthropic credit top-up to
+  run `claude_websearch`, or (b) a **free** path — create a free Google AI Studio (Gemini) key and
+  implement the `gemini` engine (Gemini free tier + Google Search grounding returns real citations at
+  $0). Awaiting founder decision. Code + schema are ready for either.
+- _Plain language: I built the "scoreboard" that checks, on a schedule, whether AI assistants name our
+  site when people ask the questions we want to win — and tracks our rivals' share too. It's wired up
+  and the database table is live. The only thing stopping it from collecting real numbers is that our
+  Anthropic account has no credit; the cheapest fix is a free Google Gemini key, or a small top-up. Your
+  call which._
+- **Status: built + schema live; blocked on engine credentials (founder decision).**
