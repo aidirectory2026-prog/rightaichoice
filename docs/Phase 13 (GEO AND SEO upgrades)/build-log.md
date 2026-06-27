@@ -193,3 +193,39 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   directory can say that. I also added a clean machine-readable data file (/llms.jsonl) that AI systems
   can ingest directly. Verified it produces correct, current data._
 - **Status: built + verified against live DB; routes pending preview-deploy smoke test.**
+
+### 2026-06-27 — D3.4 complete: weekly cron + automated /admin panel + FIRST LIVE BASELINE
+- **What:** Closed the GEO measurement loop — a weekly cron now runs the tracker automatically, an
+  admin panel shows the results, and we captured the **first real citation baseline** (Gemini enabled).
+- **Why:** Make GEO measurement fully automated + visible (the GSC-grade architecture the founder asked
+  for), and establish the "before" number for AI citations.
+- **How (commit `05e76dd`, branch `phase13-geo-seo`):**
+  - `lib/geo/run-tracking.ts` — shared orchestration (engine loop → analysis → upsert) used by BOTH the
+    CLI script and the cron, so behavior never drifts; `pickDefaultEngine()` prefers free Gemini.
+  - `app/api/cron/track-geo-citations/route.ts` — weekly cron via `cronRoute` (auth + `pipeline_runs`
+    logging); **gracefully skips (status `partial`) if no engine key is set** so it never false-alerts.
+  - `vercel.json` — scheduled `Mon 07:15 UTC` (right after the GSC crons).
+  - `app/admin/ai-citations/page.tsx` — extended the EXISTING manual citation page (not duplicated) with
+    an "Automated GEO tracking" panel: citation-rate KPI, prompts tracked, best rank, rate trend,
+    competitor strip, and a per-prompt table (cited / rank / share-of-voice / competitors). Read model
+    in `lib/geo/admin-queries.ts`.
+  - `scripts/track-geo-citations.ts` refactored to a thin wrapper over the shared module.
+- **Verification (live, multiple checks):**
+  - Founder added a free `GEMINI_API_KEY`. Single-prompt dry run → engine grounded + parsed correctly.
+  - Full baseline scan (`geo:track --apply --engine=gemini`) → wrote **12 rows, 0 errored**; confirmed in
+    DB (`count=12, cited=0, retrieved=0, avg_sources=13.6`).
+  - Admin read model verified live: `hasData=true`, rate `0%` (0/12), trend + topCompetitors populated.
+  - `tsc --noEmit` clean across the whole project.
+- **📊 FIRST GEO BASELINE (2026-06-27, engine=gemini):** **0 of 12** high-intent prompts cite
+  rightaichoice.com. Gemini grounds on **~13.6 sources per answer** but never us. Competitors observed:
+  `futurepedia.io`, `aixploria.com`. This is the measured confirmation of "no LLM suggests us" — and the
+  number every later GEO change is measured against.
+- **Residual risk:** Admin panel verified at the data/query level + `tsc`, not yet rendered on a deployed
+  URL (same as D3.2 routes — confirm on preview deploy). Single engine (Gemini) so far; add
+  Anthropic/Perplexity/OpenAI later for multi-engine coverage.
+- _Plain language: the citation scoreboard is now fully automatic — it'll re-check every Monday on its
+  own, and you can watch the trend in the admin area under "AI Citations." The first run confirms the
+  hard truth: across 12 questions we want to win, Google's AI cited ~14 sources each time and **never us**
+  — while rivals like Futurepedia showed up. That's our starting line; every GEO upgrade now has a number
+  to move._
+- **Status: done (D3.4 complete). Loop is live and automated.**

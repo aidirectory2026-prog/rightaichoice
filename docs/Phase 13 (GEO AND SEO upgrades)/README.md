@@ -34,8 +34,13 @@ Avg position ~45 · page-1 share 3.2% · compares 34% indexed · ~110 human view
 
 ## Resume checkpoint
 - [x] D0 — docs folder + baseline (2026-06-27)
-- [ ] D0 — `../rac-phase13` worktree + branch
-- [ ] D1 — recovery & depth
+- [x] D0 — `../rac-phase13` worktree + branch
+- [x] D3.4 — GEO citation tracker + free Gemini engine + weekly cron + /admin panel (baseline: 0/12 cited)
+- [x] D3.2 — live citable dataset (/llms.txt, /llms-full.txt, /llms.jsonl) — verified vs DB
+- [ ] D3.1 — citation-worthy page structure
+- [ ] D3.3 — Bing-first push
 - [ ] D2 — authority engine
-- [ ] D3 — GEO citation engine
 - [ ] D4 — conversion
+- [ ] D1 — recovery & depth (deferred: ongoing page work elsewhere)
+- [ ] Deploy `phase13-geo-seo` → preview, smoke-test /llms.* routes + /admin/ai-citations panel
+- [ ] Add Anthropic/Perplexity/OpenAI engines for multi-engine GEO coverage (later)
