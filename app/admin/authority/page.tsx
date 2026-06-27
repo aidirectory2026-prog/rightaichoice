@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { RangePicker } from '@/components/admin/range-picker'
 import { parseRange } from '@/lib/admin/range'
+import { loadDirectoryPipeline } from '@/lib/authority/admin-queries'
 import Link from 'next/link'
 
 // Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
@@ -53,6 +54,7 @@ export default async function AuthorityPage({
 }) {
   const sp = await searchParams
   const sel = parseRange(sp)
+  const dirs = await loadDirectoryPipeline() // Phase 13 D2.1 — directory submission pipeline
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('referring_domains')
@@ -132,6 +134,88 @@ export default async function AuthorityPage({
       <div className="mb-10 rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold text-white mb-3">Add a new referring domain</h2>
         <AddReferringDomainForm />
+      </div>
+
+      {/* Phase 13 D2.1 — directory submission pipeline (authority + GEO consensus) */}
+      <div className="mb-10 rounded-lg border border-indigo-900/50 bg-indigo-950/10 p-5">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-indigo-200">Directory submission pipeline</h2>
+          <span className="text-[11px] text-zinc-500">
+            {dirs.total} targets · {dirs.counts['queued'] ?? 0} queued · {dirs.counts['submitted'] ?? 0} submitted ·{' '}
+            {dirs.counts['live'] ?? 0} live · <span className="text-emerald-300">{dirs.backlinks} backlinks confirmed</span>
+          </span>
+        </div>
+        <p className="mb-4 max-w-3xl text-xs text-zinc-500">
+          High-authority, free directories to list RightAIChoice on — they earn dofollow links (the #1 ranking lever)
+          and seed the cross-source “consensus” LLMs read before citing a brand. Run{' '}
+          <code className="text-zinc-300">npm run authority:next</code> for the paste-ready submission kit; mark progress
+          with <code className="text-zinc-300">authority:mark</code>; backlinks are auto-detected by{' '}
+          <code className="text-zinc-300">authority:check</code> and flow into the table above.
+        </p>
+
+        {dirs.total === 0 ? (
+          <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-500">
+            No targets seeded yet. Run <code className="text-zinc-300">npm run authority:seed</code>.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="px-3 py-2 text-left">Next to submit</th>
+                  <th className="px-3 py-2 text-center">Tier</th>
+                  <th className="px-3 py-2 text-right">DA</th>
+                  <th className="px-3 py-2 text-center">Link</th>
+                  <th className="px-3 py-2 text-left">Submit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {dirs.next.map((d) => (
+                  <tr key={d.directory_key}>
+                    <td className="px-3 py-2 text-zinc-200">
+                      {d.directory_name}
+                      {d.notes && <span className="ml-2 text-[11px] text-zinc-500">{d.notes}</span>}
+                    </td>
+                    <td className="px-3 py-2 text-center text-xs text-zinc-400">T{d.authority_tier}</td>
+                    <td className="px-3 py-2 text-right font-mono text-xs text-zinc-400">{d.da_estimate ?? '—'}</td>
+                    <td className="px-3 py-2 text-center text-[11px]">
+                      {d.dofollow === true ? (
+                        <span className="text-emerald-400">dofollow</span>
+                      ) : d.dofollow === false ? (
+                        <span className="text-zinc-500">nofollow</span>
+                      ) : (
+                        <span className="text-zinc-600">?</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {d.submit_url ? (
+                        <Link href={d.submit_url} target="_blank" className="text-indigo-300 hover:underline">
+                          submit ↗
+                        </Link>
+                      ) : (
+                        <Link href={d.directory_url} target="_blank" className="text-zinc-400 hover:underline">
+                          site ↗
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {dirs.active.length > 0 && (
+          <div className="mt-3 text-xs text-zinc-400">
+            In progress:{' '}
+            {dirs.active.map((d) => (
+              <span key={d.directory_key} className="mr-2 inline-block rounded-full border border-zinc-700 bg-zinc-900/60 px-2 py-0.5">
+                {d.directory_name} · {d.status}
+                {d.backlink_detected && <span className="ml-1 text-emerald-300">✓ link</span>}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mb-10">
