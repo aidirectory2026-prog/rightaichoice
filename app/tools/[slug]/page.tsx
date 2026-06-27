@@ -299,6 +299,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
     ...(tool.logo_url && { image: tool.logo_url }),
     ...(tool.github_url && { codeRepository: tool.github_url }),
     ...(tool.docs_url && { documentation: tool.docs_url }),
+    // Bug-4.11 (2026-06-27): freshness signals. dateModified (last verified) and
+    // datePublished (added) help Google + AI answer engines prefer current pages
+    // and surface "updated" recency, reinforcing our real-time-data positioning.
+    ...(tool.last_verified_at && { dateModified: new Date(tool.last_verified_at).toISOString() }),
+    ...(tool.created_at && { datePublished: new Date(tool.created_at).toISOString() }),
   }
 
   return (
