@@ -11,6 +11,7 @@ import { StackSummary } from '@/components/stacks/stack-summary'
 import { SaveStackButton } from '@/components/stacks/save-stack-button'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { STACKS, getStackBySlug } from '@/lib/data/stacks'
+import { getLiveToolSlugs } from '@/lib/data/tools'
 import { createClient } from '@/lib/supabase/server'
 import {
   articleJsonLd,
@@ -104,11 +105,18 @@ export default async function StackPage({ params }: Props) {
     s.bestPick,
     ...s.alternatives,
   ])
+  // Bug-4.9: which referenced picks actually resolve to a live tool page. The
+  // stage cards link only these (others render as plain text, no 404), and the
+  // ItemList schema only cites live URLs.
+  const liveSlugs = await getLiveToolSlugs(allTools.map((t) => t.slug)).catch(
+    () => new Set<string>(),
+  )
+  const liveTools = allTools.filter((t) => liveSlugs.has(t.slug))
   const toolList = itemListJsonLd(
     `Tools in ${stack.title}`,
     `All AI tools recommended for the ${stack.goal} stack`,
     `/stacks/${slug}`,
-    allTools.map((t) => ({ name: t.name, url: `/tools/${t.slug}` })),
+    (liveTools.length > 0 ? liveTools : allTools).map((t) => ({ name: t.name, url: `/tools/${t.slug}` })),
   )
 
   const breadcrumbs = breadcrumbJsonLd([
@@ -193,7 +201,7 @@ export default async function StackPage({ params }: Props) {
             {/* Stages */}
             <div className="space-y-4">
               {stack.stages.map((stage, i) => (
-                <StackStageCard key={stage.name} stage={stage} index={i} />
+                <StackStageCard key={stage.name} stage={stage} index={i} liveSlugs={liveSlugs} />
               ))}
             </div>
 
