@@ -41,10 +41,10 @@ import { ViabilityBadge } from '@/components/tools/viability-badge'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { QuickFeedback } from '@/components/tools/quick-feedback'
 import { MobileActionBar } from '@/components/tools/mobile-action-bar'
+import { BackToTop } from '@/components/ui/back-to-top'
 import { TutorialLink } from '@/components/tools/tutorial-link'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 // Phase 3 density-replacement sections
-import { SkipIfLine } from '@/components/tools/skip-if-line'
 import { CollapsibleProse } from '@/components/tools/collapsible-prose'
 import { CostCalculator } from '@/components/tools/cost-calculator'
 import { HiddenCosts } from '@/components/tools/hidden-costs'
@@ -477,18 +477,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* FTC affiliate disclosure — inline above the fold, near primary CTA */}
-          <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3.5 py-2.5 text-xs text-zinc-400 flex items-start gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
-            <p>
-              <span className="text-zinc-300 font-medium">Affiliate disclosure:</span> We earn a commission when you
-              use our links. Editorial picks are independent.{' '}
-              <Link href="/methodology" className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline">
-                How we choose
-              </Link>
-              .
-            </p>
-          </div>
+          {/* Bug-4.2 (2026-06-27): inline affiliate disclosure removed from the
+              tool page. It now lives only on the policy pages (/methodology,
+              /terms) where it belongs; repeating it on every content page added
+              clutter near the primary CTA. */}
 
           {/* Phase 9 S6: prominent CTA → live Market Sentiment page */}
           <SentimentCTA toolSlug={tool.slug} toolName={tool.name} />
@@ -555,6 +547,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
                       {tool.editorial_verdict}
                     </p>
                   )}
+
+                  {/* Bug-4.2 (2026-06-27): the "Skip {tool} if …" sentence now
+                      lives INSIDE the verdict band, right under "Not ideal for",
+                      as one consolidated "who should skip" treatment. It used to
+                      render again as a standalone strip below, which read as the
+                      skip section appearing twice. */}
+                  {hasSkipIf && (
+                    <div className="mt-4 rounded-lg border-l-2 border-zinc-600 bg-zinc-900/30 px-4 py-2.5">
+                      <p className="text-sm text-zinc-400 leading-relaxed">
+                        <span className="font-medium text-zinc-200">Skip {tool.name} if </span>
+                        {String(tool.skip_if).trim()}
+                      </p>
+                    </div>
+                  )}
                     </>
                   ) : (
                     <p className="text-sm text-zinc-400 leading-relaxed">
@@ -600,8 +606,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   lower down as a CollapsibleProse (after Key Features + About),
                   so the page opens with structured/visual signal instead. */}
 
-              {/* Phase 3: Skip-if line (closes the verdict band — single sentence) */}
-              <SkipIfLine toolName={tool.name} text={tool.skip_if} />
+              {/* Bug-4.2 (2026-06-27): the standalone <SkipIfLine> was removed —
+                  the skip-if sentence now renders inside the Editorial Verdict
+                  band above, so "who should skip" appears exactly once. */}
 
               {/* Phase 8.next Stage 5 (2026-05-13): "Latest from {Tool}"
                   freshness section — chronological timeline of vendor
@@ -1270,58 +1277,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Pricing Details (if available) */}
-              {tool.pricing_details &&
-                Array.isArray(tool.pricing_details) &&
-                tool.pricing_details.length > 0 && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-                    <h3 className="text-sm font-semibold text-white mb-3">Pricing Plans</h3>
-                    <div className="space-y-3">
-                      {tool.pricing_details.map(
-                        (
-                          // Phase 4.5 audit fix (2026-05-09): legacy rows can
-                          // have price as a number (0, 29) instead of a
-                          // string. Type widened + coercion below so 0 renders
-                          // as "$0" not bare "0", and downstream cost-calc
-                          // doesn't blow up on .trim().
-                          plan: { name: string; price: string | number | null; features?: string[] },
-                          i: number
-                        ) => (
-                          <div
-                            key={i}
-                            className="rounded-lg border border-zinc-800 bg-zinc-950 p-3"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-white">
-                                {plan.name}
-                              </span>
-                              <span className="text-sm text-emerald-400">
-                                {plan.price !== null && plan.price !== undefined && plan.price !== ''
-                                  ? typeof plan.price === 'number'
-                                    ? `$${plan.price}`
-                                    : plan.price
-                                  : ''}
-                              </span>
-                            </div>
-                            {plan.features && plan.features.length > 0 && (
-                              <ul className="mt-2 space-y-1">
-                                {plan.features.map((f, j) => (
-                                  <li
-                                    key={j}
-                                    className="flex items-center gap-1.5 text-xs text-zinc-500"
-                                  >
-                                    <Check className="h-3 w-3 text-emerald-600" />
-                                    {f}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
+              {/* Bug-4.2 (2026-06-27): removed the duplicate sidebar "Pricing
+                  Plans" card. The main column already owns the authoritative
+                  pricing surface — 12-month CostCalculator + PricingPlansComparison
+                  (with per-tier "ideal for"/"what this adds") + Hidden costs. The
+                  sidebar copy was a thinner, redundant repeat of the same
+                  pricing_details, which made the page feel like it was
+                  re-listing plans/payment details. One pricing surface now. */}
             </aside>
           </div>
         </div>
@@ -1337,6 +1299,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
           website_url: tool.website_url,
         }}
       />
+
+      {/* Bug-4.2 (2026-06-27): back-to-top control for the long tool page */}
+      <BackToTop />
 
       <Footer />
     </>
