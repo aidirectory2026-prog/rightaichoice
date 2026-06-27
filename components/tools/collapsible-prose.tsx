@@ -33,10 +33,12 @@ export function CollapsibleProse({
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-        {icon}
-        {title}
-      </h2>
+      {title && (
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          {icon}
+          {title}
+        </h2>
+      )}
       <div className="prose prose-invert prose-zinc prose-sm max-w-none">
         <p
           className={`text-zinc-400 leading-relaxed whitespace-pre-line ${

@@ -46,6 +46,8 @@ import { TutorialLink } from '@/components/tools/tutorial-link'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
 // Phase 3 density-replacement sections
 import { CollapsibleProse } from '@/components/tools/collapsible-prose'
+import { LimitationsList } from '@/components/tools/limitations-list'
+import { RevealOnScroll } from '@/components/ui/reveal-on-scroll'
 import { CostCalculator } from '@/components/tools/cost-calculator'
 import { HiddenCosts } from '@/components/tools/hidden-costs'
 import { PricingPowerMatch } from '@/components/tools/pricing-power-match'
@@ -726,27 +728,52 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
               {/* Features */}
               {tool.features && tool.features.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-emerald-400" />
-                    Key Features
-                  </h2>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {tool.features.map((feature: string, i: number) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
-                      >
-                        <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                <RevealOnScroll>
+                  <section>
+                    <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-emerald-400" />
+                      Key Features
+                    </h2>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {tool.features.map((feature: string, i: number) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300"
+                        >
+                          <Check className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </RevealOnScroll>
               )}
 
-              {/* About {tool} — collapsible (demoted below Key Features) */}
-              <CollapsibleProse title={`About ${tool.name}`} text={tool.description} />
+              {/* About {tool} — key-facts chips + collapsible prose (Bug-4.1/4.7).
+                  The chips give an instant, scannable summary above the prose. */}
+              <section>
+                <h2 className="text-lg font-semibold text-white mb-3">About {tool.name}</h2>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[
+                    pricingLabel(tool.pricing_type),
+                    skillLabels[tool.skill_level] ?? tool.skill_level,
+                    tool.has_api ? 'API available' : 'No API',
+                    ...(Array.isArray(tool.platforms) && tool.platforms.length > 0
+                      ? [tool.platforms.map((p: string) => platformLabels[p] ?? p).join(' · ')]
+                      : []),
+                  ]
+                    .filter(Boolean)
+                    .map((fact, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full border border-zinc-700 bg-zinc-800/50 px-3 py-1 text-xs font-medium text-zinc-300"
+                      >
+                        {fact}
+                      </span>
+                    ))}
+                </div>
+                <CollapsibleProse title="" text={tool.description} />
+              </section>
 
               {/* Behind the Verdict — collapsible (demoted from the top of page) */}
               <CollapsibleProse
@@ -839,17 +866,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </section>
               )}
 
-              {/* Limitations — honest constraints (from tool.limitations) */}
+              {/* Limitations — honest constraints (from tool.limitations).
+                  Bug-4.7: rendered as icon-led gotcha cards (LimitationsList). */}
               {tool.limitations && (
-                <section className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-5">
-                  <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-400" />
-                    Limitations
-                  </h2>
-                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
-                    {tool.limitations}
-                  </p>
-                </section>
+                <RevealOnScroll>
+                  <section className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-5">
+                    <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-400" />
+                      Limitations
+                    </h2>
+                    <LimitationsList text={tool.limitations} />
+                  </section>
+                </RevealOnScroll>
               )}
 
               {/* Phase 3 — Pricing & cost band */}
