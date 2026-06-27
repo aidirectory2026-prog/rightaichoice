@@ -52,6 +52,9 @@ supporting detail this README links to:
   `09-shared-modules.md` = shared infra.
 - **`11-geo-and-authority.md`** — **(Phase 13, 2026-06-27)** GEO citation tracking + authority/directory
   engine + the self-refreshing `/llms.*` + `/state-of-ai-tools` data surfaces.
+- **`12-tool-page-health.md`** — **(Phase 12 Bug-4, 2026-06-27)** the weekly link-health sweep
+  (`tools.dead_links`), the on-demand stack viability audit, and the self-healing data-correctness
+  guarantees (feature/modality coverage, hidden costs, integrations) that ride the existing refresh + SOP.
 
 ---
 
