@@ -46,6 +46,16 @@ export const DIRECTORY_TARGETS: DirectoryTarget[] = [
   { key: 'saasworthy', name: 'SaaSworthy', url: 'https://www.saasworthy.com', submitUrl: 'https://www.saasworthy.com/submit-product', authorityTier: 3, daEstimate: 62, pricing: 'free', dofollow: true, category: 'saas-review' },
   { key: 'insidr', name: 'Insidr AI', url: 'https://www.insidr.ai', submitUrl: 'https://www.insidr.ai/submit-tool/', authorityTier: 3, daEstimate: 48, pricing: 'free', dofollow: true, category: 'ai-directory' },
   { key: 'aitoolsdirectory', name: 'AI Tools Directory', url: 'https://aitoolsdirectory.com', submitUrl: 'https://aitoolsdirectory.com/submit', authorityTier: 3, daEstimate: 40, pricing: 'free', dofollow: true, category: 'ai-directory' },
+
+  // — Phase 13 round-2: additional HIGH-AUTHORITY, free placements (high DA and/or AI-cited) —
+  { key: 'sourceforge', name: 'SourceForge', url: 'https://sourceforge.net', submitUrl: 'https://sourceforge.net/create/', authorityTier: 1, daEstimate: 92, pricing: 'free', dofollow: true, category: 'saas-review', notes: 'Very high DA business-software directory; free listing + reviews; strong dofollow link. (Sister site Slashdot.)' },
+  { key: 'trustradius', name: 'TrustRadius', url: 'https://www.trustradius.com', submitUrl: 'https://www.trustradius.com/vendors', authorityTier: 1, daEstimate: 80, pricing: 'free', dofollow: false, category: 'saas-review', notes: 'Major B2B review platform AIs cite (alongside G2/Capterra); free vendor profile. Value grows with reviews.' },
+  { key: 'wellfound', name: 'Wellfound (AngelList)', url: 'https://wellfound.com', submitUrl: 'https://wellfound.com/company/new', authorityTier: 1, daEstimate: 91, pricing: 'free', dofollow: false, category: 'entity', notes: 'Startup company profile — strong entity/knowledge-graph signal; high DA.' },
+  { key: 'stackshare', name: 'StackShare', url: 'https://stackshare.io', submitUrl: 'https://stackshare.io/tools/new', authorityTier: 2, daEstimate: 78, pricing: 'free', dofollow: true, category: 'saas-review', notes: 'Developer tech-stack directory; good for the builder/dev audience.' },
+  { key: 'getapp', name: 'GetApp (Gartner)', url: 'https://www.getapp.com', submitUrl: 'https://vendors.getapp.com', authorityTier: 2, daEstimate: 88, pricing: 'free', dofollow: false, category: 'saas-review', notes: 'Gartner network — MAY auto-populate from the Capterra listing; check before duplicating.' },
+  { key: 'softwareadvice', name: 'Software Advice (Gartner)', url: 'https://www.softwareadvice.com', authorityTier: 2, daEstimate: 85, pricing: 'free', dofollow: false, category: 'saas-review', notes: 'Gartner network — usually syndicated from Capterra; likely no separate submission needed.' },
+  { key: 'goodfirms', name: 'GoodFirms', url: 'https://www.goodfirms.co', submitUrl: 'https://www.goodfirms.co/get-listed', authorityTier: 2, daEstimate: 74, pricing: 'free', dofollow: true, category: 'saas-review', notes: 'B2B reviews + directory; free listing + dofollow.' },
+  { key: 'crozdesk', name: 'Crozdesk', url: 'https://crozdesk.com', submitUrl: 'https://vendors.crozdesk.com', authorityTier: 2, daEstimate: 64, pricing: 'free', dofollow: true, category: 'saas-review', notes: 'SaaS discovery directory; free vendor listing.' },
 ]
 
 export function getDirectoryTarget(key: string): DirectoryTarget | undefined {
