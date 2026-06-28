@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkAdmin } from '@/lib/admin/require-admin'
 
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 // H11c (Cowork QA): SVG removed — SVGs can carry inline <script>/onload handlers
@@ -8,25 +9,17 @@ const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 
 export async function POST(request: NextRequest) {
+  // Auth check — admin only (BUG-17: shared gate). 401/403 messages preserved.
+  const gate = await checkAdmin()
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' },
+      { status: gate.status },
+    )
+  }
+
+  // supabase (user-session client) is still needed for the storage upload below.
   const supabase = await createClient()
-
-  // Auth check — admin only
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-  // Cowork QA: profiles has no `role` column (the gate is is_admin) — the old
-  // `profile.role !== 'admin'` check always 403'd. Use is_admin, consistent with
-  // every other admin gate.
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const formData = await request.formData()
   const file = formData.get('file') as File | null
   const toolSlug = formData.get('slug') as string | null

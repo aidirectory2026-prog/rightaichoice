@@ -34,7 +34,13 @@ export default async function ReconciliationPage({
   // the metric; see the queries.ts note).
   const stats = await getReconciliationStats(baseFilters(parseRange({ days: String(days) }), false))
 
-  const humanEvents = stats.client_events - stats.bot_events
+  // BUG-14: keep populations matched. `humanClientEvents` (bots out, client
+  // only) is the correct denominator for the ad-block ratio — Mixpanel's loss
+  // is a CLIENT-event phenomenon, so comparing it to human server events would
+  // be a category error. `humanEvents` (client + server, bots out) is the true
+  // human total for display. The old `client_events - bot_events` mixed both.
+  const humanClientEvents = stats.client_events_human
+  const humanEvents = stats.client_events_human + stats.server_events_human
   const humanVisitors = stats.unique_distinct_ids_no_bots
   // 9.A.3 — triple-source reconciliation. Source B (this Supabase mirror) is
   // our operational truth. Source A (Mixpanel) is ad-block-lossy; rather than
@@ -42,13 +48,13 @@ export default async function ReconciliationPage({
   // MEASURE the actual ad-block ratio. Source C (Vercel Web Analytics) is an
   // independent edge counter, compared manually below.
   const assumedRatio = stats.ad_block_ratio_estimate
-  const estMixpanelClient = Math.round(humanEvents * (1 - assumedRatio))
-  const estMixpanelTotal = estMixpanelClient + stats.server_events
+  const estMixpanelClient = Math.round(humanClientEvents * (1 - assumedRatio))
+  const estMixpanelTotal = estMixpanelClient + stats.server_events_human
   const mpActual = sp.mp && Number.isFinite(Number(sp.mp)) ? Math.max(0, Math.round(Number(sp.mp))) : null
-  const measuredClient = mpActual !== null ? Math.max(0, mpActual - stats.server_events) : null
+  const measuredClient = mpActual !== null ? Math.max(0, mpActual - stats.server_events_human) : null
   const measuredRatio =
-    measuredClient !== null && humanEvents > 0
-      ? Math.max(0, Math.min(1, 1 - measuredClient / humanEvents))
+    measuredClient !== null && humanClientEvents > 0
+      ? Math.max(0, Math.min(1, 1 - measuredClient / humanClientEvents))
       : null
 
   return (

@@ -17,30 +17,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { checkAdmin } from '@/lib/admin/require-admin'
 import { propagateFreshness } from '@/lib/seo/freshness'
 
-async function requireAdmin(): Promise<{ ok: boolean; userId?: string; reason?: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, reason: 'Not signed in' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!(profile as { is_admin?: boolean } | null)?.is_admin) {
-    return { ok: false, reason: 'Not admin' }
-  }
-  return { ok: true, userId: user.id }
-}
-
 export async function POST(req: NextRequest) {
-  const gate = await requireAdmin()
+  const gate = await checkAdmin()
   if (!gate.ok) {
     return NextResponse.json({ error: gate.reason }, { status: 403 })
   }

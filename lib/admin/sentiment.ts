@@ -109,17 +109,27 @@ export async function getSentimentRevenue(f: AdminFilters): Promise<SentimentRev
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (db
     .from('sentiment_payments')
-    .select('amount_minor, currency') as any)
+    .select('amount_minor, currency, gateway_payment_id') as any)
     .eq('status', 'paid')
     .gte('created_at', f.range.cutoffISO)
     .lt('created_at', f.range.endCutoffISO)
   const byCurrency = new Map<string, { amount_minor: number; payments: number }>()
-  for (const p of (data ?? []) as Array<{ amount_minor: number; currency: string }>) {
+  // BUG-16: dedup by gateway_payment_id (the gateway's unique charge id —
+  // migration 136 has a partial-unique index on it) so a duplicated 'paid' row
+  // can't double-count revenue. Rows with a null gateway id (legacy/manual) get a
+  // unique synthetic key so each still counts exactly once. Refunds are already
+  // excluded by status='paid'.
+  const seen = new Set<string>()
+  const rows = (data ?? []) as Array<{ amount_minor: number; currency: string; gateway_payment_id: string | null }>
+  rows.forEach((p, idx) => {
+    const key = p.gateway_payment_id ?? `__null_${idx}`
+    if (seen.has(key)) return
+    seen.add(key)
     const cur = byCurrency.get(p.currency) ?? { amount_minor: 0, payments: 0 }
     cur.amount_minor += p.amount_minor
     cur.payments += 1
     byCurrency.set(p.currency, cur)
-  }
+  })
   return [...byCurrency.entries()]
     .map(([currency, v]) => ({ currency, ...v }))
     .sort((a, b) => a.currency.localeCompare(b.currency))

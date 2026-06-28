@@ -10,8 +10,8 @@
 //   tool_audience&slug=<slug>   — every user who interacted with one tool
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { checkAdmin } from '@/lib/admin/require-admin'
 
 function toCsv(rows: Array<Record<string, unknown>>): string {
   if (rows.length === 0) return ''
@@ -41,21 +41,8 @@ function csvResponse(rows: Array<Record<string, unknown>>, filename: string): Ne
   })
 }
 
-async function requireAdmin(): Promise<{ ok: boolean; reason?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, reason: 'Not signed in' }
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-  if (!(profile as { is_admin?: boolean } | null)?.is_admin) return { ok: false, reason: 'Not admin' }
-  return { ok: true }
-}
-
 export async function GET(req: NextRequest) {
-  const gate = await requireAdmin()
+  const gate = await checkAdmin()
   if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 })
 
   const url = new URL(req.url)

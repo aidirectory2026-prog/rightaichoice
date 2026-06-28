@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { requireAdmin } from '@/lib/admin/require-admin'
 import { approveTitleOverride } from '@/app/admin/tier1-review/actions'
 
 // Phase 9 Day-4 Part 2 (2026-05-29) — Server actions for the SEO Pulse
@@ -23,18 +23,7 @@ import { approveTitleOverride } from '@/app/admin/tier1-review/actions'
 // old cookie-client UPDATEs matched 0 rows under RLS with NO error — so Accept/
 // Reject/Mark-executed silently no-op'd and the buttons looked dead. requireAdmin()
 // (cookie client) still gates authorization; the mutation uses the admin client.
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-  if (!profile?.is_admin) throw new Error('Admin only')
-}
+// BUG-17: requireAdmin() now lives in lib/admin/require-admin.ts (one shared gate).
 
 type ActionMetadata = {
   baseline_position?: number | null

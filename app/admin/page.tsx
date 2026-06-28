@@ -76,8 +76,9 @@ export default async function AdminDashboardPage({
     getDashboardKpis(filters),
     getDailyActiveUsers(filters),
     // NOTE: getEngagementMetrics is now-anchored BY DESIGN — see the
-    // "Right now" strip below (audit F5 resolution).
-    getEngagementMetrics(sel, includeBots),
+    // "Right now" strip below (audit F5 resolution). It now honours the smart
+    // filters (BUG-09) while keeping the fixed DAU/WAU/MAU windows.
+    getEngagementMetrics(filters),
     getTopReferrers(filters),
     getTopChannels(filters),
     getTopPages(filters),

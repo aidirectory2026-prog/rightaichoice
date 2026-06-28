@@ -3,7 +3,7 @@
 // crashes the server render. Admin-gated.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { checkAdmin } from '@/lib/admin/require-admin'
 import { parseRange } from '@/lib/admin/range'
 import { baseFilters } from '@/lib/admin/filters'
 import {
@@ -30,16 +30,6 @@ import {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-async function requireAdmin(): Promise<{ ok: boolean; reason?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, reason: 'Not signed in' }
-  const { data: profile } = await supabase
-    .from('profiles').select('is_admin').eq('id', user.id).single()
-  if (!(profile as { is_admin?: boolean } | null)?.is_admin) return { ok: false, reason: 'Not admin' }
-  return { ok: true }
-}
-
 type Result = { name: string; ok: boolean; ms: number; sample?: unknown; error?: string }
 
 async function run<T>(name: string, fn: () => Promise<T>): Promise<Result> {
@@ -59,7 +49,7 @@ async function run<T>(name: string, fn: () => Promise<T>): Promise<Result> {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdmin()
+  const gate = await checkAdmin()
   if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 })
 
   const sel = parseRange({ days: '7' })
@@ -76,7 +66,7 @@ export async function GET(req: NextRequest) {
     run('getPlanFunnel', () => getPlanFunnel(f)),
     run('getTopExistingTools', () => getTopExistingTools(f)),
     run('getTopUseCases', () => getTopUseCases(f)),
-    run('getEngagementMetrics', () => getEngagementMetrics(sel, includeBots)),
+    run('getEngagementMetrics', () => getEngagementMetrics(f)),
     run('getTopEvents', () => getTopEvents(f)),
     run('getSearchMetrics', () => getSearchMetrics(f)),
     run('getTopSearches', () => getTopSearches(f)),

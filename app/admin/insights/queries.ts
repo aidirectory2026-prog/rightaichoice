@@ -20,7 +20,6 @@
 // typed rows. Page calls them in Promise.all.
 
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import type { RangeSelection } from '@/lib/admin/range'
 import { applyFilters, filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
 import { schemaPropKeys } from '@/lib/admin/event-props'
 import { classifyChannel, hostFromReferrer } from '@/lib/analytics/channels'
@@ -44,10 +43,6 @@ function maybeFilterBots<T>(q: T, includeBots: boolean): T {
 }
 
 export type DayWindow = 1 | 7 | 30 | 90
-
-function cutoffIso(days: DayWindow): string {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-}
 
 // Phase 9 follow-up (2026-05-28) — IST-aligned "midnight today" cutoff.
 // The founder runs admin from IST and "DAU today" should mean the IST
@@ -333,19 +328,34 @@ export async function getTopUseCases(f: AdminFilters): Promise<BarRow[]> {
 
 // ── Engagement ──────────────────────────────────────────────────────
 
-export async function getEngagementMetrics(sel: RangeSelection, includeBots: boolean): Promise<MetricResult[]> {
+// IST-midnight N days ago, as a UTC ISO string. Keeps the engagement windows on
+// ONE calendar (IST), so DAU/WAU/MAU share a boundary convention.
+function midnightIstMinusDays(n: number): string {
+  return new Date(new Date(midnightIstIso()).getTime() - n * 86_400_000).toISOString()
+}
+
+export async function getEngagementMetrics(f: AdminFilters): Promise<MetricResult[]> {
   const db = getAdminClient()
-  const todayIso = midnightIstIso()
+  const includeBots = f.includeBots
+  const filters = filtersToJsonb(f)
+  // BUG-09: the "Right now" pulse is now-anchored BY DESIGN (audit F5) — the
+  // windows are fixed DAU/WAU/MAU (today / last 7 / last 30 IST-calendar days),
+  // NOT the range picker. Two real bugs fixed: (1) the smart filters
+  // (country/device/…) were ignored — now passed via p_filters; (2) "today" was
+  // IST-midnight while 7d/30d were rolling-from-now, so the boundary was
+  // mis-counted — all three now anchor to the same IST calendar.
+  const day0 = midnightIstIso()
+  const day7 = midnightIstMinusDays(6)   // today + 6 prior = 7 calendar days
+  const day30 = midnightIstMinusDays(29) // today + 29 prior = 30 calendar days
   const [today, week, month, todayKnown, weekKnown, monthKnown] = await Promise.all([
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: todayIso, p_include_bots: includeBots }).maybeSingle(),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
-    rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoffIso(30), p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: day0, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: day7, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
+    rpc(db, 'distinct_visitors_in_window', { p_cutoff: day30, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
     // Phase 9 (2026-05-28) — distinct logged-in humans for the same windows.
-    rpc(db, 'distinct_known_users_in_window', { p_cutoff: todayIso, p_include_bots: includeBots }).maybeSingle(),
-    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(7), p_include_bots: includeBots }).maybeSingle(),
-    rpc(db, 'distinct_known_users_in_window', { p_cutoff: cutoffIso(30), p_include_bots: includeBots }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: day0, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: day7, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
+    rpc(db, 'distinct_known_users_in_window', { p_cutoff: day30, p_include_bots: includeBots, p_filters: filters }).maybeSingle(),
   ])
-  void sel
   const num = (r: { data: unknown }) => Number((r.data as { count?: number } | null)?.count ?? 0)
   return [
     { label: 'DAU (today)', value: num(today) },
@@ -1186,9 +1196,14 @@ export async function getEventHealth(days: 7 | 30 | 90 = 30): Promise<{
 
 export interface ReconciliationStats {
   days: number
-  client_events: number
-  server_events: number
-  bot_events: number
+  client_events: number // bot-INCLUSIVE
+  server_events: number // bot-INCLUSIVE
+  bot_events: number // bot rows across BOTH client + server
+  // BUG-14: bot-EXCLUDED splits so every numerator/denominator pair the page
+  // builds stays within ONE population. The old `client_events - bot_events`
+  // mixed populations (subtracting server-side bots from client-only events).
+  client_events_human: number // source_kind='client' AND bot_likely=false
+  server_events_human: number // source_kind='server' AND bot_likely=false
   unique_distinct_ids: number
   unique_distinct_ids_no_bots: number
   ad_block_ratio_estimate: number // not measurable directly — see notes
@@ -1371,13 +1386,18 @@ export async function getReconciliationStats(f: AdminFilters): Promise<Reconcili
   const db = getAdminClient()
   const sel = f.range
   const cutoff = sel.cutoffISO
-  const [client, server, bots, allUniq, humanUniq] = await Promise.all([
+  const [client, server, bots, clientHuman, serverHuman, allUniq, humanUniq] = await Promise.all([
     applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
       .eq('source_kind', 'client').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
     applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
       .eq('source_kind', 'server').gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
     applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
       .eq('bot_likely', true).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
+    // BUG-14: bot-excluded per-source counts (humans only) for within-population pairs.
+    applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
+      .eq('source_kind', 'client').eq('bot_likely', false).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
+    applyFilters(db.from('user_events').select('*', { count: 'exact', head: true })
+      .eq('source_kind', 'server').eq('bot_likely', false).gte('created_at', cutoff).lt('created_at', sel.endCutoffISO), f),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: true, p_filters: filtersToJsonb(f) }).maybeSingle(),
     rpc(db, 'distinct_visitors_in_window', { p_cutoff: cutoff, p_end: sel.endCutoffISO, p_include_bots: false, p_filters: filtersToJsonb(f) }).maybeSingle(),
   ])
@@ -1386,6 +1406,8 @@ export async function getReconciliationStats(f: AdminFilters): Promise<Reconcili
     client_events: client.count ?? 0,
     server_events: server.count ?? 0,
     bot_events: bots.count ?? 0,
+    client_events_human: clientHuman.count ?? 0,
+    server_events_human: serverHuman.count ?? 0,
     unique_distinct_ids: Number((allUniq.data as { count?: number } | null)?.count ?? 0),
     unique_distinct_ids_no_bots: Number((humanUniq.data as { count?: number } | null)?.count ?? 0),
     ad_block_ratio_estimate: 0.3, // industry baseline 25-35% on tech audiences

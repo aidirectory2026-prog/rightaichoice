@@ -1,28 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { requireAdmin } from '@/lib/admin/require-admin'
 
 const ENGINES = ['chatgpt', 'claude', 'perplexity', 'google_aio', 'gemini', 'copilot', 'other'] as const
 type Engine = (typeof ENGINES)[number]
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) throw new Error('Not authorized')
-  return { user }
-}
 
 /** Parse an optional positive int from a form field; '' / invalid → null. */
 function optInt(v: FormDataEntryValue | null): number | null {
@@ -36,7 +19,7 @@ function optInt(v: FormDataEntryValue | null): number | null {
  * and the operator can retry — volume here is tiny (a few rows per weekly check).
  */
 export async function addCitation(formData: FormData): Promise<void> {
-  const { user } = await requireAdmin()
+  const { userId } = await requireAdmin()
 
   const engine = String(formData.get('engine') ?? '').trim() as Engine
   if (!ENGINES.includes(engine)) throw new Error('Invalid engine')
@@ -71,7 +54,7 @@ export async function addCitation(formData: FormData): Promise<void> {
     position_in_answer: optInt(formData.get('position_in_answer')),
     brand_mention: brandMention,
     notes,
-    created_by: user.id,
+    created_by: userId,
   })
   if (error) throw new Error(error.message)
 
