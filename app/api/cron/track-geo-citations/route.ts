@@ -13,6 +13,7 @@
  */
 import { cronRoute } from '@/lib/pipelines/with-logging'
 import { runGeoTracking, pickDefaultEngine } from '@/lib/geo/run-tracking'
+import { sendGeoReportEmail } from '@/lib/geo/geo-report-email'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -27,5 +28,13 @@ export const GET = cronRoute({ pipelineKey: 'track-geo-citations' }, async (ctx)
     return { skipped: true, reason: 'no GEO engine enabled (set GEMINI_API_KEY)' }
   }
   const res = await runGeoTracking(ctx, { engineId, apply: true, log: (m) => console.log(m) })
-  return res
+
+  // Email the founder a report of this run (best-effort — never fail the data run on email).
+  const email = await sendGeoReportEmail().catch((e) => ({
+    ok: false,
+    error: e instanceof Error ? e.message : String(e),
+  }))
+  ctx.recordMetadata({ email_sent: email.ok, email_error: email.ok ? undefined : (email as { error?: string }).error })
+
+  return { ...res, email_sent: email.ok }
 })
