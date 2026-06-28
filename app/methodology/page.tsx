@@ -177,21 +177,16 @@ export default function MethodologyPage() {
           </section>
 
           {/* (c) Affiliate disclosure */}
-          <section className="mb-12">
+          <section id="affiliate" className="mb-12 scroll-mt-24">
             <h2 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-emerald-400" />
               How affiliate disclosure works
             </h2>
             <p className="text-zinc-400 leading-relaxed mb-3">
-              We disclose affiliate relationships at three layers, in line with the FTC&apos;s 16 CFR Part 255
+              We disclose affiliate relationships at two layers, in line with the FTC&apos;s 16 CFR Part 255
               endorsement guidelines:
             </p>
             <ul className="space-y-2 text-sm text-zinc-300 leading-relaxed list-disc pl-5">
-              <li>
-                <strong className="text-white">Page level.</strong> An inline disclosure block appears above the
-                primary CTA on every tool page that carries an affiliate link. The disclosure is visible without
-                scrolling — not buried in the footer.
-              </li>
               <li>
                 <strong className="text-white">Sitewide.</strong> This methodology page and the privacy policy both
                 disclose the affiliate relationship explicitly, naming the program (PartnerStack, Impact, direct
@@ -286,9 +281,9 @@ export default function MethodologyPage() {
               <p className="text-sm font-semibold text-white mb-1.5">Affiliate disclosure (FTC)</p>
               <p className="text-sm text-zinc-300 leading-relaxed">
                 We earn a commission when you use our links. Editorial picks are independent — affiliate status never
-                determines whether a tool appears, where it ranks, or what we say about it. Affiliate-bearing links
-                are disclosed inline on every tool page above the primary CTA. This complies with the FTC&apos;s 16
-                CFR Part 255 endorsement guidelines.
+                determines whether a tool appears, where it ranks, or what we say about it. The affiliate relationship
+                is disclosed on this methodology page, in our Terms of Service, and via a sitewide footer link, in
+                line with the FTC&apos;s 16 CFR Part 255 endorsement guidelines.
               </p>
             </div>
           </div>

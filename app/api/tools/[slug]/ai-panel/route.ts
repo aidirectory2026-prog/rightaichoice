@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient } from '@/lib/ai/anthropic'
-import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { rateLimit, rateLimitResponse, underGlobalDailyLlmBudget, llmBudgetResponse } from '@/lib/rate-limit'
 
 type RouteContext = { params: Promise<{ slug: string }> }
 
@@ -17,6 +17,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   const limit = await rateLimit('ai-panel', req, { limit: 5, windowMs: 60_000 })
   if (!limit.ok) return rateLimitResponse(limit)
+  // Cowork QA (2026-06): this anonymous Anthropic endpoint had only a per-IP
+  // limit, so IP rotation could drain spend unbounded. Add the same global
+  // daily ceiling chat/plan already enforce (fail-open on infra error).
+  if (!(await underGlobalDailyLlmBudget())) return llmBudgetResponse()
 
   const supabase = await createClient()
 
