@@ -383,6 +383,51 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   is exactly what the directory work fixes._
 - **Status: done (D1.1). D1.2/D1.3 de-prioritized by the data; D1 effectively closed (only authority/discovery remains, owned by D2/D3).**
 
+### 2026-06-29 — D2.1 cont.: directory submissions executed (operator) + 8 high-authority targets added
+- **What:** Worked the directory pipeline with the founder, one by one; added a round-2 batch of 8
+  high-authority targets (SourceForge, Wellfound, TrustRadius, StackShare, GetApp, SoftwareAdvice,
+  GoodFirms, Crozdesk).
+- **Result (2026-06-29):** **6 LIVE** — G2 (`g2.com/products/rightaichoice`), Crunchbase, Wellfound,
+  Trustpilot, SaaSHub, Indie Hackers; **4 submitted/pending** — Capterra, TrustRadius, SaaSworthy,
+  SourceForge; **3 skipped** (There's An AI For That, Futurepedia, AlternativeTo — went paid/clunky).
+  Every high-value placement is in. Live URLs recorded on each row for the weekly backlink-checker.
+- **Baseline (Moz, 2026-06-29):** DA **1**, 31 (weak) linking root domains, 23 ranking keywords, clean
+  spam score — the expected floor for a 2-month-old site; the high-DA links above are what lift it.
+- **Human-readable record:** `authority-tracking-sheet.md` (same folder).
+- _Plain language: we got listed on the big trusted sites — G2, Crunchbase, Trustpilot, Wellfound, SaaSHub
+  live; Capterra/TrustRadius/SourceForge pending. These are both the backlinks Google wants and the sources
+  AIs read. Our domain authority is still 1 (normal for a new site) and these are what pull it up._
+- **Status: done — high-value directories executed; reviews are the parked multiplier.**
+
+### 2026-06-29 — D2.2b: digital-PR / data-journalism engine (the #1 DA mover)
+- **What:** Built an operator-approved engine that turns our unique live data into editorial-link bait —
+  the highest-leverage authority work (editorial links move DA far more than directory links).
+- **How (commit `33c8975`, branch `phase13-geo-seo`):**
+  - `lib/pr/story-angles.ts` — derives newsworthy angles from `buildStateOfAI()` (freshness, pricing,
+    viability/deathwatch, category concentration, top open-source) — all live, real numbers.
+  - `lib/pr/targets.ts` — 16 curated FREE targets: AI newsletters (Ben's Bites, TLDR AI, The Rundown…),
+    inbound journalist-query platforms (Connectively/HARO, Qwoted, Featured), and data-post communities
+    (HN, r/artificial, r/SaaS…), each with its method + beat.
+  - `lib/pr/draft-pitch.ts` — DeepSeek, **method-aware** drafter (email vs. expert-answer vs. community
+    post), data-led, no hype, always cites the report URL.
+  - `supabase/migrations/175_pr_pitches.sql` — `pr_pitches` approval queue (draft→approved→sent→
+    responded→landed). **Applied live.**
+  - `scripts/pr-pitch.ts` + npm `pr:angles` / `pr:draft[:dry]` / `pr:status` — generate angles, draft
+    pitches into `pr_pitches` + a CSV working file; `runScriptedPipeline`-logged.
+- **Verification:** `tsc` clean; `pr:angles` produced 5 live angles (99.5% verified, 55.5% free/freemium,
+  Hugging Face 161,979★, etc.); a 2-pitch live draft (freshness × Ben's Bites/TLDR) drafted clean,
+  data-led pitches and stored them in `pr_pitches` + CSV. Verified the sample pitch leads with the stat +
+  links the report.
+- **Operator model:** drafts are a review queue — the founder edits/approves and sends; we never auto-send
+  or fabricate claims. Inbound-query targets (HARO-type) are the highest-yield free editorial-link source.
+- **Residual risk:** target list will need pruning as newsletters change submission methods; sending is
+  manual by design. Admin UI deferred (CSV + `pr_pitches` table is the working surface for now).
+- _Plain language: I built the machine that pitches our data to journalists and newsletters — it writes a
+  tailored, no-hype pitch for each one (leading with a real stat like "55% of AI tools are free") and
+  queues it for you to approve and send. Landing even a few of these earns the kind of high-quality links
+  that actually move our domain authority — far more than directory listings do._
+- **Status: done (D2.2b). Built + verified; drafting/sending is operator-driven.**
+
 ---
 
 ## Phase 13 round 1 — summary (2026-06-27)

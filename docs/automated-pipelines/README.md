@@ -299,7 +299,10 @@ turned the static `public/llms*.txt` into **self-refreshing routes**. Full detai
 - **`authority-check`** (Vercel cron, Mon 07:30 UTC) — directory backlink monitor → `referring_domains` →
   `/admin/authority`.
 - **Operator scripts (on-demand, pipeline_runs-logged):** `geo:track[:dry]` (same as the cron, manual);
-  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`).
+  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`);
+  `pr:angles|draft[:dry]|status` (**D2.2b digital-PR engine** — `lib/pr/*`: derive live-data angles →
+  DeepSeek-draft pitches → `pr_pitches` approval queue + CSV; the #1 DA mover via earned editorial links).
+- **New tables (round 2):** `directory_submissions` (mig 174), `pr_pitches` (mig 175).
 - **Self-refreshing data surfaces (ISR routes, not crons):** `/llms.txt`, `/llms-full.txt`, `/llms.jsonl`,
   and `/state-of-ai-tools` now regenerate from the live DB hourly/daily (replacing the static, stale
   `public/llms*.txt`). They carry a live freshness banner — our core GEO signal.
