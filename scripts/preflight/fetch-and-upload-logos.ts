@@ -119,25 +119,38 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/jpg': 'jpg',
   'image/webp': 'webp',
-  'image/x-icon': 'ico',
-  'image/vnd.microsoft.icon': 'ico',
 }
 
+// BUG-11: the "tool-logos" bucket only accepts these MIME types, so reject
+// anything else (notably image/x-icon from favicon.ico) at fetch time — it
+// would fail the Storage upload anyway, and a 16×16 .ico is a poor logo. A
+// favicon.ico URL that's actually served as image/png still passes here.
+const ALLOWED_MIME = new Set(Object.keys(EXT_BY_MIME))
+
+const FETCH_TIMEOUT_MS = 6000
+
 async function tryFetch(url: string, expectedExtHint?: string): Promise<FetchedLogo | null> {
+  // BUG-11: bound each candidate fetch so a hanging server can't stall the
+  // whole sweep (the old default-timeout fetch could block for minutes).
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
   try {
     const res = await fetch(url, {
       redirect: 'follow',
       headers: { 'User-Agent': 'RightAIChoice-Preflight/1.0' },
+      signal: ctrl.signal,
     })
     if (!res.ok) return null
-    const contentType = res.headers.get('content-type')?.split(';')[0]?.trim() ?? ''
-    if (!contentType.startsWith('image/')) return null
+    const contentType = res.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? ''
+    if (!ALLOWED_MIME.has(contentType)) return null
     const buffer = Buffer.from(await res.arrayBuffer())
     if (buffer.length < 200) return null
     const ext = expectedExtHint ?? EXT_BY_MIME[contentType] ?? 'png'
     return { buffer, contentType, ext, sourceUrl: url }
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -157,10 +170,14 @@ async function discoverLogo(slug: string, websiteUrl: string | null): Promise<Fe
   } catch {
     return null
   }
+  // Highest-quality first: apple-touch-icon (180×180) → svg → favicon.png.
+  // favicon.ico is kept LAST and only succeeds if the server serves it as a
+  // supported MIME (png) — pure image/x-icon is rejected in tryFetch.
   const candidates = [
     `${origin}/apple-touch-icon.png`,
     `${origin}/apple-touch-icon-precomposed.png`,
     `${origin}/favicon.svg`,
+    `${origin}/favicon.png`,
     `${origin}/favicon.ico`,
   ]
   for (const candidate of candidates) {
@@ -222,30 +239,28 @@ async function main() {
   let failed = 0
   const failures: string[] = []
 
-  for (const row of rows) {
+  // BUG-11: process one tool end-to-end (discover → upload → UPDATE). Logs are
+  // batched into one string so concurrent runs don't interleave per-tool output.
+  async function processTool(row: ToolRow): Promise<'ok' | 'skipped' | 'failed'> {
     const slug = row.slug
-    const websiteUrl = row.website_url
-    console.log(`[${slug}] ${row.name}`)
-    console.log(`  current logo_url: ${row.logo_url ?? '(null)'}`)
+    const lines = [`[${slug}] ${row.name}`, `  current logo_url: ${row.logo_url ?? '(null)'}`]
+    const flush = (extra: string) => console.log([...lines, extra].join('\n'))
 
-    const logo = await discoverLogo(slug, websiteUrl)
+    const logo = await discoverLogo(slug, row.website_url)
     if (!logo) {
-      console.log(`  ✗ no usable logo found — leaving NULL`)
+      flush('  ✗ no usable logo found — leaving NULL')
       failures.push(slug)
-      failed++
-      continue
+      return 'failed'
     }
 
     const key = `${slug}.${logo.ext}`
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${key}`
-    console.log(`  source:   ${logo.sourceUrl} (${logo.contentType}, ${logo.buffer.length} bytes)`)
-    console.log(`  upload:   ${BUCKET}/${key}`)
-    console.log(`  new logo_url: ${publicUrl}`)
+    lines.push(`  source:   ${logo.sourceUrl} (${logo.contentType}, ${logo.buffer.length} bytes)`)
+    lines.push(`  new logo_url: ${publicUrl}`)
 
     if (DRY_RUN) {
-      console.log(`  [dry-run] skipping upload + UPDATE`)
-      skipped++
-      continue
+      flush('  [dry-run] skipping upload + UPDATE')
+      return 'skipped'
     }
 
     const { error: upErr } = await supabase.storage
@@ -256,10 +271,9 @@ async function main() {
         cacheControl: '604800', // 7 days
       })
     if (upErr) {
-      console.log(`  ✗ Storage upload failed: ${upErr.message}`)
+      flush(`  ✗ Storage upload failed: ${upErr.message}`)
       failures.push(slug)
-      failed++
-      continue
+      return 'failed'
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -269,15 +283,29 @@ async function main() {
     })
     const { error: updErr } = await updateBuilder.eq('slug', slug)
     if (updErr) {
-      console.log(`  ✗ DB update failed: ${updErr.message}`)
+      flush(`  ✗ DB update failed: ${updErr.message}`)
       failures.push(slug)
-      failed++
-      continue
+      return 'failed'
     }
 
-    console.log(`  ✓ done\n`)
-    ok++
+    flush('  ✓ done')
+    return 'ok'
   }
+
+  // Bounded concurrency so 380 tools don't run serially (each does up to 5
+  // candidate fetches) but we don't hammer hosts / Storage either.
+  const CONCURRENCY = 8
+  let idx = 0
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, rows.length) }, async () => {
+      while (idx < rows.length) {
+        const outcome = await processTool(rows[idx++])
+        if (outcome === 'ok') ok++
+        else if (outcome === 'skipped') skipped++
+        else failed++
+      }
+    }),
+  )
 
   console.log('\n──────────────────────────────────────────')
   console.log(`Result: ${ok} updated, ${skipped} dry-run-skipped, ${failed} failed`)
