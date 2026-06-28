@@ -64,6 +64,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                   alt={profile.username}
                   width={80}
                   height={80}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (

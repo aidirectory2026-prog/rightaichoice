@@ -3,6 +3,7 @@
 import { Bot, User } from 'lucide-react'
 import { ToolCardInline } from './tool-card-inline'
 import { analytics } from '@/lib/analytics'
+import { inlineFormat } from '@/lib/format/inline-format'
 
 type ToolMention = {
   slug: string
@@ -125,12 +126,3 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-function inlineFormat(text: string): string {
-  // Bold
-  let result = text.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-  // Italic
-  result = result.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  // Inline code
-  result = result.replace(/`(.+?)`/g, '<code class="rounded bg-zinc-700 px-1 py-0.5 text-xs text-emerald-300">$1</code>')
-  return result
-}

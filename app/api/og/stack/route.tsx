@@ -64,9 +64,15 @@ export async function GET(request: NextRequest) {
     stack = getCuratedStack(slug)
   }
 
-  const fontData = await fetch(
-    new URL('/fonts/Geist-Regular.ttf', request.nextUrl.origin)
-  ).then((r) => r.arrayBuffer())
+  // Bug-26: a single font-fetch hiccup (404/blip) must NOT 500 every stack OG
+  // preview. Guard the fetch and fall back to ImageResponse's built-in font.
+  let fontData: ArrayBuffer | null = null
+  try {
+    const r = await fetch(new URL('/fonts/Geist-Regular.ttf', request.nextUrl.origin))
+    if (r.ok) fontData = await r.arrayBuffer()
+  } catch {
+    /* fall back to the default font below */
+  }
 
   const title = stack?.title ?? 'Build Anything with AI'
   const tools = stack?.tools ?? []
@@ -196,14 +202,16 @@ export async function GET(request: NextRequest) {
     {
       width: 1200,
       height: 630,
-      fonts: [
-        {
-          name: 'Geist',
-          data: fontData,
-          style: 'normal',
-          weight: 400,
-        },
-      ],
+      fonts: fontData
+        ? [
+            {
+              name: 'Geist',
+              data: fontData,
+              style: 'normal' as const,
+              weight: 400 as const,
+            },
+          ]
+        : undefined,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400',
       },

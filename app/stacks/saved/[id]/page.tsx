@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer'
 import { ExportStack } from '@/components/stacks/export-stack'
 import { createClient } from '@/lib/supabase/server'
 import { safeJsonLd } from '@/lib/seo/json-ld'
+import { incrementStackView } from '@/actions/stacks'
 
 type Stage = {
   name: string
@@ -80,14 +81,16 @@ export default async function SavedStackPage({ params }: Props) {
 
   if (!stack) notFound()
 
-  // Increment view count (fire-and-forget)
-  supabase
-    .from('saved_stacks')
-    .update({ view_count: stack.view_count + 1 })
-    .eq('id', id)
-    .then(() => {})
+  // Bug-04: atomic, awaited view-count bump via the RPC (the old fire-and-forget
+  // `update({ view_count + 1 })` lost concurrent increments and was an un-awaited
+  // promise in render).
+  await incrementStackView(id)
 
-  const stages: Stage[] = Array.isArray(stack.stages) ? stack.stages : []
+  // Bug-02: stages are user-supplied jsonb — drop any stage missing bestPick so a
+  // partial/crafted saved stack can't 500 this public, indexable page.
+  const stages: Stage[] = (Array.isArray(stack.stages) ? stack.stages : []).filter(
+    (s) => s && s.bestPick,
+  )
   const createdDate = new Date(stack.created_at).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
