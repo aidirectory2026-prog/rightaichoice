@@ -17,6 +17,8 @@
     "tracking:schema": "tsx scripts/audit/verify-event-registry.ts",
     "preflight:fetch-logos:dry": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --dry-run",
     "preflight:fetch-logos": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts",
+    "preflight:fetch-logos:missing:dry": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --missing --dry-run",
+    "preflight:fetch-logos:missing": "tsx --env-file=.env.local scripts/preflight/fetch-and-upload-logos.ts --missing",
     "refresh:dry": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --dry-run",
     "refresh:apply": "tsx --env-file=.env.local scripts/backfill-tool-data.ts --apply",
     "gsc:oauth:bootstrap": "tsx --env-file=.env.local scripts/oauth-gsc-bootstrap.ts",

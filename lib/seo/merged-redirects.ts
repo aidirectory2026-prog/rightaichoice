@@ -322,7 +322,7 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   ],
   [
     "v0-dev",
-    "v0"
+    "v0-by-vercel"
   ],
   [
     "veed-io",
@@ -342,4 +342,4 @@ export const MERGED_TOOL_REDIRECTS: Map<string, string> = new Map<string, string
   ]
 ])
 
-export const MERGED_LAST_GENERATED_AT = '2026-06-10T09:54:38.853Z'
+export const MERGED_LAST_GENERATED_AT = '2026-06-28T19:50:48.311Z'

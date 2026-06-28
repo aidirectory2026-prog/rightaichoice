@@ -80,6 +80,24 @@ const TARGET_SLUGS = [
 const argv = process.argv.slice(2)
 const DRY_RUN = argv.includes('--dry-run')
 const ONE_SLUG = argv.find((a) => a.startsWith('--slug='))?.split('=')[1]
+// BUG-11 (Phase 13): --missing dynamically targets EVERY published tool whose
+// logo_url is null/empty (the live 381-gap), instead of the stale hardcoded
+// TARGET_SLUGS. Supports --limit + djb2 sharding so the sweep can be chunked.
+const MISSING = argv.includes('--missing')
+const getNum = (flag: string, def: number) => {
+  const a = argv.find((x) => x.startsWith(`${flag}=`))
+  return a ? Number(a.split('=')[1]) : def
+}
+const LIMIT = getNum('--limit', Infinity)
+const SHARD = getNum('--shard', 0)
+const SHARDS = getNum('--shards', 1)
+
+// djb2 — same stable shard hash used by the other sharded scripts.
+function hash(s: string): number {
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = (h * 33) ^ s.charCodeAt(i)
+  return h >>> 0
+}
 
 type FetchedLogo = {
   buffer: Buffer
@@ -91,7 +109,7 @@ type FetchedLogo = {
 type ToolRow = {
   slug: string
   name: string
-  website_url: string
+  website_url: string | null
   logo_url: string | null
 }
 
@@ -123,14 +141,22 @@ async function tryFetch(url: string, expectedExtHint?: string): Promise<FetchedL
   }
 }
 
-async function discoverLogo(slug: string, websiteUrl: string): Promise<FetchedLogo | null> {
+async function discoverLogo(slug: string, websiteUrl: string | null): Promise<FetchedLogo | null> {
   const override = OVERRIDES[slug]
   if (override) {
     const got = await tryFetch(override.url, override.ext)
     if (got) return got
     console.warn(`  ! override URL failed for ${slug}: ${override.url}`)
   }
-  const origin = new URL(websiteUrl).origin
+  // Guard: a tool with no website has no origin to probe (auto-discovery only
+  // works off the brand's own domain). The render-time monogram covers it.
+  if (!websiteUrl || !/^https?:\/\//i.test(websiteUrl)) return null
+  let origin: string
+  try {
+    origin = new URL(websiteUrl).origin
+  } catch {
+    return null
+  }
   const candidates = [
     `${origin}/apple-touch-icon.png`,
     `${origin}/apple-touch-icon-precomposed.png`,
@@ -148,22 +174,47 @@ async function main() {
   const supabase = getAdminClient()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-  const slugs = ONE_SLUG ? [ONE_SLUG] : (TARGET_SLUGS as readonly string[])
-  console.log(`\n${DRY_RUN ? '[DRY-RUN] ' : ''}Processing ${slugs.length} slug(s)\n`)
-
-  const { data, error } = await supabase
-    .from('tools')
-    .select('slug, name, website_url, logo_url')
-    .in('slug', slugs as string[])
-
-  if (error) {
-    console.error('DB read failed:', error.message)
-    process.exit(1)
+  let rows: ToolRow[]
+  if (MISSING) {
+    // BUG-11: every published tool with no logo, paginated (PostgREST caps a
+    // single select at 1,000 rows; the gap is ~381 but the catalog is ~2,000).
+    const all: ToolRow[] = []
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from('tools')
+        .select('slug, name, website_url, logo_url')
+        .eq('is_published', true)
+        .or('logo_url.is.null,logo_url.eq.')
+        .order('slug', { ascending: true })
+        .range(from, from + 999)
+      if (error) {
+        console.error('DB read failed:', error.message)
+        process.exit(1)
+      }
+      const batch = (data ?? []) as unknown as ToolRow[]
+      all.push(...batch)
+      if (batch.length < 1000) break
+    }
+    let filtered = all.filter((t) => hash(t.slug) % SHARDS === SHARD % SHARDS)
+    if (Number.isFinite(LIMIT)) filtered = filtered.slice(0, LIMIT)
+    rows = filtered
+    console.log(`\n${DRY_RUN ? '[DRY-RUN] ' : ''}--missing: ${all.length} tools lack a logo; ${rows.length} in shard ${SHARD}/${SHARDS}${Number.isFinite(LIMIT) ? ` (limit ${LIMIT})` : ''}\n`)
+  } else {
+    const slugs = ONE_SLUG ? [ONE_SLUG] : (TARGET_SLUGS as readonly string[])
+    console.log(`\n${DRY_RUN ? '[DRY-RUN] ' : ''}Processing ${slugs.length} slug(s)\n`)
+    const { data, error } = await supabase
+      .from('tools')
+      .select('slug, name, website_url, logo_url')
+      .in('slug', slugs as string[])
+    if (error) {
+      console.error('DB read failed:', error.message)
+      process.exit(1)
+    }
+    rows = (data ?? []) as unknown as ToolRow[]
   }
-  const rows = (data ?? []) as unknown as ToolRow[]
   if (rows.length === 0) {
     console.error('No matching tools found.')
-    process.exit(1)
+    process.exit(MISSING ? 0 : 1)
   }
 
   let ok = 0
@@ -235,7 +286,10 @@ async function main() {
   }
   console.log('──────────────────────────────────────────\n')
 
-  process.exit(failed > 0 && !DRY_RUN ? 1 : 0)
+  // In --missing bulk mode, per-tool failures are EXPECTED (many sites have no
+  // discoverable brand asset → render-time monogram covers them), so don't fail
+  // the run. The targeted-list mode keeps its strict exit for CI/preflight use.
+  process.exit(failed > 0 && !DRY_RUN && !MISSING ? 1 : 0)
 }
 
 main().catch((e) => {

@@ -14,8 +14,54 @@ export {}
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
+import { DELETED_TOOL_SLUGS } from '@/lib/seo/deleted-tools'
 
 const OUT_PATH = resolve(process.cwd(), 'lib/seo/merged-redirects.ts')
+const MAX_CHAIN_DEPTH = 10
+
+/**
+ * BUG-07: flatten redirect chains to their terminal canonical. The edge proxy
+ * does ONE hop, so a stored chain A→B, B→C makes /tools/A a 308→308 chain —
+ * Google bleeds link equity across hops and may stop following. We rewrite to
+ * A→C, B→C. Along the way we break cycles, drop self-loops, and drop any
+ * redirect whose terminal is itself a DELETED slug (that must 410, not redirect
+ * into a dead page). Returns the flattened pairs + human-readable warnings.
+ */
+function flattenChains(
+  pairs: ReadonlyArray<readonly [string, string]>,
+): { flat: Array<readonly [string, string]>; warnings: string[] } {
+  const oneHop = new Map(pairs)
+  const warnings: string[] = []
+  const flat: Array<readonly [string, string]> = []
+  for (const [slug] of pairs) {
+    const seen = new Set<string>([slug])
+    let cur = slug
+    let depth = 0
+    for (; depth < MAX_CHAIN_DEPTH; depth++) {
+      const next = oneHop.get(cur)
+      if (!next || next === cur) break // terminal canonical, or a self-loop on cur
+      if (seen.has(next)) {
+        warnings.push(`cycle broken: ${slug} … → ${next} (already visited)`)
+        break
+      }
+      seen.add(next)
+      cur = next
+    }
+    if (depth >= MAX_CHAIN_DEPTH) warnings.push(`depth>${MAX_CHAIN_DEPTH} from ${slug}; truncated at ${cur}`)
+    const terminal = cur
+    if (terminal === slug) {
+      warnings.push(`self-loop dropped: ${slug} → ${slug}`)
+      continue
+    }
+    if (DELETED_TOOL_SLUGS.has(terminal)) {
+      warnings.push(`target deleted, redirect dropped (should 410): ${slug} → ${terminal}`)
+      continue
+    }
+    flat.push([slug, terminal] as const)
+  }
+  flat.sort((a, b) => a[0].localeCompare(b[0]))
+  return { flat, warnings }
+}
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -39,12 +85,27 @@ async function main() {
     if (data.length < 1000) break
   }
 
-  const pairs = rows
+  const rawPairs = rows
     .filter((r) => r.merged_into && r.merged_into !== r.slug)
     .map((r) => [r.slug, r.merged_into as string] as const)
-    .sort((a, b) => a[0].localeCompare(b[0]))
 
-  console.log(`[merged] found ${pairs.length} merged → canonical mappings`)
+  // BUG-07: flatten chains, break cycles, drop self-loops + deleted targets.
+  const { flat: pairs, warnings } = flattenChains(rawPairs)
+  console.log(`[merged] ${rawPairs.length} raw mappings → ${pairs.length} flattened (terminal-canonical)`)
+  if (warnings.length) {
+    console.warn(`[merged] ${warnings.length} warning(s):`)
+    warnings.forEach((w) => console.warn(`  ⚠ ${w}`))
+  }
+
+  // CI invariant: after flattening, NO target may itself be a redirect source
+  // (that would mean a chain survived). Fail hard so a bad map never ships.
+  const sources = new Set(pairs.map(([s]) => s))
+  const surviving = pairs.filter(([, t]) => sources.has(t))
+  if (surviving.length > 0) {
+    console.error(`[merged] INVARIANT VIOLATION — ${surviving.length} target(s) are still redirect sources (chain survived):`)
+    surviving.slice(0, 10).forEach(([s, t]) => console.error(`  ${s} → ${t}, but ${t} also redirects`))
+    process.exit(1)
+  }
 
   if (process.argv.includes('--dry')) {
     pairs.slice(0, 20).forEach(([from, to]) => console.log(`  ${from} → ${to}`))
