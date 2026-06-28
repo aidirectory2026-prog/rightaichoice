@@ -1,4 +1,5 @@
 -- Phase 13 D2.1 — directory submission pipeline (authority engine).
+-- (Renumbered 173 → 174: main already has a 173_link_health.sql from a parallel session.)
 --
 -- referring_domains (mig 084) tracks links we've EARNED. This table tracks the
 -- pipeline of high-authority directories we want to submit TO — status, our live
@@ -7,7 +8,7 @@
 --
 -- Operator-approved model: the engine prepares the submission kit + queue; the
 -- operator does the actual (CAPTCHA-gated, ToS-respecting) human submission and
--- records status. Reverse: 173_directory_submissions.rollback.sql
+-- records status. Reverse: 174_directory_submissions.rollback.sql
 
 create table if not exists public.directory_submissions (
   id uuid primary key default gen_random_uuid(),
