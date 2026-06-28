@@ -178,8 +178,11 @@ export const serverAnalytics = {
   },
   toolVisitRedirected(distinctId: string, toolSlug: string, referrerPath: string, ip?: string, userAgent?: string | null) {
     // Fires from the server-side /api/tools/[slug]/visit affiliate redirect
-    // handler — this is the authoritative revenue event. Client also fires
-    // tool_visit_clicked; Mixpanel de-dupes via $insert_id on the server call.
+    // handler — this is the authoritative revenue event. BUG-31: the client
+    // fires a DIFFERENT event (`tool_visit_clicked`) for referrer attribution;
+    // it is NOT $insert_id-deduped against this one (cross-event-name dedup
+    // doesn't exist in Mixpanel). The insert_id below only collapses duplicate
+    // SERVER fires of `tool_visit_redirected` itself.
     // 9.A.1 #5 — per-minute key collapses accidental double-fires / retries
     // (prefetch already filtered upstream) while still counting genuine repeat
     // clicks in later minutes. Same id for the mirror + Mixpanel call.

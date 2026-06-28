@@ -18,6 +18,13 @@ export type RunOpts = {
   limit?: number
   onlyPrompt?: string
   concurrency?: number
+  /**
+   * BUG-20: skip the real LLM engine call entirely and emit placeholder rows.
+   * Lets you exercise the pipeline plumbing (logging, mapping, optional DB
+   * write) with ZERO API cost. Without this, even a non-apply "dry run" still
+   * makes paid engine calls — it only skips the DB write.
+   */
+  mock?: boolean
   log?: (msg: string) => void
 }
 
@@ -54,7 +61,7 @@ export async function runGeoTracking(ctx: PipelineCtx, opts: RunOpts = {}): Prom
   const log = opts.log ?? (() => {})
   const engineId = opts.engineId ?? pickDefaultEngine()
   const engine = getEngine(engineId)
-  if (!engine.isEnabled()) throw new Error(`engine ${engineId} is not enabled — missing API key`)
+  if (!opts.mock && !engine.isEnabled()) throw new Error(`engine ${engineId} is not enabled — missing API key`)
 
   const snapshotDate = opts.snapshotDate ?? isoDate(new Date())
   const concurrency = Math.max(1, opts.concurrency ?? 2)
@@ -68,6 +75,27 @@ export async function runGeoTracking(ctx: PipelineCtx, opts: RunOpts = {}): Prom
   let tokensOut = 0
 
   const rows = await mapLimit(prompts, concurrency, async (p): Promise<GeoSnapshotRow> => {
+    if (opts.mock) {
+      // BUG-20: no engine call, no cost — a clearly-marked placeholder row.
+      log(`~ mock   [${p.id}] (engine skipped — no API call)`)
+      return {
+        snapshot_date: snapshotDate,
+        engine: engineId,
+        model: 'mock',
+        prompt_id: p.id,
+        prompt: p.prompt,
+        prompt_category: p.category,
+        cited: false,
+        retrieved: false,
+        citation_rank: null,
+        our_urls: [],
+        competitors: [],
+        all_sources: [],
+        share_of_voice: 0,
+        answer_excerpt: '[mock — engine skipped]',
+        error: null,
+      }
+    }
     try {
       const result = await engine.run(p.prompt)
       const a = analyzeCitations(result)

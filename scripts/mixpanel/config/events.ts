@@ -102,6 +102,8 @@ export const EVENTS: EventDef[] = [
     properties: [
       { name: 'tool_id', type: 'string', description: 'UUID of the tool.' },
       { name: 'tool_name', type: 'string', description: 'Human-readable tool name.' },
+      // BUG-32: the client fires tool_slug too (analytics.toolSaved) — was missing here.
+      { name: 'tool_slug', type: 'string', description: 'URL slug of the tool.', example: 'chatgpt' },
     ],
   },
   {
@@ -114,6 +116,8 @@ export const EVENTS: EventDef[] = [
     properties: [
       { name: 'tool_id', type: 'string', description: 'UUID of the tool.' },
       { name: 'tool_name', type: 'string', description: 'Human-readable tool name.' },
+      // BUG-32: the client fires tool_slug too (analytics.toolUnsaved) — was missing here.
+      { name: 'tool_slug', type: 'string', description: 'URL slug of the tool.', example: 'chatgpt' },
     ],
   },
   {
@@ -824,12 +828,14 @@ export const EVENTS: EventDef[] = [
     name: 'scroll_depth_reached',
     category: 'content',
     source: 'client',
-    description: 'User scrolled past 25/50/75/100% of a long page.',
-    firesOn: 'IntersectionObserver on marker elements.',
+    // BUG-32: synced to the real thresholds fired by mixpanel-provider.tsx
+    // ([10,25,50,75,90,100]) — the config previously listed only 25/50/75/100.
+    description: 'User scrolled past 10/25/50/75/90/100% of a long page.',
+    firesOn: 'Scroll handler comparing scroll % against fixed thresholds.',
     whyItMatters: 'Content-quality signal for blog and /best pages.',
     properties: [
       { name: 'path', type: 'string', description: 'Pathname.' },
-      { name: 'depth', type: 'number', description: '25 | 50 | 75 | 100.' },
+      { name: 'depth', type: 'number', description: '10 | 25 | 50 | 75 | 90 | 100.' },
     ],
   },
   {

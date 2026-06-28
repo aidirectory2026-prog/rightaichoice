@@ -206,7 +206,8 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+import { withLock } from './_lib/lockfile' // BUG-21: serialize this stateful job
+withLock('mine-quora', main).catch((err) => {
   console.error('\n❌ Fatal:', err)
   process.exit(1)
 })

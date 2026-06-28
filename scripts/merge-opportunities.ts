@@ -201,4 +201,8 @@ function sourceMetadata(a: MergedOpportunity, b: MergedOpportunity): Partial<Mer
   return rest
 }
 
-main()
+import { withLock } from './_lib/lockfile' // BUG-21: serialize this stateful job
+withLock('merge-opportunities', main).catch((e) => {
+  console.error('Fatal:', e)
+  process.exit(1)
+})

@@ -1159,7 +1159,8 @@ async function main() {
   process.exit(failed > 0 && !DRY_RUN ? 1 : 0)
 }
 
-main().catch((e) => {
+import { withLock } from './_lib/lockfile' // BUG-21: serialize this stateful job
+withLock('backfill-tool-data', main).catch((e) => {
   console.error('Fatal:', e)
   process.exit(1)
 })
