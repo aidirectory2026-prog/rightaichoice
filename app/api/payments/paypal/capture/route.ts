@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { capturePaypalOrder, paypalEnabled } from '@/lib/payments/paypal'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { serverAnalytics } from '@/lib/mixpanel-server'
+import { captureException } from '@/lib/observability/capture'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   const admin = getAdminClient() as any
   const { data: row } = await admin
     .from('sentiment_payments')
-    .select('id, user_id, gateway_order_id')
+    .select('id, user_id, gateway_order_id, amount_minor, currency, status')
     .eq('id', body.payment_id)
     .maybeSingle()
   if (!row || row.user_id !== user.id) return NextResponse.json({ error: 'not_found' }, { status: 404 })
@@ -42,11 +43,20 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { captured, captureId } = await capturePaypalOrder(body.order_id)
+    const { captured, captureId, amountMinor, currency } = await capturePaypalOrder(body.order_id)
     if (!captured) {
       await admin.from('sentiment_payments').update({ status: 'failed' }).eq('id', body.payment_id)
       void serverAnalytics.sentimentEvent('sentiment_payment_failed', user.id, { gateway: 'paypal', reason: 'not_captured' }, getIp(req))
       return NextResponse.json({ error: 'not_captured' }, { status: 402 })
+    }
+    // BUG-05: the buyer must have paid EXACTLY what we charged. Without this an
+    // attacker could approve a cheaper/foreign order and still get the credit
+    // (mirrors the Razorpay verify route's amount assertion).
+    const expectedCurrency = String(row.currency ?? '').toUpperCase()
+    if (amountMinor !== row.amount_minor || (currency ?? '') !== expectedCurrency) {
+      await admin.from('sentiment_payments').update({ status: 'failed' }).eq('id', body.payment_id)
+      void serverAnalytics.sentimentEvent('sentiment_payment_failed', user.id, { gateway: 'paypal', reason: 'amount_mismatch' }, getIp(req))
+      return NextResponse.json({ error: 'amount_mismatch' }, { status: 400 })
     }
     const { data: granted } = await admin.rpc('grant_sentiment_credit', { p_payment: body.payment_id, p_gateway_payment_id: captureId ?? body.order_id })
     void serverAnalytics.sentimentEvent('sentiment_payment_succeeded', user.id, { gateway: 'paypal', credits: granted ?? 0 }, getIp(req))
@@ -54,6 +64,7 @@ export async function POST(req: NextRequest) {
     const { data: quota } = await admin.from('sentiment_quota').select('paid_balance').eq('user_id', user.id).maybeSingle()
     return NextResponse.json({ ok: true, paid_balance: quota?.paid_balance ?? 0 })
   } catch (e) {
+    captureException(e, { route: 'paypal/capture', extra: { payment_id: body.payment_id, order_id: body.order_id } })
     await admin.from('sentiment_payments').update({ status: 'failed' }).eq('id', body.payment_id)
     return NextResponse.json({ error: e instanceof Error ? e.message : 'capture_failed' }, { status: 502 })
   }
