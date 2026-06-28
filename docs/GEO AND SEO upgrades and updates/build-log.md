@@ -428,6 +428,26 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   that actually move our domain authority — far more than directory listings do._
 - **Status: done (D2.2b). Built + verified; drafting/sending is operator-driven.**
 
+### 2026-06-29 — PR activity log + section conventions
+- **PR pitch batch generated (2026-06-28):** ran `pr:draft` for the freshness / pricing / viability
+  angles → **6 drafts** saved to `pr_pitches` + `logs/pr-pitches-2026-06-28.csv`. Put into a readable,
+  dated operator doc: **`pr-pitches-2026-06-28.md`** (this folder) — 6 ready-to-send pitches to Ben's
+  Bites, TLDR AI, The Rundown (freshness + viability + pricing angles). Awaiting operator send.
+  (A couple of DeepSeek calls hit transient "fetch failed" — engine skipped them cleanly; re-run fills gaps.)
+- **GEO report email automation added:** the weekly tracker now emails the founder a summary after each
+  run (`lib/geo/geo-report-email.ts` via Resend — cited X/Y, rate, per-prompt table, rank, share-of-voice,
+  trend, competitors). Wired into the `track-geo-citations` cron; best-effort (never fails the data run).
+  Verified `tsc` clean; can't send locally (RESEND_API_KEY lives in Vercel prod, same as other alert emails)
+  — sends automatically Mondays in production.
+- **Docs reorganized + conventions locked (founder, 2026-06-29):** all section docs moved under
+  **`docs/GEO AND SEO upgrades and updates/`**. Standing rules now in force (saved to memory): (1) date in
+  every generated doc's filename; (2) every PR/authority/GEO activity recorded here in the build log; (3)
+  recurring engines email the founder a report.
+- _Plain language: I saved the 6 ready-to-send pitch emails into a dated document you can open, set the
+  GEO scoreboard to email you its results every week, moved everything into one clearly-named folder, and
+  locked in your rules (dated files + log everything + email me)._
+- **Status: done — logged + conventions in force.**
+
 ---
 
 ## Phase 13 round 1 — summary (2026-06-27)
