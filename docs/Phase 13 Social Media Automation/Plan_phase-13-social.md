@@ -192,3 +192,109 @@ crons run server-side in prod (laptop-off); approval digest email received; ever
 (queue pattern) · `app/api/cron/{new-signup-alert,alert-failed-pipelines}/route.ts` (Resend+Slack) ·
 `lib/geo/state-of-ai.ts`, `lib/geo/llms-dataset.ts`, `lib/cron/latest-updates.ts`, `lib/cron/scrape-*.ts`
 · `lib/copy/editorial-voice.ts` · `lib/cron/supabase-admin.ts` · `lib/env.ts`.
+
+---
+
+# Appendix A — Research-first SOPs + the Brain (in depth)
+
+## A0. RESEARCH-FIRST PRINCIPLE (applies to EVERY automation — non-negotiable)
+**No automation acts blind. Each runs a RESEARCH PASS first, then acts on the evidence it gathered.**
+Concretely, per automation:
+- **`social-draft` (the brain):** before writing anything, research → (a) **what's new/trending** in AI
+  (`latest-updates` + `scrape-news/hn/reddit`), (b) **our freshest data** (`state-of-ai`, `llms-dataset` —
+  new tools, viability movers, stat shifts), (c) **what we've already posted** (dedup vs `social_posts`),
+  (d) **what has performed** (`social_metrics` — which kinds/angles/times won). Output is evidence-led, not
+  generic. Each draft stores its `source_refs` + `brain_meta.why`.
+- **scheduler (slotting):** before assigning a time, research the best window from (a) the per-platform
+  config windows **and** (b) **our own best-performing post times** (`social_metrics`). Smart, not fixed.
+- **Reddit publish → SUBREDDIT RECON (mandatory):** before any Reddit post, fetch `/r/{sub}/about.json` +
+  `/r/{sub}/about/rules.json` + recent top posts → confirm self/link posts are allowed, required flair,
+  title rules, self-promo tolerance, and that our post genuinely fits. **Abort if rules forbid.** Never
+  the same link to >1 sub.
+- **publish (all platforms):** immediately before sending, re-run `canPublishNow` research (budget left,
+  rate-window clear, not a duplicate, token healthy).
+- **`social-metrics`:** research engagement, **attribute** it to kind/angle/time, and **write learnings**
+  the brain reads next cycle (closing the loop).
+This principle is enforced in code — each automation's first phase is a `research()` call whose result is
+logged to `pipeline_runs.metadata` so we can see *what it knew* before it acted.
+
+## A1. Brain candidate scoring (selection before drafting)
+`score = 0.30·freshness + 0.25·novelty(1 − maxSimilarityToRecentPosts) + 0.30·expectedPerformance(prior
+metrics for this kind/angle) + 0.15·strategicFit(drives to money pages / showcases our data edge)`.
+Take top-N per platform per day (N from SOP config). Ties broken by freshness.
+
+## A2. DeepSeek prompt structure (`lib/social/prompts.ts`)
+- **System prompt:** role ("social editor for RightAIChoice") + brand voice rules (from
+  `editorial-voice.ts`, ban-list included) + the target platform's hard rules (chars/hashtags/link/graphic)
+  + **truth-only** ("use ONLY the provided facts; cite a source; never invent numbers") + the JSON output
+  schema instruction.
+- **User prompt:** the chosen candidate's facts + source URLs + platform + `recentPostsToAvoid` (titles/
+  hashes from history) + the target schedule window + which graphic templates are available.
+- **Output JSON schema:** `{ kind, copy, hashtags[], link_url?, graphic_template, graphic_data{}, schedule_hint, why }`.
+- **Few-shot:** 2–3 exemplary posts per platform (good shapes) embedded.
+- **Validation loop:** parse JSON → run the SOP gate (A3) → on failure, re-prompt with the specific
+  violation (max 2 retries) → else reject the candidate and move on. All via `callDeepSeek` (JSON mode).
+
+## A3. Full SOP rule table (thresholds — `lib/social/sops.ts`)
+| Rule | LinkedIn | X / Twitter | Instagram | Reddit |
+|---|---|---|---|---|
+| Max copy chars | ~3,000 | 280 | ~2,200 caption | 300 title / self-text body |
+| Hashtags | ≤3 | ≤2 | 8–15 curated | 0 (looks spammy) |
+| Link in post | yes | **cost-gated** ($0.20) — prefer in 1st comment near cap | no (link-in-bio) | sparing, never same link to >1 sub |
+| Graphic | optional | optional (boosts) | **required** | optional (often text/discussion) |
+| Posting windows (IST-aware) | Tue–Thu 9–11am, 5–6pm | 8–10am, 12pm, 5–7pm | 11am–1pm, 7–9pm | sub-dependent; off-peak avoided |
+| Max/day | 1–2 | 2–3 | 1 | **≤1 per sub, ≤2 total/day** |
+| Min spacing | 4h | 2h | — | 24h/sub |
+| Approval | gate | gate | gate | **gate (always manual)** |
+- **X budget governor:** monthly cap `X_MONTHLY_BUDGET_USD` (default $10); per-post cost = $0.20 (link) or
+  $0.015 (no link); track month-to-date in `social_posts.cost_usd`; **prefer no-link / pause X** as cap nears;
+  hard-stop at cap; meter shown in admin.
+- **Reddit safety (hard):** subreddit allowlist (config) + per-sub rule notes; **account age ≥30d, comment
+  karma ≥100** (precheck); never same `link_url` across >1 sub (history check); rolling-window rate + exp
+  backoff; per-sub ≤1 post/week; recon must pass.
+- **Voice gate:** `voiceGate(text)` rejects clichés + enforces name/positioning; **Variety:** `isDuplicate
+  (content_hash, 14d)`; **Failure:** retry+backoff, on auth/cap failure pause that platform + alert.
+
+---
+
+# Appendix B — Per-platform technical specs (verified via research; exact payloads re-confirmed against live docs in S5)
+
+## B1. LinkedIn (organization page)
+- **Auth:** OAuth 2.0, 3-legged; scope `w_organization_social` (+ `r_organization_social` for metrics);
+  app needs *Sign In with LinkedIn (OpenID)* + *Share on LinkedIn* + **Community Management API** approval
+  (2–4 wk). Token: 60-day access + 1-year refresh → `social-token-refresh` cron renews.
+- **Post:** `POST https://api.linkedin.com/rest/posts` with headers `LinkedIn-Version: YYYYMM` +
+  `X-Restli-Protocol-Version: 2.0.0`; body `{ author: "urn:li:organization:{ID}", commentary, visibility:
+  "PUBLIC", distribution, lifecycleState: "PUBLISHED" }`. **Image:** register upload (Images API) → PUT the
+  PNG → reference the returned asset URN in `content.media`.
+- **Cost:** free. **Metrics:** organizationalEntityShareStatistics.
+
+## B2. X / Twitter
+- **Auth:** OAuth 2.0 PKCE, user-context, scope `tweet.write tweet.read users.read offline.access`; token
+  via `POST https://api.x.com/2/oauth2/token`; refresh token (offline.access).
+- **Post:** `POST https://api.x.com/2/tweets` body `{ text, media?: { media_ids: [...] } }`. **Image:**
+  v2 chunked upload (INIT → APPEND ≤5MB → FINALIZE) → `media_id`.
+- **Cost (2026, pay-per-use):** **$0.015/post, $0.20/post-with-link**, reads $0.005 (cap 2M/mo). Budget
+  governor (A3) enforces the cap; prefer no-link posts.
+- **Metrics:** post `public_metrics` (likes/retweets/replies/impressions) via GET (read cost applies).
+
+## B3. Instagram (Business/Creator via Graph API)
+- **Auth:** Business/Creator IG **linked to a Facebook Page** + Meta app + App Review for
+  `instagram_content_publish` (+ `instagram_basic`); long-lived token 60-day (refreshed by cron).
+- **Publish (2-step):** `POST /{ig-user-id}/media?image_url={PUBLIC_PNG}&caption={...}` → `creation_id`;
+  then `POST /{ig-user-id}/media_publish?creation_id={...}`. **The image MUST be a public URL** → served by
+  our `app/api/social/graphic/[id]` route.
+- **Limits:** ≤50 published posts / 24h; 200 calls/hr. **Cost:** free. **Metrics:** `/media/{id}/insights`.
+
+## B4. Reddit
+- **Auth:** OAuth2; scope **`submit`** (+ `read`, `flair`, `identity`); **user-context** token (script app
+  password grant for our own account, or web-app code flow). Posting account must meet age/karma SOP.
+- **Recon (research-first):** `GET /r/{sub}/about.json` + `GET /r/{sub}/about/rules.json` + recent posts →
+  validate rules/flair/self-promo allowance before posting.
+- **Post:** `POST https://oauth.reddit.com/api/submit` body `{ sr, kind: "self"|"link", title,
+  text|url, flair_id?, flair_text?, sendreplies, nsfw:false, spoiler:false, api_type:"json" }`.
+- **Limits:** ~100 QPM/client; rolling-window — use backoff. **Cost:** free. **Metrics:** post `score`,
+  `num_comments` via the post's `.json`.
+
+> Build note (S5): each publisher's exact payloads/headers are re-verified against the live official docs
+> at implementation time; the above is the researched contract the adapters target.
