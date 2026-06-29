@@ -54,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/viability`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.85 },
     { url: `${BASE_URL}/viability/at-risk`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/viability/safe-bets`, ...lm(sf.get('tool')), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/state-of-ai-tools`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/methodology`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/team`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/embed`, changeFrequency: 'monthly', priority: 0.55 },

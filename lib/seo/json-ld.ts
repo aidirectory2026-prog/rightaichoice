@@ -250,11 +250,23 @@ export function datasetJsonLd() {
       name: 'RightAIChoice',
       url: BASE_URL,
     },
-    distribution: {
-      '@type': 'DataDownload',
-      encodingFormat: 'text/plain',
-      contentUrl: `${BASE_URL}/llms-full.txt`,
-    },
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/x-ndjson',
+        contentUrl: `${BASE_URL}/llms.jsonl`,
+      },
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'text/plain',
+        contentUrl: `${BASE_URL}/llms-full.txt`,
+      },
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'text/plain',
+        contentUrl: `${BASE_URL}/llms.txt`,
+      },
+    ],
   }
 }
 

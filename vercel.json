@@ -30,6 +30,10 @@
       "schedule": "15 7 * * 1"
     },
     {
+      "path": "/api/cron/authority-check",
+      "schedule": "30 7 * * 1"
+    },
+    {
       "path": "/api/cron/email-weekly-digest",
       "schedule": "0 8 * * 1"
     },
