@@ -2,9 +2,11 @@
 // Service-role-only tables → read via getAdminClient (the admin layout already
 // gates this route to is_admin users).
 
+import type { ReactNode } from 'react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { PageHeader } from '@/components/admin/page-header'
 import { SocialPostCard, type SocialPostView } from '@/components/admin/social-post-card'
+import { BulkApproveButton, PauseToggle } from '@/components/admin/social-controls'
 import { X_COST_PER_POST, X_COST_PER_POST_WITH_LINK } from '@/lib/social/sops'
 
 export const dynamic = 'force-dynamic'
@@ -30,8 +32,8 @@ export default async function SocialAdminPage() {
     .limit(200)
   const posts = (postsRes.data ?? []) as Row[]
 
-  const accountsRes = await db.from('social_accounts').select('platform, status, display_name, token_expires_at')
-  const accounts = (accountsRes.data ?? []) as Array<{ platform: string; status: string; display_name: string | null; token_expires_at: string | null }>
+  const accountsRes = await db.from('social_accounts').select('platform, status, display_name, token_expires_at, meta')
+  const accounts = (accountsRes.data ?? []) as Array<{ platform: string; status: string; display_name: string | null; token_expires_at: string | null; meta: Record<string, unknown> | null }>
   const accountByPlatform = new Map(accounts.map((a) => [a.platform, a]))
 
   // X budget meter — month-to-date spend from posted X posts.
@@ -99,17 +101,21 @@ export default async function SocialAdminPage() {
             {PLATFORMS.map((pl) => {
               const a = accountByPlatform.get(pl)
               const connected = a?.status === 'connected'
+              const paused = (a?.meta as { paused?: boolean } | undefined)?.paused === true
               return (
                 <div key={pl} className="flex items-center justify-between rounded border border-zinc-800 px-3 py-2">
                   <span className="text-sm capitalize text-zinc-300">{pl}</span>
-                  <span className={`text-xs font-medium ${connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                    {connected ? 'connected' : (a?.status ?? 'not connected')}
+                  <span className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${paused ? 'text-amber-400' : connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                      {paused ? 'paused' : connected ? 'connected' : (a?.status ?? 'not connected')}
+                    </span>
+                    <PauseToggle platform={pl} paused={paused} />
                   </span>
                 </div>
               )
             })}
           </div>
-          <p className="mt-2 text-xs text-zinc-500">Publishers light up as each platform's credentials/approvals land (S5).</p>
+          <p className="mt-2 text-xs text-zinc-500">Publishers light up as each platform's credentials/approvals land. Pause stops a platform without disconnecting.</p>
         </div>
       </div>
 
@@ -125,19 +131,69 @@ export default async function SocialAdminPage() {
         </div>
       </div>
 
-      <Section title={`Awaiting approval (${pending.length})`} posts={pending} empty="No drafts waiting. Run the draft brain to fill the queue." />
-      <Section title={`Approved & scheduled (${queued.length})`} posts={queued} empty="Nothing approved yet." />
+      <Section
+        title={`Awaiting approval (${pending.length})`}
+        posts={pending}
+        empty="No drafts waiting. Run the draft brain to fill the queue."
+        action={<BulkApproveButton count={pending.length} />}
+      />
+      <Section title={`Approved & scheduled (${queued.length})`} posts={queued} empty="Nothing approved yet." groupByDay />
       <Section title={`History (${done.length})`} posts={done} empty="No posted/cancelled posts yet." />
     </div>
   )
 }
 
-function Section({ title, posts, empty }: { title: string; posts: SocialPostView[]; empty: string }) {
+function dayLabel(iso: string | null): string {
+  if (!iso) return 'Unscheduled'
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }) + ' (UTC)'
+}
+
+function Section({
+  title,
+  posts,
+  empty,
+  action,
+  groupByDay,
+}: {
+  title: string
+  posts: (SocialPostView & { scheduled_at?: string | null })[]
+  empty: string
+  action?: ReactNode
+  groupByDay?: boolean
+}) {
+  // For the schedule view, group by the day a post is scheduled to go out.
+  const groups: { label: string; items: SocialPostView[] }[] = []
+  if (groupByDay) {
+    const byDay = new Map<string, SocialPostView[]>()
+    for (const p of [...posts].sort((a, b) => String(a.scheduled_at).localeCompare(String(b.scheduled_at)))) {
+      const k = dayLabel(p.scheduled_at ?? null)
+      if (!byDay.has(k)) byDay.set(k, [])
+      byDay.get(k)!.push(p)
+    }
+    for (const [label, items] of byDay) groups.push({ label, items })
+  }
+
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-lg font-semibold text-white">{title}</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        {action}
+      </div>
       {posts.length === 0 ? (
         <p className="text-sm text-zinc-500">{empty}</p>
+      ) : groupByDay ? (
+        <div className="flex flex-col gap-5">
+          {groups.map((g) => (
+            <div key={g.label}>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-emerald-400">{g.label} · {g.items.length}</div>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {g.items.map((p) => (
+                  <SocialPostCard key={p.id} post={p} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {posts.map((p) => (

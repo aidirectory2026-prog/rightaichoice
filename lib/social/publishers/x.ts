@@ -1,21 +1,68 @@
 // Phase 13 Social — X / Twitter publisher (paid, budget-capped).
 //
 // X has no free tier (2026): pay-per-use, ~$0.015/post, ~$0.20/post-with-link.
-// The brain already budget-gates at draft time; the cost is recorded here at post
-// time so the admin meter stays accurate. Posts text (link inline); native media
-// upload is a later enhancement (chunked v1.1 upload).
+// Posts text + (R2) native branded image via chunked v1.1 media upload, and
+// supports (R2) threads when the brain emits brain_meta.thread = string[].
+// Cost is recorded at post time so the admin meter stays accurate.
 
-import { xPostCost } from '../sops'
+import { X_COST_PER_POST, xPostCost } from '../sops'
 import type { SocialAccount, SocialPost } from '../types'
 import type { MetricsResult, Publisher, PublishOpts, PublishResult } from './types'
-import { clamp, fail, isRetryableStatus, postJson, tokenUsable } from './util'
+import { clamp, fail, isRetryableStatus, notPaused, postJson, tokenUsable } from './util'
 
 const TWEETS_URL = 'https://api.twitter.com/2/tweets'
+const MEDIA_URL = 'https://upload.twitter.com/1.1/media/upload.json'
 const X_MAX = 280
 
-/** Pure: the v2 tweet body. Copy already carries any link + hashtags (≤280). */
-export function buildTweetPayload(post: SocialPost): { text: string } {
-  return { text: clamp(post.copy, X_MAX) }
+/** Pure: the v2 tweet body. Attach media on the first tweet; reply for thread chaining. */
+export type TweetPayload = { text: string; media?: { media_ids: string[] }; reply?: { in_reply_to_tweet_id: string } }
+export function buildTweetPayload(text: string, opts: { mediaIds?: string[]; replyToId?: string } = {}): TweetPayload {
+  const body: TweetPayload = { text: clamp(text, X_MAX) }
+  if (opts.mediaIds?.length) body.media = { media_ids: opts.mediaIds }
+  if (opts.replyToId) body.reply = { in_reply_to_tweet_id: opts.replyToId }
+  return body
+}
+
+/** Pure: a post's thread parts (brain_meta.thread) or a single-tweet array. */
+export function threadParts(post: SocialPost): string[] {
+  const t = (post.brain_meta as { thread?: unknown } | null)?.thread
+  if (Array.isArray(t) && t.length && t.every((s) => typeof s === 'string' && (s as string).trim())) {
+    return t as string[]
+  }
+  return [post.copy]
+}
+
+/** Chunked v1.1 media upload (INIT → APPEND → FINALIZE) → media_id_string. */
+async function uploadMedia(token: string, graphicUrl: string): Promise<{ ok: true; mediaId: string } | { ok: false; error: string; retryable: boolean }> {
+  const img = await fetch(graphicUrl)
+  if (!img.ok) return { ok: false, error: `media fetch ${img.status}`, retryable: true }
+  const bytes = Buffer.from(await img.arrayBuffer())
+  const auth = { Authorization: `Bearer ${token}` }
+
+  const init = await fetch(MEDIA_URL, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ command: 'INIT', total_bytes: String(bytes.length), media_type: 'image/png', media_category: 'tweet_image' }),
+  })
+  if (!init.ok) return { ok: false, error: `media INIT ${init.status}`, retryable: isRetryableStatus(init.status) }
+  const mediaId = ((await init.json()) as { media_id_string?: string }).media_id_string
+  if (!mediaId) return { ok: false, error: 'media INIT returned no id', retryable: true }
+
+  const fd = new FormData()
+  fd.set('command', 'APPEND')
+  fd.set('media_id', mediaId)
+  fd.set('segment_index', '0')
+  fd.set('media', new Blob([bytes], { type: 'image/png' }))
+  const ap = await fetch(MEDIA_URL, { method: 'POST', headers: auth, body: fd })
+  if (!ap.ok) return { ok: false, error: `media APPEND ${ap.status}`, retryable: isRetryableStatus(ap.status) }
+
+  const fin = await fetch(MEDIA_URL, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ command: 'FINALIZE', media_id: mediaId }),
+  })
+  if (!fin.ok) return { ok: false, error: `media FINALIZE ${fin.status}`, retryable: isRetryableStatus(fin.status) }
+  return { ok: true, mediaId }
 }
 
 export const xPublisher: Publisher = {
@@ -23,24 +70,44 @@ export const xPublisher: Publisher = {
 
   isEnabled(account: SocialAccount | null): boolean {
     if (process.env.X_ENABLED !== '1') return false
-    return !!account && account.status === 'connected' && tokenUsable(account.access_token, account.token_expires_at)
+    return (
+      !!account &&
+      account.status === 'connected' &&
+      notPaused(account) &&
+      tokenUsable(account.access_token, account.token_expires_at)
+    )
   },
 
-  async publish(post: SocialPost, account: SocialAccount): Promise<PublishResult> {
-    const body = buildTweetPayload(post)
-    const { status, json, text } = await postJson(TWEETS_URL, body, {
-      Authorization: `Bearer ${account.access_token}`,
-    })
-    if (status === 201 && json?.data?.id) {
-      const id = json.data.id as string
-      return {
-        ok: true,
-        externalId: id,
-        externalUrl: `https://twitter.com/i/web/status/${id}`,
-        costUsd: xPostCost(!!post.link_url),
-      }
+  async publish(post: SocialPost, account: SocialAccount, opts: PublishOpts): Promise<PublishResult> {
+    const token = account.access_token!
+    // Upload the branded graphic (attached to the first tweet) if the post has one.
+    let mediaIds: string[] | undefined
+    if (post.graphic_template && opts.graphicUrl) {
+      const up = await uploadMedia(token, opts.graphicUrl)
+      if (!up.ok) return fail(`X media: ${up.error}`, up.retryable)
+      mediaIds = [up.mediaId]
     }
-    return fail(`X ${status}: ${text.slice(0, 200)}`, isRetryableStatus(status))
+
+    const parts = threadParts(post)
+    let firstId = ''
+    let replyTo: string | undefined
+    let costUsd = 0
+    for (let i = 0; i < parts.length; i++) {
+      const body = buildTweetPayload(parts[i], { mediaIds: i === 0 ? mediaIds : undefined, replyToId: replyTo })
+      const { status, json, text } = await postJson(TWEETS_URL, body, { Authorization: `Bearer ${token}` })
+      if (!(status === 201 && json?.data?.id)) {
+        // First tweet failing = whole post failed. A later reply failing = thread is
+        // partially posted; stop and report success of the head (a retry must NOT
+        // re-post the head — the row is already claimed/marked posted by the cron).
+        if (i === 0) return fail(`X ${status}: ${text.slice(0, 200)}`, isRetryableStatus(status))
+        break
+      }
+      const id = json.data.id as string
+      if (i === 0) firstId = id
+      replyTo = id
+      costUsd += i === 0 ? xPostCost(!!post.link_url) : X_COST_PER_POST
+    }
+    return { ok: true, externalId: firstId, externalUrl: `https://twitter.com/i/web/status/${firstId}`, costUsd }
   },
 
   async fetchMetrics(post: SocialPost, account: SocialAccount): Promise<MetricsResult> {

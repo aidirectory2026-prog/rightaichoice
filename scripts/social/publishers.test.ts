@@ -3,7 +3,7 @@
  * Run: npm run test:social-publishers
  */
 
-import { buildTweetPayload, xPublisher } from '../../lib/social/publishers/x'
+import { buildTweetPayload, threadParts, xPublisher } from '../../lib/social/publishers/x'
 import { buildRedditSubmit, redditPublisher } from '../../lib/social/publishers/reddit'
 import { buildLinkedInPost, linkedinPublisher } from '../../lib/social/publishers/linkedin'
 import { buildIgContainer, instagramPublisher } from '../../lib/social/publishers/instagram'
@@ -82,13 +82,20 @@ function connected(over: Partial<SocialAccount> = {}): SocialAccount {
 
 // ── X ─────────────────────────────────────────────────────────────────────────
 {
-  check('x: payload is {text}', buildTweetPayload(post({ copy: 'hi' })).text === 'hi')
-  check('x: payload clamps to 280', buildTweetPayload(post({ copy: 'a'.repeat(400) })).text.length === 280)
+  check('x: payload is {text}', buildTweetPayload('hi').text === 'hi')
+  check('x: payload clamps to 280', buildTweetPayload('a'.repeat(400)).text.length === 280)
+  check('x: payload attaches media + reply', (() => {
+    const b = buildTweetPayload('hi', { mediaIds: ['m1'], replyToId: 't1' })
+    return b.media?.media_ids[0] === 'm1' && b.reply?.in_reply_to_tweet_id === 't1'
+  })())
+  check('x: threadParts returns single when no thread', threadParts(post({ copy: 'one' })).length === 1)
+  check('x: threadParts expands brain_meta.thread', threadParts(post({ copy: 'x', brain_meta: { thread: ['a', 'b', 'c'] } })).length === 3)
   check('x: disabled without flag', !xPublisher.isEnabled(connected()))
   process.env.X_ENABLED = '1'
-  check('x: enabled with flag + connected token', xPublisher.isEnabled(connected()))
+  check('x: enabled with flag + connected token', xPublisher.isEnabled(connected({ token_expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString() })))
   check('x: disabled when no account', !xPublisher.isEnabled(noAccount))
   check('x: disabled when token expired', !xPublisher.isEnabled(connected({ token_expires_at: new Date(Date.now() - 1000).toISOString() })))
+  check('x: disabled when paused', !xPublisher.isEnabled(connected({ token_expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString(), meta: { paused: true } })))
   delete process.env.X_ENABLED
 }
 
@@ -107,9 +114,11 @@ function connected(over: Partial<SocialAccount> = {}): SocialAccount {
 // ── LinkedIn ────────────────────────────────────────────────────────────────
 {
   const body = buildLinkedInPost(post({ platform: 'linkedin', copy: 'Insight here', hashtags: ['#AI', '#Tools'] }), 'urn:li:organization:123')
+  const commentary = body.commentary as string
   check('linkedin: author = org urn', body.author === 'urn:li:organization:123')
-  check('linkedin: commentary has copy + hashtags', body.commentary.includes('Insight here') && body.commentary.includes('#AI #Tools'))
+  check('linkedin: commentary has copy + hashtags', commentary.includes('Insight here') && commentary.includes('#AI #Tools'))
   check('linkedin: published + public', body.lifecycleState === 'PUBLISHED' && body.visibility === 'PUBLIC')
+  check('linkedin: image attaches via content.media', !!(buildLinkedInPost(post({ platform: 'linkedin', copy: 'x' }), 'urn:li:organization:1', 'urn:li:image:abc').content as { media?: { id: string } } | undefined)?.media)
   check('linkedin: disabled without org urn', !linkedinPublisher.isEnabled(connected({ platform: 'linkedin' })))
 }
 

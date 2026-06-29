@@ -13,6 +13,8 @@ import {
   GanttChartSquare,
   BookMarked,
   RefreshCw,
+  Search,
+  Share2,
 } from 'lucide-react'
 import { GuideCard, GuideHeader, Callout } from './_components'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
@@ -82,10 +84,24 @@ export default function ResourcesIndexPage() {
           blurb="The data-layer machine: how ~2,000 tools refresh themselves from live news, how one change propagates to every page, how the Viability Score works, and what it costs. Plain English + the link to the full pipelines playbook."
           icon={<RefreshCw className="h-5 w-5" />}
         />
+        <GuideCard
+          href="/admin/resources/geo-seo"
+          step="8 · growth"
+          title="GEO & SEO upgrades"
+          blurb="How we get found by Google AND by AI answer engines: the citation scoreboard, the machine-readable citable dataset, and the authority + digital-PR engines that earn the links and mentions."
+          icon={<Search className="h-5 w-5" />}
+        />
+        <GuideCard
+          href="/admin/resources/social"
+          step="9 · growth"
+          title="Social media automation"
+          blurb="The in-house tool that researches, writes, designs, and posts to LinkedIn / X / Instagram / Reddit on schedule — pending your one-tap approval. Smart SOPs, branded graphics, a hard X budget cap."
+          icon={<Share2 className="h-5 w-5" />}
+        />
       </div>
 
       <Callout tone="good" title="The promise behind this guide">
-        Two of these six sections — the <strong>event dictionary</strong> and the{' '}
+        Two of these sections — the <strong>event dictionary</strong> and the{' '}
         <strong>metric provenance cards</strong> — are not written by hand. They are generated at
         page-load time from the same source files that power the live tracking code and the ⓘ
         popovers on the dashboard. If an event or a metric changes, this guide changes with it on

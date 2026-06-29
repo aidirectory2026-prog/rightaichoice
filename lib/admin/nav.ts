@@ -264,6 +264,18 @@ export const ADMIN_NAV: AdminNavSection[] = [
         description: 'distinct_id, session, bot flag, UTM, first touch, IST windows, data epochs.',
         filterCapabilities: [],
       },
+      {
+        href: '/admin/resources/geo-seo',
+        label: 'GEO & SEO upgrades',
+        description: 'Getting found by Google + AI answer engines: citation scoreboard, citable dataset, authority + PR engines.',
+        filterCapabilities: [],
+      },
+      {
+        href: '/admin/resources/social',
+        label: 'Social media automation',
+        description: 'The in-house social tool: research → draft → approve → cloud-post across 4 platforms, with smart SOPs.',
+        filterCapabilities: [],
+      },
     ],
   },
 ]

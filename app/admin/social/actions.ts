@@ -123,3 +123,37 @@ export async function editPost(
   revalidatePath('/admin/social')
   return { ok: true }
 }
+
+/** Bulk-approve all drafts (optionally scoped to one platform). */
+export async function bulkApprove(platform?: Platform): Promise<ActionResult & { approved?: number }> {
+  const g = await gate()
+  if ('error' in g) return { error: g.error }
+  let q = g.db
+    .from('social_posts')
+    .update({ status: 'approved', updated_at: new Date().toISOString() } as never)
+    .eq('status', 'draft')
+  if (platform) q = q.eq('platform', platform)
+  const res = (await q.select('id')) as { data: { id: string }[] | null; error: { message: string } | null }
+  if (res.error) return { error: res.error.message }
+  revalidatePath('/admin/social')
+  return { ok: true, approved: (res.data ?? []).length }
+}
+
+/** Pause/resume a platform — publishers + the brain skip a paused platform without
+ *  disconnecting it. Stored as social_accounts.meta.paused (row created if absent). */
+export async function setPlatformPaused(platform: Platform, paused: boolean): Promise<ActionResult> {
+  const g = await gate()
+  if ('error' in g) return { error: g.error }
+  const cur = (await g.db.from('social_accounts').select('meta').eq('platform', platform).maybeSingle()) as {
+    data: { meta: Record<string, unknown> | null } | null
+  }
+  const meta = { ...((cur.data?.meta as Record<string, unknown>) ?? {}), paused }
+  const res = (await g.db
+    .from('social_accounts')
+    .upsert({ platform, meta, updated_at: new Date().toISOString() } as never, { onConflict: 'platform' })) as {
+    error: { message: string } | null
+  }
+  if (res.error) return { error: res.error.message }
+  revalidatePath('/admin/social')
+  return { ok: true }
+}

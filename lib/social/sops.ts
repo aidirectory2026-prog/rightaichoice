@@ -8,6 +8,7 @@
 
 import crypto from 'node:crypto'
 import type { DraftProposal, Platform, PostKind } from './types'
+import { canonicalLink, xEffectiveLength } from './util'
 
 // ── Verdict shape ────────────────────────────────────────────────────────────
 export type Verdict = { ok: boolean; reasons: string[] }
@@ -192,6 +193,22 @@ export function isDuplicate(hash: string, recentHashes: string[]): Verdict {
   return recentHashes.includes(hash) ? fail('duplicate angle within variety window') : PASS
 }
 
+/** Dedup key for a destination link on a platform (UTM-stripped → cross-date safe). */
+export function linkDedupKey(platform: Platform, url: string | null | undefined): string {
+  return `${platform}|${canonicalLink(url)}`
+}
+
+/**
+ * Global link dedup: has this exact destination already been shared **on this
+ * platform** (any date, UTM ignored)? Same link on a DIFFERENT platform is allowed
+ * (normal cross-posting); the same link repeated on the same platform is blocked.
+ */
+export function isDuplicateLink(platform: Platform, url: string | null | undefined, postedKeys: string[]): Verdict {
+  const c = canonicalLink(url)
+  if (!c) return PASS
+  return postedKeys.includes(`${platform}|${c}`) ? fail('this link was already posted on this platform') : PASS
+}
+
 // ── Truth-only sourcing ─────────────────────────────────────────────────────────
 /** Every draft must carry at least one real source URL; uncited drafts are rejected. */
 export function sourcingGate(draft: Pick<DraftProposal, 'source_refs'>): Verdict {
@@ -206,14 +223,17 @@ export function platformFit(draft: DraftProposal): Verdict {
   if (!sop) return fail(`unknown platform ${draft.platform}`)
   const reasons: string[] = []
 
-  if (draft.copy.length > sop.maxChars)
-    reasons.push(`copy ${draft.copy.length} chars > ${sop.maxChars} max for ${draft.platform}`)
+  // X counts every URL as 23 chars (t.co), so measure the way X does — a long UTM
+  // link shouldn't false-trip the 280 limit. Other platforms use literal length.
+  const effLen = draft.platform === 'x' ? xEffectiveLength(draft.copy) : draft.copy.length
+  if (effLen > sop.maxChars)
+    reasons.push(`copy ${effLen} chars > ${sop.maxChars} max for ${draft.platform}`)
   if ((draft.hashtags?.length ?? 0) > sop.maxHashtags)
     reasons.push(`${draft.hashtags.length} hashtags > ${sop.maxHashtags} max for ${draft.platform}`)
   if (sop.requiresGraphic && !draft.graphic_template)
     reasons.push(`${draft.platform} requires a graphic but none specified`)
-  if (sop.linkPolicy === 'bio' && draft.link_url)
-    reasons.push(`${draft.platform} does not support inline links (use link-in-bio)`)
+  // Instagram has no inline links, but a link IS allowed on the draft — the publisher
+  // posts it as the first comment (link-in-bio convention), so we don't reject it here.
   if (draft.platform === 'reddit' && (draft.hashtags?.length ?? 0) > 0)
     reasons.push('reddit posts should not use hashtags (reads as spam)')
 
