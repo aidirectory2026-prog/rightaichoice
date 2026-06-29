@@ -6,6 +6,30 @@
 
 ---
 
+## 0. ⭐ Press / source-intro email (reusable — for any press inbox or journalist-request reply, e.g. Connectively/HARO/Qwoted)
+**Subject:** Source + fresh data for AI-tool stories — RightAIChoice (2,000+ tools, continuously verified)
+
+> Hi there,
+>
+> I run RightAIChoice (rightaichoice.com), an independent decision engine that tracks 2,000+ AI tools — and unusually, we re-verify every tool's data on a continuous cycle (last week, 1,995 of 1,998 tools were re-checked within 7 days). That gives us current, citable data on the AI-tool market most directories can't offer.
+>
+> I'd love to be a resource for any AI-tool stories. A few data points we can back with hard numbers:
+> • 55% of AI tools are free or freemium (full pricing breakdown available)
+> • Average "viability" score of 85/100 across 2,000 tools — i.e. which tools are at risk of shutting down
+> • Category trends (Marketing & SEO is currently the largest category)
+>
+> Public report with the full data: https://rightaichoice.com/state-of-ai-tools
+>
+> Happy to pull custom cuts of the data, share our methodology, or give a quote on deadline. One more possible angle: I'm a non-technical founder who built the entire platform — and its automations — using AI coding tools.
+>
+> Best,
+> Tanmay Verma — Founder, RightAIChoice
+> rightaichoice.com · linkedin.com/in/tanmayverma99
+
+_Reuse this verbatim for any journalist/source request; swap the lead data point to match the query's topic._
+
+---
+
 ## 1. Ben's Bites — ⭐ TAILORED REPLY to Ben's welcome email (use THIS — Ben's whole niche is "non-technical people building with AI", a perfect fit)
 **How:** reply directly to Ben's welcome email (keep his thread).
 
