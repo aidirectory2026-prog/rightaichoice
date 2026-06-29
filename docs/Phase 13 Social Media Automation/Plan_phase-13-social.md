@@ -298,3 +298,84 @@ Take top-N per platform per day (N from SOP config). Ties broken by freshness.
 
 > Build note (S5): each publisher's exact payloads/headers are re-verified against the live official docs
 > at implementation time; the above is the researched contract the adapters target.
+
+---
+
+# ROUND 2 — Hardening, Smart Upgrades & Documentation (2026-06-30)
+
+> Phase 13 S0–S7 shipped + deployed. This round **hardens** the tool (fixes every real bug a deep
+> read-only audit of all 23 merged files found), makes it **smarter / professional-grade** (informed by
+> how Buffer / Hootsuite / Sprout / SocialBee work in 2026), and **fully documents** it across three
+> surfaces. **Founder decision: build EVERYTHING now**, including native image upload on X/LinkedIn.
+> Nothing posts live yet (no accounts connected), so posting-dependent features are built + unit-tested
+> now and live-verified when accounts connect. Code in worktree `../rac-social` on branch
+> `phase13-social-r2`; safe-by-default unchanged (every platform OFF until connected).
+
+## R1 — Correctness & robustness fixes (the audited bugs)
+| # | Bug found | Fix | File(s) |
+|---|---|---|---|
+| 1 | **Double-post race (CRITICAL)** — publish cron selects `approved`+due rows with no lock; overlapping runs could post the same row twice. | **Atomic claim:** `update social_posts set publish_started_at=now() where id=? and status='approved' and (publish_started_at is null or publish_started_at < now()-'10 min') returning id`; only post if a row came back. Reset on retryable failure. | `app/api/cron/social-publish/route.ts` + migration 179 |
+| 2 | **LinkedIn `\|\| true`** — `(200\|\|201) && (json?.id \|\| true)` always reports success even with no post id. | Require a real id; return a (retryable-mapped) failure when absent. | `lib/social/publishers/linkedin.ts` |
+| 3 | **DeepSeek malformed JSON** wastes a candidate (no retry). | Retry the draft call once with a strict-JSON nudge before recording an error. | `lib/social/brain.ts` |
+| 4 | **Token-refresh gaps** — a failed refresh of a still-valid-but-expiring token is swallowed; 60s usability margin is thin. | Mark account `error` immediately on failed refresh of an expiring token; bump `tokenUsable` margin 60s→300s. | `app/api/cron/social-token-refresh/route.ts`, `lib/social/publishers/util.ts` |
+| 5 | **Instagram public-URL** not pre-checked → opaque container error. | HEAD the graphic URL before creating the container; clear error if unreachable. | `lib/social/publishers/instagram.ts` |
+| 6 | **Reddit re-check at publish** only validates the allowlist, not age/karma. | Re-run full `redditSafety` using `social_accounts.meta` (age/karma); graceful fallback. | `app/api/cron/social-publish/route.ts` |
+| 7 | **Budget realism** — draft-time X budget ignores already-approved-but-unposted X posts → silent cap breach. | Count cost of `approved`+`scheduled` X posts in month spend. | `lib/social/brain.ts`, social-draft/publish crons |
+
+## R2 — Smart upgrades (in-house, $0, verifiable now)
+- **Best-time-from-data scheduling** — `nextSlot()` picks the best hour from the insights model
+  (`PerformanceModel.byHourUTC`) when data exists, else the static `optimalHoursUTC`. (`lib/social/brain.ts`.)
+- **UTM tagging** — `withUtm(url, platform)` adds `utm_source/medium/campaign` to every outbound link so
+  GA attributes social traffic; dedup/`content_hash` use the canonical (UTM-stripped) URL.
+  (`lib/social/util.ts` new + `sources.ts`/`brain.ts`.)
+- **Global + cross-platform dedup** — flag a `link_url`/angle reused across the full history and across
+  platforms, not just the 14-day window. (`lib/social/sops.ts`, `brain.ts`.)
+- **Per-platform Pause switch** — `social_accounts.meta.paused=true`; `isEnabled()` + the brain treat
+  paused as off (no disconnect). (publishers, brain, admin.)
+- **Evergreen recycling** — draft cron re-queues a top-quartile *posted* item older than N days as a fresh
+  draft, **rephrased by DeepSeek** (variation, not a verbatim repost). (`lib/social/brain.ts` + `social_metrics`.)
+- **A/B copy variants** — brain optionally drafts 2 variants (tagged `brain_meta.variant_group`); admin
+  approves one or schedules both apart. (`brain.ts`, admin card.)
+
+## R3 — Posting-dependent features (built now, live-verified on connect)
+- **Native image upload** — **X:** chunked v1.1 media upload (INIT/APPEND/FINALIZE) → `media_id` → v2
+  `media.media_ids`. **LinkedIn:** Images API register-upload → PUT PNG → asset URN → `/rest/posts`. Both
+  fetch the PNG from `publicGraphicUrl(id)`. (`x.ts`, `linkedin.ts`.)
+- **Instagram first-comment link** — after `media_publish`, post the UTM'd link as the first comment via
+  `/{media-id}/comments` (no inline links on IG). (`instagram.ts`.)
+- **Threads** — brain may emit `brain_meta.thread = string[]`; X posts a reply-chain, Reddit a top
+  comment. Stored in existing jsonb (no migration). Marked unverifiable-until-live. (`brain.ts`, `x.ts`, `reddit.ts`.)
+
+## R4 — Admin UX upgrades (`app/admin/social/*`, `components/admin/social-post-card.tsx`)
+- Bulk approve (all-pending / per-platform) · char-count-vs-limit indicator (green/amber/red) ·
+  pause/resume platform controls in the connection strip · schedule timeline (group Approved by day).
+
+## R5 — Documentation (three surfaces)
+1. **This docs folder** — this Round-2 section in the Plan; dated build-log entries per round + refreshed
+   acceptance table.
+2. **Admin Learning Resources** (`/admin/resources`, hand-written React guides) — new **GEO & SEO** guide
+   (`app/admin/resources/geo-seo/page.tsx`) and **Social Media Automation** guide
+   (`app/admin/resources/social/page.tsx`), wired into the index cards, the Resources nav
+   (`lib/admin/nav.ts`), and the `GuideFooterNav` chain.
+3. **automated-pipelines playbook** — new **`docs/automated-pipelines/13-social-automation.md`** (matches
+   the 01–12 format): purpose → cron schedule → step-by-step (research → draft → SOP gate → approve →
+   publish → metrics → insights) → **per-platform process** (auth/endpoints/media/limits/cost) → **strict
+   SOPs** → research-first principle → **Key Files table covering EVERY social file** → data model →
+   failure matrix → cost/observability → CLI; explicit **what/why/how**. Link it from the README; re-verify
+   `11-geo-and-authority.md`.
+
+## Migration
+**179_social_round2.sql** (+rollback): `social_posts.publish_started_at timestamptz` (the claim/lock) +
+index. Pause / A/B group / thread array all fit existing `jsonb` columns — no further schema change.
+
+## Verification (acceptance)
+Migration 179 live + verified · `tsc` 0 errors · existing suites (41 SOP + 30 publishers + 13 insights)
+**plus new tests** (UTM build/strip, best-time slot selection, global/cross-platform dedup, A/B grouping,
+pause gating, atomic-claim double-run, native-media payload builders, thread expansion) · live harness
+(`social:verify-publish-cron` run twice → second claims nothing; safe-skip holds) · graphic route DB→PNG ·
+new admin guide routes render · every social file present in the `13-social-automation.md` Key Files table
+· squash PR `phase13-social-r2 → main` → deploy → verify prod.
+
+## Build order
+Migration 179 → R1 → R2 → R3 → R4 → R5 docs → R6 final verify + PR + deploy. Each step: build → verify ×N
+→ document → commit.
