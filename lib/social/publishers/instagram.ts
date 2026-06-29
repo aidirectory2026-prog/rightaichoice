@@ -38,6 +38,18 @@ export const instagramPublisher: Publisher = {
     if (!uid) return fail('instagram: no IG user id configured', false)
     if (!opts.graphicUrl) return fail('instagram: a public graphic URL is required', false)
 
+    // 0) pre-check the graphic URL is publicly reachable. Instagram fetches it
+    // server-side; if SOCIAL_PUBLIC_ORIGIN is misconfigured (localhost / behind
+    // auth) the container call fails with an opaque error. Fail fast + clearly.
+    try {
+      const head = await fetch(opts.graphicUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+      if (!head.ok) {
+        return fail(`instagram: graphic URL not publicly reachable (HTTP ${head.status}) — check SOCIAL_PUBLIC_ORIGIN`, false)
+      }
+    } catch (e) {
+      return fail(`instagram: graphic URL fetch failed (${e instanceof Error ? e.message : 'network'}) — check SOCIAL_PUBLIC_ORIGIN`, true)
+    }
+
     // 1) container
     const c = await postJson(`${GRAPH}/${uid}/media`, buildIgContainer(post, opts.graphicUrl), {
       Authorization: `Bearer ${account.access_token}`,

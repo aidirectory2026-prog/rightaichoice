@@ -35,8 +35,13 @@ export const GET = cronRoute({ pipelineKey: 'social-token-refresh' }, async (ctx
         .eq('id', acc.id)
       refreshed++
     } else {
-      const expired = acc.token_expires_at != null && new Date(acc.token_expires_at).getTime() <= Date.now()
-      if (expired) {
+      // Refresh failed. Only flag 'error' if the token will expire BEFORE the next
+      // daily run can retry (<25h) — otherwise a transient refresh outage shouldn't
+      // prematurely disable an account that still has days of validity. This is the
+      // robustness fix: don't wait for full expiry to surface a dead refresh path,
+      // but don't cry wolf 3 days early either.
+      const msLeft = acc.token_expires_at ? new Date(acc.token_expires_at).getTime() - Date.now() : Infinity
+      if (msLeft < 25 * 3_600_000) {
         await db.from('social_accounts').update({ status: 'error', updated_at: new Date().toISOString() } as never).eq('id', acc.id)
         errored++
       }

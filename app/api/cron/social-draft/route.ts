@@ -5,6 +5,7 @@
 import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { draftPosts } from '@/lib/social/brain'
+import { xPostCost } from '@/lib/social/sops'
 import type { Platform } from '@/lib/social/types'
 
 export const dynamic = 'force-dynamic'
@@ -20,13 +21,27 @@ function startOfMonthISO(): string {
 export const GET = cronRoute({ pipelineKey: 'social-draft' }, async (ctx) => {
   const db = getAdminClient()
   const xCap = process.env.X_MONTHLY_CAP_USD ? parseFloat(process.env.X_MONTHLY_CAP_USD) : null
+  // Spend so far this month = already-POSTED X cost...
   const spendRes = await db
     .from('social_posts')
     .select('cost_usd')
     .eq('platform', 'x')
     .eq('status', 'posted')
     .gte('posted_at', startOfMonthISO())
-  const xSpend = ((spendRes.data ?? []) as { cost_usd: number }[]).reduce((s, r) => s + (Number(r.cost_usd) || 0), 0)
+  const postedSpend = ((spendRes.data ?? []) as { cost_usd: number }[]).reduce((s, r) => s + (Number(r.cost_usd) || 0), 0)
+  // ...PLUS the projected cost of already-approved/scheduled X posts that haven't
+  // posted yet (they WILL post this month), so drafting can't silently overcommit
+  // the cap behind a pile of pending approvals.
+  const pendingRes = await db
+    .from('social_posts')
+    .select('link_url')
+    .eq('platform', 'x')
+    .in('status', ['approved', 'scheduled'])
+  const pendingSpend = ((pendingRes.data ?? []) as { link_url: string | null }[]).reduce(
+    (s, r) => s + xPostCost(!!r.link_url),
+    0,
+  )
+  const xSpend = postedSpend + pendingSpend
 
   const perPlatform = process.env.SOCIAL_DRAFTS_PER_PLATFORM ? parseInt(process.env.SOCIAL_DRAFTS_PER_PLATFORM, 10) : 1
   const { poolSize, outcomes } = await draftPosts({
@@ -39,7 +54,7 @@ export const GET = cronRoute({ pipelineKey: 'social-draft' }, async (ctx) => {
   const failed = outcomes.filter((o) => o.status === 'error' || o.status === 'rejected').length
 
   ctx.recordItems({ processed: outcomes.length, succeeded: queued, failed })
-  ctx.recordMetadata({ poolSize, queued, perPlatform })
+  ctx.recordMetadata({ poolSize, queued, perPlatform, xSpend: +xSpend.toFixed(3), postedSpend: +postedSpend.toFixed(3), pendingSpend: +pendingSpend.toFixed(3) })
   if (queued < outcomes.length) ctx.setStatus('partial')
   return { poolSize, queued, total: outcomes.length }
 })

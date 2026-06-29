@@ -116,20 +116,26 @@ export async function draftPosts(opts: DraftOptions): Promise<DraftRunResult> {
       }
 
       // Write the copy.
+      // Write the copy, retrying once on a transient error or malformed JSON (the
+      // model occasionally returns prose/fenced output) before giving up — a flaky
+      // parse shouldn't permanently waste a good candidate.
       let copy: BrainCopy | null = null
-      try {
-        const raw = await callDeepSeek({
-          system: buildSystemPrompt(platform),
-          user: buildUserPrompt(c, recent.angles),
-          max_tokens: 700,
-        })
-        copy = parseCopy(raw)
-      } catch (e) {
-        outcomes.push({ platform, candidateKey: c.key, status: 'error', reasons: [e instanceof Error ? e.message : String(e)] })
-        continue
+      let lastErr = ''
+      for (let attempt = 1; attempt <= 2 && !copy; attempt++) {
+        const userPrompt =
+          attempt === 1
+            ? buildUserPrompt(c, recent.angles)
+            : `${buildUserPrompt(c, recent.angles)}\n\nIMPORTANT: your previous reply was not valid JSON. Return ONLY the JSON object, no prose, no code fences.`
+        try {
+          const raw = await callDeepSeek({ system: buildSystemPrompt(platform), user: userPrompt, max_tokens: 700 })
+          copy = parseCopy(raw)
+          if (!copy) lastErr = 'unparseable model output'
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e)
+        }
       }
       if (!copy) {
-        outcomes.push({ platform, candidateKey: c.key, status: 'error', reasons: ['unparseable model output'] })
+        outcomes.push({ platform, candidateKey: c.key, status: 'error', reasons: [lastErr || 'unparseable model output'] })
         continue
       }
 

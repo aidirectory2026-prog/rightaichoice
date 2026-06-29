@@ -43,20 +43,27 @@ export const linkedinPublisher: Publisher = {
   async publish(post: SocialPost, account: SocialAccount): Promise<PublishResult> {
     const urn = orgUrn(account)
     if (!urn) return fail('linkedin: no organization URN configured', false)
-    const { status, json, text } = await postJson(POSTS_URL, buildLinkedInPost(post, urn), {
+    const { status, json, text, headers } = await postJson(POSTS_URL, buildLinkedInPost(post, urn), {
       Authorization: `Bearer ${account.access_token}`,
       'LinkedIn-Version': LINKEDIN_VERSION,
       'X-Restli-Protocol-Version': '2.0.0',
     })
-    // LinkedIn returns the post URN in the x-restli-id header or the body id.
-    if ((status === 200 || status === 201) && (json?.id || true)) {
-      const id = (json?.id as string) ?? 'urn:li:share:unknown'
+    // LinkedIn returns the post URN in the x-restli-id response header (preferred)
+    // or the body id. Require a REAL id — never report success without one (a 200
+    // with no id means the post did not actually create).
+    const id = (headers['x-restli-id'] as string | undefined) ?? (json?.id as string | undefined)
+    if ((status === 200 || status === 201) && id) {
       return {
         ok: true,
         externalId: id,
         externalUrl: `https://www.linkedin.com/feed/update/${id}`,
         costUsd: 0,
       }
+    }
+    if (status === 200 || status === 201) {
+      // Accepted but no id surfaced — treat as retryable so we re-verify rather than
+      // silently mark a possibly-uncreated post as done.
+      return fail(`linkedin ${status}: success status but no post id returned`, true)
     }
     return fail(`linkedin ${status}: ${text.slice(0, 200)}`, isRetryableStatus(status))
   },
