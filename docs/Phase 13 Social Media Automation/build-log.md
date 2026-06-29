@@ -216,3 +216,43 @@ approval digest email; X spend under a hard cap.
   the safety switches for all four (28 checks pass): each correctly refuses to post when it isn't
   connected. Turning them on is the account-setup step I'll hand you a checklist for._
 - **Status: done.** Commit `fa3eb20` on `phase13-social`.
+
+### 2026-06-30 — SM-S6: cloud crons (the "posts even when the laptop is off" layer)
+- **What:** Five Vercel cron routes (run server-side, no laptop needed) + registered in `vercel.json`.
+  - **`/api/cron/social-publish`** (every 15 min) — finds **approved** posts whose scheduled time has
+    arrived; **re-checks the SOPs at the moment of posting** (X budget, daily cap + no-burst spacing,
+    Reddit allowlist), then posts via the platform publisher and records the outcome (external id/url,
+    cost, posted_at). Platforms not connected yet are **skipped** (left approved) — approving ahead of
+    setup never causes a failure; transient errors stay approved to retry; only hard errors → `failed`.
+  - **`/api/cron/social-draft`** (daily 05:00 UTC) — refills the queue from live data (X budget-gated).
+  - **`/api/cron/social-metrics`** (every 6h) — appends per-post engagement to `social_metrics`.
+  - **`/api/cron/social-approval-digest`** (daily 09:00 UTC) — **emails (Resend) + Slacks** the founder
+    the posts awaiting approval, linking to `/admin/social`. No-op when nothing's pending.
+  - **`/api/cron/social-token-refresh`** (daily 03:00 UTC) — refreshes OAuth tokens nearing expiry
+    (refresh_token grant for X/LinkedIn/Reddit; long-lived refresh for Instagram); marks
+    expired-and-unrefreshable accounts `error` so the admin strip shows they need reconnecting.
+    (`lib/social/publishers/refresh.ts`.)
+- **Why:** This is the locked "posts on schedule from the cloud" requirement. All five log to
+  `pipeline_runs` (via `cronRoute`), so they show up in the existing pipeline-health dashboard + the
+  failed-pipeline alerter — same observability as every other automation.
+- **How:** Reused `cronRoute` (bearer-token auth + pipeline logging) and the Resend/Slack pattern from
+  `new-signup-alert`. The publish cron computes month-to-date X spend once per run for the budget gate.
+- **Verification (live):**
+  - **End-to-end publish-cron test against the real DB** (`npm run social:verify-publish-cron`): approved
+    a draft with a past schedule → ran the cron handler with `CRON_SECRET` auth → **HTTP 200**, found 1
+    due post, **safely SKIPPED** it (X not connected) leaving it `approved` (`posted=0, failed=0`), then
+    reverted. Proves the full query → SOP-recheck → publish-dispatch flow runs and the safe-skip
+    guarantee holds.
+  - `vercel.json` valid JSON, **25 crons** (under Pro's 40 limit).
+  - `npm run test:social-publishers` → **30 passed** (added the token-refresh `selectExpiring` selector);
+    `tsc --noEmit` → **0 errors**.
+- **Residual risk:** Live posting + token refresh can't be exercised until platform credentials exist
+  (S7). The crons are written to be safe no-ops until then (skip when unconnected). Once deployed, the
+  schedules are live on Vercel.
+- _Plain language: this is the part that makes it run on its own. Five robots on Vercel's servers:
+  one checks every 15 minutes for approved posts whose time has come and posts them (and it double-checks
+  every rule right before posting); one writes fresh drafts each morning; one collects likes/comments; one
+  emails you each day what's waiting for approval; one keeps the account logins from expiring. They run in
+  the cloud, so your laptop can be off. I proved the posting robot runs correctly against the real
+  database and, crucially, refuses to post anything until an account is actually connected._
+- **Status: done.** Commit `6d5ffcf` on `phase13-social`.

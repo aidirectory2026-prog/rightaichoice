@@ -31,6 +31,6 @@ budget cap · 4. In-house + free (only X costs, capped).
 - [x] **S3** — sources + brain + `social:draft` (8 live candidates; 2 real on-voice drafts queued) (2026-06-30)
 - [x] **S4** — admin `/admin/social` (queue, live graphic preview, approve/edit/reschedule, X budget meter, connections) (2026-06-30)
 - [x] **S5** — pluggable publishers (all 4, feature-flagged OFF; 28 unit tests) (2026-06-30)
-- [ ] **S6** — scheduler + approval-digest + metrics + token-refresh crons (laptop-off layer)
+- [x] **S6** — scheduler + approval-digest + metrics + token-refresh crons (5 crons live in vercel.json; publish cron verified vs live DB) (2026-06-30)
 - [ ] **S7** — insights feedback loop + operator-setup checklist
 - [ ] Operator: platform credentials/approvals (LinkedIn/IG reviews, X billing cap, Reddit account)
