@@ -390,7 +390,9 @@ Pipeline-relevant fixes from the QA audit pass (`Phase 10 (Cowork QA)/BUILD_LOG.
 
 In-house, approval-gated social posting across LinkedIn / X / Instagram / Reddit. The brain drafts from
 live data + branded graphics, the founder approves in `/admin/social`, and these crons post from the
-cloud. Full design + build log: `docs/Phase 13 Social Media Automation/`. Turn-on steps:
+cloud. **Full deep-dive (every file, per-platform process, strict SOPs, what/why/how):
+[13-social-automation.md](./13-social-automation.md).** Design + build log:
+`docs/Phase 13 Social Media Automation/`. Turn-on steps:
 `docs/Phase 13 Social Media Automation/operator-setup.md`.
 
 | Cron (Vercel) | Schedule | What it does |
