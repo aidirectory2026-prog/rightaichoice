@@ -73,6 +73,7 @@
     "test:xss": "tsx scripts/audit/xss-inline-format.test.ts",
     "test:range": "tsx scripts/audit/previous-range.test.ts",
     "test:social-sops": "tsx scripts/social/sops.test.ts",
+    "social:render-samples": "tsx scripts/social/render-samples.ts",
     "links:check:dry": "tsx --env-file=.env.local scripts/check-link-health.ts --dry",
     "links:check": "tsx --env-file=.env.local scripts/check-link-health.ts",
     "stacks:audit": "tsx --env-file=.env.local scripts/audit-stacks.ts",
