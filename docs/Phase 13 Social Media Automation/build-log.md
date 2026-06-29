@@ -306,3 +306,82 @@ approval digest email; X spend under a hard cap.
 **Live-verified:** candidate pool, DeepSeek drafting, graphic route (DB→PNG), publish-cron safe-skip.
 **Remaining to post live:** platform credentials only — the `operator-setup.md` checklist (intentionally
 left to the founder; engine is safe-OFF until then). **Next: open a squash PR `phase13-social → main`.**
+
+---
+
+## 📖 In plain language — everything we built this phase (for a non-technical read)
+
+This section explains, with zero jargon, exactly what this phase produced and how it all works together.
+
+### The problem we set out to solve
+RightAIChoice needs a steady, professional presence on **LinkedIn, X (Twitter), Instagram, and Reddit** —
+but without hiring an agency, paying for a scheduling tool (Buffer/Hootsuite), or you hand-posting every
+day. So we built our **own** tool, in-house, that does the heavy lifting and only asks you for a one-tap
+yes/no before anything goes out.
+
+### The simplest way to picture it
+Think of it as a **small newsroom that runs itself**:
+1. A **researcher** reads our own up-to-date data every day and finds things worth posting.
+2. A **writer** turns each into a proper post — short and punchy for X, professional for LinkedIn, etc.
+3. A **designer** makes a clean branded image to go with it (free, made from code — no paid image tools).
+4. A **safety editor** checks every post against strict rules before it's allowed near the queue.
+5. **You** are the editor-in-chief: you see everything in a dashboard and approve with one tap.
+6. A **dispatch desk** (running on the internet, not your laptop) posts approved items at the right time.
+7. An **analyst** watches what got likes/comments and tells the writer what to make more of.
+
+Nothing is ever posted without your approval, and no platform can post at all until you connect its
+account — so there is no risk of an accidental or rogue post.
+
+### What each piece actually is
+- **The filing cabinet (database).** Three lists the tool keeps: every post (draft → approved → posted,
+  with its image, schedule, cost, and the live link once posted); the login for each connected account; and
+  the likes/comments numbers collected over time. All locked to admin-only access.
+- **The rulebook (the "SOPs").** The strict, smart conditions baked into every action:
+  - *Truth-only:* a post with no real source is rejected — it can't make up statistics.
+  - *Brand voice:* auto-rejects our banned buzzwords ("game-changer", "seamless", "unlock", etc.).
+  - *No repeats / no bursts:* won't reuse an angle or post too often or too close together; knows each
+    platform's good posting hours.
+  - *Platform manners:* X's 280-character limit, LinkedIn's ≤3 hashtags, Instagram needs an image, Reddit
+    uses no hashtags.
+  - *Reddit anti-ban:* only approved subreddits, only from an aged/credible account, never the same link
+    across subreddits, max one post per subreddit per week, and always a manual approval.
+  - *X money cap:* X is the only paid platform; the tool tracks spend against a hard monthly cap you set,
+    blocks the pricier link-posts first as it nears the cap, and stops X entirely at the cap.
+- **The designer (graphics).** Five branded image styles — a big-number stat card, a tool spotlight, a
+  weekly news roundup, a head-to-head comparison, and a quote card — each produced in the three sizes
+  Instagram/X/LinkedIn want, in our colours, **for free**. (We generated real samples and they look
+  professional.)
+- **The brain (the writer + researcher).** Reads our live tool data (we track ~2,000 AI tools, re-verified
+  continuously), picks what's worth posting, and writes the copy in our voice using **only true facts** —
+  for about a tenth of a cent per post (it uses DeepSeek, a low-cost AI). We tested it live: it wrote a
+  real X post and a real LinkedIn post about freshly-verified tools, both accurate and on-brand.
+- **Your dashboard (the frontend).** A page at **`/admin/social`** (in the admin panel, under "SEO &
+  Growth → Social"). It shows the queue split into *Awaiting approval*, *Approved & scheduled*, and
+  *History*; each post displays its image, text, character count, hashtags, link, and sources. You can
+  **Approve, Edit, Reschedule, or Reject** each one, watch the **X spend meter**, and see which platforms
+  are **connected**. *(It becomes clickable in your browser once we deploy the branch.)*
+- **The "send" buttons (publishers).** The actual posting code for each of the four networks, each one
+  **switched OFF until you connect that account** — so nothing can post by accident.
+- **The cloud robots (the schedulers).** Five automated jobs running on Vercel's servers (so your laptop
+  can be off): one posts approved items every 15 minutes (re-checking every rule first), one writes fresh
+  drafts each morning, one collects engagement numbers, one **emails you each day** what's waiting for
+  approval, and one keeps the account logins from expiring.
+- **The analyst (insights).** Once posts are live and we see real engagement, the tool learns which formats
+  and angles performed and quietly favours them in future drafts.
+
+### What it costs
+Almost nothing. The images are free (made from code). The writing is ~$0.001 per post. The only paid piece
+is X, and that's protected by a hard monthly cap you control. LinkedIn, Instagram, and Reddit are free.
+
+### Is it finished?
+The **tool itself is finished and verified** — 84 automated checks pass, and we proved the live pieces work
+(it researched real data, wrote real posts, generated real images from the database, and the posting robot
+correctly refused to post because no account is connected yet). The **only** thing left is connecting the
+accounts, which is a setup task on each platform's website. We wrote you a step-by-step for that in
+`operator-setup.md` — Reddit and X take minutes; LinkedIn and Instagram need a 2–4 week approval from those
+companies, so they're worth starting now. The moment an account is connected, the tool starts posting on
+its schedule, pending your approvals.
+
+### How you'll use it day-to-day
+Each morning you get an email listing what's waiting. You open `/admin/social`, glance at each post and its
+image, and approve, tweak, reschedule, or reject. That's it — the cloud robots do the rest.
