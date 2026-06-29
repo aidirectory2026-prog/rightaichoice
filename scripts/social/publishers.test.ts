@@ -8,6 +8,7 @@ import { buildRedditSubmit, redditPublisher } from '../../lib/social/publishers/
 import { buildLinkedInPost, linkedinPublisher } from '../../lib/social/publishers/linkedin'
 import { buildIgContainer, instagramPublisher } from '../../lib/social/publishers/instagram'
 import { isRetryableStatus, clamp, tokenUsable } from '../../lib/social/publishers/util'
+import { selectExpiring } from '../../lib/social/publishers/refresh'
 import type { SocialAccount, SocialPost } from '../../lib/social/types'
 
 let passed = 0
@@ -118,6 +119,21 @@ function connected(over: Partial<SocialAccount> = {}): SocialAccount {
   check('ig: image_url set', c.image_url === 'https://site/img.png')
   check('ig: caption = copy + hashtags', c.caption.includes('caption') && c.caption.includes('#a'))
   check('ig: disabled without flag/user-id', !instagramPublisher.isEnabled(connected({ platform: 'instagram' })))
+}
+
+// ── token refresh selector ──────────────────────────────────────────────────
+{
+  const now = Date.now()
+  const mk = (over: Partial<SocialAccount>) => connected(over)
+  const accts = [
+    mk({ token_expires_at: new Date(now + 1 * 3600_000).toISOString() }), // expiring in 1h
+    mk({ token_expires_at: new Date(now + 200 * 3600_000).toISOString() }), // far future
+    mk({ token_expires_at: null }), // no expiry
+    mk({ status: 'disconnected', token_expires_at: new Date(now + 1000).toISOString() }), // not connected
+  ]
+  const exp = selectExpiring(accts, 72, now)
+  check('refresh: selects only the soon-expiring connected token', exp.length === 1)
+  check('refresh: ignores far-future + null-expiry + disconnected', exp.length === 1)
 }
 
 console.log(`\nsocial-publishers: ${passed} passed, ${failed} failed`)
