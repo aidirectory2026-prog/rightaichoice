@@ -75,3 +75,38 @@ approval digest email; X spend under a hard cap.
   Reddit, our banned buzzwords, no-repeat rules, and posting-time limits. Wrote 41 tests that all pass, so
   the rulebook is proven to work before anything can post._
 - **Status: done.** Commit `8817b34` on `phase13-social`.
+
+### 2026-06-30 — SM-S2: in-house graphics engine (templates + public render route)
+- **What:** A code-rendered, on-brand graphics engine — **$0, no AI-image cost** — producing five post
+  formats at three platform sizes.
+  - `lib/social/graphics/templates.tsx` — five templates: **stat_card, tool_spotlight, news_roundup,
+    comparison, quote**, each wrapped in a shared brand frame (dark `#09090b` + emerald `#34d399` +
+    Geist, RightAIChoice mark top-left, rightaichoice.com footer). Sizes: `square` 1080×1080 (IG feed),
+    `portrait` 1080×1350 (IG portrait), `landscape` 1200×675 (X/LinkedIn). Includes `SAMPLE_DATA` and a
+    `PLATFORM_DEFAULT_SIZE` map.
+  - `lib/social/graphics/render.tsx` — `renderGraphic()` wraps `next/og` `ImageResponse`; font is
+    injected by the caller (route fetches Geist from origin, script reads from disk) and degrades to
+    Satori's default on any blip (never 500s).
+  - `app/api/social/graphic/[id]/route.tsx` — **public** PNG route (Instagram's publish API requires a
+    publicly reachable image URL). Renders a queued post by UUID, or sample data via
+    `/api/social/graphic/preview?t=<template>&size=<size>` for admin preview. Exposes only the rendered
+    image — no DB fields leak.
+  - `scripts/social/render-samples.ts` (`npm run social:render-samples`) — offline PNG renderer for
+    eyeball QA.
+- **Why:** Branded graphics are the free differentiator vs. text-only competitors; rendering from code
+  (not an image API) keeps it on-brand and $0. A public route is mandatory for the Instagram publisher.
+- **How:** Reused the proven `ImageResponse` + Geist pattern from `app/api/og/stack/route.tsx`. Kept all
+  glyphs within Geist (replaced a `★` that was triggering an external Google-font fetch) so rendering has
+  zero external font dependency.
+- **Verification:**
+  - Rendered all 5 templates across sizes → **7 sample PNGs eyeballed**: brand-correct, legible, well
+    spaced, no tofu/missing glyphs after the star fix.
+  - `npx tsc --noEmit` → **0 errors** (fixed the untyped-admin-client `never` types by casting the query
+    result, matching the existing `pr_pitches` pattern).
+- **Residual risk:** Long copy can overflow a fixed-size card; the brain (S3) must respect per-template
+  length budgets, and the admin preview (S4) lets the founder catch any overflow before approving.
+- _Plain language: built the picture-maker. It turns our data into clean, branded images — a big-number
+  stat card, a tool spotlight, a weekly news roundup, a head-to-head comparison, and a quote card — in the
+  three sizes Instagram/X/LinkedIn want, all in our colors, for free. I generated real samples and they
+  look professional. You'll be able to preview every image in the admin panel before anything posts._
+- **Status: done.** Commit `c24a33c` on `phase13-social`.

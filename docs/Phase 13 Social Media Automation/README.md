@@ -27,7 +27,7 @@ budget cap · 4. In-house + free (only X costs, capped).
 ## Build sequence (status)
 - [x] **S0** — worktree `../rac-social` + docs + baseline (2026-06-30)
 - [x] **S1** — DB (`social_posts`/`social_accounts`/`social_metrics`, RLS, live) + SOP engine + 41 tests (2026-06-30)
-- [ ] **S2** — in-house graphics engine (templates + public render route)
+- [x] **S2** — in-house graphics engine (5 templates × 3 sizes + public render route; samples eyeballed) (2026-06-30)
 - [ ] **S3** — sources + brain + `social:draft`
 - [ ] **S4** — admin `/admin/social` (queue, preview, approve/edit/reschedule, budget meter, insights)
 - [ ] **S5** — pluggable publishers (X capped + Reddit first; LinkedIn + Instagram on approval)
