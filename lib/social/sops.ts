@@ -106,6 +106,20 @@ export const REDDIT_DEFAULTS = {
   maxPostsPerSubPerWeek: 1,
 }
 
+/**
+ * Subreddits where a value-first, data-led post is plausibly welcome. The brain
+ * may only SUGGEST one of these; redditSafety() + manual approval still gate every
+ * post, and each sub's own self-promo rules must be respected by the operator.
+ */
+export const REDDIT_ALLOWLIST = [
+  'artificial',
+  'ArtificialInteligence',
+  'productivity',
+  'SaaS',
+  'sideproject',
+  'EntrepreneurRideAlong',
+]
+
 export function redditSafety(args: {
   subreddit: string
   allowlist: string[]
