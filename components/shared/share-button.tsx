@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Share2, X, Check, Copy, MessageCircle } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
+import { copyToClipboard } from '@/lib/utils/clipboard'
 
 type ShareButtonProps = {
   url: string
@@ -95,7 +96,7 @@ export function ShareButton({ url, title, text = '', size = 'md', variant = 'ico
   }, [open])
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(fullUrl)
+    if (!(await copyToClipboard(fullUrl))) return // BUG-27f: no false "Copied!"
     setCopied(true)
     analytics.shareClicked(entity, entityId || fullUrl, 'copy_link')
     setTimeout(() => setCopied(false), 2000)

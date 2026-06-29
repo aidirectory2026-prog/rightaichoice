@@ -32,12 +32,34 @@ export async function saveStack(input: SaveStackInput) {
     return { error: 'This stack is too large to save.' }
   }
 
+  const title = input.title.slice(0, 200)
+  const goal = input.goal.slice(0, 500)
+
+  // BUG-27e: idempotent save. The auto-save-after-login effect + a manual click
+  // (or a double-click / two tabs) can fire saveStack twice; without this each
+  // call inserts a fresh row → duplicate stacks in the user's library. An exact
+  // (user, title, goal, source) match is almost certainly the same stack, so
+  // return the existing id instead of inserting again.
+  const { data: existing } = await supabase
+    .from('saved_stacks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('title', title)
+    .eq('goal', goal)
+    .eq('source', input.source)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (existing?.id) {
+    return { success: 'Stack saved!', id: (existing as { id: string }).id }
+  }
+
   const { data, error } = await supabase
     .from('saved_stacks')
     .insert({
       user_id: user.id,
-      title: input.title.slice(0, 200),
-      goal: input.goal.slice(0, 500),
+      title,
+      goal,
       description: input.description?.slice(0, 1000) || null,
       stages,
       summary,

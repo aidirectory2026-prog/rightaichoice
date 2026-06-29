@@ -65,9 +65,27 @@ export function AuthProvider({
       if (active) setProfile((data as Profile) ?? null)
     }
 
+    // BUG-23: cheap getSession() pre-check first. It reads the stored session
+    // WITHOUT a network round-trip, so an anonymous visitor (the common case on
+    // edge-cached pages) skips the getUser() call entirely. Only when a session
+    // exists do we validate it against the auth server; if that validation
+    // fails (a stale/un-refreshable token), clear the sb-* cookie locally so we
+    // don't re-hit a dead token on every navigation.
     supabase.auth
-      .getUser()
-      .then(({ data }) => resolve(data.user?.id ?? null, data.user?.email ?? null, data.user?.is_anonymous ?? false))
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (!session) {
+          if (active) { setUser(null); setProfile(null) }
+          return
+        }
+        const { data, error } = await supabase.auth.getUser()
+        if (error || !data.user) {
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+          if (active) { setUser(null); setProfile(null) }
+          return
+        }
+        void resolve(data.user.id, data.user.email ?? null, data.user.is_anonymous ?? false)
+      })
       .catch(() => { if (active) { setUser(null); setProfile(null) } })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

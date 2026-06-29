@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Copy, Check, Share2 } from 'lucide-react'
+import { copyToClipboard } from '@/lib/utils/clipboard'
 
 type ExportStackProps = {
   title: string
@@ -43,9 +44,10 @@ export function ExportStack({ title, goal, stages, summary, shareUrl }: ExportSt
   }
 
   async function copyMarkdown() {
-    await navigator.clipboard.writeText(generateMarkdown())
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    if (await copyToClipboard(generateMarkdown())) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   function shareToX() {
@@ -62,10 +64,12 @@ export function ExportStack({ title, goal, stages, summary, shareUrl }: ExportSt
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(fullUrl)
-    setCopied(true)
+    const ok = await copyToClipboard(fullUrl)
     setShowMenu(false)
-    setTimeout(() => setCopied(false), 2000)
+    if (ok) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   return (

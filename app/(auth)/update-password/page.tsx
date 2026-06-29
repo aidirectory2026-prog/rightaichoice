@@ -1,11 +1,59 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import { updatePassword } from '@/actions/auth'
 import { Logo } from '@/components/shared/logo'
 
 export default function UpdatePasswordPage() {
   const [state, formAction, isPending] = useActionState(updatePassword, null)
+  // BUG-27d: gate on a real session. A recovery link establishes one (via
+  // /auth/confirm → exchangeCodeForSession, or a PASSWORD_RECOVERY event); a
+  // signed-in user changing their password also has one. With NO session the
+  // form's submit would just fail with a confusing error, so show an
+  // "expired link" state + a path to request a fresh one instead.
+  const [hasSession, setHasSession] = useState<boolean | null>(null) // null = checking
+
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active) setHasSession((prev) => prev || !!session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || session) setHasSession(true)
+    })
+    return () => { active = false; subscription.unsubscribe() }
+  }, [])
+
+  // A successful update flips state.success — keep showing the form/message then.
+  if (hasSession === null && !state?.success) {
+    return (
+      <div className="space-y-6 text-center">
+        <Logo size="lg" />
+        <p className="mt-6 text-sm text-zinc-400">Checking your reset link…</p>
+      </div>
+    )
+  }
+
+  if (hasSession === false && !state?.success) {
+    return (
+      <div className="space-y-6 text-center">
+        <Logo size="lg" />
+        <h1 className="mt-6 text-xl font-semibold text-white">Reset link invalid or expired</h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          This password-reset link is no longer valid. Request a fresh one and we&apos;ll email you a new link.
+        </p>
+        <Link
+          href="/forgot-password"
+          className="inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+        >
+          Request a new link
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
