@@ -443,6 +443,29 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   - 2026-06-29 — **Press/source-intro email** sent (founder's press contact). `pr_pitches`: reusable press email.
   - 2026-06-29 — **The Rundown AI** (pricing angle) sent to support@ with a "please forward to editorial" note → `pr_pitches` status `sent`.
   - _Pending sends:_ Ben's Bites (tailored reply), TLDR AI (reply to welcome email).
+
+### 2026-06-30 — Accelerator #2: programmatic per-category "State of AI [X]" report pages
+- **What:** 18 new data-report pages, one per category (`/state-of-ai-tools/[category]`, e.g.
+  `/state-of-ai-tools/marketing-seo`), each computed live from our catalog — a new SEO surface + a new
+  PR angle + AI-citation bait per category. Compounds the main report + PR engine.
+- **How (branch `phase13-geo-seo`, commit `ff41351`; first synced the branch with the merged main —
+  resolved one `state-of-ai.ts` conflict by taking main's shared-viability-threshold version):**
+  - `lib/geo/state-of-ai.ts` — extracted shared `computeStats(tools, generatedAt)` core; added
+    `getCategoryList()` (slug+name) and `buildStateOfCategory(slug, name)` (filters the dataset to one
+    category, recomputes all stats incl. freshness for the subset).
+  - `app/state-of-ai-tools/[category]/page.tsx` — static per-category route (`generateStaticParams` over
+    all categories, per-category `generateMetadata`, answer-first TL;DR + pricing/viability tables +
+    top-OSS + cite block + links back to the main report and the category browse page).
+  - `app/sitemap.ts` — all 18 category-report URLs added so they get crawled.
+- **Verification:** `tsc` clean; live build test — 18 categories found; Marketing & SEO report =
+  106 tools, 99.1% verified/7d, 56.6% free/freemium, viability avg 86, correct pricing split.
+- **Residual risk:** pages verified at builder + tsc level, not yet on a deployed URL (confirm after the
+  next PR merge). Internal links from the main report's category table → these pages deferred (sitemap
+  covers crawl discovery for now).
+- _Plain language: I built 18 mini data-reports — one per category (AI marketing tools, AI coding tools,
+  etc.) — each full of original numbers. That's 18 more pages Google can rank and 18 more "here's a
+  data story" angles to pitch, all generated automatically from our live data._
+- **Status: done (accelerator #2). Goes live on the next deploy/PR merge.**
 - **GEO report email automation added:** the weekly tracker now emails the founder a summary after each
   run (`lib/geo/geo-report-email.ts` via Resend — cited X/Y, rate, per-prompt table, rank, share-of-voice,
   trend, competitors). Wired into the `track-geo-citations` cron; best-effort (never fails the data run).
