@@ -33,8 +33,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { meta } = post
   // Phase 7J: emit article:modified_time so SERPs surface freshness for
   // long-form content. Falls back to publishedAt when an updated_at isn't
-  // present in frontmatter.
-  const modifiedTime = meta.updatedAt ?? meta.publishedAt
+  // present in frontmatter. BUG-38: only emit valid ISO dates — a malformed
+  // value would otherwise become an invalid OG timestamp.
+  const isValidDate = (v: string | null | undefined) => !!v && !Number.isNaN(new Date(v).getTime())
+  const publishedTime = isValidDate(meta.publishedAt) ? meta.publishedAt : undefined
+  const modifiedRaw = meta.updatedAt ?? meta.publishedAt
+  const modifiedTime = isValidDate(modifiedRaw) ? modifiedRaw : undefined
   const override = await getTitleOverride(`/blog/${slug}`)
   return {
     title: override ? { absolute: override } : meta.title,
@@ -45,8 +49,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: meta.description,
       url: `/blog/${slug}`,
       type: 'article',
-      publishedTime: meta.publishedAt,
-      modifiedTime,
+      ...(publishedTime ? { publishedTime } : {}),
+      ...(modifiedTime ? { modifiedTime } : {}),
       authors: [meta.author],
       ...(meta.image && { images: [{ url: meta.image, alt: meta.title }] }),
     },
@@ -56,7 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: meta.description,
       ...(meta.image && { images: [meta.image] }),
     },
-    other: { 'article:modified_time': modifiedTime },
+    ...(modifiedTime ? { other: { 'article:modified_time': modifiedTime } } : {}),
   }
 }
 
@@ -67,13 +71,24 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const { meta, content } = post
 
+  // BUG-38: a malformed publishedAt/updatedAt would render "Invalid Date" to
+  // users AND emit an invalid datePublished that Google flags as a
+  // structured-data error. Validate once; omit the date wherever it's bad.
+  const toValidDate = (v: string | null | undefined): Date | null => {
+    if (!v) return null
+    const d = new Date(v)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const publishedDate = toValidDate(meta.publishedAt)
+  const modifiedDate = toValidDate(meta.updatedAt ?? meta.publishedAt) ?? publishedDate
+
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: meta.title,
     description: meta.description,
-    datePublished: meta.publishedAt,
-    dateModified: meta.updatedAt ?? meta.publishedAt,
+    ...(publishedDate ? { datePublished: publishedDate.toISOString() } : {}),
+    ...(modifiedDate ? { dateModified: modifiedDate.toISOString() } : {}),
     author: {
       '@type': 'Organization',
       name: meta.author,
@@ -139,23 +154,27 @@ export default async function BlogPostPage({ params }: PageProps) {
             </h1>
             <p className="mt-3 text-lg text-zinc-400">{meta.description}</p>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-zinc-500">
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                {new Date(meta.publishedAt).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </span>
+              {publishedDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  {publishedDate.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              )}
               <span className="flex items-center gap-1.5">
                 <User className="h-4 w-4" />
                 {meta.author}
               </span>
-              <LastUpdated date={new Date(meta.updatedAt ?? meta.publishedAt)} />
+              {modifiedDate && <LastUpdated date={modifiedDate} />}
             </div>
-            <div className="mt-3">
-              <ReviewedByOurTeam date={new Date(meta.updatedAt ?? meta.publishedAt)} />
-            </div>
+            {modifiedDate && (
+              <div className="mt-3">
+                <ReviewedByOurTeam date={modifiedDate} />
+              </div>
+            )}
             {meta.categories.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {meta.categories.map((cat) => (

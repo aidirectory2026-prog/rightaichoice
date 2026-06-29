@@ -852,13 +852,17 @@ export async function getToolsBySlugs(slugs: string[]) {
  */
 export async function getSavedTools(userId: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('user_saved_tools')
     .select(
       `created_at, tools(id, name, slug, tagline, logo_url, website_url, pricing_type, avg_rating, review_count, view_count, viability_score)`
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+  // BUG-35: surface a real DB failure instead of swallowing it and returning
+  // [] — otherwise the /saved page can't tell "you have no saves" from "we
+  // couldn't load your saves" and shows the wrong (empty) state.
+  if (error) throw new Error(`getSavedTools: ${error.message}`)
   // Supabase types this as `tools: T | T[]` depending on FK resolution; in
   // practice tool_id → tools is a single row, but we defensively unwrap.
   return (data ?? [])

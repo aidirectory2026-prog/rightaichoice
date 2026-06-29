@@ -110,6 +110,8 @@ async function SearchResults({
     page?: string
   }
 }) {
+  // BUG-37: sanitise the page param — NaN / 0 / negatives collapse to 1.
+  const requestedPage = Math.max(1, Number.parseInt(params.page ?? '1', 10) || 1)
   const [categories, { tools, total, page, totalPages }] = await Promise.all([
     getCategories(),
     getTools({
@@ -120,9 +122,21 @@ async function SearchResults({
       platform: params.platform as Platform | undefined,
       has_api: params.has_api === 'true' ? true : undefined,
       sort: (params.sort as 'trending' | 'newest' | 'most_reviewed' | 'alphabetical') ?? 'trending',
-      page: params.page ? parseInt(params.page, 10) : 1,
+      page: requestedPage,
     }),
   ])
+
+  // BUG-37: a page number past the last page of a NON-empty result set is
+  // "out of range", not "no results" — keep the two states distinct.
+  const outOfRange = total > 0 && tools.length === 0 && requestedPage > totalPages
+  const pageOneHref = (() => {
+    const sp = new URLSearchParams()
+    sp.set('q', q)
+    for (const [k, v] of Object.entries(params)) {
+      if (k !== 'page' && k !== 'q' && typeof v === 'string' && v) sp.set(k, v)
+    }
+    return `/search?${sp.toString()}`
+  })()
 
   // Fire-and-forget query logging so we know what searches are landing here
   // and what's returning zero results — feeds future catalog gap reports.
@@ -143,10 +157,34 @@ async function SearchResults({
           </div>
           <ToolPagination page={page} totalPages={totalPages} total={total} />
         </>
+      ) : outOfRange ? (
+        <OutOfRange q={q} totalPages={totalPages} pageOneHref={pageOneHref} />
       ) : (
         <NoResults q={q} />
       )}
     </>
+  )
+}
+
+function OutOfRange({ q, totalPages, pageOneHref }: { q: string; totalPages: number; pageOneHref: string }) {
+  return (
+    <div className="mt-12 text-center">
+      <div className="mx-auto w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
+        <span className="text-2xl">📄</span>
+      </div>
+      <p className="text-lg text-zinc-300">That page doesn&apos;t exist</p>
+      <p className="mt-2 text-sm text-zinc-500">
+        Results for &ldquo;{q}&rdquo; only run to page {totalPages}. Jump back to the start.
+      </p>
+      <div className="mt-6 flex justify-center">
+        <Link
+          href={pageOneHref}
+          className="rounded-full border border-emerald-800 bg-emerald-950/40 px-4 py-1.5 text-sm text-emerald-300 hover:bg-emerald-900/40 transition-colors"
+        >
+          Go to page 1
+        </Link>
+      </div>
+    </div>
   )
 }
 

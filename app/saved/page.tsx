@@ -32,7 +32,43 @@ export default async function SavedPage() {
     redirect('/login?next=/saved')
   }
 
-  const tools = await getSavedTools(user.id)
+  // BUG-35: distinguish a load FAILURE from a genuinely-empty shortlist.
+  let tools: Awaited<ReturnType<typeof getSavedTools>> | null = null
+  let loadError = false
+  try {
+    tools = await getSavedTools(user.id)
+  } catch {
+    loadError = true
+  }
+
+  if (loadError || !tools) {
+    return (
+      <>
+        <Navbar />
+        <main className="flex-1">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Bookmark className="h-6 w-6 text-emerald-400 fill-emerald-400" />
+              Saved tools
+            </h1>
+            <div className="mt-8 rounded-xl border border-red-900/50 bg-red-950/20 p-8 text-center">
+              <p className="text-lg text-zinc-200">We couldn&apos;t load your saved tools.</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                This is a temporary glitch — your shortlist is safe. Please refresh in a moment.
+              </p>
+              <Link
+                href="/saved"
+                className="mt-6 inline-flex rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
+              >
+                Retry
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <>
