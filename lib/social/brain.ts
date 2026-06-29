@@ -7,6 +7,7 @@
 // until a human approves). Nothing here posts anything.
 
 import { getAdminClient } from '../cron/supabase-admin'
+import { buildPerformanceModel } from './insights'
 import { callDeepSeek, stripJsonFences } from '../plan/deepseek'
 import { PLATFORM_DEFAULT_SIZE, GRAPHIC_SIZES } from './graphics/templates'
 import { buildSystemPrompt, buildUserPrompt, type BrainCopy } from './prompts'
@@ -73,7 +74,9 @@ export type DraftOptions = {
 }
 
 export async function draftPosts(opts: DraftOptions): Promise<DraftRunResult> {
-  const pool = await buildCandidatePool()
+  // Insights feedback loop: weight candidates by what's actually performed.
+  const perf = await buildPerformanceModel()
+  const pool = await buildCandidatePool({ perf })
   const recent = await loadRecent()
   const seen = new Set(recent.hashes)
   const supa = getAdminClient()

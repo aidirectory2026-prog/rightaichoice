@@ -22,6 +22,7 @@ export {}
 import { getAdminClient } from '../lib/cron/supabase-admin'
 import { runScriptedPipeline } from '../lib/pipelines/with-logging'
 import { buildCandidatePool, draftPosts } from '../lib/social/brain'
+import { buildPerformanceModel } from '../lib/social/insights'
 import type { Platform } from '../lib/social/types'
 
 const SITE = process.env.SOCIAL_PUBLIC_ORIGIN ?? 'https://rightaichoice.com'
@@ -29,7 +30,7 @@ const ALL: Platform[] = ['linkedin', 'x', 'instagram', 'reddit']
 
 const argv = process.argv.slice(2)
 const mode =
-  argv.find((a) => ['--pool', '--draft', '--status', '--preview'].includes(a)) ?? '--status'
+  argv.find((a) => ['--pool', '--draft', '--status', '--preview', '--insights'].includes(a)) ?? '--status'
 const isDry = argv.includes('--dry') || argv.includes('--dry-run')
 const arg = (k: string) => argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1]
 const platforms = (arg('platforms')?.split(',').map((s) => s.trim()) as Platform[] | undefined)?.filter((p) =>
@@ -119,10 +120,28 @@ async function preview() {
   console.log(`sources: ${(p.source_refs as Array<{ url: string }>).map((s) => s.url).join(', ')}`)
 }
 
+async function insights() {
+  const m = await buildPerformanceModel()
+  console.log(`\n=== PERFORMANCE MODEL (last 60d · ${m.sampleSize} posts with metrics) ===`)
+  if (m.sampleSize === 0) {
+    console.log('No engagement data yet — the brain uses neutral weights until posts go live + metrics accrue.')
+    return
+  }
+  const fmt = (rec: Record<string, { n: number; avgScore: number }>) =>
+    Object.entries(rec)
+      .sort((a, b) => b[1].avgScore - a[1].avgScore)
+      .map(([k, v]) => `   ${k.padEnd(22)} avg=${v.avgScore.toFixed(1)} (n=${v.n})`)
+      .join('\n')
+  console.log('\nby platform×format:\n' + fmt(m.byPlatformKind))
+  console.log('\nby format:\n' + fmt(m.byKind))
+  console.log('\nby platform:\n' + fmt(m.byPlatform))
+}
+
 async function main() {
   if (mode === '--pool') return pool()
   if (mode === '--draft') return draft()
   if (mode === '--preview') return preview()
+  if (mode === '--insights') return insights()
   return status()
 }
 

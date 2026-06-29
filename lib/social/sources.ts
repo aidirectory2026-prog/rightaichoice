@@ -8,6 +8,7 @@
 
 import { buildStateOfAI, type StateOfAI } from '../geo/state-of-ai'
 import { loadDataset, type Dataset, type DatasetTool } from '../geo/llms-dataset'
+import { expectedPerformanceByKind, type PerformanceModel } from './insights'
 import type { GraphicData, GraphicTemplate } from './graphics/templates'
 import type { PostKind, SourceRef } from './types'
 
@@ -29,10 +30,13 @@ export type Candidate = {
   score: number // weighted rank
 }
 
-function scoreOf(c: Pick<Candidate, 'freshness' | 'novelty' | 'strategicFit'>): number {
-  // Insights-driven expectedPerformance is added in S7; for now weight the
-  // signals we have. (Appendix A1 formula, minus the not-yet-available term.)
-  return +(0.4 * c.freshness + 0.3 * c.novelty + 0.3 * c.strategicFit).toFixed(4)
+function scoreOf(
+  c: Pick<Candidate, 'freshness' | 'novelty' | 'strategicFit'>,
+  expectedPerformance: number,
+): number {
+  // Appendix A1 — the full ranking formula now that insights (S7) feed it.
+  // expectedPerformance is neutral (0.5) until engagement data accrues.
+  return +(0.3 * c.freshness + 0.25 * c.novelty + 0.3 * expectedPerformance + 0.15 * c.strategicFit).toFixed(4)
 }
 
 function topToolsForSpotlight(ds: Dataset, n: number): DatasetTool[] {
@@ -50,11 +54,18 @@ function freshestTools(ds: Dataset, n: number): DatasetTool[] {
 }
 
 /** Build the candidate pool from live data. Pass cached dataset/state to avoid re-reads. */
-export async function buildCandidatePool(opts?: { dataset?: Dataset; state?: StateOfAI }): Promise<Candidate[]> {
+export async function buildCandidatePool(opts?: {
+  dataset?: Dataset
+  state?: StateOfAI
+  perf?: PerformanceModel
+}): Promise<Candidate[]> {
   const ds = opts?.dataset ?? (await loadDataset())
   const d = opts?.state ?? (await buildStateOfAI(ds))
   const out: Candidate[] = []
-  const push = (c: Omit<Candidate, 'score'>) => out.push({ ...c, score: scoreOf(c) })
+  const push = (c: Omit<Candidate, 'score'>) => {
+    const eperf = opts?.perf ? expectedPerformanceByKind(opts.perf, c.kind) : 0.5
+    out.push({ ...c, score: scoreOf(c, eperf) })
+  }
 
   // ── Stat cards from the State-of-AI report (citable, current) ──────────────
   const statSource: SourceRef[] = [{ title: 'RightAIChoice — State of AI Tools', url: REPORT_URL }]
