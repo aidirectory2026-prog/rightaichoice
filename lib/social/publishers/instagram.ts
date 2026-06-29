@@ -6,7 +6,7 @@
 
 import type { SocialAccount, SocialPost } from '../types'
 import type { MetricsResult, Publisher, PublishOpts, PublishResult } from './types'
-import { fail, isRetryableStatus, postJson, tokenUsable } from './util'
+import { fail, isRetryableStatus, notPaused, postJson, tokenUsable } from './util'
 
 const GRAPH = 'https://graph.facebook.com/v21.0'
 
@@ -28,6 +28,7 @@ export const instagramPublisher: Publisher = {
     return (
       !!account &&
       account.status === 'connected' &&
+      notPaused(account) &&
       tokenUsable(account.access_token, account.token_expires_at) &&
       !!igUserId(account)
     )
@@ -67,6 +68,13 @@ export const instagramPublisher: Publisher = {
       return fail(`instagram publish ${p.status}: ${p.text.slice(0, 200)}`, isRetryableStatus(p.status))
     }
     const mediaId = p.json.id as string
+
+    // 3) first-comment link — IG has no inline caption links, so the (UTM'd) link
+    // goes in the first comment (the link-in-bio convention done automatically).
+    if (post.link_url) {
+      await postJson(`${GRAPH}/${mediaId}/comments`, { message: post.link_url }, { Authorization: `Bearer ${account.access_token}` }).catch(() => {})
+    }
+
     // best-effort permalink
     let permalink = ''
     try {

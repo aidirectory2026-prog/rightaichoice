@@ -4,7 +4,7 @@
 
 import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
-import { draftPosts } from '@/lib/social/brain'
+import { draftPosts, recycleTopPerformers } from '@/lib/social/brain'
 import { xPostCost } from '@/lib/social/sops'
 import type { Platform } from '@/lib/social/types'
 
@@ -49,12 +49,22 @@ export const GET = cronRoute({ pipelineKey: 'social-draft' }, async (ctx) => {
     perPlatform,
     xMonthlyCapUSD: xCap,
     xMonthSpendUSD: xSpend,
+    abVariants: process.env.SOCIAL_AB_VARIANTS === '1',
   })
+
+  // Optional evergreen recycling: re-queue a top performer as a fresh (rephrased) draft.
+  let recycled = 0
+  if (process.env.SOCIAL_RECYCLE === '1') {
+    const rec = await recycleTopPerformers({ olderThanDays: 30, max: 1 })
+    recycled = rec.filter((o) => o.status === 'queued').length
+    outcomes.push(...rec)
+  }
+
   const queued = outcomes.filter((o) => o.status === 'queued').length
   const failed = outcomes.filter((o) => o.status === 'error' || o.status === 'rejected').length
 
   ctx.recordItems({ processed: outcomes.length, succeeded: queued, failed })
-  ctx.recordMetadata({ poolSize, queued, perPlatform, xSpend: +xSpend.toFixed(3), postedSpend: +postedSpend.toFixed(3), pendingSpend: +pendingSpend.toFixed(3) })
+  ctx.recordMetadata({ poolSize, queued, recycled, perPlatform, xSpend: +xSpend.toFixed(3), postedSpend: +postedSpend.toFixed(3), pendingSpend: +pendingSpend.toFixed(3) })
   if (queued < outcomes.length) ctx.setStatus('partial')
-  return { poolSize, queued, total: outcomes.length }
+  return { poolSize, queued, recycled, total: outcomes.length }
 })

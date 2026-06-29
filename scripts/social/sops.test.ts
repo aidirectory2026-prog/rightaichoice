@@ -133,12 +133,17 @@ function draft(p: Partial<DraftProposal>): DraftProposal {
     !platformFit(draft({ platform: 'instagram', copy: 'caption', graphic_template: undefined })).ok,
   )
   check(
-    'fit: Instagram inline link rejected (link-in-bio)',
-    !platformFit(
+    'fit: Instagram link allowed (posted as first comment, not inline)',
+    platformFit(
       draft({ platform: 'instagram', graphic_template: 'stat_card', link_url: 'https://x.com' }),
     ).ok,
   )
   check('fit: reddit hashtags rejected', !platformFit(draft({ platform: 'reddit', hashtags: ['#ai'] })).ok)
+  // X t.co-aware length: a long UTM link must not false-trip 280.
+  check(
+    'fit: X copy with long UTM link passes (t.co counts as 23)',
+    platformFit(draft({ platform: 'x', copy: 'short hook https://rightaichoice.com/state-of-ai-tools?utm_source=x&utm_medium=social&utm_campaign=rac_social' })).ok,
+  )
 }
 
 // ── Scheduling intelligence ─────────────────────────────────────────────────────

@@ -6,10 +6,21 @@
 
 import type { SocialAccount, SocialPost } from '../types'
 import type { MetricsResult, Publisher, PublishResult } from './types'
-import { fail, isRetryableStatus, tokenUsable } from './util'
+import { fail, isRetryableStatus, notPaused, tokenUsable } from './util'
+import { threadParts } from './x'
 
 const SUBMIT_URL = 'https://oauth.reddit.com/api/submit'
+const COMMENT_URL = 'https://oauth.reddit.com/api/comment'
 const UA = process.env.REDDIT_USER_AGENT ?? 'web:rightaichoice:v1 (by /u/rightaichoice)'
+
+/** Best-effort top comment (used for thread continuation); never fails the post. */
+async function postComment(token: string, parentFullname: string, text: string): Promise<void> {
+  await fetch(COMMENT_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
+    body: new URLSearchParams({ api_type: 'json', thing_id: parentFullname, text }).toString(),
+  }).catch(() => {})
+}
 
 export type RedditSubmit = { sr: string; kind: 'self' | 'link'; title: string; text?: string; url?: string; api_type: 'json' }
 
@@ -32,6 +43,7 @@ export const redditPublisher: Publisher = {
     return (
       !!account &&
       account.status === 'connected' &&
+      notPaused(account) &&
       tokenUsable(account.access_token, account.token_expires_at) &&
       !!process.env.REDDIT_CLIENT_ID
     )
@@ -59,9 +71,15 @@ export const redditPublisher: Publisher = {
     }
     const errs = j?.json?.errors
     if (res.ok && Array.isArray(errs) && errs.length === 0 && j?.json?.data) {
+      const fullname = (j.json.data.name as string) ?? (j.json.data.id as string)
+      // Thread continuation: any parts beyond the first go in a top comment.
+      const parts = threadParts(post)
+      if (parts.length > 1 && fullname) {
+        await postComment(account.access_token!, fullname, parts.slice(1).join('\n\n'))
+      }
       return {
         ok: true,
-        externalId: (j.json.data.name as string) ?? (j.json.data.id as string),
+        externalId: fullname,
         externalUrl: (j.json.data.url as string) ?? '',
         costUsd: 0,
       }

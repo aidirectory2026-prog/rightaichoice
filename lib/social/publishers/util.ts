@@ -1,6 +1,13 @@
 // Phase 13 Social — shared publisher helpers (pure + thin HTTP).
 
+import type { SocialAccount } from '../types'
 import type { PublishResult } from './types'
+
+/** A platform is usable only if its account isn't paused (meta.paused). The admin
+ *  pause switch lets the founder stop a platform without disconnecting it. */
+export function notPaused(account: SocialAccount | null): boolean {
+  return (account?.meta as { paused?: boolean } | undefined)?.paused !== true
+}
 
 /** 5xx and 429 are worth retrying; 4xx (auth/validation) are not. */
 export function isRetryableStatus(status: number): boolean {
