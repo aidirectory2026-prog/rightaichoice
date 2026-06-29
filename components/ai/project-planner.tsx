@@ -157,6 +157,10 @@ export function ProjectPlanner({
   const [activeVariant, setActiveVariant] = useState<PlanVariant | null>(null)
   const pendingQueryRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // BUG-25: cancel an in-flight /api/plan stream when a new run starts (or on
+  // unmount) so its events can't race the new run's state.
+  const abortRef = useRef<AbortController | null>(null)
+  useEffect(() => () => abortRef.current?.abort(), [])
 
   const effectiveSurface: CtaSurface = sourceSurface ?? 'plan_page'
 
@@ -258,6 +262,14 @@ export function ProjectPlanner({
     setPlan(null)
     setActiveStage(null)
 
+    // BUG-25: abort any previous run, then own a fresh controller for this one.
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    // BUG-24: track whether a terminal event arrived; if the stream ends
+    // without one, the plan was cut off mid-flight and we must say so.
+    let gotTerminal = false
+
     try {
       const res = await fetch('/api/plan', {
         method: 'POST',
@@ -267,6 +279,7 @@ export function ProjectPlanner({
           profile: userProfile,
           variant: variantOverride ?? null,
         }),
+        signal: controller.signal,
       })
 
       // Non-stream early failures (400 validation, 429 rate limit) still come
@@ -318,6 +331,7 @@ export function ProjectPlanner({
           if (evt.stages.length > 0) setActiveStage(evt.stages[0].id)
           setLoading(false) // flip from WaitingState to Plan view as soon as structure is known
         } else if (evt.type === 'enriched') {
+          gotTerminal = true
           setPlan((prev) => (prev ? { ...prev, stages: evt.stages } : prev))
           const allTools = evt.stages.flatMap((s) => s.tools ?? [])
           const toolCount = allTools.length
@@ -334,8 +348,10 @@ export function ProjectPlanner({
             if (stage.matchTier) analytics.planMatchTier(stage.id, stage.matchTier)
           }
         } else if (evt.type === 'done') {
+          gotTerminal = true
           if (evt._timings) analytics.planPerf(evt._timings)
         } else if (evt.type === 'error') {
+          gotTerminal = true
           setError(evt.message ?? 'Something went wrong. Try again.')
           setLoading(false)
         }
@@ -366,17 +382,28 @@ export function ProjectPlanner({
           /* noop */
         }
       }
+      // BUG-24: stream closed cleanly but never sent enriched/done/error → it
+      // was cut off mid-generation (proxy timeout, dropped connection). Don't
+      // leave a half-built outline with no tools; tell the user to re-run.
+      if (!gotTerminal && !controller.signal.aborted) {
+        setError('Your plan was interrupted before it finished — please run it again.')
+      }
     } catch {
-      setError('Network error. Please try again.')
+      // A new run (or unmount) aborted this one — stay silent; the new run owns the UI.
+      if (!controller.signal.aborted) setError('Network error. Please try again.')
     } finally {
-      setLoading(false)
+      // Only this run may clear loading — an abort means a newer run is in charge.
+      if (!controller.signal.aborted) setLoading(false)
+      if (abortRef.current === controller) abortRef.current = null
     }
   }
 
   function handleReset() {
+    abortRef.current?.abort() // BUG-25: cancel a streaming run on "New"
     setPlan(null)
     setQuery('')
     setError('')
+    setLoading(false)
     setActiveStage(null)
     setTimeout(() => inputRef.current?.focus(), 50)
   }
