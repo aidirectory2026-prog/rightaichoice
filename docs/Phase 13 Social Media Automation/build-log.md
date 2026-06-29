@@ -41,3 +41,37 @@ approval digest email; X spend under a hard cap.
 - _Plain language: set up a clean, isolated workspace for the social tool and wrote down where we're
   starting from (basically zero automation today)._
 - **Status: done.**
+
+### 2026-06-30 — SM-S1: database tables + SOP engine + unit tests
+- **What:** The foundation — three Postgres tables and the rule engine that enforces "strict + smart
+  SOPs."
+  - Migration `178_social_automation.sql` (+ rollback): `social_posts` (the approval queue + audit log,
+    22 cols), `social_accounts` (per-platform OAuth tokens, 11 cols), `social_metrics` (engagement over
+    time, 9 cols). All RLS-enabled with **no anon policies** → admin/service-role only.
+  - `lib/social/types.ts` — shared types (`Platform`, `SocialPost`, `DraftProposal`, `SourceRef`).
+  - `lib/social/sops.ts` — the SOPs as **pure, testable functions**: `withinXBudget` (hard monthly cap;
+    link posts at $0.20 blocked before $0.015 plain posts as the cap nears), `redditSafety` (allowlist +
+    account age/karma minimums + no same-link cross-posting + weekly per-sub cap), `voiceGate` (rejects
+    the editorial-voice banned phrases), `contentHash`/`isDuplicate` (variety window), `sourcingGate`
+    (truth-only — uncited drafts rejected), `platformFit` (char/hashtag/graphic/link rules per platform),
+    `canPublishNow`/`isOptimalHour` (daily caps, no-burst spacing, optimal windows), and a composite
+    `preQueueGate`. Per-platform config table `PLATFORM_SOPS`.
+  - `scripts/social/sops.test.ts` — 41 unit tests (`npm run test:social-sops`).
+- **Why:** Every later layer (brain, publishers, crons) gates through these rules. Making them pure
+  functions means the safety logic is deterministic and unit-tested, not buried in DB/network code.
+- **How:** Migration applied live via Supabase MCP; SOP rules take state as inputs (existing hashes,
+  month spend, account stats) so they stay side-effect-free.
+- **Verification:**
+  - `npm run test:social-sops` → **41 passed, 0 failed** (budget governor, Reddit gate, voice, dedup,
+    sourcing, platform-fit, scheduling, composite gate, config sanity).
+  - `npx tsc --noEmit` → **0 errors**.
+  - Live DB: all 3 tables present, `rls_on=true`, column counts 22/11/9; a smoke test confirmed a valid
+    row inserts, `platform='facebook'` is rejected by the check constraint, and cleanup left 0 rows.
+- **Residual risk:** Token columns store OAuth secrets in plaintext (service-role-only, RLS-locked) —
+  acceptable for now; can add column encryption later if required. Reddit allowlist + X monthly cap are
+  passed in by callers (S3/S5 wire the real values).
+- _Plain language: built the "filing cabinet" the tool will use (drafts, account logins, engagement
+  numbers) and the rulebook that decides what's allowed to post — budget limits for X, anti-ban rules for
+  Reddit, our banned buzzwords, no-repeat rules, and posting-time limits. Wrote 41 tests that all pass, so
+  the rulebook is proven to work before anything can post._
+- **Status: done.** Commit `8817b34` on `phase13-social`.
