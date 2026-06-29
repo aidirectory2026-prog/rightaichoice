@@ -465,7 +465,8 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
 - _Plain language: I built 18 mini data-reports — one per category (AI marketing tools, AI coding tools,
   etc.) — each full of original numbers. That's 18 more pages Google can rank and 18 more "here's a
   data story" angles to pitch, all generated automatically from our live data._
-- **Status: done (accelerator #2). Goes live on the next deploy/PR merge.**
+- **Status: done (accelerator #2). PR merged 2026-06-30; LIVE in production — verified
+  `/state-of-ai-tools/image-generation` (200, "77.3% free or freemium"). All 18 category pages live.**
 - **GEO report email automation added:** the weekly tracker now emails the founder a summary after each
   run (`lib/geo/geo-report-email.ts` via Resend — cited X/Y, rate, per-prompt table, rank, share-of-voice,
   trend, competitors). Wired into the `track-geo-citations` cron; best-effort (never fails the data run).
