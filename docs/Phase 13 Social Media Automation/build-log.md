@@ -256,3 +256,53 @@ approval digest email; X spend under a hard cap.
   the cloud, so your laptop can be off. I proved the posting robot runs correctly against the real
   database and, crucially, refuses to post anything until an account is actually connected._
 - **Status: done.** Commit `6d5ffcf` on `phase13-social`.
+
+### 2026-06-30 — SM-S7: insights feedback loop + operator setup checklist
+- **What:** The brain learns from results, plus the doc that lets the founder switch platforms on.
+  - `lib/social/insights.ts` — `buildPerformanceModel()` reads `social_metrics` × `social_posts`, scores
+    each post's engagement (comments ×3, shares ×5, weighted), takes the **latest** snapshot per post, and
+    aggregates by platform / format / platform×format / hour. `expectedPerformance(...)` → 0..1, with a
+    **neutral 0.5 fallback** until enough signal accrues.
+  - `sources.ts` now ranks with the **full Appendix A1 formula** (0.30 freshness + 0.25 novelty + 0.30
+    expectedPerformance + 0.15 strategicFit); `brain.ts` loads the model each run so high-performing
+    formats/angles get drafted more. `scripts/social.ts` gains **`social:insights`** (prints the model).
+  - **`operator-setup.md`** — exact click-by-click to connect each platform (Reddit, X, LinkedIn,
+    Instagram): app creation, scopes, the `social_accounts` insert SQL, the `*_ENABLED` flags, and a
+    per-platform "verify it's live" check + the daily rhythm. Names every env key (never values).
+  - `docs/automated-pipelines/README.md` — added the Phase 13 social-cron inventory (the project SOP:
+    every automation documented in the playbook).
+- **Why:** This is the "smart brain that analyses everything" closing the loop, and the only remaining
+  path to live posting (credentials) is now a written checklist the founder can follow.
+- **How:** Pure model + scoring functions (DB-read split from computation) so the loop is unit-tested;
+  empty-data path returns neutral so nothing changes until real engagement exists.
+- **Verification:** `npm run test:social-insights` → **13 passed** (engagement weighting,
+  latest-snapshot-wins, high-vs-low performer ranking, neutral fallback); `social:insights` live shows the
+  neutral model (no posts yet); pool re-ranks cleanly under the new formula. `tsc --noEmit` → **0 errors**.
+- **Residual risk:** The loop has no real engagement to learn from until posting goes live (operator
+  credentials) — by design it's neutral until then.
+- _Plain language: the tool now gets smarter over time — once posts go out and we see likes/comments, it
+  favours the formats and angles that actually worked. And I wrote you a plain step-by-step to switch on
+  each network (Reddit and X take minutes; LinkedIn and Instagram need a 2–4 week app review, so start
+  those early). The moment an account is connected, it starts posting on schedule._
+- **Status: done.** Insights commit `d657581`; docs this commit.
+
+---
+
+## ✅ Phase 13 acceptance (2026-06-30) — built + verified
+
+| Requirement | Status |
+|---|---|
+| 4 platforms (LinkedIn/X/Instagram/Reddit) | ✅ publishers + SOPs for all 4 |
+| Smart approval gate (nothing posts unapproved) | ✅ draft→approve→post; publish cron only posts `approved` |
+| Research-first brain (DeepSeek) | ✅ live pool (8 candidates) → on-voice drafts, verified |
+| Graphics **and** text, in-house ($0) | ✅ 5 `next/og` templates × 3 sizes, eyeballed |
+| Strict + smart SOPs brained in | ✅ X budget cap · Reddit ban-avoidance · voice · variety · scheduling |
+| Posts even when laptop off (cloud) | ✅ 5 Vercel crons; publish cron verified vs live DB |
+| X enabled with hard budget cap | ✅ governor + meter + auto-skip near cap |
+| Insights loop ("analyses everything") | ✅ engagement model weights future drafts |
+| Everything documented | ✅ Plan + this build-log (every step) + README + operator-setup + playbook |
+
+**Test totals:** 41 (SOP) + 30 (publishers) + 13 (insights) = **84 unit tests pass; `tsc` 0 errors.**
+**Live-verified:** candidate pool, DeepSeek drafting, graphic route (DB→PNG), publish-cron safe-skip.
+**Remaining to post live:** platform credentials only — the `operator-setup.md` checklist (intentionally
+left to the founder; engine is safe-OFF until then). **Next: open a squash PR `phase13-social → main`.**

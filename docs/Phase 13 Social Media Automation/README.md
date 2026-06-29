@@ -32,5 +32,7 @@ budget cap · 4. In-house + free (only X costs, capped).
 - [x] **S4** — admin `/admin/social` (queue, live graphic preview, approve/edit/reschedule, X budget meter, connections) (2026-06-30)
 - [x] **S5** — pluggable publishers (all 4, feature-flagged OFF; 28 unit tests) (2026-06-30)
 - [x] **S6** — scheduler + approval-digest + metrics + token-refresh crons (5 crons live in vercel.json; publish cron verified vs live DB) (2026-06-30)
-- [ ] **S7** — insights feedback loop + operator-setup checklist
-- [ ] Operator: platform credentials/approvals (LinkedIn/IG reviews, X billing cap, Reddit account)
+- [x] **S7** — insights feedback loop + operator-setup checklist (13 tests; `operator-setup.md` written) (2026-06-30)
+- [ ] **Operator:** platform credentials/approvals — follow **`operator-setup.md`** (Reddit/X: minutes; LinkedIn/IG: 2–4wk review)
+
+**Engine status: built + verified (84 unit tests, tsc clean, live-verified). Safe-OFF until accounts are connected.**

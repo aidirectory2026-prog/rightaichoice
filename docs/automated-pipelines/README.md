@@ -386,6 +386,27 @@ Pipeline-relevant fixes from the QA audit pass (`Phase 10 (Cowork QA)/BUILD_LOG.
   cron-pipelines timeouts stopped 2026-06-10; `freshness-sla`/`draft-stuck` are *watchdogs* (they
   "fail" to alert, not because they're broken).
 
+## Phase 13 — Social Media Automation (2026-06-30)
+
+In-house, approval-gated social posting across LinkedIn / X / Instagram / Reddit. The brain drafts from
+live data + branded graphics, the founder approves in `/admin/social`, and these crons post from the
+cloud. Full design + build log: `docs/Phase 13 Social Media Automation/`. Turn-on steps:
+`docs/Phase 13 Social Media Automation/operator-setup.md`.
+
+| Cron (Vercel) | Schedule | What it does |
+|---|---|---|
+| `social-publish` | `*/15 * * * *` | posts APPROVED+due posts; re-checks SOPs at post time; skips unconnected platforms |
+| `social-draft` | `0 5 * * *` | refills the queue with drafts from live data (X budget-gated) |
+| `social-metrics` | `0 */6 * * *` | appends per-post engagement → `social_metrics` |
+| `social-approval-digest` | `0 9 * * *` | emails+Slacks the founder the pending-approval queue |
+| `social-token-refresh` | `0 3 * * *` | refreshes platform OAuth tokens before expiry |
+
+- **Engine:** DeepSeek (copy) + `next/og` (graphics, $0) · **Tables:** `social_posts`, `social_accounts`,
+  `social_metrics` (migration 178) · **SOPs:** `lib/social/sops.ts` (X budget cap, Reddit ban-avoidance,
+  voice gate, variety/dedup, scheduling) · **Insights loop:** `lib/social/insights.ts` weights drafts by
+  what performed. **Safe-by-default:** every platform OFF until its `*_ENABLED` flag + a connected account.
+- **CLI:** `social:pool` / `social:draft` / `social:status` / `social:preview` / `social:insights`.
+
 ## Quick reference
 - One-page ops runbook (health-check + recovery): [sop-pipelines-master.md](./sop-pipelines-master.md)
 - Manual runs: [06-manual-runs.md](./06-manual-runs.md) · Setup: [08-setup-guide.md](./08-setup-guide.md)
