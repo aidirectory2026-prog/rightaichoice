@@ -31,6 +31,19 @@ export type SocialPost = {
   updated_at: string
 }
 
+export type SocialAccount = {
+  id: string
+  platform: Platform
+  display_name: string | null
+  access_token: string | null
+  refresh_token: string | null
+  token_expires_at: string | null
+  scope: string | null
+  external_account_id: string | null // org URN / ig-user-id / reddit username
+  status: 'connected' | 'disconnected' | 'error'
+  meta: Record<string, unknown>
+}
+
 /** Result of a research pass an automation runs BEFORE acting (logged for transparency). */
 export type ResearchResult = {
   ran: string // what was researched
