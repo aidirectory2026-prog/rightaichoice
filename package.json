@@ -78,6 +78,7 @@
     "social:draft": "tsx --env-file=.env.local scripts/social.ts --draft",
     "social:status": "tsx --env-file=.env.local scripts/social.ts --status",
     "social:preview": "tsx --env-file=.env.local scripts/social.ts --preview",
+    "social:verify-route": "tsx --env-file=.env.local scripts/social/verify-route.ts",
     "links:check:dry": "tsx --env-file=.env.local scripts/check-link-health.ts --dry",
     "links:check": "tsx --env-file=.env.local scripts/check-link-health.ts",
     "stacks:audit": "tsx --env-file=.env.local scripts/audit-stacks.ts",
