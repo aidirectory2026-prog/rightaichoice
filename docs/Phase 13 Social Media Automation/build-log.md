@@ -385,3 +385,76 @@ its schedule, pending your approvals.
 ### How you'll use it day-to-day
 Each morning you get an email listing what's waiting. You open `/admin/social`, glance at each post and its
 image, and approve, tweak, reschedule, or reject. That's it — the cloud robots do the rest.
+
+---
+
+# ROUND 2 — Hardening, Smart Upgrades & Documentation (2026-06-30)
+
+> After the tool shipped, we ran a deep read-only audit of all 23 files, researched how the big
+> professional tools (Buffer/Hootsuite/Sprout/SocialBee) work in 2026, and did a round of **bug fixes +
+> smart upgrades + documentation**. Founder decision: **build everything now**, including native images on
+> X/LinkedIn. Worktree `../rac-social` on `phase13-social-r2`. Migration **179** (`publish_started_at`).
+
+### 2026-06-30 — R1: correctness & robustness fixes (every audited bug)
+- **What / why / how:**
+  - **Double-post race (CRITICAL).** The publish cron selected approved+due rows with no lock, so two
+    overlapping runs could post the same row twice. Fixed with an **atomic claim** (migration 179 adds
+    `publish_started_at`): the cron sets it `where status='approved' and (publish_started_at is null or
+    < now-10min) returning id` and only posts if a row came back. A crashed run's claim is reclaimable
+    after 10 min. (`app/api/cron/social-publish/route.ts`.)
+  - **LinkedIn false success.** `(200||201) && (json?.id || true)` always reported success. Now requires a
+    real post id (from the `x-restli-id` header — `postJson` now returns headers — or the body); a 200
+    with no id is treated as retryable, never silently "done". (`publishers/linkedin.ts`, `util.ts`.)
+  - **DeepSeek malformed JSON** now retries once with a strict-JSON nudge before wasting a candidate.
+  - **Token refresh:** flags an account `error` when an *expiring* token (<25h) fails to refresh (not only
+    after full expiry), without crying wolf days early; `tokenUsable` margin 60s→300s.
+  - **Instagram** pre-checks the graphic URL is publicly reachable (clear error vs. an opaque container fail).
+  - **Reddit** re-runs the FULL safety check at post time (allowlist + age/karma + cross-post + weekly cap),
+    not just the allowlist.
+  - **Budget realism:** the draft cron now counts approved+scheduled (not-yet-posted) X cost too, so
+    approvals can't silently overcommit the cap.
+- **Verification:** `tsc` 0; existing suites pass; **atomic claim verified live** (`social:verify-claim` —
+  first run claims the row, second gets nothing → no double-post). Commit `7e64ff7`.
+- _Plain language: I fixed the one genuinely serious bug (it was theoretically possible for the same post
+  to go out twice if two cloud jobs overlapped — now impossible, and I proved it on the real database) plus
+  several smaller robustness gaps. Nothing in how you use it changes; it's just safer._
+
+### 2026-06-30 — R2: smart upgrades (professional-grade, in-house, $0)
+- **What:** **Best-time scheduling** (the brain now schedules each post in the hour that has historically
+  performed best, learned from engagement data); **UTM tagging** on every link (so Google Analytics shows
+  exactly how much traffic each platform drives) with X-aware length counting (a long tracking link counts
+  as 23 chars, the way X actually counts, so it never falsely trips the 280 limit); **global dedup** (won't
+  re-share the same destination link on the same platform, ignoring tracking tags — cross-platform is still
+  allowed); a **per-platform pause switch**; **evergreen recycling** (re-queues a top-performing old post,
+  reworded by AI, never a verbatim repost); and **A/B variants** (two takes on a post to compare).
+- **Why / how:** These are the standard features of the big paid tools — built in-house for free. Recycling
+  + A/B are env-gated (`SOCIAL_RECYCLE`, `SOCIAL_AB_VARIANTS`) and off by default. (`lib/social/util.ts`,
+  `brain.ts`, `sops.ts`, `social-draft` cron.)
+- **Verification:** +19 unit tests (`social:test:social-upgrades`) covering UTM, canonicalisation,
+  X-length, link dedup, best-time slot selection, recycle ranking; live dry-run draft clean. Commit `fa749d6`.
+- _Plain language: the tool got noticeably smarter — it learns the best time to post, tags links so you can
+  see what social is actually driving, won't repeat itself, can pause a network with one click, and can
+  recycle your best posts. All free._
+
+### 2026-06-30 — R3: native images, threads, first-comment (every platform fully featured)
+- **What:** **X** now uploads the branded image natively (chunked upload) and can post **threads**;
+  **LinkedIn** uploads the image as a proper asset; **Instagram** posts the link as the **first comment**
+  (IG allows no caption links); **Reddit** posts thread continuations as a top comment. So every platform
+  now carries the branded graphic, not just Instagram.
+- **Why / how:** Visual posts get far more engagement; this was the biggest remaining gap. Built against
+  each platform's documented media flow. (`publishers/{x,linkedin,instagram,reddit}.ts`.)
+- **Verification:** payload-builder + thread + media-attach unit tests pass; `tsc` 0. **Note:** the live
+  API calls (actual uploads) can only be exercised once the platform accounts are connected — they're
+  built and unit-tested now, and verified end-to-end at connect time. Commit `fa749d6`.
+- _Plain language: every network now posts your branded picture (before, only Instagram did), and X/Reddit
+  can post multi-part threads. The actual uploads get a final real-world test the moment you connect each
+  account._
+
+### 2026-06-30 — R4: admin dashboard upgrades
+- **What:** **Approve-all** button (clear the queue in one tap), **character-count vs. each platform's
+  limit** on every card (green/amber/red), **pause/resume** buttons per platform in the connection strip,
+  and the Approved list **grouped by day** so you can see your posting schedule at a glance.
+- **Verification:** `tsc` 0. (Live page render confirms on deploy — Turbopack can't run in the worktree.)
+  Commit `03550f5`.
+- _Plain language: the dashboard is easier to run — approve everything at once, see at a glance if a post
+  is too long, pause a network, and view what's going out which day._
