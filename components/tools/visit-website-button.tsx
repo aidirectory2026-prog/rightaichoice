@@ -5,7 +5,9 @@ import { analytics, getDistinctIdWithFallback } from '@/lib/analytics'
 
 type Props = {
   slug: string
-  url: string
+  // BUG-42: `url` removed — it was always ignored. The href is built from
+  // `slug` (/api/tools/[slug]/visit), and that endpoint server-side redirects
+  // to affiliate_url ?? website_url, so the client never needs the raw URL.
   toolId?: string
   source?: string
   /** Override button styling (e.g. the subtle zinc style in the compare
@@ -36,7 +38,6 @@ function buildVisitHref(slug: string, source: string): string {
 
 export function VisitWebsiteButton({
   slug,
-  url: _url,
   toolId,
   source = 'tool_page',
   className,

@@ -95,7 +95,6 @@ export function ComparisonTable({ tools }: { tools: ComparedTool[] }) {
                 logs. Now routed through /api/tools/[slug]/visit. */}
             <VisitWebsiteButton
               slug={tool.slug}
-              url={tool.website_url}
               toolId={tool.id}
               source="compare_table"
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 min-h-[40px] text-xs text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"

@@ -287,7 +287,6 @@ export default async function BestPage({ params }: PageProps) {
                             affiliate_url is applied + the click is logged (was a raw vendor link). */}
                         <VisitWebsiteButton
                           slug={tool.slug}
-                          url={tool.website_url}
                           toolId={tool.id}
                           source="best_page"
                           label="Visit"

@@ -439,7 +439,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 title={`${tool.name} — ${tool.tagline}`}
                 text={`Check out ${tool.name} — ${tool.tagline} | Found on RightAIChoice`}
               />
-              <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page" />
+              <VisitWebsiteButton slug={tool.slug} toolId={tool.id} source="tool_page" />
             </div>
           </div>
 

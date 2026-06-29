@@ -306,7 +306,6 @@ export default async function ComparisonSlugPage({ params }: Props) {
                     <VisitWebsiteButton
                       key={tt.id}
                       slug={tt.slug}
-                      url={tt.website_url}
                       toolId={tt.id}
                       source="compare_verdict"
                       label={`Try ${tt.name}`}

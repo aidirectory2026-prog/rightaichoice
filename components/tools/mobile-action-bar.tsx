@@ -29,7 +29,7 @@ export function MobileActionBar({ tool }: Props) {
     <div className="lg:hidden fixed inset-x-0 bottom-[60px] z-[60] border-t border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80">
       <div className="flex items-center gap-2 px-3 py-2.5 safe-area-bottom">
         <div className="flex-1 min-w-0">
-          <VisitWebsiteButton slug={tool.slug} url={tool.website_url} toolId={tool.id} source="tool_page_mobile_bar" />
+          <VisitWebsiteButton slug={tool.slug} toolId={tool.id} source="tool_page_mobile_bar" />
         </div>
         <SaveToolButton toolId={tool.id} toolName={tool.name} toolSlug={tool.slug} />
         <AddToCompareButton
