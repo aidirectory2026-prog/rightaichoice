@@ -183,3 +183,36 @@ approval digest email; X spend under a hard cap.
   itself will be visible the moment we deploy (a local preview tool won't run inside this isolated
   workspace, which is a workspace quirk, not a code problem)._
 - **Status: done.** Commit `b30a613` on `phase13-social`.
+
+### 2026-06-30 — SM-S5: pluggable publishers (all 4 platforms)
+- **What:** The actual posting code, one module per platform behind a shared interface.
+  - `lib/social/publishers/types.ts` — the `Publisher` contract: `isEnabled(account)` /
+    `publish(post, account, opts)` / `fetchMetrics(post, account)`.
+  - `x.ts` — X v2 tweet; records the pay-per-use **cost** at post time (so the admin meter is exact).
+  - `reddit.ts` — `/api/submit` (self-post, or link-post if a link is set), real User-Agent;
+    self-post title from the brain's suggested title.
+  - `linkedin.ts` — `/rest/posts` to the **company page** (text + auto-unfurled link).
+  - `instagram.ts` — the **2-step** Graph flow (create container with the **public graphic URL** →
+    publish); caption = copy + hashtags (link-in-bio).
+  - `util.ts` — retryable-status mapping (429/5xx retry, 4xx don't), token-expiry check, 280-char
+    final clamp, bounded `postJson`.
+  - `index.ts` — the registry + `publishOne(post)` orchestrator (loads the account, checks enabled,
+    builds the graphic URL, calls the publisher) + `publicGraphicUrl()`.
+- **Why:** Keeping the engine platform-agnostic means platforms can switch on one at a time as their
+  credentials/approvals land, without touching the brain, the queue, or the cron.
+- **How:** Each platform is **feature-flagged OFF by default** — `isEnabled()` returns false unless its
+  env flag (`X_ENABLED` / `REDDIT_ENABLED` / `LINKEDIN_ENABLED` / `INSTAGRAM_ENABLED`) is `1` **and** a
+  connected account with a non-expired token exists. So nothing can post until the operator wires it up
+  (S7 checklist). Pure payload builders are exported separately so they're unit-testable without keys.
+- **Verification:** `npm run test:social-publishers` → **28 passed** (payload builders for all 4, the
+  retryable/clamp/token-expiry utils, and the enabled-gating: every platform is correctly *disabled*
+  with no flag / no account / expired token). `tsc --noEmit` → **0 errors**. (Live network posting is
+  intentionally not exercised — it needs the operator credentials from S7.)
+- **Residual risk:** No live post has been made yet (no credentials) — that's the S7 operator step. X
+  and LinkedIn post text+link only for now (native image upload to those two is a later enhancement;
+  Instagram already posts the graphic, which is its whole point).
+- _Plain language: wrote the "send" button for each network — but every one is switched OFF until you
+  connect that account, so there's zero risk of an accidental post. I tested the message-formatting and
+  the safety switches for all four (28 checks pass): each correctly refuses to post when it isn't
+  connected. Turning them on is the account-setup step I'll hand you a checklist for._
+- **Status: done.** Commit `fa3eb20` on `phase13-social`.
