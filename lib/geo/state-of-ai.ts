@@ -6,7 +6,10 @@
 // single DB read as the citable dataset (loadDataset).
 
 import { loadDataset, type Dataset } from './llms-dataset'
+import { getAdminClient } from '../cron/supabase-admin'
 import { VIABILITY_SAFE_BET, VIABILITY_AT_RISK } from '@/lib/viability'
+
+const DAY = 86_400_000
 
 export type StatRow = { label: string; count: number; pct: number }
 
@@ -36,9 +39,46 @@ const TITLE = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export async function buildStateOfAI(ds?: Dataset): Promise<StateOfAI> {
   const data = ds ?? (await loadDataset())
-  const tools = data.tools
+  return computeStats(data.tools, data.freshness.generatedAt)
+}
+
+// ── Per-category reports (Phase 13 D2.2b — programmatic linkable assets) ─────
+
+export type CategoryReport = StateOfAI & { categoryName: string; categorySlug: string }
+
+/** Categories (slug + name) for generateStaticParams + slug→name mapping. */
+export async function getCategoryList(): Promise<Array<{ slug: string; name: string }>> {
+  const db = getAdminClient()
+  const { data } = await db.from('categories').select('slug, name').order('name')
+  return ((data ?? []) as Array<{ slug: string; name: string }>).filter((c) => c.slug && c.name)
+}
+
+/** Same stats as the main report, scoped to one category (tools whose categories include categoryName). */
+export async function buildStateOfCategory(
+  categorySlug: string,
+  categoryName: string,
+  ds?: Dataset,
+): Promise<CategoryReport> {
+  const data = ds ?? (await loadDataset())
+  const tools = data.tools.filter((t) => t.categories.includes(categoryName))
+  return { ...computeStats(tools, data.freshness.generatedAt), categoryName, categorySlug }
+}
+
+/** Core stats computation, usable for the whole catalog or any filtered subset. */
+function computeStats(tools: Dataset['tools'], generatedAt: string): StateOfAI {
   const total = tools.length
   const pct = (n: number) => (total ? Math.round((n / total) * 1000) / 10 : 0)
+
+  // Freshness — recomputed from the (possibly filtered) tool set.
+  const now = Date.now()
+  const verifyTimes = tools
+    .map((t) => t.last_verified_at)
+    .filter((t): t is string => !!t)
+    .sort()
+  const verified7d = tools.filter(
+    (t) => t.last_verified_at && now - new Date(t.last_verified_at).getTime() <= 7 * DAY,
+  ).length
+  const latestVerify = verifyTimes.length ? verifyTimes[verifyTimes.length - 1] : null
 
   // Pricing mix
   const pricingCounts = new Map<string, number>()
@@ -79,11 +119,11 @@ export async function buildStateOfAI(ds?: Dataset): Promise<StateOfAI> {
     .map((t) => ({ name: t.name, slug: t.slug, stars: t.github_stars as number }))
 
   return {
-    generatedAt: data.freshness.generatedAt,
+    generatedAt,
     totalPublished: total,
-    verified7d: data.freshness.verified7d,
-    verified7dPct: pct(data.freshness.verified7d),
-    latestVerify: data.freshness.latestVerify,
+    verified7d,
+    verified7dPct: pct(verified7d),
+    latestVerify,
     pricingMix,
     freeOrFreemiumPct: pct(freeOrFreemium),
     viability: {

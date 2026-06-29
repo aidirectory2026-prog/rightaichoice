@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getSectionFreshness } from '@/lib/seo/freshness'
+import { getCategoryList } from '@/lib/geo/state-of-ai'
 
 const BASE_URL = 'https://rightaichoice.com'
 
@@ -40,7 +41,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Homepage reflects the whole catalog's freshest signal.
   const homepageFresh = newest('tool', 'compare', 'blog', 'category', 'best', 'stack', 'role')
 
+  // Phase 13 D2.2b — per-category "State of AI [X]" data-report pages.
+  const categoryReports: MetadataRoute.Sitemap = (await getCategoryList()).map((c) => ({
+    url: `${BASE_URL}/state-of-ai-tools/${c.slug}`,
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }))
+
   return [
+    ...categoryReports,
     { url: BASE_URL, ...lm(homepageFresh), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/tools`, ...lm(sf.get('tool')), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/compare`, ...lm(sf.get('compare')), changeFrequency: 'daily', priority: 0.9 },
