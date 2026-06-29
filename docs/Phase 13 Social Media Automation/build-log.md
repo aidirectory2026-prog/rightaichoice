@@ -110,3 +110,40 @@ approval digest email; X spend under a hard cap.
   three sizes Instagram/X/LinkedIn want, all in our colors, for free. I generated real samples and they
   look professional. You'll be able to preview every image in the admin panel before anything posts._
 - **Status: done.** Commit `c24a33c` on `phase13-social`.
+
+### 2026-06-30 — SM-S3: research sources + DeepSeek brain + drafting CLI
+- **What:** The "smart brain" — it researches our live data first, then drafts platform-tailored posts.
+  - `lib/social/sources.ts` — `buildCandidatePool()` turns our LIVE verified catalog into a ranked pool
+    of postable candidates: State-of-AI stat cards (freshness, pricing, viability), top-viability **tool
+    spotlights** (with the tool's real site as the source), a **freshest-tools roundup**, and a milestone
+    **quote**. Every candidate carries the exact facts AND a pre-filled graphic spec built from real
+    numbers — so a graphic can never show an invented stat. Ranked by `0.4·freshness + 0.3·novelty +
+    0.3·strategicFit` (the insights term lands in S7).
+  - `lib/social/prompts.ts` — system prompt = our editorial voice + the platform's SOP formatting +
+    truth-only rules + a strict JSON contract; the model only writes copy around facts it's given.
+  - `lib/social/brain.ts` — `draftPosts()`: research → rank/dedup (variety window) → DeepSeek copy →
+    `preQueueGate` (SOPs) → optimal schedule slot → insert as a **DRAFT**. X draft-time budget gate; X
+    hashtags folded into the 280-char body so the limit is real.
+  - `scripts/social.ts` — operator CLI: `social:pool` (no cost), `social:draft [--dry] [--platforms=]
+    [--limit=]`, `social:status`, `social:preview --id=` — all `runScriptedPipeline`-logged.
+- **Why:** This is the engine that decides *what's worth posting* and writes it well, cheaply (~$0.001
+  per draft via DeepSeek), grounded only in true data — the founder just approves.
+- **How:** Reused `buildStateOfAI`/`loadDataset` (same data behind the GEO report), `callDeepSeek`,
+  `EDITORIAL_VOICE`, and the `runScriptedPipeline` logging wrapper — no new external dependencies.
+- **Verification (live):**
+  - `social:pool` → **8 real candidates** off live data (1,998 tools tracked, **99.8% re-verified in 7
+    days**, real tool names + source URLs).
+  - Real draft of **1 X + 1 LinkedIn** post: both grounded strictly in the four real tool names,
+    on-voice (passed the voice gate), platform-correct (X ~215 chars with hashtags folded in; LinkedIn
+    professional, 3 hashtags), passed the full SOP gate, inserted as drafts with a suggested slot +
+    graphic preview URL. (`social:status` shows 2 drafts.)
+  - `npm run test:social-sops` → **41 passed**; `tsc --noEmit` → **0 errors**.
+- **Residual risk:** With `--limit=1` every platform picks the same top candidate (legitimate
+  cross-posting, but the founder should vary `--limit` / approve selectively). Model copy can drift
+  slightly beyond the literal facts (e.g. "some shifted in rankings") — the human approval gate (S4) is
+  the backstop; we can tighten the prompt if needed.
+- _Plain language: built the brain. It reads our own up-to-date tool data, figures out what's worth
+  posting, and writes a proper post for each platform — short and punchy for X, professional for LinkedIn
+  — using only real facts, for about a tenth of a cent each. I generated two real posts and they read
+  well and stayed truthful. They're sitting as drafts waiting for your approval (which is what S4 builds)._
+- **Status: done.** Commit `5379656` on `phase13-social`.
