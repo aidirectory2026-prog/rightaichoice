@@ -29,7 +29,7 @@ budget cap · 4. In-house + free (only X costs, capped).
 - [x] **S1** — DB (`social_posts`/`social_accounts`/`social_metrics`, RLS, live) + SOP engine + 41 tests (2026-06-30)
 - [x] **S2** — in-house graphics engine (5 templates × 3 sizes + public render route; samples eyeballed) (2026-06-30)
 - [x] **S3** — sources + brain + `social:draft` (8 live candidates; 2 real on-voice drafts queued) (2026-06-30)
-- [ ] **S4** — admin `/admin/social` (queue, preview, approve/edit/reschedule, budget meter, insights)
+- [x] **S4** — admin `/admin/social` (queue, live graphic preview, approve/edit/reschedule, X budget meter, connections) (2026-06-30)
 - [ ] **S5** — pluggable publishers (X capped + Reddit first; LinkedIn + Instagram on approval)
 - [ ] **S6** — scheduler + approval-digest + metrics + token-refresh crons (laptop-off layer)
 - [ ] **S7** — insights feedback loop + operator-setup checklist

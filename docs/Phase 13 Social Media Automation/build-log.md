@@ -147,3 +147,39 @@ approval digest email; X spend under a hard cap.
   — using only real facts, for about a tenth of a cent each. I generated two real posts and they read
   well and stayed truthful. They're sitting as drafts waiting for your approval (which is what S4 builds)._
 - **Status: done.** Commit `5379656` on `phase13-social`.
+
+### 2026-06-30 — SM-S4: admin approval panel (/admin/social)
+- **What:** The control room where the founder reviews and one-tap-approves drafts.
+  - `app/admin/social/page.tsx` — the queue in three groups (**Awaiting approval / Approved & scheduled
+    / History**); each post shows a **live rendered graphic preview** (the public route), the copy, the
+    char count, hashtags, link, and source domains. Plus an **X budget meter** (month-to-date spend vs.
+    `X_MONTHLY_CAP_USD`, colour-coded), a **platform connection strip** (connected/not), and a
+    queue-by-platform snapshot.
+  - `app/admin/social/actions.ts` — gated server actions: **approve** (draft→approved), **un-approve**,
+    **reject** (→cancelled, never deletes — keeps the audit row), **reschedule** (rejects past times),
+    **edit** copy+hashtags (re-runs the voice + platform-fit gate; drafts only). Only legal status
+    transitions are allowed.
+  - `components/admin/social-post-card.tsx` — client card with the one-tap buttons + inline editor.
+  - `lib/admin/nav.ts` — new **Social** entry under SEO & Growth (breadcrumb + sidebar resolve).
+- **Why:** This is the human approval gate — the locked decision that nothing posts unapproved. It also
+  surfaces the X spend and connection health so the founder always knows the state.
+- **How:** `social_posts` is service-role-only, so the page reads via `getAdminClient` (the admin layout
+  already redirects non-admins). Reused the `PageHeader` + zinc/emerald admin kit and the
+  `useTransition` server-action pattern from the authority page.
+- **Verification:**
+  - **Graphic route, end-to-end (server-free harness):** real queued X draft renders via DB lookup →
+    **HTTP 200 image/png** (eyeballed: the news_roundup card shows the real tool names — Autosana,
+    Aembit, Plus AI, Google Cloud Vision AI); `/preview?t=…` modes → 200; bad id → **404**.
+    (`npm run social:verify-route`.)
+  - `npx tsc --noEmit` → **0 errors**.
+- **Residual risk:** The admin page's *visual* render isn't yet eyeballed in a browser — Turbopack
+  refuses to run against the worktree's out-of-root `node_modules` symlink, so the local dev server
+  won't boot here. Its data layer + the embedded graphic route are fully verified and it typechecks; the
+  live page confirms on the next preview/production deploy. Connection strip shows "not connected" until
+  S5 wires accounts.
+- _Plain language: built your dashboard. You'll see every drafted post with its picture, edit or
+  reschedule it, and approve with one tap — and nothing goes out until you do. It also shows how much
+  X is costing this month against your cap. I verified the post images load from the live data; the page
+  itself will be visible the moment we deploy (a local preview tool won't run inside this isolated
+  workspace, which is a workspace quirk, not a code problem)._
+- **Status: done.** Commit `b30a613` on `phase13-social`.
