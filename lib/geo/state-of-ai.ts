@@ -6,6 +6,7 @@
 // single DB read as the citable dataset (loadDataset).
 
 import { loadDataset, type Dataset } from './llms-dataset'
+import { VIABILITY_SAFE_BET, VIABILITY_AT_RISK } from '@/lib/viability'
 
 export type StatRow = { label: string; count: number; pct: number }
 
@@ -50,11 +51,11 @@ export async function buildStateOfAI(ds?: Dataset): Promise<StateOfAI> {
     .sort((a, b) => b.count - a.count)
   const freeOrFreemium = tools.filter((t) => t.pricing_type === 'free' || t.pricing_type === 'freemium').length
 
-  // Viability buckets
+  // Viability buckets (BUG-39: shared thresholds, not magic numbers)
   const scored = tools.filter((t) => typeof t.viability_score === 'number')
-  const atRisk = scored.filter((t) => (t.viability_score as number) < 40).length
-  const moderate = scored.filter((t) => (t.viability_score as number) >= 40 && (t.viability_score as number) < 70).length
-  const strong = scored.filter((t) => (t.viability_score as number) >= 70).length
+  const atRisk = scored.filter((t) => (t.viability_score as number) < VIABILITY_AT_RISK).length
+  const moderate = scored.filter((t) => (t.viability_score as number) >= VIABILITY_AT_RISK && (t.viability_score as number) < VIABILITY_SAFE_BET).length
+  const strong = scored.filter((t) => (t.viability_score as number) >= VIABILITY_SAFE_BET).length
   const avg = scored.length
     ? Math.round(scored.reduce((s, t) => s + (t.viability_score as number), 0) / scored.length)
     : null
