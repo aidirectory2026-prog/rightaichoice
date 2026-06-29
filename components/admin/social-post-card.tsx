@@ -36,6 +36,15 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: 'bg-zinc-900 text-zinc-500 line-through',
 }
 
+// Client-safe copy of the platform char limits (the server SOP module can't be
+// imported here). X counts URLs as 23 (t.co), so measure the way X does.
+const PLATFORM_LIMIT: Record<string, number> = { linkedin: 3000, x: 280, instagram: 2200, reddit: 40000 }
+function effectiveLen(platform: string, text: string): number {
+  if (platform !== 'x') return text.length
+  const urls = text.match(/https?:\/\/\S+/g) ?? []
+  return text.length - urls.reduce((s, u) => s + u.length, 0) + urls.length * 23
+}
+
 /** ISO → value for <input type="datetime-local"> in the viewer's local tz. */
 function toLocalInput(iso: string | null): string {
   if (!iso) return ''
@@ -140,7 +149,13 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
           )}
 
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-            <span>{post.copy.length} chars</span>
+            {(() => {
+              const limit = PLATFORM_LIMIT[post.platform] ?? 0
+              const used = effectiveLen(post.platform, post.copy)
+              const pct = limit ? used / limit : 0
+              const tone = pct > 1 ? 'text-rose-400' : pct > 0.9 ? 'text-amber-400' : 'text-zinc-500'
+              return <span className={tone}>{used}{limit ? `/${limit}` : ''} chars</span>
+            })()}
             {post.link_url ? (
               <a href={post.link_url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
                 link
