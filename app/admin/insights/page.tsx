@@ -92,7 +92,7 @@ export default async function InsightsPage({
     getPlanFunnel(filters),
     getTopExistingTools(filters),
     getTopUseCases(filters),
-    getEngagementMetrics(sel, includeBots),
+    getEngagementMetrics(filters),
     getTopEvents(filters),
     getSearchMetrics(filters),
     getTopSearches(filters),

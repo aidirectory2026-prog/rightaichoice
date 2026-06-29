@@ -9,7 +9,8 @@ import { ToolLogo } from '@/components/tools/tool-logo'
 import { ShareButton } from '@/components/shared/share-button'
 import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
 import { getRolePageBySlug, ROLE_PAGES } from '@/lib/data/role-pages'
-import { createClient } from '@/lib/supabase/server'
+import { MIN_INDEXABLE_TOOLS } from '@/lib/data/best-pages'
+import { getRolePageTools } from '@/lib/data/role-page-tools'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { itemListJsonLd, faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { UpdatedBadge } from '@/components/shared/updated-badge'
@@ -30,6 +31,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const page = getRolePageBySlug(slug)
   if (!page) return { title: 'Not Found' }
 
+  // BUG-06: auto-noindex a thin role page (<MIN_INDEXABLE_TOOLS curated tools),
+  // OR'd with the manual flag. cache() dedupes against the page render.
+  const tools = await getRolePageTools(page)
+  const noindex = page.noindex || tools.length < MIN_INDEXABLE_TOOLS
+
   return {
     title: `${page.title} (2026)`,
     description: page.description,
@@ -49,7 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `https://rightaichoice.com/for/${slug}`,
     },
-    ...(page.noindex && { robots: { index: false, follow: true } }),
+    ...(noindex && { robots: { index: false, follow: true } }),
   }
 }
 
@@ -58,28 +64,10 @@ export default async function RolePage({ params }: PageProps) {
   const config = getRolePageBySlug(slug)
   if (!config) notFound()
 
-  const supabase = await createClient()
-
-  // Get tool IDs from all relevant categories
-  const { data: catTools } = await supabase
-    .from('tool_categories')
-    .select('tool_id, categories!inner(slug)')
-    .in('categories.slug', config.categories)
-
-  const toolIds = [...new Set(catTools?.map((r) => r.tool_id) ?? [])]
-
-  let tools: any[] = []
-  if (toolIds.length > 0) {
-    const { data } = await supabase
-      .from('tools')
-      .select('*, tool_categories(category_id, categories(*))')
-      .eq('is_published', true)
-      .in('id', toolIds)
-      .order('review_count', { ascending: false })
-      .limit(24)
-
-    tools = data ?? []
-  }
+  // BUG-06: single source of truth for the curated list (cache()-deduped with
+  // generateMetadata's thin-page gate).
+  const tools = await getRolePageTools(config)
+  const isThin = tools.length < MIN_INDEXABLE_TOOLS
 
   // Real "Updated <date>" from pages_freshness for this role hub path.
   const freshnessDate = await getLastChangedAt(`/for/${slug}`).catch(() => null)
@@ -120,8 +108,10 @@ export default async function RolePage({ params }: PageProps) {
 
   return (
     <>
-      {/* Phase 10 #9 — don't emit empty ItemList/FAQ when there are 0 tools. */}
-      <script {...jsonLdScriptProps(tools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
+      {/* Phase 10 #9 / BUG-06 — only ship ItemList + FAQPage on a NON-THIN page
+          (≥MIN_INDEXABLE_TOOLS curated tools); thin pages are noindex,follow and
+          ship just the breadcrumb. */}
+      <script {...jsonLdScriptProps(isThin ? [breadcrumbs] : [itemList, faq, breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">

@@ -18,6 +18,8 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { isLikelyBotUA } from '@/lib/bot-detection'
 import { validateEvent } from '@/lib/analytics-schema'
+import { rateLimit } from '@/lib/rate-limit'
+import { captureException } from '@/lib/observability/capture'
 
 // Phase 9 follow-up (2026-05-28) — short retry for transient Supabase 5xx /
 // network blips. Three attempts, exponential backoff capped at 600ms total,
@@ -135,7 +137,9 @@ function profileUpdatesFor(e: MirrorEvent): Record<string, unknown> {
       // track-mirror, so the counter was stuck at 0. `tool_visit_clicked` is the
       // CLIENT event and the only visit event that arrives here, so keying on it
       // increments exactly once (no double count is possible — the server event
-      // never hits this code path). Bots are filtered upstream before this runs.
+      // never hits this code path). BUG-13: bot events are SKIPPED in the
+      // profile-update loop below (the user_events row is still written with
+      // bot_likely=true) — they no longer inflate this counter.
       updates.p_inc_tools_visited = 1
       updates.p_arr_tools_visited = arr('tool_slug')
       break
@@ -246,6 +250,17 @@ export async function POST(req: NextRequest) {
   const events = (body.events ?? []).slice(0, 100) // hard cap per batch
   if (events.length === 0) {
     return NextResponse.json({ ok: true, written: 0 })
+  }
+
+  // BUG-12: this is a public, service-role-WRITE endpoint — rate-limit per IP so
+  // it can't be flooded into user_events. CRITICAL: on over-limit return HTTP 200
+  // (NOT 429) with dropped:'rate_limited' so the client's retry holding pen
+  // (lib/analytics.ts saveRetryQueue, which re-saves on any non-2xx) treats the
+  // batch as delivered and CLEARS it — a 429 would trigger a replay storm. The
+  // 503 path below is reserved for genuinely-retryable Supabase failures.
+  const rl = await rateLimit('track-mirror', req, { limit: 60, windowMs: 60_000 })
+  if (!rl.ok) {
+    return NextResponse.json({ ok: true, written: 0, dropped: 'rate_limited' })
   }
 
   const db = getAdminClient()
@@ -363,6 +378,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown'
     console.error('[track-mirror] user_events insert failed after retry:', message)
+    captureException(err, { route: 'track-mirror', extra: { events: events.length } })
     // 503 (not 500) signals the client to KEEP the batch in its holding
     // pen and replay on the next flush instead of treating it as a
     // permanent failure.
@@ -389,6 +405,12 @@ export async function POST(req: NextRequest) {
   }
   const sessionSent = new Set<string>()
   for (const e of events) {
+    // BUG-13: skip bot/webdriver events from the durable per-user profile
+    // aggregation — user_intent_profile is the salable per-user record, and bot
+    // traffic corrupts it (the comment claiming "filtered upstream" was false).
+    // The event row itself was already written above with bot_likely=true.
+    const eventBot = botLikely || (e.properties as Record<string, unknown> | undefined)?.webdriver === true
+    if (eventBot) continue
     const updates = profileUpdatesFor(e)
     const touch = touchSent.has(e.distinct_id) ? null : touchFor(e)
     const session = sessionSent.has(e.distinct_id)

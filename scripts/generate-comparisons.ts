@@ -687,22 +687,9 @@ async function writePair(pair: Pair, content: CompareOutput): Promise<void> {
   const supa = getAdminClient()
   const now = new Date().toISOString()
 
-  // Deep mode: delete any existing editorial row for this slug first,
-  // then insert the fresh v3 version. We do NOT preserve the original
-  // tool_comparisons.id (a v3 page is conceptually a new editorial
-  // version), and any back-references to the old row should be rare —
-  // user-saved comparisons via /compare?tools= live on different rows
-  // (is_editorial=false).
-  if (isDeep) {
-    const { error: delErr } = await supa
-      .from('tool_comparisons')
-      .delete()
-      .eq('slug', pair.pair_slug)
-      .eq('is_editorial', true)
-    if (delErr) throw new Error(`DB pre-delete: ${delErr.message}`)
-  }
-
-  const { error } = await supa.from('tool_comparisons').insert({
+  // slug is globally UNIQUE (tool_comparisons_slug_key), so at most one row per
+  // pair. Build the full payload first, then write in ONE statement.
+  const payload = {
     tool_ids: [pair.tool_a.id, pair.tool_b.id],
     slug: pair.pair_slug,
     is_editorial: true,
@@ -715,12 +702,24 @@ async function writePair(pair: Pair, content: CompareOutput): Promise<void> {
     use_cases: content.use_cases,
     benchmarks: content.benchmarks,
     faqs: content.faqs,
-  } as never)
+  }
+
+  if (isDeep) {
+    // BUG-18: atomic upsert keyed on the unique slug — replaces the old
+    // delete-then-insert, which left the comparison page GONE if the insert
+    // failed after the delete succeeded. Upserting also preserves the row id
+    // (no dangling back-references to a churned id).
+    const { error } = await supa
+      .from('tool_comparisons')
+      .upsert(payload as never, { onConflict: 'slug' })
+    if (error) throw new Error(`DB upsert: ${error.message}`)
+    return
+  }
+
+  // Non-deep mode keeps insert-or-skip: an existing editorial row is left as-is.
+  const { error } = await supa.from('tool_comparisons').insert(payload as never)
   if (error) {
     if (error.code === '23505') {
-      // Unique-violation on slug — race with another instance or
-      // already-existing row not surfaced by our pre-check. Treat as
-      // skip-existing rather than fail.
       throw new Error(`SLUG_EXISTS:${pair.pair_slug}`)
     }
     throw new Error(`DB insert: ${error.message}`)

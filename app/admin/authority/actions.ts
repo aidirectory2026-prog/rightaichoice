@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { checkAdmin } from '@/lib/admin/require-admin'
 
 const CHANNELS = new Set([
   'founder_outreach',
@@ -25,19 +26,11 @@ function normalizeDomain(input: string): string {
 export async function addReferringDomain(
   formData: FormData,
 ): Promise<{ error?: string; domain?: string }> {
+  // BUG-17: shared admin gate; {error} shape + messages preserved.
+  const gate = await checkAdmin()
+  if (!gate.ok) return { error: gate.status === 401 ? 'Not authenticated' : 'Admin only' }
+
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-  if (!profile?.is_admin) return { error: 'Admin only' }
-
   const rawDomain = String(formData.get('domain') ?? '')
   if (!rawDomain) return { error: 'Domain required' }
   const domain = normalizeDomain(rawDomain)

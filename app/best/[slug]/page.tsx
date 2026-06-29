@@ -8,8 +8,8 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { ToolLogo } from '@/components/tools/tool-logo'
 import { ShareButton } from '@/components/shared/share-button'
 import { VisitWebsiteButton } from '@/components/tools/visit-website-button'
-import { getBestPageBySlug, BEST_PAGES } from '@/lib/data/best-pages'
-import { getTools } from '@/lib/data/tools'
+import { getBestPageBySlug, BEST_PAGES, MIN_INDEXABLE_TOOLS } from '@/lib/data/best-pages'
+import { getBestPageTools } from '@/lib/data/best-page-tools'
 import { pricingLabel, pricingColor } from '@/lib/utils'
 import { itemListJsonLd, faqPageJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo/json-ld'
 import { PlanCTAInline } from '@/components/cta/plan-cta-inline'
@@ -35,6 +35,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const page = getBestPageBySlug(slug)
   if (!page) return { title: 'Not Found' }
 
+  // BUG-06: auto-noindex a thin page (<MIN_INDEXABLE_TOOLS ranked tools), OR'd
+  // with the manual flag. cache() dedupes this against the page render below.
+  const tools = await getBestPageTools(page)
+  const noindex = page.noindex || tools.length < MIN_INDEXABLE_TOOLS
+
   return {
     title: `${page.title} (2026)`,
     description: page.description,
@@ -54,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `https://rightaichoice.com/best/${slug}`,
     },
-    ...(page.noindex && { robots: { index: false, follow: true } }),
+    ...(noindex && { robots: { index: false, follow: true } }),
   }
 }
 
@@ -63,30 +68,10 @@ export default async function BestPage({ params }: PageProps) {
   const config = getBestPageBySlug(slug)
   if (!config) notFound()
 
-  // Build filters for tool query
-  const filters: Parameters<typeof getTools>[0] = {
-    page: 1,
-    sort: 'most_reviewed',
-  }
-
-  if (config.skillLevel) filters.skill_level = config.skillLevel
-  if (config.slug === 'free') filters.pricing = 'free'
-
-  // Phase 9 (2026-06-05) — niche pages populate via full-text search (niche-
-  // relevant tools) instead of a category dump. Falls back to category filter
-  // for non-niche pages. See doc 22.
-  if (config.niche) {
-    filters.search = config.niche
-    filters.rankByRelevance = true
-  } else {
-    const category = config.categories?.[0]
-    if (category) filters.category = category
-  }
-
-  const { tools } = await getTools(filters)
-
-  // Limit to top 18
-  const topTools = tools.slice(0, 18)
+  // BUG-06: single source of truth for the ranked list (cache()-deduped with
+  // generateMetadata's thin-page gate). Already limited to the top 18.
+  const topTools = await getBestPageTools(config)
+  const isThin = topTools.length < MIN_INDEXABLE_TOOLS
 
   // Real "Updated <date>" from pages_freshness for this hub path — reflects
   // the latest user-visible change among the tools featured here (fanned out
@@ -118,8 +103,8 @@ export default async function BestPage({ params }: PageProps) {
       answer: `${top3.join(', ')} lead our 2026 ranking${topPick ? `, with ${topPick.name} as the top pick` : ''}. The full list is ranked on features, pricing, integrations, and real-world signals — not pay-for-placement.`,
     },
     {
-      question: `How much do these tools cost?`,
-      answer: `Most options on this list offer a free tier or trial; paid plans vary by tool. Each tool's current pricing is shown on its badge and detail page, so you can filter to what fits your budget.`,
+      question: `How much do ${subject} cost?`,
+      answer: `Pricing across our ${subject} spans free tiers to paid plans${topPick ? `; ${topPick.name}, our top pick, is ${pricingLabel(topPick.pricing_type).toLowerCase()}` : ''}. Every tool's current pricing badge is shown in the list above, so you can filter to what fits your budget.`,
     },
     {
       question: `Are there free ${subject}?`,
@@ -143,10 +128,11 @@ export default async function BestPage({ params }: PageProps) {
 
   return (
     <>
-      {/* Phase 10 #9 — never emit an empty ItemList / FAQ (Google rejects empty
-          structured data and the placeholder FAQ text can surface in AI
-          Overviews). Only the breadcrumb ships when there are 0 ranked tools. */}
-      <script {...jsonLdScriptProps(topTools.length > 0 ? [itemList, faq, breadcrumbs] : [breadcrumbs])} />
+      {/* Phase 10 #9 / BUG-06 — only ship ItemList + FAQPage on a NON-THIN page
+          (≥MIN_INDEXABLE_TOOLS ranked tools). Thin pages are noindex,follow, so
+          emitting their (sparse, near-duplicate) structured data would only feed
+          AI Overviews low-value markup — the breadcrumb alone ships there. */}
+      <script {...jsonLdScriptProps(isThin ? [breadcrumbs] : [itemList, faq, breadcrumbs])} />
       <Navbar />
 
       <main className="flex-1">
@@ -165,6 +151,15 @@ export default async function BestPage({ params }: PageProps) {
               <div className="max-w-2xl">
                 <h1 className="text-3xl font-bold text-white">{config.h1}</h1>
                 <p className="mt-3 text-zinc-400 leading-relaxed">{config.description}</p>
+                {/* BUG-06 — optional authored intro: 1–2 unique paragraphs so a
+                    "best of" page has genuine prose, not just a ranked list. */}
+                {config.intro && (
+                  <div className="mt-4 space-y-3 text-sm text-zinc-400 leading-relaxed">
+                    {config.intro.split('\n\n').map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-zinc-600">
                   <UpdatedBadge date={freshnessDate} />
                   <span>{' · '}{topTools.length} tools ranked</span>

@@ -23,6 +23,7 @@
 export {}
 
 import { getAdminClient } from '../lib/cron/supabase-admin'
+import { fetchAllPages } from '../lib/data/_pagination'
 
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
@@ -33,8 +34,8 @@ const getNum = (flag: string, def: number) => {
 const SHARD = getNum('--shard', 0)
 const SHARDS = getNum('--shards', 1)
 const LIMIT = getNum('--limit', Infinity)
-const CONCURRENCY = 6
-const TIMEOUT_MS = 8000
+const CONCURRENCY = 16
+const TIMEOUT_MS = 7000
 const UA = 'Mozilla/5.0 (compatible; RightAIChoiceBot/1.0; +https://rightaichoice.com)'
 
 type ToolRow = {
@@ -104,11 +105,62 @@ async function probeOnce(url: string, method: 'HEAD' | 'GET'): Promise<Verdict |
   }
 }
 
+// BUG-30: soft-404 detection. Many dead resource pages return HTTP 200 with a
+// "Not Found" body (or 200-redirect a deep link to the bare homepage), so the
+// status-only check above passes them. We confirm a 'live' verdict with ONE
+// bounded GET and downgrade to 'dead' ONLY on a STRONG signal — staying as
+// conservative as the rest of this script (never hide a genuinely live link):
+//   (1) the <title> or first <h1> BEGINS with a not-found marker, or
+//   (2) a deep link (≥1 path segment) lands on the bare site root after redirects.
+// e.g. docs.anthropic.com/claude/guides → 200 "Not Found - Claude Platform Docs".
+const SOFT_404_RE = /^\s*(?:404\b|not[\s-]*found|page not found|404 error|error 404|page (?:doesn'?t|does not) exist|page (?:no longer|not) available)/i
+
+function firstTag(body: string, tag: 'title' | 'h1'): string {
+  const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'))
+  return (m?.[1] ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+}
+
+async function isSoft404(url: string): Promise<boolean> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: { 'User-Agent': UA, Accept: 'text/html,*/*' },
+      signal: ctrl.signal,
+    })
+    if (!res.ok) return false // status-based path already handled this
+    // Signal (2): deep link redirected to a bare homepage.
+    try {
+      const orig = new URL(url)
+      const final = new URL(res.url)
+      const origDeep = orig.pathname.replace(/\/+$/, '').split('/').filter(Boolean).length >= 1
+      const finalRoot = final.pathname.replace(/\/+$/, '') === ''
+      if (origDeep && finalRoot) return true
+    } catch { /* unparseable URL → fall through to body check */ }
+    // Signal (1): title / h1 not-found marker. Only inspect HTML, bounded slice.
+    if (!/html/i.test(res.headers.get('content-type') ?? '')) return false
+    const body = (await res.text()).slice(0, 24_000)
+    return SOFT_404_RE.test(firstTag(body, 'title')) || SOFT_404_RE.test(firstTag(body, 'h1'))
+  } catch {
+    return false // ambiguous (timeout/abort) → keep the link (conservative)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function probe(url: string): Promise<Verdict> {
   const head = await probeOnce(url, 'HEAD')
-  if (head !== 'retry') return head
-  const get = await probeOnce(url, 'GET')
-  return get === 'retry' ? 'unknown' : get
+  let verdict: Verdict
+  if (head !== 'retry') verdict = head
+  else {
+    const get = await probeOnce(url, 'GET')
+    verdict = get === 'retry' ? 'unknown' : get
+  }
+  // Confirm 'live' against soft-404s (one extra bounded GET per live link).
+  if (verdict === 'live' && (await isSoft404(url))) return 'dead'
+  return verdict
 }
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (it: T) => Promise<R>): Promise<R[]> {
@@ -130,13 +182,18 @@ async function main() {
   const runStart = Date.now()
   console.log(`[link-health] shard ${SHARD}/${SHARDS} dry=${DRY}`)
 
-  const { data, error } = await sb
-    .from('tools')
-    .select('id, slug, docs_url, changelog_url, github_url, website_url, tutorial_urls, tutorial_links, community_links, dead_links')
-    .eq('is_published', true)
-  if (error) throw error
+  // Paginate — PostgREST caps a single .select() at 1,000 rows, so without this
+  // a >1,000-tool catalog is silently half-swept (the catalog is ~2,000).
+  const allTools = await fetchAllPages<ToolRow>((from, to) =>
+    sb
+      .from('tools')
+      .select('id, slug, docs_url, changelog_url, github_url, website_url, tutorial_urls, tutorial_links, community_links, dead_links')
+      .eq('is_published', true)
+      .order('slug', { ascending: true })
+      .range(from, to)
+  )
 
-  let tools = (data as unknown as ToolRow[]).filter((t) => hash(t.slug) % SHARDS === SHARD % SHARDS)
+  let tools = allTools.filter((t) => hash(t.slug) % SHARDS === SHARD % SHARDS)
   if (Number.isFinite(LIMIT)) tools = tools.slice(0, LIMIT)
   console.log(`[link-health] ${tools.length} tools in shard`)
 

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
+import { VIABILITY_SAFE_BET, VIABILITY_AT_RISK } from '@/lib/viability'
 
 type ViabilityBadgeProps = {
   score: number | null
@@ -15,7 +16,7 @@ type ViabilityBadgeProps = {
 }
 
 function getScoreConfig(score: number) {
-  if (score >= 70) {
+  if (score >= VIABILITY_SAFE_BET) {
     return {
       color: 'text-emerald-400',
       bg: 'bg-emerald-950/40 border-emerald-800/50',
@@ -23,7 +24,7 @@ function getScoreConfig(score: number) {
       Icon: ShieldCheck,
     }
   }
-  if (score >= 40) {
+  if (score >= VIABILITY_AT_RISK) {
     return {
       color: 'text-yellow-400',
       bg: 'bg-yellow-950/30 border-yellow-800/50',

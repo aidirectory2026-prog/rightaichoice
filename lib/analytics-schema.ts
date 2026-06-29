@@ -57,6 +57,10 @@ export const BASE_CONTEXT_SCHEMA = z
     session_id: z.string(),
     webdriver: z.boolean(),
     clarity_session_id: z.string(),
+    // The Clarity bridge (clarity-provider.tsx) registers BOTH the session id
+    // AND the deep-link playback url as Mixpanel super-props, so both ride in
+    // properties on every event once Clarity's user cookie exists.
+    clarity_playback_url: z.string(),
     schema_valid: z.boolean(),
     schema_issues: z.array(z.string()),
     // 10.7a — channel classification (lib/analytics/channels.ts), stamped by
@@ -115,6 +119,11 @@ export const BASE_CONTEXT_PROP_KEYS = new Set<string>([
   'session_id',
   'webdriver',
   'clarity_session_id',
+  // I9 fix (2026-06-28): clarity_playback_url rides in properties alongside
+  // clarity_session_id but was missing here, so it reached each event's strict
+  // schema and tripped "Unrecognized key" → ~12% of client events tagged
+  // schema_valid=false (engaged_time_heartbeat/scroll_depth/page_viewed/…).
+  'clarity_playback_url',
   'first_touch_referrer',
   'first_touch_landing',
   'schema_valid',
@@ -932,12 +941,12 @@ export const EVENT_SCHEMAS = {
   },
   signup_method_selected: {
     description:
-      'Signup method chosen on the signup page — analytics.signupMethodSelected (10.7c.6): the Google OAuth button click or the email/password form submit. The step BETWEEN signup_started and signup_completed that shows which method users attempt (vs which completes).',
-    plainEnglish: 'Someone picked how to sign up (Google or email).',
+      'Signup method chosen on the signup page — analytics.signupMethodSelected (10.7c.6): the OAuth button click (Google/LinkedIn), the email/password form submit, or the guest/continue-as-guest path. The step BETWEEN signup_started and signup_completed that shows which method users attempt (vs which completes). Phase 12 Bug-3.4 added LinkedIn + guest; the schema enum is kept in sync with the analytics.signupMethodSelected() union.',
+    plainEnglish: 'Someone picked how to sign up (Google, LinkedIn, email, or guest).',
     category: 'auth',
     source: 'client',
     props: z
-      .object({ method: z.enum(['email', 'google', 'github']), source: z.string() })
+      .object({ method: z.enum(['email', 'google', 'github', 'guest', 'linkedin']), source: z.string() })
       .strict(),
   },
   signup_completed: {

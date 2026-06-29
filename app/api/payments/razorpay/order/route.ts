@@ -5,6 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { pricingForRequest } from '@/lib/geo/currency'
 import { createRazorpayOrder, razorpayConfigured } from '@/lib/payments/razorpay'
 import { serverAnalytics } from '@/lib/mixpanel-server'
+import { captureException } from '@/lib/observability/capture'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
       currency: pricing.currency,
     })
   } catch (e) {
+    captureException(e, { route: 'razorpay/order', extra: { payment_row: row.id } })
     await admin.from('sentiment_payments').update({ status: 'failed' }).eq('id', row.id)
     return NextResponse.json({ error: e instanceof Error ? e.message : 'order_failed' }, { status: 502 })
   }

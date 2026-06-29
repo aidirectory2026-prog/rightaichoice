@@ -264,6 +264,22 @@ async function loadLatestDiff(scope: Scope): Promise<{ id: string; to_date: stri
   return { id: row.id, to_date: row.to_date, signals: row.signals ?? [] }
 }
 
+// GSC `page` is a full URL; title_overrides.page_path is a path. Strip the host.
+function stripHost(url: string): string {
+  return url.replace(/^https?:\/\/[^/]+/, '')
+}
+
+// 2026-06-28 — pages that already carry an active (curated) title_override.
+// A title_rewrite suggestion for such a page is noise: the title was already
+// optimized, but the triage kept re-proposing it every week (it didn't know an
+// override existed), which is what cluttered the SEO-pulse queue. Other action
+// types (links_inject, depth_expand, refresh_page) remain valid for these pages.
+async function loadOverriddenPaths(): Promise<Set<string>> {
+  const db = getAdminClient()
+  const { data } = await db.from('title_overrides').select('page_path').is('reverted_at', null)
+  return new Set((data ?? []).map((r) => (r as { page_path: string }).page_path))
+}
+
 // ── Handler ─────────────────────────────────────────────────────────
 
 export const GET = cronRoute({ pipelineKey: 'triage-gsc' }, async (ctx) => {
@@ -298,7 +314,16 @@ export const GET = cronRoute({ pipelineKey: 'triage-gsc' }, async (ctx) => {
   }
 
   const deduped = dedupByPage(allCandidates)
-  const ranked = rank(deduped).slice(0, CAP_PER_WEEK)
+
+  // Drop title_rewrite candidates for pages that already have a curated title
+  // override — re-suggesting an optimized title is the noise that filled the
+  // queue (see loadOverriddenPaths). Keep non-title actions on those pages.
+  const overridden = await loadOverriddenPaths()
+  const filtered = deduped.filter(
+    (c) => c.action_type !== 'title_rewrite' || !overridden.has(stripHost(c.page)),
+  )
+
+  const ranked = rank(filtered).slice(0, CAP_PER_WEEK)
 
   // Idempotency: clear this week's 'proposed' rows so a re-run lands
   // on the same final state. Never touch accepted/executed/measured.

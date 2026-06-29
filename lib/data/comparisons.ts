@@ -208,49 +208,53 @@ export async function getFeaturedEditorialComparisons(limit = 6) {
  * win as their counts accrue), so we stick with chronological for the
  * hub listing.
  */
-export async function getEditorialComparisonsPaginated(page = 1, perPage = 24) {
+export async function getEditorialComparisonsPaginated(
+  page = 1,
+  perPage = 24,
+  filters?: { category?: string; sort?: 'recent' | 'popular' },
+) {
   const supabase = await createClient()
   const safePage = Math.max(1, page)
   const offset = (safePage - 1) * perPage
+  const category = filters?.category?.trim() || null
+  const sort = filters?.sort === 'popular' ? 'popular' : 'recent'
 
-  // Count
-  const { count } = await supabase
-    .from('tool_comparisons')
-    .select('slug', { count: 'exact', head: true })
-    .eq('is_editorial', true)
-    .eq('noindex', false)
-
-  // Page rows
-  const { data, error } = await supabase
-    .from('tool_comparisons')
-    .select('slug, tool_ids, verdict, published_at, view_count')
-    .eq('is_editorial', true)
-    .eq('noindex', false)
-    .order('published_at', { ascending: false })
-    .range(offset, offset + perPage - 1)
+  // 2026-06-28: routed through editorial_compares_filtered (migration 177) so the
+  // hub can filter by category. tool_comparisons keys tools via the tool_ids
+  // array (no FK), so the category join lives in SQL. With no category + 'recent'
+  // sort the output matches the prior chronological behaviour exactly.
+  const { data, error } = await supabase.rpc('editorial_compares_filtered', {
+    p_category: category,
+    p_sort: sort,
+    p_limit: perPage,
+    p_offset: offset,
+  })
   if (error || !data) {
     return { compares: [], total: 0, totalPages: 0, page: safePage }
   }
+  const rows = data as Array<{
+    slug: string
+    verdict: string | null
+    tool_ids: string[]
+    view_count: number | null
+    total: number
+  }>
+  const total = rows.length > 0 ? Number(rows[0].total) : 0
 
-  const allIds = Array.from(new Set(data.flatMap((c) => c.tool_ids as string[])))
-  if (allIds.length === 0) {
-    return { compares: [], total: count ?? 0, totalPages: 0, page: safePage }
+  const allIds = Array.from(new Set(rows.flatMap((c) => c.tool_ids)))
+  const nameById = new Map<string, string>()
+  if (allIds.length > 0) {
+    const { data: tools } = await supabase.from('tools').select('id, name').in('id', allIds)
+    for (const t of tools ?? []) nameById.set(t.id as string, t.name as string)
   }
 
-  const { data: tools } = await supabase
-    .from('tools')
-    .select('id, slug, name')
-    .in('id', allIds)
-  const nameById = new Map((tools ?? []).map((t) => [t.id, t.name as string]))
-
-  const compares = data.map((c) => ({
-    slug: c.slug as string,
-    verdict: (c.verdict as string | null) ?? '',
-    toolNames: (c.tool_ids as string[]).map((id) => nameById.get(id)).filter(Boolean) as string[],
-    viewCount: (c.view_count as number) ?? 0,
+  const compares = rows.map((c) => ({
+    slug: c.slug,
+    verdict: c.verdict ?? '',
+    toolNames: c.tool_ids.map((id) => nameById.get(id)).filter(Boolean) as string[],
+    viewCount: c.view_count ?? 0,
   }))
 
-  const total = count ?? 0
   return {
     compares,
     total,

@@ -639,11 +639,14 @@ export const analytics = {
     capture('tool_page_viewed', { tool_id: toolId, tool_slug: toolSlug })
   },
   toolVisitClicked(toolId: string, toolSlug: string, source: string) {
-    // Fires on "Visit Website" button. Server-side route /api/tools/[slug]/visit
-    // handles the affiliate redirect + server log; this captures the client-side
-    // attribution (which page referred the click). Paired server event is
-    // "tool_visit_clicked_server" from lib/mixpanel-server.ts — revenue-critical
-    // events fire both client + server so ad-blockers can't kill them.
+    // Fires on "Visit Website" button — client-side attribution (which page
+    // referred the click). BUG-31: the authoritative, ad-block-proof revenue
+    // event is the SEPARATE server event `tool_visit_redirected`, fired by
+    // serverAnalytics.toolVisitRedirected from the /api/tools/[slug]/visit
+    // redirect handler (there is NO `tool_visit_clicked_server`). These are two
+    // DIFFERENT event names, so Mixpanel does NOT $insert_id-dedupe them — they
+    // are complementary, not a deduped pair. Resilience comes from the server
+    // event firing regardless of whether this client event is blocked.
     capture('tool_visit_clicked', { tool_id: toolId, tool_slug: toolSlug, source })
   },
 

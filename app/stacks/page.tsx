@@ -127,6 +127,8 @@ export default function StacksIndexPage() {
               description: stack.description,
               stages: stack.stages.length,
               paidPath: stack.summary.paidPath,
+              freePath: stack.summary.freePath,
+              skillLevel: stack.summary.skillLevel,
             }))}
           />
 

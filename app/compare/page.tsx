@@ -12,6 +12,7 @@ import { getCategories } from '@/lib/data/categories'
 import { ComparePageActions } from '@/components/compare/compare-page-actions'
 import { CompareEmptyState } from '@/components/compare/compare-empty-state'
 import { ComparePagination } from '@/components/compare/compare-pagination'
+import { CompareFilters } from '@/components/compare/compare-filters'
 import {
   breadcrumbJsonLd,
   comparisonJsonLd,
@@ -19,7 +20,7 @@ import {
 } from '@/lib/seo/json-ld'
 
 type PageProps = {
-  searchParams: Promise<{ tools?: string; page?: string }>
+  searchParams: Promise<{ tools?: string; page?: string; category?: string; sort?: string }>
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -56,20 +57,25 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function ComparePage({ searchParams }: PageProps) {
-  const { tools: toolsParam, page: pageParam } = await searchParams
+  const { tools: toolsParam, page: pageParam, category: categoryParam, sort: sortParam } = await searchParams
   const slugs = (toolsParam ?? '').split(',').filter(Boolean).slice(0, 3)
 
   // ── Hub landing page (no ?tools= query) ──────────────────────
   if (slugs.length < 2) {
     const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
     const PER_PAGE = 24
+    const category = (categoryParam ?? '').trim()
+    const sort = sortParam === 'popular' ? 'popular' : 'recent'
     // Phase 7H follow-up (2026-05-13): replaced the static 12-featured
     // grid with a paginated 24-per-page listing of ALL editorial
     // comparisons. With 587+ pages, the hub previously exposed only
     // ~2% of the catalog to discovery — bad for both UX (no way to
     // browse) and SEO (Googlebot only sees the same 12 from this hub).
     const [{ compares, total, totalPages }, categories] = await Promise.all([
-      getEditorialComparisonsPaginated(page, PER_PAGE).catch(() => ({
+      getEditorialComparisonsPaginated(page, PER_PAGE, {
+        category: category || undefined,
+        sort,
+      }).catch(() => ({
         compares: [],
         total: 0,
         totalPages: 0,
@@ -77,6 +83,13 @@ export default async function ComparePage({ searchParams }: PageProps) {
       })),
       getCategories().catch(() => []),
     ])
+    const categoryOptions = (categories as Array<{ slug: string; name: string }>).map((c) => ({
+      slug: c.slug,
+      name: c.name,
+    }))
+    const activeCategoryName = category
+      ? categoryOptions.find((c) => c.slug === category)?.name ?? null
+      : null
 
     return (
       <>
@@ -86,53 +99,73 @@ export default async function ComparePage({ searchParams }: PageProps) {
               deeper pages focused on browsing the listing. */}
           {page === 1 && <CompareEmptyState />}
 
-          {/* Editorial compares — paginated full listing */}
-          {compares.length > 0 && (
-            <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${page === 1 ? 'py-12 border-t border-zinc-800/50' : 'pt-8 pb-12'}`}>
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold text-white">
-                  {page === 1 ? 'In-depth editorial comparisons' : `All comparisons — page ${page}`}
-                </h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  {page === 1
-                    ? `Deeply-researched head-to-heads with at-a-glance tables, benchmarks, and verdicts. Browse all ${total.toLocaleString()} comparisons below.`
-                    : `Browse the full catalog of ${total.toLocaleString()} editorial comparisons.`}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {compares.map((c) => (
-                  <Link
-                    key={c.slug}
-                    href={`/compare/${c.slug}`}
-                    className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
-                  >
-                    <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                      {c.toolNames.join(' vs ')}
-                    </h3>
-                    {c.verdict && (
-                      <p className="mt-2 text-xs text-zinc-500 leading-relaxed line-clamp-3">
-                        {c.verdict}
-                      </p>
-                    )}
-                    <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity">
-                      Read the verdict <ArrowUpRight className="h-3 w-3" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <ComparePagination page={page} totalPages={totalPages} total={total} />
-            </section>
-          )}
+          {/* Editorial compares — paginated, filterable listing */}
+          <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${page === 1 ? 'py-12 border-t border-zinc-800/50' : 'pt-8 pb-12'}`} id="compare-listing">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-white">
+                {activeCategoryName
+                  ? `${activeCategoryName} comparisons`
+                  : page === 1
+                  ? 'In-depth editorial comparisons'
+                  : `All comparisons — page ${page}`}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                {activeCategoryName
+                  ? `Head-to-heads featuring ${activeCategoryName} tools — at-a-glance tables, benchmarks, and verdicts.`
+                  : page === 1
+                  ? 'Deeply-researched head-to-heads with at-a-glance tables, benchmarks, and verdicts. Filter by category or search below.'
+                  : 'Browse the full catalog of editorial comparisons.'}
+              </p>
+            </div>
+
+            {/* Smart filters — category + sort (URL-driven, crawlable, survives pagination) */}
+            <CompareFilters categories={categoryOptions} total={total} />
+
+            {compares.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {compares.map((c) => (
+                    <Link
+                      key={c.slug}
+                      href={`/compare/${c.slug}`}
+                      className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 hover:border-emerald-800/50 hover:bg-zinc-900/60 transition-all duration-200"
+                    >
+                      <h3 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                        {c.toolNames.join(' vs ')}
+                      </h3>
+                      {c.verdict && (
+                        <p className="mt-2 text-xs text-zinc-500 leading-relaxed line-clamp-3">
+                          {c.verdict}
+                        </p>
+                      )}
+                      <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity">
+                        Read the verdict <ArrowUpRight className="h-3 w-3" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <ComparePagination page={page} totalPages={totalPages} total={total} />
+              </>
+            ) : (
+              <p className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
+                No editorial comparisons{activeCategoryName ? ` in ${activeCategoryName}` : ''} yet.{' '}
+                <Link href="/compare" className="text-emerald-400 hover:text-emerald-300">
+                  Clear the filter
+                </Link>
+                .
+              </p>
+            )}
+          </section>
 
           {/* Browse by category */}
           {categories.length > 0 && (
             <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 border-t border-zinc-800/50">
               <div className="mb-8">
                 <h2 className="text-xl font-semibold text-white">
-                  Browse tools by category
+                  Browse comparisons by category
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Pick a category to see top tools and build your own comparison
+                  Pick a category to filter the head-to-heads above
                 </p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -141,8 +174,12 @@ export default async function ComparePage({ searchParams }: PageProps) {
                   return (
                     <Link
                       key={c.id}
-                      href={`/tools?category=${c.slug}`}
-                      className="group flex flex-col items-center rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-zinc-700 hover:bg-zinc-900/60 transition-all duration-200 text-center"
+                      href={`/compare?category=${c.slug}#compare-listing`}
+                      className={`group flex flex-col items-center rounded-xl border p-4 transition-all duration-200 text-center ${
+                        category === c.slug
+                          ? 'border-emerald-700 bg-emerald-950/30'
+                          : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60'
+                      }`}
                     >
                       {c.icon && <span className="text-2xl mb-2">{c.icon}</span>}
                       <span className="text-xs font-medium text-zinc-300 group-hover:text-white transition-colors">

@@ -397,7 +397,11 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {editorialCompares.map((c) => (
+              {/* BUG-33: skip cards whose tool names didn't resolve (a deleted /
+                  merged tool leaves a blank " vs " heading) — needs ≥2 names. */}
+              {editorialCompares
+                .filter((c) => (c.toolNames?.filter(Boolean).length ?? 0) >= 2)
+                .map((c) => (
                 <Link
                   key={c.slug}
                   href={`/compare/${c.slug}`}

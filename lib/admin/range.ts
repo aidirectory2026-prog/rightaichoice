@@ -220,23 +220,71 @@ export function rangeToDays(sel: RangeSelection): number {
   return sel.days
 }
 
+/** Shift a Date back/forward by N calendar months in `tz`, preserving the
+ *  wall-clock time-of-day and clamping the day to the target month's length
+ *  (e.g. Mar 31 −1mo → Feb 28). */
+function shiftMonthsInTz(date: Date, deltaMonths: number, tz: string): Date {
+  const p = partsInTz(date, tz)
+  let y = p.year
+  let m = p.month + deltaMonths
+  while (m < 1) { m += 12; y -= 1 }
+  while (m > 12) { m -= 12; y += 1 }
+  // Date.UTC month is 0-based, so (y, m, 0) is the last day of 1-based month m.
+  const daysInTarget = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  const day = Math.min(p.day, daysInTarget)
+  return dateFromTzWallClock(y, m, day, p.hour, p.minute, p.second, tz)
+}
+
+function mkPrev(startMs: number, endMs: number, sel: RangeSelection): RangeSelection {
+  return {
+    key: 'custom',
+    cutoffISO: new Date(startMs).toISOString(),
+    endCutoffISO: new Date(endMs).toISOString(),
+    label: `previous period (${sel.label})`,
+    calendarAnchored: sel.calendarAnchored,
+    days: sel.days,
+  }
+}
+
 /**
- * Phase 10.5a.2 — the immediately-preceding window of equal length, for
- * period-over-period deltas: [start − span, start). Pure arithmetic on the
- * selection's own cutoffs, so it works identically for presets, custom
- * ranges and partial calendar windows ("today" compares against the same
- * number of elapsed hours of yesterday — honest, not yesterday's full day).
+ * Phase 10.5a.2 / BUG-10 (Phase 13) — the comparison window for
+ * period-over-period deltas, now calendar-aware:
+ *
+ *  • Rolling presets (7d/14d/30d/90d) + custom ranges → the immediately
+ *    preceding equal-length block [start − span, start). Unchanged.
+ *  • CALENDAR-ANCHORED PARTIALS (today/yesterday/wtd/mtd) → shift the WHOLE
+ *    window back exactly one calendar period (1 day / 1 week / 1 month),
+ *    preserving the elapsed offset. So "today" at 14:00 compares against
+ *    yesterday 00:00→14:00 (the same morning hours) — NOT, as the old
+ *    [start−span,start) did, against yesterday 10:00→24:00 (a different part
+ *    of the day, which silently skewed every "Today"/"WTD"/"MTD" delta).
  */
 export function previousRange(sel: RangeSelection): RangeSelection {
   const start = new Date(sel.cutoffISO).getTime()
   const end = new Date(sel.endCutoffISO).getTime()
   const span = Math.max(1, end - start)
-  return {
-    key: 'custom',
-    cutoffISO: new Date(start - span).toISOString(),
-    endCutoffISO: sel.cutoffISO,
-    label: `previous period (${sel.label})`,
-    calendarAnchored: sel.calendarAnchored,
-    days: sel.days,
+
+  if (!sel.calendarAnchored) {
+    return mkPrev(start - span, start, sel)
+  }
+
+  const tz = ADMIN_TZ
+  switch (sel.key) {
+    case 'today':
+    case 'yesterday': {
+      // IST has no DST, so a −1-day shift on UTC ms preserves wall-clock.
+      return mkPrev(addDays(new Date(start), -1).getTime(), addDays(new Date(end), -1).getTime(), sel)
+    }
+    case 'wtd': {
+      return mkPrev(addDays(new Date(start), -7).getTime(), addDays(new Date(end), -7).getTime(), sel)
+    }
+    case 'mtd': {
+      return mkPrev(shiftMonthsInTz(new Date(start), -1, tz).getTime(), shiftMonthsInTz(new Date(end), -1, tz).getTime(), sel)
+    }
+    case 'custom':
+    default: {
+      // Custom ranges are full-day aligned → preceding equal-length block.
+      return mkPrev(start - span, start, sel)
+    }
   }
 }

@@ -357,6 +357,97 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   session is editing, so they're written up for a dedicated follow-up rather than changed now.)_
 - **Status: diagnosis done (D4); fixes scoped for a follow-up to avoid collision with active page work.**
 
+### 2026-06-28 — D1.1: originality-density audit (read-only) — and a plan-changing finding
+- **What:** Built + ran a read-only audit scoring every published page on "original value density"
+  (proprietary data + text depth + freshness + 28d GSC impressions) → keep / enrich / consolidate.
+- **Why:** The May-2026 core update demotes thin programmatic pages; we needed to know how many of OUR
+  pages are actually thin before consolidating (D1.2).
+- **How:** `lib/seo/originality-audit.ts` (pure scoring) + `scripts/audit-originality.ts` (CLI, writes
+  `scripts/.originality-audit.json`). **New files only — no edits to tool/compare/category templates**
+  (active page work elsewhere; collision-avoidance). Designed by a background agent, then created + run
+  by the main session (the agent's sandbox was read-only). Commit `dfcaa66`.
+- **Verification:** `tsc --noEmit` clean; ran live against the full catalog.
+- **📊 FINDING (full catalog, 1,998 tools + 925 compares):** tools = **1,830 keep / 168 enrich / 0
+  consolidate**; compares = **924 keep / 0 enrich / 1 consolidate**. **Our pages are NOT thin** — every
+  tool carries real proprietary data (viability, pricing, categories, all freshly verified) and compares
+  have editorial prose. Only **1** page of ~2,900 is a consolidation candidate
+  (`/compare/heymilo-ai-vs-presto-voice`).
+- **Plan impact:** **D1.2 (data-driven consolidation / 308-redirects) is effectively a no-op** — nothing
+  to merge away (no equity to lose). The 168 "enrich" tools are borderline (rich data, zero impressions):
+  their problem is **discovery, not depth**. D1 therefore confirms the binding constraint is **authority +
+  getting found** (D2/D3), not page quality. D1.2/D1.3 de-prioritized; the 1 thin compare flagged for a
+  later cleanup pass.
+- _Plain language: I scored all ~2,900 pages to find the "thin" ones Google punishes. The answer: we
+  barely have any — basically 1. Our pages are genuinely data-rich, so there's nothing to clean up. That
+  confirms our real problem isn't the pages — it's that not enough other sites/AIs point to us yet, which
+  is exactly what the directory work fixes._
+- **Status: done (D1.1). D1.2/D1.3 de-prioritized by the data; D1 effectively closed (only authority/discovery remains, owned by D2/D3).**
+
+### 2026-06-29 — D2.1 cont.: directory submissions executed (operator) + 8 high-authority targets added
+- **What:** Worked the directory pipeline with the founder, one by one; added a round-2 batch of 8
+  high-authority targets (SourceForge, Wellfound, TrustRadius, StackShare, GetApp, SoftwareAdvice,
+  GoodFirms, Crozdesk).
+- **Result (2026-06-29):** **6 LIVE** — G2 (`g2.com/products/rightaichoice`), Crunchbase, Wellfound,
+  Trustpilot, SaaSHub, Indie Hackers; **4 submitted/pending** — Capterra, TrustRadius, SaaSworthy,
+  SourceForge; **3 skipped** (There's An AI For That, Futurepedia, AlternativeTo — went paid/clunky).
+  Every high-value placement is in. Live URLs recorded on each row for the weekly backlink-checker.
+- **Baseline (Moz, 2026-06-29):** DA **1**, 31 (weak) linking root domains, 23 ranking keywords, clean
+  spam score — the expected floor for a 2-month-old site; the high-DA links above are what lift it.
+- **Human-readable record:** `authority-tracking-sheet.md` (same folder).
+- _Plain language: we got listed on the big trusted sites — G2, Crunchbase, Trustpilot, Wellfound, SaaSHub
+  live; Capterra/TrustRadius/SourceForge pending. These are both the backlinks Google wants and the sources
+  AIs read. Our domain authority is still 1 (normal for a new site) and these are what pull it up._
+- **Status: done — high-value directories executed; reviews are the parked multiplier.**
+
+### 2026-06-29 — D2.2b: digital-PR / data-journalism engine (the #1 DA mover)
+- **What:** Built an operator-approved engine that turns our unique live data into editorial-link bait —
+  the highest-leverage authority work (editorial links move DA far more than directory links).
+- **How (commit `33c8975`, branch `phase13-geo-seo`):**
+  - `lib/pr/story-angles.ts` — derives newsworthy angles from `buildStateOfAI()` (freshness, pricing,
+    viability/deathwatch, category concentration, top open-source) — all live, real numbers.
+  - `lib/pr/targets.ts` — 16 curated FREE targets: AI newsletters (Ben's Bites, TLDR AI, The Rundown…),
+    inbound journalist-query platforms (Connectively/HARO, Qwoted, Featured), and data-post communities
+    (HN, r/artificial, r/SaaS…), each with its method + beat.
+  - `lib/pr/draft-pitch.ts` — DeepSeek, **method-aware** drafter (email vs. expert-answer vs. community
+    post), data-led, no hype, always cites the report URL.
+  - `supabase/migrations/175_pr_pitches.sql` — `pr_pitches` approval queue (draft→approved→sent→
+    responded→landed). **Applied live.**
+  - `scripts/pr-pitch.ts` + npm `pr:angles` / `pr:draft[:dry]` / `pr:status` — generate angles, draft
+    pitches into `pr_pitches` + a CSV working file; `runScriptedPipeline`-logged.
+- **Verification:** `tsc` clean; `pr:angles` produced 5 live angles (99.5% verified, 55.5% free/freemium,
+  Hugging Face 161,979★, etc.); a 2-pitch live draft (freshness × Ben's Bites/TLDR) drafted clean,
+  data-led pitches and stored them in `pr_pitches` + CSV. Verified the sample pitch leads with the stat +
+  links the report.
+- **Operator model:** drafts are a review queue — the founder edits/approves and sends; we never auto-send
+  or fabricate claims. Inbound-query targets (HARO-type) are the highest-yield free editorial-link source.
+- **Residual risk:** target list will need pruning as newsletters change submission methods; sending is
+  manual by design. Admin UI deferred (CSV + `pr_pitches` table is the working surface for now).
+- _Plain language: I built the machine that pitches our data to journalists and newsletters — it writes a
+  tailored, no-hype pitch for each one (leading with a real stat like "55% of AI tools are free") and
+  queues it for you to approve and send. Landing even a few of these earns the kind of high-quality links
+  that actually move our domain authority — far more than directory listings do._
+- **Status: done (D2.2b). Built + verified; drafting/sending is operator-driven.**
+
+### 2026-06-29 — PR activity log + section conventions
+- **PR pitch batch generated (2026-06-28):** ran `pr:draft` for the freshness / pricing / viability
+  angles → **6 drafts** saved to `pr_pitches` + `logs/pr-pitches-2026-06-28.csv`. Put into a readable,
+  dated operator doc: **`pr-pitches-2026-06-28.md`** (this folder) — 6 ready-to-send pitches to Ben's
+  Bites, TLDR AI, The Rundown (freshness + viability + pricing angles). Awaiting operator send.
+  (A couple of DeepSeek calls hit transient "fetch failed" — engine skipped them cleanly; re-run fills gaps.)
+- **GEO report email automation added:** the weekly tracker now emails the founder a summary after each
+  run (`lib/geo/geo-report-email.ts` via Resend — cited X/Y, rate, per-prompt table, rank, share-of-voice,
+  trend, competitors). Wired into the `track-geo-citations` cron; best-effort (never fails the data run).
+  Verified `tsc` clean; can't send locally (RESEND_API_KEY lives in Vercel prod, same as other alert emails)
+  — sends automatically Mondays in production.
+- **Docs reorganized + conventions locked (founder, 2026-06-29):** all section docs moved under
+  **`docs/GEO AND SEO upgrades and updates/`**. Standing rules now in force (saved to memory): (1) date in
+  every generated doc's filename; (2) every PR/authority/GEO activity recorded here in the build log; (3)
+  recurring engines email the founder a report.
+- _Plain language: I saved the 6 ready-to-send pitch emails into a dated document you can open, set the
+  GEO scoreboard to email you its results every week, moved everything into one clearly-named folder, and
+  locked in your rules (dated files + log everything + email me)._
+- **Status: done — logged + conventions in force.**
+
 ---
 
 ## Phase 13 round 1 — summary (2026-06-27)

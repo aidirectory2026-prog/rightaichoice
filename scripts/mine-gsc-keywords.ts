@@ -307,7 +307,8 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+import { withLock } from './_lib/lockfile' // BUG-21: serialize this stateful job
+withLock('mine-gsc-keywords', main).catch((err) => {
   console.error('\n❌ Fatal error:', err)
   process.exit(1)
 })

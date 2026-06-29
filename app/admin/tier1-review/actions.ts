@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { requireAdmin } from '@/lib/admin/require-admin'
 import { bumpFreshness, type FreshnessPageType } from '@/lib/seo/freshness'
 import { submitToIndexNow } from '@/lib/indexnow'
 
@@ -84,22 +84,6 @@ async function captureBaseline(admin: any, path: string): Promise<void> {
   }
 }
 
-async function requireAdmin() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) throw new Error('Not authorized')
-  return { user }
-}
 
 type ApproveArgs = {
   pagePath: string
@@ -112,7 +96,7 @@ export async function approveTitleOverride(
   args: ApproveArgs,
 ): Promise<{ ok?: true; error?: string }> {
   try {
-    const { user } = await requireAdmin()
+    const { userId } = await requireAdmin()
 
     if (!args.pagePath.startsWith('/') || args.pagePath.length > 200) {
       return { error: 'Invalid pagePath' }
@@ -137,7 +121,7 @@ export async function approveTitleOverride(
       page_path: args.pagePath,
       override_title: title,
       source_bucket: args.bucket,
-      approved_by: user.id,
+      approved_by: userId,
       notes: args.notes ?? null,
     })
 

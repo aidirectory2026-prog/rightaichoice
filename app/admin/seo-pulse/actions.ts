@@ -1,8 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { requireAdmin } from '@/lib/admin/require-admin'
+import { approveTitleOverride } from '@/app/admin/tier1-review/actions'
 
 // Phase 9 Day-4 Part 2 (2026-05-29) — Server actions for the SEO Pulse
 // weekly-loop review page.
@@ -22,18 +23,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 // old cookie-client UPDATEs matched 0 rows under RLS with NO error — so Accept/
 // Reject/Mark-executed silently no-op'd and the buttons looked dead. requireAdmin()
 // (cookie client) still gates authorization; the mutation uses the admin client.
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-  if (!profile?.is_admin) throw new Error('Admin only')
-}
+// BUG-17: requireAdmin() now lives in lib/admin/require-admin.ts (one shared gate).
 
 type ActionMetadata = {
   baseline_position?: number | null
@@ -91,6 +81,50 @@ export async function rejectAction(formData: FormData): Promise<void> {
     .eq('id', id)
     .in('status', ['proposed', 'accepted'])
   if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/seo-pulse')
+}
+
+// 2026-06-28 — the REAL "apply" for a title_rewrite action. The old Accept/
+// Mark-executed only flipped workflow status; they never changed a live title,
+// so the button looked dead from the owner's seat. This writes a real
+// title_override (reusing the canonical tier1 apply: soft-revert + insert +
+// GSC baseline capture + recrawl signal) AND marks the weekly action executed.
+export async function applyTitleAction(formData: FormData): Promise<void> {
+  await requireAdmin()
+  const id = String(formData.get('id') ?? '')
+  const title = String(formData.get('title') ?? '').trim()
+  if (!id) throw new Error('id required')
+  if (title.length < 10 || title.length > 80) {
+    throw new Error('Title must be 10–80 chars (include the " | RightAIChoice" suffix)')
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any
+  const { data: row, error: readErr } = await admin
+    .from('weekly_loop_actions')
+    .select('page, action_type')
+    .eq('id', id)
+    .single()
+  if (readErr || !row) throw new Error(readErr?.message ?? 'action not found')
+  const r = row as { page: string; action_type: string }
+  if (r.action_type !== 'title_rewrite') throw new Error('Not a title_rewrite action')
+
+  // GSC stores a full URL; title_overrides keys on the path.
+  const pagePath = r.page.replace(/^https?:\/\/[^/]+/, '')
+
+  const res = await approveTitleOverride({
+    pagePath,
+    title,
+    bucket: '1A',
+    notes: `Applied from SEO Pulse weekly action ${id}`,
+  })
+  if (res.error) throw new Error(res.error)
+
+  await admin
+    .from('weekly_loop_actions')
+    .update({ status: 'executed', executed_at: new Date().toISOString() })
+    .eq('id', id)
 
   revalidatePath('/admin/seo-pulse')
 }

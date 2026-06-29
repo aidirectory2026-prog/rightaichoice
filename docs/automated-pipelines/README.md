@@ -52,6 +52,9 @@ supporting detail this README links to:
   `09-shared-modules.md` = shared infra.
 - **`11-geo-and-authority.md`** — **(Phase 13, 2026-06-27)** GEO citation tracking + authority/directory
   engine + the self-refreshing `/llms.*` + `/state-of-ai-tools` data surfaces.
+- **`12-tool-page-health.md`** — **(Phase 12 Bug-4, 2026-06-27)** the weekly link-health sweep
+  (`tools.dead_links`), the on-demand stack viability audit, and the self-healing data-correctness
+  guarantees (feature/modality coverage, hidden costs, integrations) that ride the existing refresh + SOP.
 
 ---
 
@@ -111,7 +114,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 | `/api/cron/indexnow-unindexed` | `0 10 * * 2` | Re-ping un-indexed URLs. |
 | `/api/cron/resubmit-sitemap-gsc` | `0 6 * * 1` | Resubmit sitemap to GSC. |
 | `/api/cron/snapshot-gsc` | `30 6 * * 1` | Weekly GSC snapshot. |
-| `/api/cron/triage-gsc` | `0 7 * * 1` | GSC diff → weekly action triage. |
+| `/api/cron/triage-gsc` | `0 7 * * 1` | GSC diff → weekly action triage → `weekly_loop_actions` (reviewed at `/admin/seo-pulse`). **(2026-06-28)** Skips `title_rewrite` candidates for pages that already carry an active `title_override` (re-suggesting a curated title was the main queue-noise source). title_rewrite rows on `/admin/seo-pulse` now have a working **"Apply title →"** field that writes a live `title_overrides` row (canonical tier1 apply: soft-revert + insert + GSC baseline + recrawl) and marks the action executed — previously Accept/Mark-executed only changed status, never a live title. |
 | `/api/cron/track-geo-citations` | `15 7 * * 1` | **(Phase 13 D3.4)** GEO citation scoreboard — asks a web-searching AI (free Gemini engine; Anthropic/Perplexity/OpenAI scaffolded) the target prompts in `lib/geo/target-prompts.ts` and writes one row per `(date, engine, prompt)` to `geo_citation_snapshots`: are we cited, rank, competitors, share-of-voice. The GEO analogue of `snapshot-gsc`. Surfaced at `/admin/ai-citations`. Gracefully records `partial` (no false alert) if no engine key is set. See `11-geo-and-authority.md`. |
 | `/api/cron/authority-check` | `30 7 * * 1` | **(Phase 13 D2.4)** Backlink monitor — re-fetches each submitted/live directory listing in `directory_submissions`, detects a link back to rightaichoice.com, and logs confirmed backlinks into `referring_domains` (channel `other`, note `directory:<key>`) → `/admin/authority`. See `11-geo-and-authority.md`. |
 | `/api/cron/email-weekly-digest` | `0 8 * * 1` | Operator weekly digest email. |
@@ -296,7 +299,10 @@ turned the static `public/llms*.txt` into **self-refreshing routes**. Full detai
 - **`authority-check`** (Vercel cron, Mon 07:30 UTC) — directory backlink monitor → `referring_domains` →
   `/admin/authority`.
 - **Operator scripts (on-demand, pipeline_runs-logged):** `geo:track[:dry]` (same as the cron, manual);
-  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`).
+  `authority:seed|next|mark|check|status` (the directory submission workflow — `lib/authority/`);
+  `pr:angles|draft[:dry]|status` (**D2.2b digital-PR engine** — `lib/pr/*`: derive live-data angles →
+  DeepSeek-draft pitches → `pr_pitches` approval queue + CSV; the #1 DA mover via earned editorial links).
+- **New tables (round 2):** `directory_submissions` (mig 174), `pr_pitches` (mig 175).
 - **Self-refreshing data surfaces (ISR routes, not crons):** `/llms.txt`, `/llms-full.txt`, `/llms.jsonl`,
   and `/state-of-ai-tools` now regenerate from the live DB hourly/daily (replacing the static, stale
   `public/llms*.txt`). They carry a live freshness banner — our core GEO signal.

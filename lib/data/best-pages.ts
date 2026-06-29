@@ -29,7 +29,22 @@ export type BestPageConfig = {
    * reclaim crawl budget from pages stuck at pos 51+.
    */
   noindex?: boolean
+  /**
+   * BUG-06 (Phase 13) — optional authored intro, rendered as 1–2 unique
+   * paragraphs above the ranked list. Gives a thin "best of" page genuinely
+   * unique prose (split on "\n\n"). Leave unset for pages that rely on the
+   * ranked list + interpolated FAQ for their unique content.
+   */
+  intro?: string
 }
+
+/**
+ * BUG-06 (Phase 13) — quality gate. A "best/for X" page with fewer than this
+ * many ranked tools is too thin to compete and is auto-noindex,follow'd (URL
+ * stays live) + dropped from the sitemap, regardless of the manual `noindex`
+ * flag. 8 mirrors the long-standing manual rule in the niche-page comment.
+ */
+export const MIN_INDEXABLE_TOOLS = 8
 
 export const BEST_PAGES: BestPageConfig[] = [
   {

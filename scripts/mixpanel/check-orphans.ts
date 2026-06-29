@@ -65,6 +65,30 @@ const KNOWN_DEFERRED: Set<string> = new Set([
   'stack_tool_removed',
   'stack_exported',
   'embed_snippet_copied',
+  // BUG-19 (Phase 13): lexicon-defined events with no call site yet, confirmed
+  // against analytics-callsites.gen.json (no firing site) + the grep fallback.
+  // Declaring them here lets the orphan gate flip to a hard exit(1) below so any
+  // NEW undeclared orphan fails CI, while these known-pending events only warn.
+  'plan_step_completed',
+  'plan_abandoned',
+  'recommendation_requested',
+  'workflow_generated',
+  'workflow_saved',
+  'workflow_shared',
+  'workflow_voted',
+  'stack_viewed',
+  'ai_chat_tool_suggested',
+  'question_asked',
+  'question_answered',
+  'discussion_replied',
+  'blog_post_viewed',
+  'best_page_viewed',
+  'role_page_viewed',
+  'search_no_results',
+  'empty_search',
+  'pricing_viewed',
+  'upgrade_clicked',
+  'perf_mark',
 ])
 
 function snakeToCamel(snake: string): string {
@@ -98,35 +122,49 @@ function main(): void {
   const callSiteFiles = allFiles.filter((f) => !f.endsWith('lib/analytics.ts'))
   const blob = callSiteFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
 
+  // BUG-19: primary source of truth is analytics-callsites.gen.json (written by
+  // `npm run tracking:schema`). It records the ACTUAL firing method per event —
+  // including `…Rich` wrappers and acronym camelCase that the regex grep below
+  // would miss — so it eliminates false orphans. The grep is kept as a fallback
+  // that additionally catches SDK methods (analytics.identify / .reset) which
+  // aren't tracked as events in the gen file.
+  let fired = new Set<string>()
+  try {
+    const gen = JSON.parse(readFileSync(join(ROOT, 'lib/analytics-callsites.gen.json'), 'utf8')) as Record<string, unknown[]>
+    fired = new Set(Object.keys(gen).filter((k) => Array.isArray(gen[k]) && gen[k].length > 0))
+  } catch {
+    console.warn('⚠ analytics-callsites.gen.json missing/unreadable — run `npm run tracking:schema` first. Falling back to grep only.')
+  }
+
   const orphans: string[] = []
   const deferred: string[] = []
   for (const def of EVENTS) {
     if (DYNAMIC_DISPATCH_ALLOW.has(def.name)) continue
-    // Method name is camelCase of the event name.
-    const methodName = snakeToCamel(def.name)
-    // Match analytics.{methodName}( anywhere in the codebase.
-    const re = new RegExp('analytics\\.' + methodName + '\\b')
-    if (!re.test(blob)) {
+    // Wired iff the gen file records a firing site OR the grep finds the call.
+    const re = new RegExp('analytics\\.' + snakeToCamel(def.name) + '\\b')
+    const wired = fired.has(def.name) || re.test(blob)
+    if (!wired) {
       if (KNOWN_DEFERRED.has(def.name)) deferred.push(def.name)
       else orphans.push(def.name)
     }
   }
 
-  console.log(`Scanned ${EVENTS.length} events × ${callSiteFiles.length} files.`)
+  console.log(`Scanned ${EVENTS.length} events × ${callSiteFiles.length} files (gen file: ${fired.size} fired).`)
   if (deferred.length > 0) {
     console.log(`\n${deferred.length} known-deferred events (no UI surface yet):`)
     for (const n of deferred) console.log(`  - ${n}`)
   }
   if (orphans.length > 0) {
-    // Phase 8.g.11.f — informational-only for now. The admin /health page
-    // surfaces these prominently. Once the orphan count drops below ~5,
-    // switch this to process.exit(1) to enforce no-new-orphans in CI.
-    console.warn(`\n${orphans.length} orphan events (defined but never called) — review on /admin/health (Event capture health):`)
-    for (const n of orphans) console.warn(`  - ${n}`)
-    console.warn('\n(Not failing the build — see comment in scripts/mixpanel/check-orphans.ts.)')
-  } else {
-    console.log('\n✓ No orphan events.')
+    // BUG-19: now ENFORCED. Every known lexicon-defined-but-unsurfaced event is
+    // declared in KNOWN_DEFERRED above, so a non-deferred orphan here is a NEW
+    // one — either wire it, add it to KNOWN_DEFERRED, or remove it from the
+    // lexicon. Failing the build keeps the catalog honest.
+    console.error(`\n✗ ${orphans.length} NEW orphan event(s) — defined in the lexicon, no firing site:`)
+    for (const n of orphans) console.error(`  - ${n}`)
+    console.error('\nWire each one, add it to KNOWN_DEFERRED, or drop it from config/events.ts.')
+    process.exit(1)
   }
+  console.log('\n✓ No new orphan events.')
 }
 
 main()

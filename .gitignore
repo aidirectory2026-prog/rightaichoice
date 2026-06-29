@@ -54,6 +54,7 @@ supabase/.temp/
 candidates/.tmp/
 scripts/.tmp-*.ts
 scripts/.gsc-indexation-report.json
+.locks/
 .synthetic-dev-server.log
 
 # Brainstorming visual companion mockups

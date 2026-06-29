@@ -2,23 +2,14 @@
 // insights_cohort and manages saved cohorts (admin_saved_views). Admin-gated.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { checkAdmin } from '@/lib/admin/require-admin'
 
 export const dynamic = 'force-dynamic'
 
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
-  if (!profile?.is_admin) return null
-  return user
-}
-
 // GET — list saved cohorts.
 export async function GET() {
-  if (!(await requireAdmin())) return NextResponse.json({ views: [] }, { status: 403 })
+  if (!(await checkAdmin()).ok) return NextResponse.json({ views: [] }, { status: 403 })
   const db = getAdminClient()
   const { data } = await db
     .from('admin_saved_views')
@@ -30,15 +21,15 @@ export async function GET() {
 
 // POST — { action: 'run' | 'save' | 'delete', ... }
 export async function POST(req: NextRequest) {
-  const user = await requireAdmin()
-  if (!user) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  const gate = await checkAdmin()
+  if (!gate.ok) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   const db = getAdminClient()
   const body = await req.json().catch(() => ({}))
   const action = body.action ?? 'run'
 
   if (action === 'save') {
     if (!body.name || !body.payload) return NextResponse.json({ error: 'name + payload required' }, { status: 400 })
-    await db.from('admin_saved_views').insert({ name: String(body.name).slice(0, 120), kind: 'cohort', payload: body.payload, created_by: user.id } as never)
+    await db.from('admin_saved_views').insert({ name: String(body.name).slice(0, 120), kind: 'cohort', payload: body.payload, created_by: gate.userId } as never)
     return NextResponse.json({ ok: true })
   }
   if (action === 'delete') {

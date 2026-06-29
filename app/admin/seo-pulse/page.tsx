@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { MetricCard } from '@/components/admin/charts'
-import { acceptAction, rejectAction, markExecuted } from './actions'
+import { acceptAction, rejectAction, markExecuted, applyTitleAction } from './actions'
 
 // Phase 9 Day-4 Part 2 (2026-05-29) — Weekly SEO triage review page.
 // Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
@@ -332,6 +332,30 @@ function ActionCard({ action }: { action: ActionRow }) {
           <div className="text-xs text-zinc-600 mt-2">
             dominant query: <em className="text-zinc-400">{m.dominant_query}</em>
           </div>
+        )}
+
+        {/* 2026-06-28 — REAL apply for title rewrites: type the new title and
+            this writes a live title_override (+ recrawl signal) and marks the
+            action executed. (Accept/Reject only change workflow status.) */}
+        {action.action_type === 'title_rewrite' && action.status !== 'executed' && (
+          <form action={applyTitleAction} className="mt-3 flex flex-col gap-1.5 sm:flex-row sm:items-center">
+            <input type="hidden" name="id" value={action.id} />
+            <input
+              type="text"
+              name="title"
+              required
+              minLength={10}
+              maxLength={80}
+              placeholder="New page title — 10–80 chars, end with “ | RightAIChoice”"
+              className="flex-1 rounded border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-emerald-600 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded transition-colors"
+            >
+              Apply title →
+            </button>
+          </form>
         )}
       </div>
 

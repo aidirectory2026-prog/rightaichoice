@@ -5,7 +5,10 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 export const dynamic = 'force-dynamic'
 
 const recommendSchema = z.object({
-  use_case: z.string().trim().min(1, 'Use case is required').max(5000, 'Use case is too long'),
+  // BUG-34: require ≥3 chars — a 1–2 char use_case ("a", "ai") is too vague to
+  // spend a paid recommendation call on. pricing_type/skill_level are already
+  // enum-whitelisted below, so a junk budget/level can't reach the model either.
+  use_case: z.string().trim().min(3, 'Please describe your use case in a bit more detail').max(5000, 'Use case is too long'),
   pricing_type: z.enum(['free', 'freemium', 'paid', 'enterprise']).optional(),
   skill_level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
 })

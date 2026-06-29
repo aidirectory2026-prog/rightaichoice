@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { Key, Plus, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react'
+import { copyToClipboard } from '@/lib/utils/clipboard'
 
 type ApiKey = {
   id: string
@@ -63,11 +64,11 @@ export function ApiKeysPanel({ initialKeys }: { initialKeys: ApiKey[] }) {
     })
   }
 
-  function handleCopy(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
+  async function handleCopy(text: string) {
+    if (await copyToClipboard(text)) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    })
+    }
   }
 
   const activeKeys = keys.filter((k) => k.is_active)

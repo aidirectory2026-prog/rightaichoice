@@ -102,29 +102,39 @@ export function SaveStackButton({
     })
   }
 
-  // Phase 8.g.11.a — derive tool list + estimated total cost from the
-  // stages payload and fire the rich save event.
+  // BUG-36 (Phase 13): derive the tool list + estimated cost from the ACTUAL
+  // stage shape `{ bestPick, alternatives }`. The old code read `stage.tools`,
+  // a field that never exists on this payload (every call site — planner,
+  // saved page, /stacks/[slug] — passes bestPick/alternatives), so it silently
+  // fired stack_saved with EMPTY tool_slugs and $0 cost. tool_slugs now records
+  // every persisted tool (best pick + its alternatives); the headline cost sums
+  // the chosen BEST PICKS only — alternatives are swap options, not extra spend.
   function fireStackSavedRich(payload: SaveStackPayload, stackSlug: string) {
-    const stages = (payload.stages ?? []) as Array<{ tools?: Array<{ slug?: string; id?: string; pricing_details?: Array<{ price?: string | number }> }> }>
-    const tools = stages.flatMap((s) => s.tools ?? [])
-    const tool_slugs = tools.map((t) => t.slug ?? '').filter(Boolean)
-    const tool_ids = tools.map((t) => t.id ?? '').filter(Boolean)
-    // Crude cost extraction — first price seen per tool, summed; tolerates
-    // strings like "$29/mo" by parsing leading number.
-    let total = 0
-    for (const t of tools) {
-      const price = t.pricing_details?.[0]?.price
-      if (typeof price === 'number') total += price
-      else if (typeof price === 'string') {
-        const n = parseFloat(price.replace(/[^\d.]/g, ''))
-        if (!Number.isNaN(n)) total += n
+    type Pick = { slug?: string | null; pricing?: string | number | null }
+    type Stage = { bestPick?: Pick | null; alternatives?: Pick[] | null }
+    const stages = (payload.stages ?? []) as Stage[]
+
+    const parsePrice = (p: unknown): number => {
+      if (typeof p === 'number') return Number.isFinite(p) ? p : 0
+      if (typeof p === 'string') {
+        const n = parseFloat(p.replace(/[^\d.]/g, ''))
+        return Number.isNaN(n) ? 0 : n
       }
+      return 0
     }
+
+    const bestPicks = stages.map((s) => s.bestPick).filter((b): b is Pick => !!b?.slug)
+    const altSlugs = stages
+      .flatMap((s) => (s.alternatives ?? []).map((a) => a?.slug))
+      .filter((s): s is string => !!s)
+    const tool_slugs = [...new Set([...bestPicks.map((b) => b.slug as string), ...altSlugs])]
+    const total = bestPicks.reduce((sum, b) => sum + parsePrice(b.pricing), 0)
+
     analytics.stackSavedRich({
       stack_slug: stackSlug,
       stack_name: payload.title,
       tool_slugs,
-      tool_ids,
+      tool_ids: [], // this payload shape carries names/slugs/pricing, not ids
       total_estimated_cost_usd: Math.round(total),
       source: payload.source === 'curated' ? 'compare_page' : payload.source === 'planner' ? 'plan_flow' : 'manual_builder',
     })

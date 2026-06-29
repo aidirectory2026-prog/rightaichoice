@@ -145,7 +145,7 @@ async function main() {
     volatile[name] = await snap(fn)
     process.stdout.write('.')
   }
-  await vol('insights.getEngagementMetrics.humans', () => insights.getEngagementMetrics(SEL, false))
+  await vol('insights.getEngagementMetrics.humans', () => insights.getEngagementMetrics(baseFilters(SEL, false)))
   await vol('insights.getKpiRows', () => insights.getKpiRows())
   await vol('insights.getVolumeProjection', () => insights.getVolumeProjection())
   await vol('insights.getEventHealth.30', () => insights.getEventHealth(30))

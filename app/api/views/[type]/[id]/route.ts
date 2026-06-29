@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { isNonHumanRequest } from '@/lib/bot-detection'
+import { captureException } from '@/lib/observability/capture'
 
 export const runtime = 'nodejs'
 // Disable caching — every POST must hit the route
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { error: incErr } = await supa.rpc(fn, { p_id: id } as never)
   if (incErr) {
     console.error(`[/api/views] increment failed for ${type}:${id}`, incErr.message)
+    captureException(incErr, { route: 'views', extra: { type, id } })
     return new NextResponse(null, { status: 204 })
   }
 

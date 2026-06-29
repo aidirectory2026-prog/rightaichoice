@@ -17,6 +17,7 @@
  * `plan_signup_modal_shown` is fired by the CALLER when the gate becomes visible.
  */
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Mail } from 'lucide-react'
 import { signInWithOAuthClient } from '@/lib/auth/oauth-client'
@@ -42,6 +43,9 @@ type Props = {
 
 export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPagePath, onSkip }: Props) {
   const router = useRouter()
+  // BUG-27c: once any auth path is initiated, lock the whole option list so a
+  // double-click can't fire two OAuth redirects / two guest sessions.
+  const [busy, setBusy] = useState(false)
 
   function effectivePagePath(): string {
     if (originalPagePath) return originalPagePath
@@ -50,6 +54,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
   }
 
   function handleOAuth(provider: 'google' | 'linkedin') {
+    if (busy) return
+    setBusy(true)
     analytics.planSignupModalOAuthClicked({ provider })
     if (typedGoal.trim()) {
       stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
@@ -68,6 +74,7 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
   // the redirect — GoogleSignInButton creates the session, then auth-provider
   // persists the goal with completed_google on the next page.
   function beforeGoogleSignIn() {
+    setBusy(true)
     analytics.planSignupModalOAuthClicked({ provider: 'google' })
     if (typedGoal.trim()) {
       stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
@@ -82,6 +89,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
   }
 
   function handleEmail() {
+    if (busy) return
+    setBusy(true)
     analytics.signupMethodSelected('email', 'plan_signup_modal')
     if (typedGoal.trim()) {
       stashPendingIntent(typedGoal, sourceSurface, effectivePagePath())
@@ -96,6 +105,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
   }
 
   function handleGuest() {
+    if (busy) return
+    setBusy(true)
     analytics.signupMethodSelected('guest', 'plan_signup_modal')
     if (typedGoal.trim()) {
       void persistPlanIntent({
@@ -109,6 +120,7 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
   }
 
   function handleSkip() {
+    if (busy) return
     analytics.planSignupModalSkipped({ typed_goal_char_count: typedGoal.length })
     if (typedGoal.trim()) {
       void persistPlanIntent({
@@ -128,7 +140,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
         <button
           type="button"
           onClick={() => handleOAuth('linkedin')}
-          className="w-full flex items-center justify-center gap-2.5 rounded-lg bg-[#0A66C2] hover:bg-[#0958A8] px-4 py-3 text-sm font-semibold text-white transition-colors"
+          disabled={busy}
+          className="w-full flex items-center justify-center gap-2.5 rounded-lg bg-[#0A66C2] hover:bg-[#0958A8] px-4 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:pointer-events-none"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -138,7 +151,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
         <button
           type="button"
           onClick={handleEmail}
-          className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition-colors"
+          disabled={busy}
+          className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:pointer-events-none"
         >
           <Mail className="h-4 w-4" aria-hidden />
           Continue with email
@@ -149,7 +163,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
         <button
           type="button"
           onClick={handleGuest}
-          className="group inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+          disabled={busy}
+          className="group inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-60 disabled:pointer-events-none"
         >
           Continue as guest
           <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" aria-hidden />
@@ -157,7 +172,8 @@ export function SignupOptions({ typedGoal, sourceSurface, nextUrl, originalPageP
         <button
           type="button"
           onClick={handleSkip}
-          className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
+          disabled={busy}
+          className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-60 disabled:pointer-events-none"
         >
           Skip — just show my stack
         </button>

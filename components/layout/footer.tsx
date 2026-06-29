@@ -40,6 +40,7 @@ const COMPANY_LINKS: Array<{ href: string; label: string }> = [
 const LEGAL_LINKS: Array<{ href: string; label: string }> = [
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
+  { href: '/methodology#affiliate', label: 'Affiliate disclosure' },
   { href: '/unsubscribe', label: 'Unsubscribe' },
 ]
 

@@ -167,6 +167,15 @@ export async function getSurfaceBreakdown(f: AdminFilters): Promise<SurfaceStat[
     if (surface) q = q.eq(`properties->>${propKey}`, surface)
     return applyFilters(q, f, { dropEvent: true })
   }
+  // BUG-15: clamp display rates to ≤100%. ctr (clicks/impr) and signup_rate
+  // (signups/clicks) can legitimately exceed 100% — e.g. a signup attributed to
+  // a surface whose impression/click prop didn't fire, the optional source_surface,
+  // or an identity change between click and signup. A "140% signup rate" reads as
+  // broken. The raw impressions/clicks/signups counts are still returned so a
+  // genuine anomaly (signups > clicks) stays visible. NB: clicks key on
+  // plan_cta_clicked.surface and signups on plan_signup_modal_completed.source_surface
+  // — each event's OWN correct prop (verified), not a mismatch.
+  const pct = (n: number, d: number) => (d > 0 ? Math.min(100, Math.round((n / d) * 1000) / 10) : 0)
   const out: SurfaceStat[] = []
   for (const surface of surfaces) {
     const [impr, click, sig] = await Promise.all([
@@ -181,9 +190,9 @@ export async function getSurfaceBreakdown(f: AdminFilters): Promise<SurfaceStat[
       surface,
       impressions,
       clicks,
-      ctr: impressions > 0 ? Math.round((clicks / impressions) * 1000) / 10 : 0,
+      ctr: pct(clicks, impressions),
       signups,
-      signup_rate: clicks > 0 ? Math.round((signups / clicks) * 1000) / 10 : 0,
+      signup_rate: pct(signups, clicks),
     })
   }
 
@@ -204,9 +213,9 @@ export async function getSurfaceBreakdown(f: AdminFilters): Promise<SurfaceStat[
     surface: 'ALL (parity check)',
     impressions: totImpr,
     clicks: totClick,
-    ctr: totImpr > 0 ? Math.round((totClick / totImpr) * 1000) / 10 : 0,
+    ctr: pct(totClick, totImpr),
     signups: totSig,
-    signup_rate: totClick > 0 ? Math.round((totSig / totClick) * 1000) / 10 : 0,
+    signup_rate: pct(totSig, totClick),
   })
   return out
 }

@@ -108,7 +108,13 @@ export async function verifyPaypalWebhook(headers: Headers, rawBody: string): Pr
 }
 
 /** Capture an approved order. Returns the capture id when COMPLETED. */
-export async function capturePaypalOrder(orderId: string): Promise<{ captured: boolean; captureId?: string }> {
+// BUG-05: also return the CAPTURED amount + currency so callers can assert the
+// buyer actually paid the price we charged (PayPal returns the captured amount as
+// a decimal string in the gateway currency; we convert to minor units to compare
+// against sentiment_payments.amount_minor). currency is the ISO code (uppercase).
+export async function capturePaypalOrder(
+  orderId: string,
+): Promise<{ captured: boolean; captureId?: string; amountMinor?: number; currency?: string }> {
   const token = await accessToken()
   if (!token) return { captured: false }
   const res = await fetch(`${apiBase()}/v2/checkout/orders/${orderId}/capture`, {
@@ -118,9 +124,16 @@ export async function capturePaypalOrder(orderId: string): Promise<{ captured: b
   if (!res.ok) throw new Error(`PayPal capture ${res.status}: ${(await res.text()).slice(0, 200)}`)
   const json = (await res.json()) as {
     status?: string
-    purchase_units?: { payments?: { captures?: { id?: string; status?: string }[] } }[]
+    purchase_units?: {
+      payments?: {
+        captures?: { id?: string; status?: string; amount?: { currency_code?: string; value?: string } }[]
+      }
+    }[]
   }
   const capture = json.purchase_units?.[0]?.payments?.captures?.[0]
   const captured = json.status === 'COMPLETED' && capture?.status === 'COMPLETED'
-  return { captured: !!captured, captureId: capture?.id }
+  const value = capture?.amount?.value
+  const amountMinor = value != null && value !== '' ? Math.round(parseFloat(value) * 100) : undefined
+  const currency = capture?.amount?.currency_code?.toUpperCase()
+  return { captured: !!captured, captureId: capture?.id, amountMinor, currency }
 }
