@@ -458,3 +458,37 @@ image, and approve, tweak, reschedule, or reject. That's it — the cloud robots
   Commit `03550f5`.
 - _Plain language: the dashboard is easier to run — approve everything at once, see at a glance if a post
   is too long, pause a network, and view what's going out which day._
+
+### 2026-06-30 — R5: documentation (three surfaces)
+- **What:** (1) This build-log + the Round-2 plan section in `Plan_phase-13-social.md`. (2) **Admin
+  Learning Resources** — two new in-app guide pages: **GEO & SEO upgrades** (`/admin/resources/geo-seo`)
+  and **Social media automation** (`/admin/resources/social`), each with plain-English + technical
+  sections, wired into the resources index cards, the Resources sidebar nav, and the footer-nav chain.
+  (3) **automated-pipelines playbook** — new `docs/automated-pipelines/13-social-automation.md`: a full
+  deep-dive documenting **every file**, each platform's process (auth/endpoints/media/limits/cost), the
+  strict SOPs, the research-first principle, the 7-step flow, the data model, the failure matrix, and the
+  CLI — with explicit what/why/how — linked from the playbook README.
+- **Verification:** `tsc` 0; every social file present in the deep-dive's Key Files table (grep
+  cross-check); guide routes typecheck (live render confirms on deploy). Commits `23e1cee`, `c644ef0`, `5133564`.
+- _Plain language: everything we built is now written up in three places — the build log, two new
+  illustrated guide pages inside the admin panel (one for the Google/AI-visibility work, one for the social
+  tool), and the technical playbook that documents every single file and every platform's process._
+
+---
+
+## ✅ Round 2 acceptance (2026-06-30)
+
+| Goal | Status |
+|---|---|
+| Re-audit + fix every real bug | ✅ 7 fixes incl. the critical double-post race (verified live) |
+| Make it smarter (professional-grade) | ✅ best-time scheduling · UTM · global dedup · pause · recycling · A/B |
+| Native media on every platform | ✅ X chunked upload + threads · LinkedIn asset · IG first-comment · Reddit thread |
+| Admin UX | ✅ bulk approve · char limits · pause controls · day timeline |
+| Document in plan folder + build-log | ✅ Round-2 plan section + per-round entries (this log) |
+| Document in admin Learning Resources | ✅ GEO & SEO + Social guide pages, wired into nav/index |
+| Document every file in automated-pipelines | ✅ `13-social-automation.md` (every file + platform + SOP + what/why/how) |
+
+**Verification totals:** `tsc` **0 errors** · **109 unit tests pass** (42 SOP + 35 publishers + 13 insights
++ 19 upgrades) · **live-verified**: atomic-claim double-post guard, publish-cron safe-skip, graphic route
+DB→PNG. Migration **179** applied live. **Safe-by-default unchanged** — every platform OFF until connected.
+Native-media + thread API calls are unit-tested now and get their final real-world test when accounts connect.
