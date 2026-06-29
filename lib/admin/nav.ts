@@ -166,6 +166,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
         filterCapabilities: ['range'],
       },
       { href: '/admin/tier1-review', label: 'Tier-1 Review', filterCapabilities: [] },
+      {
+        href: '/admin/social',
+        label: 'Social',
+        description: 'Phase 13 — cross-platform post queue: approve / edit / reschedule drafts, X budget meter, connection status.',
+        filterCapabilities: [],
+      },
     ],
   },
   {

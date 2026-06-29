@@ -1,0 +1,54 @@
+// Phase 13 Social — shared publisher helpers (pure + thin HTTP).
+
+import type { PublishResult } from './types'
+
+/** 5xx and 429 are worth retrying; 4xx (auth/validation) are not. */
+export function isRetryableStatus(status: number): boolean {
+  return status === 429 || (status >= 500 && status < 600)
+}
+
+export function fail(error: string, retryable = false): PublishResult {
+  return { ok: false, error, retryable }
+}
+
+/** A token is usable if present and not past expiry (with a 60s safety margin). */
+export function tokenUsable(accessToken: string | null, expiresAt: string | null): boolean {
+  if (!accessToken) return false
+  if (!expiresAt) return true
+  return new Date(expiresAt).getTime() - 60_000 > Date.now()
+}
+
+/** Hard final guard: never exceed a platform's char limit at post time. */
+export function clamp(text: string, max: number): string {
+  if (text.length <= max) return text
+  return text.slice(0, max - 1).trimEnd() + '…'
+}
+
+/** POST JSON with an auth header + a bounded timeout. */
+export async function postJson(
+  url: string,
+  body: unknown,
+  headers: Record<string, string>,
+  timeoutMs = 20_000,
+): Promise<{ status: number; json: any; text: string }> {
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+      signal: ac.signal,
+    })
+    const text = await res.text()
+    let json: any = null
+    try {
+      json = text ? JSON.parse(text) : null
+    } catch {
+      /* non-JSON body */
+    }
+    return { status: res.status, json, text }
+  } finally {
+    clearTimeout(timer)
+  }
+}

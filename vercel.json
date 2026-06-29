@@ -80,6 +80,26 @@
     {
       "path": "/api/cron/alert-failed-pipelines",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/social-publish",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/social-draft",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/social-metrics",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/social-approval-digest",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/social-token-refresh",
+      "schedule": "0 3 * * *"
     }
   ]
 }
