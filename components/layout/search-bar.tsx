@@ -154,6 +154,11 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
           onFocus={() => hasResults && setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="What do you want to do? e.g. &quot;edit videos with AI&quot;"
+          aria-label="Search AI tools"
+          role="combobox"
+          aria-expanded={!!(isOpen && hasResults)}
+          aria-controls="search-suggestions"
+          aria-autocomplete="list"
           className={`w-full rounded-xl border border-zinc-700 bg-zinc-900 text-white placeholder:text-zinc-500 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/50 transition-colors ${
             isLarge
               ? 'pl-12 pr-28 py-4 text-base'
@@ -172,7 +177,7 @@ export function SearchBar({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
 
       {/* Autocomplete dropdown */}
       {isOpen && hasResults && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/50 overflow-hidden">
+        <div id="search-suggestions" role="listbox" aria-label="Search suggestions" className="absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/50 overflow-hidden">
           {/* Tool results */}
           {results.tools.length > 0 && (
             <div>

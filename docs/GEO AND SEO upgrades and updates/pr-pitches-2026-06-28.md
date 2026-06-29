@@ -6,12 +6,48 @@
 
 ---
 
-## 1. Ben's Bites — send at: https://news.bensbites.com/  (use their "tip/submit" or contact)
-**Subject:** 99.5% of AI tools verified in 7 days—why most lists are wrong
+## 0. ⭐ Press / source-intro email (reusable — for any press inbox or journalist-request reply, e.g. Connectively/HARO/Qwoted)
+**Subject:** Source + fresh data for AI-tool stories — RightAIChoice (2,000+ tools, continuously verified)
 
-We re-verified 99.5% of our 1,998 tracked AI tools within the last 7 days. Why does that matter? Most AI directories scrape a tool once and let the data rot. Our continuous verification shows how fast the landscape changes—hundreds of tools go dead, change pricing, or add features weekly. Full data in our State of AI Tools report: https://rightaichoice.com/state-of-ai-tools. Would you feature this stat in Ben's Bites? It's a concrete number your readers can cite.
+> Hi there,
+>
+> I run RightAIChoice (rightaichoice.com), an independent decision engine that tracks 2,000+ AI tools — and unusually, we re-verify every tool's data on a continuous cycle (last week, 1,995 of 1,998 tools were re-checked within 7 days). That gives us current, citable data on the AI-tool market most directories can't offer.
+>
+> I'd love to be a resource for any AI-tool stories. A few data points we can back with hard numbers:
+> • 55% of AI tools are free or freemium (full pricing breakdown available)
+> • Average "viability" score of 85/100 across 2,000 tools — i.e. which tools are at risk of shutting down
+> • Category trends (Marketing & SEO is currently the largest category)
+>
+> Public report with the full data: https://rightaichoice.com/state-of-ai-tools
+>
+> Happy to pull custom cuts of the data, share our methodology, or give a quote on deadline. One more possible angle: I'm a non-technical founder who built the entire platform — and its automations — using AI coding tools.
+>
+> Best,
+> Tanmay Verma — Founder, RightAIChoice
+> rightaichoice.com · linkedin.com/in/tanmayverma99
 
-Tanmay, RightAIChoice
+_Reuse this verbatim for any journalist/source request; swap the lead data point to match the query's topic._
+
+---
+
+## 1. Ben's Bites — ⭐ TAILORED REPLY to Ben's welcome email (use THIS — Ben's whole niche is "non-technical people building with AI", a perfect fit)
+**How:** reply directly to Ben's welcome email (keep his thread).
+
+> Hi Ben,
+>
+> Thanks for the welcome — and honestly your angle is exactly why I subscribed. I'm a non-technical founder, and I built my whole product (and all its automations) using AI coding tools. Pretty much the thing you make content about.
+>
+> It's RightAIChoice (rightaichoice.com) — an independent decision engine for choosing AI tools. The part I'm proud of: it isn't a static list. I built automations that re-verify every tool's data on a continuous cycle — last week 1,995 of 1,998 tools (99.8%) were re-checked within 7 days. As far as I can tell, no other directory does that, and I built and run it solo, non-technically, with AI.
+>
+> That freshness throws off some fun, citable data. I just published a free "State of AI Tools" report from it — e.g. 55% of AI tools are free or freemium, and the average "survival/viability" score is 85/100: https://rightaichoice.com/state-of-ai-tools
+>
+> Two things that might suit Bites: 1) The data — happy to pull any cut for your readers. 2) The build story — a non-technical person shipping a 2,000-tool engine + automations entirely with AI tools.
+>
+> Either way, big fan of what you do.
+>
+> Tanmay, RightAIChoice
+
+_(Generic fallback version — only if a reply isn't possible):_ "We re-verified 99.5% of our 1,998 tracked AI tools within the last 7 days. Most AI directories scrape once and let data rot… Full data: https://rightaichoice.com/state-of-ai-tools. Would you feature this stat?" — Tanmay, RightAIChoice
 
 ---
 

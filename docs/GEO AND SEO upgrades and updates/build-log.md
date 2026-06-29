@@ -434,6 +434,15 @@ measurable presence for target prompts; signups & affiliate clicks materially ab
   dated operator doc: **`pr-pitches-2026-06-28.md`** (this folder) — 6 ready-to-send pitches to Ben's
   Bites, TLDR AI, The Rundown (freshness + viability + pricing angles). Awaiting operator send.
   (A couple of DeepSeek calls hit transient "fetch failed" — engine skipped them cleanly; re-run fills gaps.)
+- **Ben's Bites pitch tailored (2026-06-29):** Ben Tossell's whole niche is "non-technical people building
+  with AI" — a perfect fit for our founder. Rewrote the Ben's Bites pitch as a personal reply to his
+  welcome email, leading with the founder/build story (non-technical, built the engine + automations with
+  AI) + the freshness data + report link. Saved as the ⭐ version in `pr-pitches-2026-06-28.md`. Also
+  confirmed `/state-of-ai-tools` + `/llms.txt` are LIVE in production (PR merged 2026-06-29) — pitch links work.
+- **PR send log (running):**
+  - 2026-06-29 — **Press/source-intro email** sent (founder's press contact). `pr_pitches`: reusable press email.
+  - 2026-06-29 — **The Rundown AI** (pricing angle) sent to support@ with a "please forward to editorial" note → `pr_pitches` status `sent`.
+  - _Pending sends:_ Ben's Bites (tailored reply), TLDR AI (reply to welcome email).
 - **GEO report email automation added:** the weekly tracker now emails the founder a summary after each
   run (`lib/geo/geo-report-email.ts` via Resend — cited X/Y, rate, per-prompt table, rank, share-of-voice,
   trend, competitors). Wired into the `track-geo-citations` cron; best-effort (never fails the data run).
