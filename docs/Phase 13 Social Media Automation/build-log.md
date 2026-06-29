@@ -492,3 +492,56 @@ image, and approve, tweak, reschedule, or reject. That's it — the cloud robots
 + 19 upgrades) · **live-verified**: atomic-claim double-post guard, publish-cron safe-skip, graphic route
 DB→PNG. Migration **179** applied live. **Safe-by-default unchanged** — every platform OFF until connected.
 Native-media + thread API calls are unit-tested now and get their final real-world test when accounts connect.
+
+---
+
+## 📖 Round 2 in plain language (for a non-technical read)
+
+This is the whole of Round 2 with zero jargon — what changed and why it matters to you.
+
+### Why we did a Round 2
+The tool was already built and live, but before connecting any accounts we did three things: (1) a careful
+**re-inspection of every file** to catch bugs, (2) **research into how the big professional tools** (Buffer,
+Hootsuite, Sprout, SocialBee) work in 2026 so we could match them, and (3) **wrote everything down** in three
+places. You asked us to "make it smarter and re-verify there are no bugs" — that's exactly what this was.
+
+### The one bug that genuinely mattered
+There was a subtle timing flaw: if two of the cloud "posting robots" ever ran at the same moment, they could
+both grab the same post and publish it **twice**. We fixed it by giving each post a "claim ticket" — only one
+robot can claim a post, the other walks away. We then **proved it on the real database** (ran two at once;
+the second got nothing). The rest were smaller safety tightenings (e.g. LinkedIn now confirms a post really
+went out before marking it done; logins get refreshed more carefully). **None of this changes how you use the
+tool — it's just safer.**
+
+### How it got smarter (the professional-tool features, built in-house for free)
+- **It learns the best time to post.** Once posts go out, it notices which hours get the most engagement and
+  schedules future posts then.
+- **It tags every link** so Google Analytics can show you exactly how much traffic each platform sends —
+  you'll know if LinkedIn or X is actually working.
+- **It won't repeat itself** — the same link won't go out twice on the same platform.
+- **You can pause a platform** with one click (without disconnecting it).
+- **It can recycle your best posts** — taking a top performer from a month ago and rewriting it fresh (never
+  a copy-paste).
+- **It can A/B test** — write two versions of a post to see which lands better.
+
+### Every platform now posts your branded picture
+Before, only Instagram attached the image. Now **X and LinkedIn upload it too**, Instagram drops the link in
+the first comment (since Instagram doesn't allow links in captions), and X & Reddit can post **threads**
+(multi-part posts). Visual posts get far more engagement, so this was the biggest missing piece.
+
+### Your dashboard got easier
+Approve everything at once, see a red warning if a post is too long for a platform, pause/resume any network,
+and view your upcoming posts grouped by day.
+
+### Written down in three places
+1. **This build log + the plan** — the full record.
+2. **Inside the admin panel** (`Resources` → Learning guide) — two new illustrated guide pages: one on the
+   Google/AI-visibility work, one on this social tool. Readable by anyone, no code needed.
+3. **The technical playbook** — a document that lists every single file and every platform's exact process,
+   for any future engineer.
+
+### Still completely safe
+Nothing can post until **you** connect an account and approve a post. Everything above is built and tested;
+the parts that talk to the live platforms (image uploads, threads) get their final real-world test the moment
+each account is connected. That connection step is the only thing left — see the setup guide
+(`operator-setup.md`).
