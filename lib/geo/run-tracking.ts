@@ -28,13 +28,26 @@ export type RunOpts = {
   log?: (msg: string) => void
 }
 
-/** First enabled engine, preferring the free Gemini path, then claude_websearch. */
+// Auto-selected engines for the cron, in preference order. ONLY free/cheap
+// web-grounded engines belong here — a GEO-citation engine MUST search the web
+// and return the URLs it cited (DeepSeek/other plain LLMs can't, so they are
+// not eligible). `claude_websearch` is deliberately NOT auto-selected: it runs
+// on the paid ANTHROPIC_API_KEY and silently falling back to it is what
+// produced the all-errored "credit balance too low" run. It stays available for
+// EXPLICIT `--engine=claude_websearch` use once funded.
+// NOTE: only IMPLEMENTED web-grounded engines may go here. `perplexity`/`openai`
+// are still stubs (run() throws) — adding them before the adapter exists would
+// re-create the all-errored run. So it's gemini-only until a real fallback ships.
+const AUTO_ENGINE_ORDER: EngineId[] = ['gemini']
+
+/** First enabled auto-eligible engine. Throws (→ cron skips cleanly) if none. */
 export function pickDefaultEngine(): EngineId {
-  for (const id of ['gemini', 'claude_websearch'] as EngineId[]) {
+  for (const id of AUTO_ENGINE_ORDER) {
     if (ENGINES[id].isEnabled()) return id
   }
   throw new Error(
-    'no GEO engine enabled — set GEMINI_API_KEY (free, aistudio.google.com) or fund ANTHROPIC_API_KEY',
+    'no auto GEO engine enabled — set GEMINI_API_KEY (free, aistudio.google.com). ' +
+      'Anthropic is no longer an automatic fallback; run it explicitly with --engine=claude_websearch if funded.',
   )
 }
 
