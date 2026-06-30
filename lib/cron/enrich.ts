@@ -267,6 +267,15 @@ function normalizeEnrichmentPayload(p: Record<string, unknown>): void {
   for (const f of stringFields) {
     if (p[f] === null) p[f] = (f === 'limitations' || f === 'our_views') ? null : ''
   }
+  // tagline is z.string().max(120); DeepSeek occasionally returns a longer hook,
+  // and a hard .parse() reject dropped the WHOLE enrichment (returned null →
+  // candidate counted as failed). The array fields above already clamp-not-reject;
+  // do the same for the tagline scalar so one long line never costs us a tool.
+  if (typeof p.tagline === 'string' && p.tagline.length > 120) {
+    const cut = p.tagline.slice(0, 120)
+    const lastSpace = cut.lastIndexOf(' ')
+    p.tagline = (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trim()
+  }
   // Filter null/non-string entries from string arrays + cap to schema-allowed length
   const stringArrayFieldsWithCaps: Array<[string, number, number]> = [
     ['features', 15, 500], ['integrations', 15, 100], ['best_for', 5, 200],

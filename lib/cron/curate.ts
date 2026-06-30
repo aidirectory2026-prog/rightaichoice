@@ -39,6 +39,11 @@ export interface CandidateSignals {
     hardPass: boolean
     /** Phase 10 #56 — at least one probe source responded. */
     probed?: boolean
+    /** 2026-07-01 — the Reddit probe specifically got a real response. Reddit is
+     *  the decisive buzz signal for brand-new tools (HN coverage is sparse); when
+     *  it's unavailable (no OAuth creds → 403 from CI/datacenter IPs) the gate has
+     *  no buzz read and must NOT hard-reject low-HN tools. See curateCandidate. */
+    redditOk?: boolean
   }
 }
 
@@ -149,12 +154,23 @@ export function curateCandidate(input: CurateInput, ctx: CurateContext): CurateD
   // it didn't hardPass, reject. Tools that "appeared on a list" but
   // have zero real-world buzz get filtered here. Skipped when the
   // probe wasn't run (legacy scale-catalog path).
-  // Phase 10 #56 — only HARD-reject on traction when the probe actually ran
-  // (probed !== false). A probe outage/block returns all-zeros which is NOT the
-  // same as "no buzz"; rejecting then would silently drop real tools. When the
-  // probe was inconclusive we fall back to the soft criteria below.
+  //
+  // Phase 10 #56 — only HARD-reject when the probe actually ran. A probe
+  // outage returns all-zeros, which is NOT "no buzz".
+  //
+  // 2026-07-01 fix — the original `probed !== false` check used `probed = hn.ok
+  // || reddit.ok`, so when HN responded but Reddit was unavailable (no OAuth
+  // creds in CI → www.reddit.com 403s datacenter IPs) the gate STILL hard-rejected
+  // every tool with HN < 30 points, because reddit always scored 0. Result: the
+  // ingest job admitted ~0 tools and exited 1 EVERY day (the reported "automations
+  // failing/timing out"). Reddit is the decisive buzz source for brand-new tools,
+  // so the hard gate may only fire when Reddit was ACTUALLY measured (redditOk).
+  // When Reddit is unavailable we fall through to the soft criteria below — which
+  // run in degraded mode (minCriteria 2) and still insert as DRAFT, so the onboard
+  // SOP gate remains the real publish bar. Adding REDDIT_CLIENT_ID/SECRET restores
+  // the full hard gate automatically (redditOk becomes true).
   const t = input.signals?.tractionHard
-  if (t && t.probed !== false && !t.hardPass) {
+  if (t && t.probed !== false && t.redditOk !== false && !t.hardPass) {
     reasons.push(`traction-hard:hn=${t.hnPoints}/reddit=${t.redditThreads}/score=${Math.round(t.score)}`)
   }
 

@@ -15,6 +15,11 @@ interface IngestResult {
   inserted: number
   failed: number
   insertedSlugs: string[]
+  // Traction-probe health for the batch. Lets the caller distinguish a quiet
+  // day (gate legitimately rejected everything, probes healthy) from a real
+  // signal outage (Reddit/HN probe down) — the two must NOT both hard-fail CI.
+  probesTotal: number
+  redditProbesOk: number
 }
 
 // Phase 8 freshness contract (2026-05-16):
@@ -27,7 +32,7 @@ export async function runIngestion(
   batchSize = 25,
 ): Promise<IngestResult> {
   const runId = crypto.randomUUID()
-  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, gated: 0, inserted: 0, failed: 0, insertedSlugs: [] }
+  const result: IngestResult = { runId, discovered: 0, deduplicated: 0, enriched: 0, gated: 0, inserted: 0, failed: 0, insertedSlugs: [], probesTotal: 0, redditProbesOk: 0 }
 
   const curateCtx = await loadCurateContext(supabase)
   // Phase 8 (2026-05-16): raise the soft-criteria minimum from 2 → 3.
@@ -97,6 +102,13 @@ export async function runIngestion(
     batch.map((t) => t.name),
     5,
   )
+  // Record probe health so the batch runner can tell a quiet day apart from a
+  // dead Reddit signal (the failure mode that silently froze ingestion for days).
+  result.probesTotal = tractionMap.size
+  result.redditProbesOk = [...tractionMap.values()].filter((s) => s.reddit.ok).length
+  if (result.probesTotal > 0 && result.redditProbesOk === 0) {
+    console.warn(`[ingest:${runId}] WARNING: Reddit traction probe returned ok=false for all ${result.probesTotal} candidates — signal may be down`)
+  }
 
   for (const tool of batch) {
     try {
@@ -135,6 +147,10 @@ export async function runIngestion(
                   score: traction.score,
                   hardPass: traction.hardPass,
                   probed: traction.probed,
+                  // Whether the Reddit buzz signal was actually measured. When
+                  // false (no creds → CI 403), curate skips the hard-reject so a
+                  // missing Reddit signal doesn't zero out ingestion.
+                  redditOk: traction.reddit.ok,
                 }
               : undefined,
           },

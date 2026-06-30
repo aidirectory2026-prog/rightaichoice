@@ -39,20 +39,28 @@ async function main() {
 
   console.log(`[ingest:batch] done in ${elapsed}s`, JSON.stringify(result, null, 2))
 
-  // Phase 9c hotfix (2026-05-17): only fail when literally zero new
-  // tools inserted AND there were discoverable candidates. The
-  // traction gate intentionally gates most candidates on quiet days,
-  // so high gate rates aren't failures — they're the gate working.
+  // Failure policy — distinguish a genuine outage from a working gate.
   //
-  // Phase 8.d.1 tightening (2026-05-18): the original condition
-  // (discovered>0 && inserted===0) over-triggered when every discovered
-  // candidate was a duplicate of an existing tool — that's the catalog
-  // being comprehensive, not a gate misbehaving. Now we only fail when
-  // there were *unique* candidates (after dedup) that the curate/
-  // traction gates rejected. Pure-dedup days exit 0 with a warning.
-  if (result.deduplicated > 0 && result.inserted === 0) {
-    console.error(`⚠ ${result.deduplicated} unique candidates but 0 inserted — check curate/traction gates`)
+  // History: this used to `exit(1)` whenever (deduplicated>0 && inserted===0).
+  // But 0-inserted is NOT inherently a failure: the curate/traction gate
+  // intentionally rejects candidates that don't clear the quality bar — a high
+  // gate rate is the gate WORKING. Collapsing "gate rejected everything" into a
+  // hard CI failure is exactly what made this workflow go red EVERY day once the
+  // Reddit traction signal went dark (no creds in CI → the gate rejected ~100%)
+  // — the 2026-07-01 "automations failing / timing out" report. The gate itself
+  // is fixed in curate.ts (it no longer hard-rejects when Reddit is unmeasured),
+  // so insertion resumes; this exit policy stops the false alarms regardless.
+  //
+  // A 0-insert day is now a warning, not a failure. We reserve exit(1) for a real
+  // outage: candidates were enriched-able but enrichment produced ZERO output,
+  // which means DeepSeek (or the enrichment path) is down — actionable, page-worthy.
+  const enrichmentDead = result.deduplicated > 0 && result.enriched === 0
+  if (enrichmentDead) {
+    console.error(`✗ ${result.deduplicated} unique candidates but enrichment produced 0 — DeepSeek/enrichment outage`)
     process.exit(1)
+  }
+  if (result.deduplicated > 0 && result.inserted === 0) {
+    console.warn(`ℹ ${result.deduplicated} unique candidates, 0 cleared the quality gate today (reddit probes healthy: ${result.redditProbesOk}/${result.probesTotal}) — gate working, not a failure`)
   }
   if (result.discovered > 0 && result.deduplicated === 0) {
     console.warn(`ℹ ${result.discovered} discovered, all duplicates — catalog is comprehensive today`)
