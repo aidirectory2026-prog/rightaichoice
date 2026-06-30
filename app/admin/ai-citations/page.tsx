@@ -150,7 +150,7 @@ export default async function AiCitationsPage() {
             Automated GEO tracking
             <span className="ml-2 font-normal text-zinc-500">
               {geo.hasData
-                ? `${ENGINE_LABEL[geo.engine ?? ''] ?? geo.engine} · latest run ${fmtDate(geo.snapshotDate)}`
+                ? `${ENGINE_LABEL[geo.engine ?? ''] ?? geo.engine} · ${geo.showingStale ? 'last good run' : 'latest run'} ${fmtDate(geo.snapshotDate)}`
                 : 'no runs yet'}
             </span>
           </h2>
@@ -158,6 +158,19 @@ export default async function AiCitationsPage() {
             Weekly cron asks {geo.total || 'N'} target prompts through a web-searching AI and records whether we’re cited (Phase 13 D3.4).
           </span>
         </div>
+
+        {/* Infra-failure alert: the latest run wholly errored (e.g. API credits)
+            — show it as an engine problem to fix, NOT as a 0% citation result. */}
+        {geo.lastRunFailed && (
+          <div className="mb-4 rounded-md border border-amber-800/60 bg-amber-950/20 p-3 text-xs text-amber-200">
+            <span className="font-semibold">Last automated run didn’t complete.</span>{' '}
+            The {ENGINE_LABEL[geo.lastRunEngine ?? ''] ?? geo.lastRunEngine} run on {fmtDate(geo.lastRunDate)} failed for every prompt
+            {geo.lastRunError ? <> — <span className="text-amber-100">{geo.lastRunError}</span></> : ''}.
+            This is an engine/billing issue, not a citation result. Fix: set <code className="text-amber-100">GEMINI_API_KEY</code> (free engine) for the
+            weekly cron, or top up the Anthropic balance, then re-run <code className="text-amber-100">npm run geo:track</code>.
+            {geo.showingStale && <> Metrics below show the last <span className="font-medium">successful</span> run.</>}
+          </div>
+        )}
 
         {!geo.hasData ? (
           <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-500">

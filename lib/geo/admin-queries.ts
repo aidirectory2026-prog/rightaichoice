@@ -28,6 +28,25 @@ export type GeoPanel = {
   rows: GeoPanelRow[]
   trend: Array<{ date: string; cited: number; total: number; rate: number }>
   topCompetitors: Array<{ domain: string; n: number }>
+  // BUG (admin GEO panel): the LATEST run can be entirely engine-errored (e.g.
+  // Anthropic credit exhausted), which previously rendered as a red "0%
+  // citation rate" + a wall of "err" rows — indistinguishable from "we aren't
+  // being cited". These fields let the page show the failure as an infra alert
+  // and fall back to the last SUCCESSFUL run for the headline metrics.
+  lastRunFailed: boolean
+  lastRunError: string | null
+  lastRunEngine: string | null
+  lastRunDate: string | null
+  showingStale: boolean // true when the displayed run isn't the latest run
+}
+
+/** Pull the human-readable message out of a raw engine/API error string
+ *  (e.g. `400 {"type":"error","error":{"message":"…"}}`). */
+function cleanEngineError(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const m = raw.match(/"message"\s*:\s*"([^"]+)"/)
+  if (m) return m[1]
+  return raw.length > 180 ? `${raw.slice(0, 180)}…` : raw
 }
 
 export async function loadGeoCitationPanel(): Promise<GeoPanel> {
@@ -42,20 +61,47 @@ export async function loadGeoCitationPanel(): Promise<GeoPanel> {
     rows: [],
     trend: [],
     topCompetitors: [],
+    lastRunFailed: false,
+    lastRunError: null,
+    lastRunEngine: null,
+    lastRunDate: null,
+    showingStale: false,
   }
 
-  const { data: latest } = await db
+  // Pull recent snapshots once and bucket by (date, engine) so we can pick the
+  // latest run that actually produced results — not a run that wholly errored.
+  const { data: recentAll } = await db
     .from('geo_citation_snapshots')
-    .select('snapshot_date')
+    .select('snapshot_date, engine, cited, error')
     .order('snapshot_date', { ascending: false })
-    .limit(1)
-  const snapshotDate = (latest as Array<{ snapshot_date: string }> | null)?.[0]?.snapshot_date
-  if (!snapshotDate) return empty
+    .limit(1000)
+  const recentRows = (recentAll ?? []) as Array<{ snapshot_date: string; engine: string | null; cited: boolean; error: string | null }>
+  if (recentRows.length === 0) return empty
+
+  type RunAgg = { date: string; engine: string | null; total: number; cited: number; errored: number; anyError: string | null }
+  const runs = new Map<string, RunAgg>()
+  for (const r of recentRows) {
+    const key = `${r.snapshot_date}|${r.engine ?? ''}`
+    const a = runs.get(key) ?? { date: r.snapshot_date, engine: r.engine, total: 0, cited: 0, errored: 0, anyError: null }
+    a.total++
+    if (r.cited) a.cited++
+    if (r.error) { a.errored++; a.anyError = a.anyError ?? r.error }
+    runs.set(key, a)
+  }
+  const runList = [...runs.values()] // already newest-first from the ordered query
+  const latestRun = runList[0]
+  const lastRunFailed = latestRun.total > 0 && latestRun.errored === latestRun.total
+
+  // The run we DISPLAY metrics for: the most recent run with ≥1 non-errored
+  // prompt. Falls back to the latest run if every recent run failed.
+  const displayRun = runList.find((r) => r.total > r.errored) ?? latestRun
+  const snapshotDate = displayRun.date
 
   const { data: latestRows } = await db
     .from('geo_citation_snapshots')
     .select('engine, prompt_id, prompt_category, cited, retrieved, citation_rank, share_of_voice, competitors, error')
     .eq('snapshot_date', snapshotDate)
+    .eq('engine', displayRun.engine ?? '')
     .order('cited', { ascending: false })
   const rows = (latestRows ?? []) as Array<Record<string, unknown>>
 
@@ -72,23 +118,24 @@ export async function loadGeoCitationPanel(): Promise<GeoPanel> {
 
   const cited = panelRows.filter((r) => r.cited).length
   const total = panelRows.length
-  const engine = (rows[0]?.engine as string) ?? null
+  const engine = (rows[0]?.engine as string) ?? displayRun.engine ?? null
 
-  // Trend across recent snapshot dates (aggregate in JS).
-  const { data: recent } = await db
-    .from('geo_citation_snapshots')
-    .select('snapshot_date, cited')
-    .order('snapshot_date', { ascending: false })
-    .limit(500)
-  const byDate = new Map<string, { cited: number; total: number }>()
-  for (const r of (recent ?? []) as Array<{ snapshot_date: string; cited: boolean }>) {
-    const d = byDate.get(r.snapshot_date) ?? { cited: 0, total: 0 }
+  // Trend across recent snapshot dates (reuse recentRows; exclude wholly-errored
+  // runs so a failed run doesn't read as a 0% citation dip).
+  const byDate = new Map<string, { cited: number; total: number; errored: number }>()
+  for (const r of recentRows) {
+    const d = byDate.get(r.snapshot_date) ?? { cited: 0, total: 0, errored: 0 }
     d.total++
     if (r.cited) d.cited++
+    if (r.error) d.errored++
     byDate.set(r.snapshot_date, d)
   }
   const trend = Array.from(byDate.entries())
-    .map(([date, v]) => ({ date, cited: v.cited, total: v.total, rate: v.total ? Math.round((v.cited / v.total) * 100) : 0 }))
+    .filter(([, v]) => v.total > v.errored) // drop fully-failed runs from the trend
+    .map(([date, v]) => {
+      const real = v.total - v.errored
+      return { date, cited: v.cited, total: real, rate: real ? Math.round((v.cited / real) * 100) : 0 }
+    })
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 8)
 
@@ -100,5 +147,24 @@ export async function loadGeoCitationPanel(): Promise<GeoPanel> {
     .sort((a, b) => b.n - a.n)
     .slice(0, 8)
 
-  return { hasData: true, snapshotDate, engine, total, cited, rate: total ? Math.round((cited / total) * 100) : 0, rows: panelRows, trend, topCompetitors }
+  // Headline rate ignores errored prompts so an engine blip doesn't read as 0%.
+  const erroredInDisplay = panelRows.filter((r) => r.error).length
+  const realTotal = total - erroredInDisplay
+
+  return {
+    hasData: true,
+    snapshotDate,
+    engine,
+    total: realTotal,
+    cited,
+    rate: realTotal ? Math.round((cited / realTotal) * 100) : 0,
+    rows: panelRows,
+    trend,
+    topCompetitors,
+    lastRunFailed,
+    lastRunError: lastRunFailed ? cleanEngineError(latestRun.anyError) : null,
+    lastRunEngine: latestRun.engine,
+    lastRunDate: latestRun.date,
+    showingStale: snapshotDate !== latestRun.date,
+  }
 }
