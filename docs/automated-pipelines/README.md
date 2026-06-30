@@ -397,8 +397,9 @@ cloud. **Full deep-dive (every file, per-platform process, strict SOPs, what/why
 
 | Cron (Vercel) | Schedule | What it does |
 |---|---|---|
+| `social-strategy` | `0 4 * * 1` | weekly: per-platform strategy from last week + insights, goal-aligned → feeds the brain |
 | `social-publish` | `*/15 * * * *` | posts APPROVED+due posts; re-checks SOPs at post time; skips unconnected platforms |
-| `social-draft` | `0 5 * * *` | refills the queue with drafts from live data (X budget-gated) |
+| `social-draft` | `0 5 * * *` | refills the queue with drafts from live data (X budget-gated), steered by the weekly strategy |
 | `social-metrics` | `0 */6 * * *` | appends per-post engagement → `social_metrics` |
 | `social-approval-digest` | `0 9 * * *` | emails+Slacks the founder the pending-approval queue |
 | `social-token-refresh` | `0 3 * * *` | refreshes platform OAuth tokens before expiry |

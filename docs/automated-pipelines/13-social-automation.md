@@ -18,16 +18,26 @@ non-paused account exists** — the publish cron simply skips unconnected platfo
 ## Schedule (Vercel crons — `vercel.json`)
 | Path | Schedule (UTC) | What / why |
 |---|---|---|
-| `/api/cron/social-draft` | `0 5 * * *` | **Research → draft.** Fills the queue from live data; X budget-gated; optional A/B + evergreen recycling. |
+| `/api/cron/social-strategy` | `0 4 * * 1` | **Plan (weekly).** Per platform, crafts this week's strategy from last week + engagement, aligned to the two brand goals → `social_strategies`. Runs before the daily draft so drafting follows it. |
+| `/api/cron/social-draft` | `0 5 * * *` | **Research → draft.** Fills the queue from live data, steered by this week's strategy; X budget-gated; optional A/B + evergreen recycling. |
 | `/api/cron/social-publish` | `*/15 * * * *` | **Publish.** Posts approved+due items; re-checks SOPs at post time; **atomic claim** prevents double-posting; skips unconnected/paused platforms. |
 | `/api/cron/social-metrics` | `0 */6 * * *` | **Measure.** Pulls per-post engagement → `social_metrics` (feeds insights). |
 | `/api/cron/social-approval-digest` | `0 9 * * *` | **Nudge.** Emails (Resend) + Slacks the founder the pending-approval queue. |
 | `/api/cron/social-token-refresh` | `0 3 * * *` | **Keep alive.** Refreshes OAuth tokens before expiry; flags dead refreshes. |
 
-All five wrap `cronRoute()` → bearer-auth (`CRON_SECRET`) + a `pipeline_runs` row, so they appear in
+All six wrap `cronRoute()` → bearer-auth (`CRON_SECRET`) + a `pipeline_runs` row, so they appear in
 `/admin/health` + the `alert-failed-pipelines` alerter like every other pipeline.
 
 ## How it works — step by step
+
+### Step 0 — Plan the week (`lib/social/strategy.ts`, weekly)
+**What:** each Monday, per platform, `buildWeeklyStrategy()` reads **last week's** posted content +
+engagement (via the insights scorer) and DeepSeek crafts a brief — focus, themes, formats, cadence,
+rationale, goal-alignment — explicitly tied to the two brand goals (**strong brand awareness** +
+**more engagement & users**) → stored in `social_strategies`. **Why:** so posting is a goal-directed weekly
+campaign, not just good one-off content. **How:** the brief is injected into Step 2's drafting prompt
+(`strategyHint`), so each draft pursues the plan. No data yet → a sensible "establish presence" starter.
+Shown per platform in the admin with a one-tap **Regenerate**.
 
 ### Step 1 — Research first (`lib/social/sources.ts`)
 **What:** `buildCandidatePool()` turns our LIVE verified catalog into a ranked pool of postable candidates:
@@ -105,7 +115,7 @@ publicly reachable URL; the others fetch the PNG to upload natively).
 9. **Pause switch** — `social_accounts.meta.paused` stops a platform without disconnecting it.
 10. **Failure handling** — retryable vs. hard errors; atomic claim prevents double-posts; everything logs to `pipeline_runs`.
 
-## Data model (migrations 178 + 179)
+## Data model (migrations 178 + 179 + 180)
 - **`social_posts`** — the approval queue + audit log: platform, kind, status
   (`draft→approved→scheduled→posted|failed|cancelled`), copy, hashtags, link_url, graphic_template +
   graphic_data + graphic_size, subreddit, source_refs, content_hash, brain_meta (angle/score/variant/thread/
@@ -115,6 +125,9 @@ publicly reachable URL; the others fetch the PNG to upload natively).
   external_account_id (org URN / ig-user-id / reddit username), status (`connected|disconnected|error`),
   **meta.paused**. RLS, service-role only.
 - **`social_metrics`** — per-post engagement time series (impressions/likes/comments/shares/clicks + raw).
+- **`social_strategies`** — per-platform **weekly strategy** (one row per platform per week): focus, themes,
+  post_types, cadence, rationale, goal_alignment, based_on (last-week summary). Drives the admin strategy
+  card and feeds the drafting brain. RLS, service-role only.
 
 ## Key Files (every file in the system)
 **Core engine (`lib/social/`)**
@@ -126,6 +139,7 @@ publicly reachable URL; the others fetch the PNG to upload natively).
 | `prompts.ts` | DeepSeek system/user prompts (voice + platform rules + JSON contract) |
 | `brain.ts` | orchestration: research→rank→write→gate→best-time→queue; A/B; `recycleTopPerformers` |
 | `insights.ts` | engagement model + `expectedPerformance` (the learning loop) |
+| `strategy.ts` | per-platform **weekly strategy** engine (goal-aligned; from last week + insights; feeds the brain) |
 | `util.ts` | UTM tagging, canonical link, X t.co length |
 | `graphics/templates.tsx` | 5 branded templates × 3 sizes (stat_card, tool_spotlight, news_roundup, comparison, quote) |
 | `graphics/render.tsx` | `next/og` ImageResponse wrapper + font loader |
@@ -146,7 +160,7 @@ publicly reachable URL; the others fetch the PNG to upload natively).
 | File | Role |
 |---|---|
 | `app/api/social/graphic/[id]/route.tsx` | public PNG render route (DB row or `/preview`) |
-| `app/api/cron/social-{draft,publish,metrics,approval-digest,token-refresh}/route.ts` | the 5 crons |
+| `app/api/cron/social-{strategy,draft,publish,metrics,approval-digest,token-refresh}/route.ts` | the 6 crons |
 | `app/admin/social/page.tsx` | approval dashboard (queue, budget meter, connections, timeline) |
 | `app/admin/social/actions.ts` | gated actions: approve/unapprove/cancel/reschedule/edit/bulkApprove/setPlatformPaused |
 | `components/admin/social-post-card.tsx` | per-post card (preview, char-count, actions) |
@@ -155,12 +169,13 @@ publicly reachable URL; the others fetch the PNG to upload natively).
 **CLI, tests, migrations**
 | File | Role |
 |---|---|
-| `scripts/social.ts` | `social:pool` / `:draft` / `:status` / `:preview` / `:insights` |
+| `scripts/social.ts` | `social:pool` / `:draft` / `:status` / `:preview` / `:insights` / `:strategy` |
 | `scripts/social/render-samples.ts` | offline PNG sample renderer |
-| `scripts/social/{sops,publishers,insights,upgrades}.test.ts` | **109 unit tests** |
+| `scripts/social/{sops,publishers,insights,upgrades,strategy}.test.ts` | **123 unit tests** |
 | `scripts/social/{verify-route,verify-publish-cron,verify-claim}.ts` | server-free live harnesses |
 | `supabase/migrations/178_social_automation.sql` | tables + RLS |
 | `supabase/migrations/179_social_round2.sql` | `publish_started_at` claim column + index |
+| `supabase/migrations/180_social_strategies.sql` | `social_strategies` table (weekly plan) |
 
 ## Failure handling & recovery
 | Symptom | Cause | Fix |
@@ -185,7 +200,8 @@ npm run social:draft -- --dry  # plan; drop --dry to write drafts
 npm run social:status          # queue counts
 npm run social:preview -- --id=<uuid>
 npm run social:insights        # performance model
-npm run test:social-sops | test:social-publishers | test:social-insights | test:social-upgrades  # 109 tests
+npm run social:strategy -- --platform=x   # generate + print this week's strategy
+npm run test:social-sops | test:social-publishers | test:social-insights | test:social-upgrades | test:social-strategy  # 123 tests
 npm run social:verify-claim    # proves the atomic claim blocks double-posting (live)
 ```
 

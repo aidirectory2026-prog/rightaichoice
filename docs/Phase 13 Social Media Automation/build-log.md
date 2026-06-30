@@ -545,3 +545,43 @@ Nothing can post until **you** connect an account and approve a post. Everything
 the parts that talk to the live platforms (image uploads, threads) get their final real-world test the moment
 each account is connected. That connection step is the only thing left — see the setup guide
 (`operator-setup.md`).
+
+---
+
+# ROUND 3 — Per-platform views + AI weekly strategy (2026-06-30)
+
+> Organise the admin by channel, and give each channel a **weekly strategy** crafted from last week's
+> results + engagement, aligned to two goals: **strong brand awareness** and **more engagement & users**.
+> The strategy isn't decorative — it **feeds the drafting brain**, so each week's posts pursue that week's
+> plan. Worktree `phase13-social-strategy`. Migration **180** (`social_strategies`).
+
+### 2026-06-30 — per-platform tabs + weekly strategy engine
+- **What / why / how:**
+  - **Strategy engine** (`lib/social/strategy.ts`): each week, per platform, it reads last week's posted
+    content + engagement (via the insights scorer), then DeepSeek crafts a brief — focus, themes, formats,
+    cadence, rationale, goal-alignment — explicitly tied to the two goals. Stored in `social_strategies`
+    (one row per platform per week). No data yet → a sensible goal-aligned "establish presence" starter.
+    Generated weekly by the new `social-strategy` cron (Mon 04:00 UTC, before the daily draft), and
+    regenerable on demand.
+  - **Feeds the brain:** the drafting prompt now carries the week's strategy, so each draft is steered
+    toward the plan (not just shown in the UI).
+  - **Admin** (`/admin/social`): an **Overview** tab + one tab per platform (LinkedIn/X/Instagram/Reddit).
+    Each platform tab shows **this week's strategy card** (focus, theme chips, formats, cadence, why, goal
+    fit, "based on last week", + a **Regenerate** button) and that platform's filtered queue + connection
+    (+ X budget on the X tab).
+  - CLI `social:strategy`; 14 new unit tests.
+- **Verification:** migration 180 live (RLS, unique platform+week_start); `tsc` 0; **123 social tests
+  pass** (added 14 strategy tests); **live strategy generation for X verified** (read Supabase + DeepSeek,
+  wrote a real goal-aligned brief). Commit `81af0b1`.
+- **Mid-task incident (handled):** while recreating the worktree, a failed `cd` left a later `ln -sf` running
+  in the main repo and it overwrote the local `.env.local` with a self-referential symlink. Recovered: found
+  a real copy in another worktree, restored it, then the founder ran `vercel env pull` to repopulate the
+  full authoritative set from Vercel. **No repo/DB/live-site impact** (only the local config file); X stayed
+  connected (its token lives in the DB). Safeguard adopted: never `ln -sf` against the main repo's files;
+  verify the working directory before any file op.
+- _Plain language: the social dashboard now has a tab for each network, and each one shows a short
+  "this week's plan" the AI writes from how last week went — what to post, how often, and why — always
+  pointing at the two goals (get known + get engagement/users). That plan also quietly steers what the AI
+  drafts, so the posts actually follow the strategy. (Separately: a slip of mine wiped your local settings
+  file mid-way — fully recovered from Vercel, nothing on the live site or database was touched.)_
+- **Status: done.** Reddit remains parked (account aging). Remaining = connect the other platforms when ready.
