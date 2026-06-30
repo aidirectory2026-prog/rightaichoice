@@ -1,8 +1,10 @@
-// Phase 13 Social — daily token refresh. Refreshes platform OAuth tokens before
+// Phase 13 Social — HOURLY token refresh. Refreshes platform OAuth tokens before
 // they expire (X / LinkedIn / Reddit refresh_token grant; Instagram long-lived
-// refresh). Tokens that can't be refreshed (no creds / refresh failed) and are
-// already expired are marked status='error' so the admin connection strip shows
-// they need reconnecting.
+// refresh). Runs hourly because X (and Reddit) access tokens live only ~2h — a
+// daily refresh left them dead most of the day; selectExpiring(72h) means X/Reddit
+// refresh every run while long-lived LinkedIn/IG tokens only refresh near expiry.
+// Tokens that can't be refreshed near expiry are marked status='error' so the
+// admin connection strip shows they need reconnecting.
 
 import { cronRoute } from '@/lib/pipelines/with-logging'
 import { getAdminClient } from '@/lib/cron/supabase-admin'

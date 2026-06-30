@@ -103,7 +103,7 @@
     },
     {
       "path": "/api/cron/social-token-refresh",
-      "schedule": "0 3 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }

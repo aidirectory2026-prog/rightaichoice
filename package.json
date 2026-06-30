@@ -88,6 +88,7 @@
     "social:verify-publish-cron": "tsx --env-file=.env.local scripts/social/verify-publish-cron.ts",
     "social:verify-claim": "tsx --env-file=.env.local scripts/social/verify-claim.ts",
     "social:connect-x": "tsx --env-file=.env.local scripts/social/connect-x.ts",
+    "social:verify-keys": "tsx --env-file=.env.local scripts/social/verify-keys.ts",
     "links:check:dry": "tsx --env-file=.env.local scripts/check-link-health.ts --dry",
     "links:check": "tsx --env-file=.env.local scripts/check-link-health.ts",
     "stacks:audit": "tsx --env-file=.env.local scripts/audit-stacks.ts",
