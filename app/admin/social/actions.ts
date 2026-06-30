@@ -171,3 +171,19 @@ export async function setPlatformPaused(platform: Platform, paused: boolean): Pr
   revalidatePath('/admin/social')
   return { ok: true }
 }
+
+/** Mark a post as posted MANUALLY (founder copy-pasted it to the platform by hand).
+ *  Moves it to History so the queue reflects what's done. Optional live URL. */
+export async function markPostedManually(id: string, url?: string): Promise<ActionResult> {
+  const g = await gate()
+  if ('error' in g) return { error: g.error }
+  const now = new Date().toISOString()
+  const upd = (await g.db
+    .from('social_posts')
+    .update({ status: 'posted', posted_at: now, external_url: url?.trim() || null, updated_at: now } as never)
+    .eq('id', id)
+    .in('status', ['draft', 'approved', 'scheduled'])) as { error: { message: string } | null }
+  if (upd.error) return { error: upd.error.message }
+  revalidatePath('/admin/social')
+  return { ok: true }
+}
