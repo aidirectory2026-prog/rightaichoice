@@ -151,12 +151,42 @@ CREATE TABLE ingestion_logs (
 | `lib/cron/scrape.ts` | Web scraping utility |
 | `supabase/migrations/023_ingestion_pipeline.sql` | Creates ingestion_logs table |
 
+## Curation & traction gate
+Before insert, each candidate passes a **soft-criteria gate** (≥`minCriteria` of
+trending/growing/in-use/viability) plus a **traction-hard gate** that probes
+Hacker News + Reddit for real-world buzz (`lib/cron/traction-probe.ts`).
+
+**Reddit dependency (important):** the traction-hard gate's buzz signal comes
+mainly from Reddit. Reddit 403s its tokenless endpoints from datacenter/CI IPs,
+so the probe needs `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` (a free Reddit
+"script" app) to return data.
+- **With creds:** full-strength gate — only tools with genuine HN/Reddit buzz pass.
+- **Without creds (current GH Actions state):** Reddit is unmeasured. As of the
+  2026-07-01 fix the gate **degrades gracefully** — it does NOT hard-reject for
+  "no buzz" when Reddit couldn't be measured; it falls back to the soft criteria
+  (`minCriteria` drops 3→2). Tools still insert as DRAFT, so the onboard SOP lane
+  remains the real publish bar. Adding the creds auto-restores the full gate.
+
+> Regression fixed 2026-07-01: previously the gate used `probed = hn.ok || reddit.ok`,
+> so with HN up but Reddit dead it hard-rejected ~100% of candidates → 0 inserted →
+> the `ingest-tools` job exited 1 EVERY day, turning freshness-batch red and tripping
+> the freshness/draft-stuck SLA alarms.
+
 ## Failure Handling
 - If a discovery source fails, the others still run (`Promise.allSettled`)
 - If website scraping fails, enrichment falls back to the raw description only
-- If Claude returns invalid JSON, the tool is skipped (not inserted)
+- If Claude/DeepSeek returns invalid JSON, the tool is skipped (not inserted); an
+  over-long tagline is truncated to ≤120 chars rather than dropping the tool
 - If DB insert fails, the error is logged with the exact message
 - The pipeline never crashes the entire run — each tool is processed independently
+- **A 0-inserted run is a warning, not a failure** — a working gate rejecting
+  everything on a quiet day is normal. The batch script (`scripts/ingest-tools-batch.ts`)
+  only `exit(1)`s on a real enrichment outage (candidates present but 0 enriched =
+  DeepSeek down), so quiet days no longer page false alarms.
 
 ## What Gets Published
-Every successfully enriched tool is immediately published (`is_published: true`). This means it shows up on the directory, search results, and tool pages within minutes of insertion (after Next.js ISR revalidates).
+New tools insert **unpublished** (`is_published: false`) — Phase 10 #51's
+DRAFT-until-green policy. A tool only goes live once the gated SOP lane
+(`onboard-tools?mode=sop`) confirms every quality gate passes (categories, ≥3
+alternatives, ≥2 editorial compares, ≥9 FAQs, editorial fields, logo). This
+prevents users and Google from seeing half-built pages.
