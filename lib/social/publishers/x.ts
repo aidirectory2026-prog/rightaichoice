@@ -11,7 +11,9 @@ import type { MetricsResult, Publisher, PublishOpts, PublishResult } from './typ
 import { clamp, fail, isRetryableStatus, notPaused, postJson, tokenUsable } from './util'
 
 const TWEETS_URL = 'https://api.twitter.com/2/tweets'
-const MEDIA_URL = 'https://upload.twitter.com/1.1/media/upload.json'
+// v2 media upload — works with the OAuth2 user token (the legacy v1.1 upload host
+// rejects OAuth2 with a 403). Simple upload is fine for our small PNGs (<5MB).
+const MEDIA_URL = 'https://api.twitter.com/2/media/upload'
 const X_MAX = 280
 
 /** Pure: the v2 tweet body. Attach media on the first tweet; reply for thread chaining. */
@@ -37,32 +39,17 @@ async function uploadMedia(token: string, graphicUrl: string): Promise<{ ok: tru
   const img = await fetch(graphicUrl)
   if (!img.ok) return { ok: false, error: `media fetch ${img.status}`, retryable: true }
   const bytes = Buffer.from(await img.arrayBuffer())
-  const auth = { Authorization: `Bearer ${token}` }
 
-  const init = await fetch(MEDIA_URL, {
-    method: 'POST',
-    headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ command: 'INIT', total_bytes: String(bytes.length), media_type: 'image/png', media_category: 'tweet_image' }),
-  })
-  if (!init.ok) return { ok: false, error: `media INIT ${init.status}`, retryable: isRetryableStatus(init.status) }
-  const mediaId = ((await init.json()) as { media_id_string?: string }).media_id_string
-  if (!mediaId) return { ok: false, error: 'media INIT returned no id', retryable: true }
-
+  // v2 simple upload: one multipart POST with the bytes + media_category.
   const fd = new FormData()
-  fd.set('command', 'APPEND')
-  fd.set('media_id', mediaId)
-  fd.set('segment_index', '0')
-  fd.set('media', new Blob([bytes], { type: 'image/png' }))
-  const ap = await fetch(MEDIA_URL, { method: 'POST', headers: auth, body: fd })
-  if (!ap.ok) return { ok: false, error: `media APPEND ${ap.status}`, retryable: isRetryableStatus(ap.status) }
-
-  const fin = await fetch(MEDIA_URL, {
-    method: 'POST',
-    headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ command: 'FINALIZE', media_id: mediaId }),
-  })
-  if (!fin.ok) return { ok: false, error: `media FINALIZE ${fin.status}`, retryable: isRetryableStatus(fin.status) }
-  return { ok: true, mediaId }
+  fd.set('media', new Blob([bytes], { type: 'image/png' }), 'graphic.png')
+  fd.set('media_category', 'tweet_image')
+  const r = await fetch(MEDIA_URL, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+  if (!r.ok) return { ok: false, error: `media v2 ${r.status}: ${(await r.text()).slice(0, 150)}`, retryable: isRetryableStatus(r.status) }
+  const j = (await r.json()) as { data?: { id?: string }; id?: string; media_id_string?: string }
+  const mediaId = j?.data?.id ?? j?.media_id_string ?? j?.id
+  if (!mediaId) return { ok: false, error: 'media v2: no id in response', retryable: true }
+  return { ok: true, mediaId: String(mediaId) }
 }
 
 export const xPublisher: Publisher = {
