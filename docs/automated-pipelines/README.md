@@ -402,7 +402,7 @@ cloud. **Full deep-dive (every file, per-platform process, strict SOPs, what/why
 | `social-draft` | `0 5 * * *` | refills the queue with drafts from live data (X budget-gated), steered by the weekly strategy |
 | `social-metrics` | `0 */6 * * *` | appends per-post engagement → `social_metrics` |
 | `social-approval-digest` | `0 9 * * *` | emails+Slacks the founder the pending-approval queue |
-| `social-token-refresh` | `0 3 * * *` | refreshes platform OAuth tokens before expiry |
+| `social-token-refresh` | `0 * * * *` | refreshes platform OAuth tokens hourly (X/Reddit tokens live ~2h) |
 
 - **Engine:** DeepSeek (copy) + `next/og` (graphics, $0) · **Tables:** `social_posts`, `social_accounts`,
   `social_metrics` (migration 178) · **SOPs:** `lib/social/sops.ts` (X budget cap, Reddit ban-avoidance,

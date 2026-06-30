@@ -23,7 +23,7 @@ non-paused account exists** — the publish cron simply skips unconnected platfo
 | `/api/cron/social-publish` | `*/15 * * * *` | **Publish.** Posts approved+due items; re-checks SOPs at post time; **atomic claim** prevents double-posting; skips unconnected/paused platforms. |
 | `/api/cron/social-metrics` | `0 */6 * * *` | **Measure.** Pulls per-post engagement → `social_metrics` (feeds insights). |
 | `/api/cron/social-approval-digest` | `0 9 * * *` | **Nudge.** Emails (Resend) + Slacks the founder the pending-approval queue. |
-| `/api/cron/social-token-refresh` | `0 3 * * *` | **Keep alive.** Refreshes OAuth tokens before expiry; flags dead refreshes. |
+| `/api/cron/social-token-refresh` | `0 * * * *` | **Keep alive (hourly).** Refreshes OAuth tokens before expiry — hourly because X/Reddit access tokens live only ~2h; flags dead refreshes. |
 
 All six wrap `cronRoute()` → bearer-auth (`CRON_SECRET`) + a `pipeline_runs` row, so they appear in
 `/admin/health` + the `alert-failed-pipelines` alerter like every other pipeline.
