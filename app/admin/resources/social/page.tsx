@@ -52,6 +52,33 @@ export default function SocialGuidePage() {
         </p>
       </Section>
 
+      <Section title="The steps every post goes through" audience="everyone">
+        <p>Whatever the platform, a post travels the same seven steps:</p>
+        <ol className="ml-4 list-decimal space-y-1">
+          <li><strong>Monday — the weekly plan.</strong> Per platform, the AI reviews how last week performed and writes that week&rsquo;s strategy (focus, themes, formats, cadence), aimed at the two goals.</li>
+          <li><strong>Each morning — drafting.</strong> It researches our live tool data, picks what&rsquo;s worth posting, and writes a post tailored to that platform&rsquo;s style — steered by the week&rsquo;s strategy — and chooses a branded image.</li>
+          <li><strong>Safety gate.</strong> Before anything is queued: truth-only (must cite real data), brand-voice (no buzzwords), the platform&rsquo;s format rules, and no-repeat. Anything that fails is dropped, not queued.</li>
+          <li><strong>Smart scheduling.</strong> It books a good time slot — the hour that historically performs best for that platform, respecting the daily cap and minimum spacing (no bursts).</li>
+          <li><strong>You approve.</strong> It appears in that platform&rsquo;s tab as a draft with its image; you approve, edit, reschedule, or reject. <strong>Nothing posts unapproved.</strong></li>
+          <li><strong>Auto-post from the cloud</strong> at the scheduled time (laptop can be off), with the branded image and a tracked link.</li>
+          <li><strong>Measure &amp; learn.</strong> It collects engagement, which feeds next week&rsquo;s plan and the best-time scheduling.</li>
+        </ol>
+      </Section>
+
+      <Section title="Each platform's rules (SOPs)" audience="everyone">
+        <p><strong>LinkedIn</strong> — company-page posts. Professional, data-led, opens with the insight (not &ldquo;Hi everyone&rdquo;); aim for 3&ndash;6 tight sentences (≤3,000 chars), <strong>≤3 hashtags</strong>, a link is fine (LinkedIn shows a preview card), branded image attached. <strong>Max 1/day</strong>, ≥4h apart, weekday business hours (~9am&ndash;12pm US-Eastern). Goal: credibility &amp; awareness.</p>
+        <p><strong>X / Twitter</strong> — <strong>≤280 characters</strong> (a link only counts as 23), ≤2 hashtags, can post threads, image attached. <strong>Paid</strong> — protected by a hard monthly budget cap; the pricier link-posts are blocked first as the cap nears. Up to 3/day, ≥2h apart.</p>
+        <p><strong>Instagram</strong> — <strong>image is mandatory</strong>; caption up to 2,200 chars with curated hashtags. Instagram doesn&rsquo;t allow links in captions, so the link is posted as the <strong>first comment</strong> automatically. Max 1/day.</p>
+        <Callout tone="warn" title="Reddit — the strictest by design">
+          Reddit punishes anything that smells like an ad. So: <strong>value-first, framed as data/discussion</strong>,
+          <strong> no hashtags</strong>, only <strong>approved subreddits</strong>, only from an <strong>aged account</strong>
+          (≥30 days, ≥50 karma), <strong>never the same link across multiple subreddits</strong>, max 1 post per
+          subreddit per week, and <strong>always your manual approval</strong>. These rules are enforced in code and
+          re-checked again right before posting.
+        </Callout>
+        <p className="text-zinc-500">Across all four: truth-only sourcing, the brand-voice gate, no-repeat/dedup, the mandatory approval gate, and an hourly login-refresh so connections never silently expire.</p>
+      </Section>
+
       <Section title="How it works, technically" audience="technical">
         <p>
           Six Vercel crons: <Code>social-strategy</Code> (weekly Mon, crafts each platform&rsquo;s plan →{' '}
