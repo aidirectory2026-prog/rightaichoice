@@ -3,8 +3,31 @@
 // Phase 13 R2 — admin controls: bulk approve + per-platform pause/resume.
 
 import { useState, useTransition } from 'react'
-import { bulkApprove, setPlatformPaused } from '@/app/admin/social/actions'
+import { bulkApprove, setPlatformPaused, regenerateStrategy } from '@/app/admin/social/actions'
 import type { Platform } from '@/lib/social/types'
+
+export function RegenerateStrategyButton({ platform }: { platform: string }) {
+  const [pending, start] = useTransition()
+  const [msg, setMsg] = useState<string | null>(null)
+  return (
+    <span className="flex items-center gap-2">
+      <button
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            setMsg(null)
+            const r = await regenerateStrategy(platform as Platform)
+            setMsg(r.error ?? 'updated')
+          })
+        }
+        className="rounded border border-emerald-800 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-900/30 disabled:opacity-50"
+      >
+        {pending ? 'Generating…' : 'Regenerate'}
+      </button>
+      {msg ? <span className="text-xs text-zinc-500">{msg}</span> : null}
+    </span>
+  )
+}
 
 export function BulkApproveButton({ count }: { count: number }) {
   const [pending, start] = useTransition()

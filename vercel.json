@@ -86,6 +86,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/social-strategy",
+      "schedule": "0 4 * * 1"
+    },
+    {
       "path": "/api/cron/social-draft",
       "schedule": "0 5 * * *"
     },

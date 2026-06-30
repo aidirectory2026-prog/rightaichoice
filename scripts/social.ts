@@ -23,6 +23,7 @@ import { getAdminClient } from '../lib/cron/supabase-admin'
 import { runScriptedPipeline } from '../lib/pipelines/with-logging'
 import { buildCandidatePool, draftPosts } from '../lib/social/brain'
 import { buildPerformanceModel } from '../lib/social/insights'
+import { buildWeeklyStrategy } from '../lib/social/strategy'
 import type { Platform } from '../lib/social/types'
 
 const SITE = process.env.SOCIAL_PUBLIC_ORIGIN ?? 'https://rightaichoice.com'
@@ -30,7 +31,7 @@ const ALL: Platform[] = ['linkedin', 'x', 'instagram', 'reddit']
 
 const argv = process.argv.slice(2)
 const mode =
-  argv.find((a) => ['--pool', '--draft', '--status', '--preview', '--insights'].includes(a)) ?? '--status'
+  argv.find((a) => ['--pool', '--draft', '--status', '--preview', '--insights', '--strategy'].includes(a)) ?? '--status'
 const isDry = argv.includes('--dry') || argv.includes('--dry-run')
 const arg = (k: string) => argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1]
 const platforms = (arg('platforms')?.split(',').map((s) => s.trim()) as Platform[] | undefined)?.filter((p) =>
@@ -137,11 +138,29 @@ async function insights() {
   console.log('\nby platform:\n' + fmt(m.byPlatform))
 }
 
+async function strategy() {
+  const onlyPlatform = arg('platform') as Platform | undefined
+  const targets = onlyPlatform && ALL.includes(onlyPlatform) ? [onlyPlatform] : ALL
+  console.log(`\n=== WEEKLY STRATEGY ${isDry ? '(DRY — not saved)' : ''} ===`)
+  for (const p of targets) {
+    const s = await buildWeeklyStrategy(p, { dryRun: isDry })
+    console.log(`\n• ${p.toUpperCase()} — week of ${s.weekStart}`)
+    console.log(`   focus:   ${s.focus}`)
+    console.log(`   themes:  ${s.themes.join(' · ')}`)
+    console.log(`   formats: ${s.postTypes.join(', ')}`)
+    console.log(`   cadence: ${s.cadence}`)
+    console.log(`   why:     ${s.rationale}`)
+    console.log(`   goalfit: ${s.goalAlignment}`)
+    console.log(`   basedOn: ${s.basedOn.postCount} posts last week (avg engagement ${s.basedOn.avgEngagement})`)
+  }
+}
+
 async function main() {
   if (mode === '--pool') return pool()
   if (mode === '--draft') return draft()
   if (mode === '--preview') return preview()
   if (mode === '--insights') return insights()
+  if (mode === '--strategy') return strategy()
   return status()
 }
 

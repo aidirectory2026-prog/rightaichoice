@@ -40,16 +40,29 @@ export default function SocialGuidePage() {
         </ul>
       </Section>
 
+      <Section title="Per-platform views + this week's strategy" audience="everyone">
+        <p>
+          The dashboard has a tab for each network (plus an Overview). On each platform tab you&rsquo;ll see
+          <strong> this week&rsquo;s strategy</strong> — a short plan the AI writes every Monday from how last
+          week actually performed: the week&rsquo;s focus, content themes, recommended formats, posting cadence,
+          and why — always pointed at the two goals (<strong>brand awareness</strong> and{' '}
+          <strong>more engagement &amp; users</strong>). It&rsquo;s not just a card to read: that plan is fed
+          into the writer, so the week&rsquo;s drafts actually follow the strategy. Hit{' '}
+          <strong>Regenerate</strong> any time to rebuild it from the latest results.
+        </p>
+      </Section>
+
       <Section title="How it works, technically" audience="technical">
         <p>
-          Five Vercel crons: <Code>social-draft</Code> (daily, research→draft), <Code>social-publish</Code>{' '}
-          (every 15 min, posts approved+due with an atomic claim so overlapping runs can&rsquo;t double-post),{' '}
-          <Code>social-metrics</Code> (6-hourly), <Code>social-approval-digest</Code> (daily email), and{' '}
-          <Code>social-token-refresh</Code> (daily). Copy via DeepSeek (~$0.001/draft); graphics via{' '}
-          <Code>next/og</Code> ($0). Platform-agnostic publishers light up only when{' '}
+          Six Vercel crons: <Code>social-strategy</Code> (weekly Mon, crafts each platform&rsquo;s plan →{' '}
+          <Code>social_strategies</Code>, feeds the brain), <Code>social-draft</Code> (daily, research→draft),{' '}
+          <Code>social-publish</Code> (every 15 min, posts approved+due with an atomic claim so overlapping
+          runs can&rsquo;t double-post), <Code>social-metrics</Code> (6-hourly), <Code>social-approval-digest</Code>{' '}
+          (daily email), and <Code>social-token-refresh</Code> (daily). Copy via DeepSeek (~$0.001/draft);
+          graphics via <Code>next/og</Code> ($0). Platform-agnostic publishers light up only when{' '}
           <Code>{'<PLATFORM>_ENABLED=1'}</Code> and a connected, non-paused account exist. The SOP rulebook
-          (<Code>lib/social/sops.ts</Code>) is pure + unit-tested (109 tests). Tables: <Code>social_posts</Code>,{' '}
-          <Code>social_accounts</Code>, <Code>social_metrics</Code>. Full deep-dive:{' '}
+          (<Code>lib/social/sops.ts</Code>) is pure + unit-tested (123 tests). Tables: <Code>social_posts</Code>,{' '}
+          <Code>social_accounts</Code>, <Code>social_metrics</Code>, <Code>social_strategies</Code>. Full deep-dive:{' '}
           <Code>docs/automated-pipelines/13-social-automation.md</Code>.
         </p>
       </Section>
