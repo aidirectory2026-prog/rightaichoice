@@ -46,7 +46,7 @@ export function buildSystemPrompt(platform: Platform): string {
   ].join('\n')
 }
 
-export function buildUserPrompt(candidate: Candidate, recentAngles: string[]): string {
+export function buildUserPrompt(candidate: Candidate, recentAngles: string[], weeklyStrategy?: string): string {
   return [
     `TOPIC: ${candidate.topic}`,
     `KEY FACTS (ground the copy strictly in these):`,
@@ -56,6 +56,7 @@ export function buildUserPrompt(candidate: Candidate, recentAngles: string[]): s
       ? `A branded graphic (${candidate.graphic_template}) accompanies this post — don't restate the whole graphic in the copy; complement it.`
       : `Text-only post (no graphic).`,
     recentAngles.length ? `RECENT ANGLES TO AVOID REPEATING: ${recentAngles.join(' | ')}` : ``,
+    weeklyStrategy ? `THIS WEEK'S STRATEGY (steer the post toward this): ${weeklyStrategy}` : ``,
     ``,
     `Write the post now per the rules.`,
   ]

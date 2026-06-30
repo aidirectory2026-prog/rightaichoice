@@ -16,6 +16,7 @@ import { notPaused } from './publishers/util'
 import { buildSystemPrompt, buildUserPrompt, type BrainCopy } from './prompts'
 import { buildCandidatePool, type Candidate } from './sources'
 import { contentHash, isDuplicateLink, linkDedupKey, preQueueGate, withinXBudget, PLATFORM_SOPS } from './sops'
+import { getCurrentStrategy, strategyHint } from './strategy'
 import { withUtm } from './util'
 import type { DraftProposal, Platform, SocialAccount } from './types'
 
@@ -95,8 +96,14 @@ function parseCopy(raw: string): BrainCopy | null {
 }
 
 /** DeepSeek copy with one retry on transient error / malformed JSON. */
-async function writeCopy(platform: Platform, c: Candidate, recentAngles: string[], variant?: 'A' | 'B'): Promise<BrainCopy | null> {
-  const base = buildUserPrompt(c, recentAngles)
+async function writeCopy(
+  platform: Platform,
+  c: Candidate,
+  recentAngles: string[],
+  variant?: 'A' | 'B',
+  weeklyStrategy?: string,
+): Promise<BrainCopy | null> {
+  const base = buildUserPrompt(c, recentAngles, weeklyStrategy)
   for (let attempt = 1; attempt <= 2; attempt++) {
     const nudge =
       variant === 'B' ? '\n\nWrite a DISTINCT alternative angle/hook from the obvious one (this is the B variant of an A/B test).' : ''
@@ -134,7 +141,12 @@ export async function draftPosts(opts: DraftOptions): Promise<DraftRunResult> {
   // Accounts (for the pause switch). Absent account → not paused (drafting is fine
   // before connection); only an explicitly paused account suppresses drafting.
   const accounts = new Map<Platform, SocialAccount | null>()
-  for (const p of opts.platforms) accounts.set(p, await loadAccount(p))
+  const strategyHints = new Map<Platform, string | undefined>()
+  for (const p of opts.platforms) {
+    accounts.set(p, await loadAccount(p))
+    // This week's strategy steers what the brain drafts for the platform (S2).
+    strategyHints.set(p, strategyHint(await getCurrentStrategy(p)))
+  }
 
   // Insert one draft (a variant). Returns the outcome; mutates seen/linkKeys.
   async function createDraft(
@@ -150,7 +162,7 @@ export async function draftPosts(opts: DraftOptions): Promise<DraftRunResult> {
     // URL in the copy (X wraps it to 23 chars via t.co; xEffectiveLength accounts
     // for that in the SOP gate). Other platforms carry it in the structured field.
     const utmLink = c.link_url ? withUtm(c.link_url, platform) : null
-    const copy = await writeCopy(platform, { ...c, link_url: utmLink }, recent.angles, variant)
+    const copy = await writeCopy(platform, { ...c, link_url: utmLink }, recent.angles, variant, strategyHints.get(platform))
     if (!copy) return { platform, candidateKey: c.key, status: 'error', reasons: ['unparseable model output'], variant }
 
     let finalCopy = copy.copy

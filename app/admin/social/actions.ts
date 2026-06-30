@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { checkAdmin } from '@/lib/admin/require-admin'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { platformFit, voiceGate } from '@/lib/social/sops'
+import { buildWeeklyStrategy } from '@/lib/social/strategy'
 import type { DraftProposal, Platform, PostKind } from '@/lib/social/types'
 
 type ActionResult = { ok?: true; error?: string }
@@ -137,6 +138,19 @@ export async function bulkApprove(platform?: Platform): Promise<ActionResult & {
   if (res.error) return { error: res.error.message }
   revalidatePath('/admin/social')
   return { ok: true, approved: (res.data ?? []).length }
+}
+
+/** Regenerate this week's strategy for a platform on demand (from last week + insights). */
+export async function regenerateStrategy(platform: Platform): Promise<ActionResult> {
+  const g = await gate()
+  if ('error' in g) return { error: g.error }
+  try {
+    await buildWeeklyStrategy(platform)
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'strategy generation failed' }
+  }
+  revalidatePath('/admin/social')
+  return { ok: true }
 }
 
 /** Pause/resume a platform — publishers + the brain skip a paused platform without
