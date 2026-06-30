@@ -4,7 +4,7 @@
 // and one-tap actions. All mutations go through the gated server actions.
 
 import { useState, useTransition } from 'react'
-import { approvePost, unapprovePost, cancelPost, reschedulePost, editPost } from '@/app/admin/social/actions'
+import { approvePost, unapprovePost, cancelPost, reschedulePost, editPost, markPostedManually } from '@/app/admin/social/actions'
 
 export type SocialPostView = {
   id: string
@@ -18,7 +18,7 @@ export type SocialPostView = {
   subreddit: string | null
   scheduled_at: string | null
   source_refs: { title: string; url: string }[]
-  brain_meta: { angle?: string; title?: string | null; score?: number } | null
+  brain_meta: { angle?: string; reason?: string; title?: string | null; score?: number } | null
 }
 
 const PLATFORM_COLOR: Record<string, string> = {
@@ -60,6 +60,25 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
   const [copy, setCopy] = useState(post.copy)
   const [tags, setTags] = useState(post.hashtags.join(' '))
   const [when, setWhen] = useState(toLocalInput(post.scheduled_at))
+  const [copied, setCopied] = useState(false)
+
+  // The exact text to paste into each platform when posting by hand.
+  function composeText(): string {
+    const tags = post.hashtags.join(' ')
+    if (post.platform === 'x') return post.copy // link + hashtags already inline
+    if (post.platform === 'reddit') {
+      const title = (post.brain_meta?.title as string | undefined)?.trim()
+      return [title ? `Title: ${title}` : '', post.copy].filter(Boolean).join('\n\n')
+    }
+    if (post.platform === 'instagram') return [post.copy, tags].filter(Boolean).join('\n\n')
+    return [post.copy, post.link_url ?? '', tags].filter(Boolean).join('\n\n') // linkedin etc.
+  }
+  function doCopy() {
+    navigator.clipboard.writeText(composeText()).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
 
   function run(fn: () => Promise<{ ok?: true; error?: string }>) {
     setError(null)
@@ -83,9 +102,6 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
         <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[post.status] ?? 'text-zinc-400'}`}>
           {post.status}
         </span>
-        {post.brain_meta?.angle ? (
-          <span className="text-xs text-zinc-500">· {post.brain_meta.angle}</span>
-        ) : null}
         {post.subreddit ? <span className="text-xs text-orange-300">· r/{post.subreddit}</span> : null}
       </div>
 
@@ -145,6 +161,11 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
               {post.hashtags.length ? (
                 <p className="mt-1 text-sm text-emerald-400">{post.hashtags.join(' ')}</p>
               ) : null}
+              {post.brain_meta?.reason || post.brain_meta?.angle ? (
+                <p className="mt-2 rounded bg-zinc-900/60 px-2 py-1 text-xs italic text-zinc-400">
+                  Why post this: {post.brain_meta?.reason ?? post.brain_meta?.angle}
+                </p>
+              ) : null}
             </>
           )}
 
@@ -170,9 +191,40 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Manual posting — copy the text, grab the image, post by hand, then mark done */}
       {post.status !== 'posted' && post.status !== 'cancelled' ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-900 pt-3">
+          <button
+            onClick={doCopy}
+            className="rounded border border-emerald-800 px-3 py-1 text-sm font-medium text-emerald-300 hover:bg-emerald-900/30"
+          >
+            {copied ? 'Copied ✓' : 'Copy text'}
+          </button>
+          {post.graphic_template ? (
+            <a
+              href={`/api/social/graphic/${post.id}`}
+              download={`${post.platform}-${post.kind}.png`}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-900"
+            >
+              Download image
+            </a>
+          ) : null}
+          {post.platform === 'instagram' && post.link_url ? (
+            <span className="text-xs text-zinc-500">link → post as first comment</span>
+          ) : null}
+          <button
+            disabled={pending}
+            onClick={() => run(() => markPostedManually(post.id))}
+            className="ml-auto rounded bg-emerald-700 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-50"
+          >
+            Mark as posted ✓
+          </button>
+        </div>
+      ) : null}
+
+      {/* Queue actions (approve / reschedule / reject — used by the auto-publish loop) */}
+      {post.status !== 'posted' && post.status !== 'cancelled' ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           {isDraft ? (
             <button
               disabled={pending}
