@@ -49,13 +49,16 @@ const SEL: RangeSelection = {
 type Combo = {
   name: string
   includeBots: boolean
-  device?: string
-  country?: string
-  source?: string
-  utmSource?: string
+  // Phase 14: any dimension may be a single value or an array (multi-value / IN).
+  device?: string | string[]
+  country?: string | string[]
+  source?: string | string[]
+  utmSource?: string | string[]
   auth?: 'known' | 'anon'
-  event?: string
+  event?: string | string[]
 }
+
+const arr = (v: string | string[] | undefined): string[] => (v == null ? [] : Array.isArray(v) ? v : [v])
 
 type Row = {
   combo: string
@@ -80,15 +83,23 @@ function rawWhere(c: Combo): string {
     `created_at < ${lit(TO_ISO)}`,
   ]
   if (!c.includeBots) parts.push('not bot_likely')
-  if (c.device) {
-    parts.push(c.device === 'unknown' ? 'device_type is null' : `device_type = ${lit(c.device)}`)
+  if (arr(c.device).length) {
+    const ds = arr(c.device)
+    const known = ds.filter((d) => d !== 'unknown')
+    const preds: string[] = []
+    if (known.length) preds.push(`device_type in (${known.map(lit).join(', ')})`)
+    if (ds.includes('unknown')) preds.push('device_type is null')
+    parts.push(preds.length > 1 ? `(${preds.join(' or ')})` : preds[0])
   }
-  if (c.country) parts.push(`country = ${lit(c.country)}`)
-  if (c.source) parts.push(`referrer ilike ${lit('%' + c.source + '%')}`)
-  if (c.utmSource) parts.push(`utm_source = ${lit(c.utmSource)}`)
+  if (arr(c.country).length) parts.push(`country in (${arr(c.country).map(lit).join(', ')})`)
+  if (arr(c.source).length) {
+    const ss = arr(c.source).map((s) => `referrer ilike ${lit('%' + s + '%')}`)
+    parts.push(ss.length > 1 ? `(${ss.join(' or ')})` : ss[0])
+  }
+  if (arr(c.utmSource).length) parts.push(`utm_source in (${arr(c.utmSource).map(lit).join(', ')})`)
   if (c.auth === 'known') parts.push('user_id is not null')
   if (c.auth === 'anon') parts.push('user_id is null')
-  if (c.event) parts.push(`event_name = ${lit(c.event)}`)
+  if (arr(c.event).length) parts.push(`event_name in (${arr(c.event).map(lit).join(', ')})`)
   return parts.join(' and ')
 }
 
@@ -107,12 +118,15 @@ function toAdminFilters(c: Combo): AdminFilters {
 
 function describe(c: Combo): string {
   const parts: string[] = []
-  if (c.device) parts.push(`device=${c.device}`)
-  if (c.country) parts.push(`country=${c.country}`)
-  if (c.source) parts.push(`source=${c.source}`)
-  if (c.utmSource) parts.push(`utm_source=${c.utmSource}`)
+  const show = (k: string, v: string | string[] | undefined) => {
+    if (arr(v).length) parts.push(`${k}=${arr(v).join('|')}`)
+  }
+  show('device', c.device)
+  show('country', c.country)
+  show('source', c.source)
+  show('utm_source', c.utmSource)
   if (c.auth) parts.push(`auth=${c.auth}`)
-  if (c.event) parts.push(`event=${c.event}`)
+  show('event', c.event)
   parts.push(`bots=${c.includeBots ? 'incl' : 'excl'}`)
   return parts.join(' ')
 }
@@ -179,6 +193,13 @@ async function main() {
     { name: 'country+event', includeBots: false, country: topCountry, event: 'page_viewed' },
     { name: '3stack', includeBots: false, device: 'desktop', country: topCountry, auth: 'anon' },
     { name: '3stack+bots', includeBots: true, device: 'desktop', country: topCountry, auth: 'anon' },
+    // Phase 14 — multi-value (array / IN) combos. Equivalence holds even when a
+    // value has 0 rows (RPC array path must equal the hand-written IN clause).
+    { name: 'country[multi]', includeBots: false, country: [topCountry, 'US'] },
+    { name: 'device[real+unknown]', includeBots: false, device: ['desktop', 'unknown'] },
+    { name: 'device[mobile,tablet]', includeBots: false, device: ['mobile', 'tablet'] },
+    { name: 'event[multi]', includeBots: false, event: ['page_viewed', 'tool_page_viewed'] },
+    { name: 'multi+stack', includeBots: false, device: ['desktop', 'mobile'], country: [topCountry, 'US'] },
   ]
 
   const rows: Row[] = []
