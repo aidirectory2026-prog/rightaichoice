@@ -8,7 +8,9 @@ import { fail, isRetryableStatus, notPaused, postJson, tokenUsable } from './uti
 
 const POSTS_URL = 'https://api.linkedin.com/rest/posts'
 const IMAGES_INIT_URL = 'https://api.linkedin.com/rest/images?action=initializeUpload'
-const LINKEDIN_VERSION = process.env.LINKEDIN_API_VERSION ?? '202506'
+// LinkedIn versions monthly; 202506 was sunset. Default to a current version
+// (override via LINKEDIN_API_VERSION as newer ones ship).
+const LINKEDIN_VERSION = process.env.LINKEDIN_API_VERSION ?? '202606'
 
 function orgUrn(account: SocialAccount): string | null {
   return account.external_account_id ?? process.env.LINKEDIN_ORG_URN ?? null
