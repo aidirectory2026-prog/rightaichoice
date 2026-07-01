@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { analytics } from '@/lib/analytics'
+import { isChunkLoadError, attemptChunkReload } from '@/lib/chunk-recovery'
 
 export default function GlobalError({
   error,
@@ -21,6 +22,15 @@ export default function GlobalError({
       error_type: 'react_boundary',
       page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
     })
+    // Phase 14 — if this boundary tripped because a JS chunk failed to load
+    // (deploy version-skew: a tab on an old build requesting chunks the new
+    // deployment no longer serves), reload once to pull the fresh build so the
+    // page self-heals instead of leaving controls dead. Guarded against loops.
+    // Small delay lets the errorEncountered beacon flush before we navigate.
+    if (isChunkLoadError(error.message) || isChunkLoadError(error.name)) {
+      const t = setTimeout(() => attemptChunkReload(), 200)
+      return () => clearTimeout(t)
+    }
   }, [error])
 
   return (
