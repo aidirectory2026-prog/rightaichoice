@@ -53,6 +53,34 @@ function nameMatches(toolName: string, repo: Repo): boolean {
 }
 
 /**
+ * Lean stars-only probe for the ingest traction gate. ONE search call (no issues
+ * fetch) to stay under the 30/min authenticated search rate limit across a batch.
+ * Resolves the repo by strict name match and returns its star count.
+ *
+ * `ok` reflects whether GitHub actually answered: false on a network error or a
+ * rate-limit/5xx (so the gate treats it as "couldn't check", not "no repo").
+ * A 200 with no matching repo is ok:true, stars:0 — a real "no popular repo"
+ * signal (fine for closed-source tools; they lean on the other sources).
+ */
+export async function probeGitHubStars(toolName: string): Promise<{ stars: number; ok: boolean }> {
+  try {
+    const q = encodeURIComponent(`"${toolName}" in:name`)
+    let h = headers()
+    let res = await fetch(`${API}/search/repositories?q=${q}&sort=stars&order=desc&per_page=5`, { headers: h })
+    if (res.status === 401) {
+      h = { 'User-Agent': 'RightAIChoice/1.0 (rightaichoice.com)', Accept: 'application/vnd.github+json' }
+      res = await fetch(`${API}/search/repositories?q=${q}&sort=stars&order=desc&per_page=5`, { headers: h })
+    }
+    if (!res.ok) return { stars: 0, ok: false } // rate-limit / 5xx → couldn't check
+    const search = (await res.json()) as { items?: Repo[] }
+    const repo = (search.items ?? []).find((r) => !r.archived && nameMatches(toolName, r))
+    return { stars: repo?.stargazers_count ?? 0, ok: true }
+  } catch {
+    return { stars: 0, ok: false }
+  }
+}
+
+/**
  * GitHub adoption + issue signals for a tool. Resolves the repo by strict-ish
  * name match (most-starred candidate); returns [] for closed-source tools.
  * Never throws.

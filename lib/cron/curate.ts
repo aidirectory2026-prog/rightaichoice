@@ -34,16 +34,16 @@ export interface CandidateSignals {
    */
   tractionHard?: {
     hnPoints: number
+    githubStars: number
+    phVotes: number
     redditThreads: number
     score: number
     hardPass: boolean
-    /** Phase 10 #56 — at least one probe source responded. */
+    /** 2026-07-01 — at least one RELIABLE source (HN/GitHub/Product Hunt)
+     *  responded. Reddit is a bonus signal and is deliberately excluded, so a
+     *  Reddit outage never authorizes a hard-reject. When false the probe was
+     *  inconclusive and curate must fall through to the soft criteria. */
     probed?: boolean
-    /** 2026-07-01 — the Reddit probe specifically got a real response. Reddit is
-     *  the decisive buzz signal for brand-new tools (HN coverage is sparse); when
-     *  it's unavailable (no OAuth creds → 403 from CI/datacenter IPs) the gate has
-     *  no buzz read and must NOT hard-reject low-HN tools. See curateCandidate. */
-    redditOk?: boolean
   }
 }
 
@@ -150,28 +150,22 @@ export function curateCandidate(input: CurateInput, ctx: CurateContext): CurateD
   if (!input.enriched.description?.trim() || input.enriched.description.length < 120) reasons.push('thin-description')
   if (ctx.existingSlugs.has(slug)) reasons.push('slug-collision')
 
-  // Phase 8 traction-hard gate: if a traction probe was attached AND
-  // it didn't hardPass, reject. Tools that "appeared on a list" but
-  // have zero real-world buzz get filtered here. Skipped when the
-  // probe wasn't run (legacy scale-catalog path).
+  // Traction-hard gate: if a traction probe was attached AND it didn't hardPass,
+  // reject. Tools that "appeared on a list" but have zero real-world adoption get
+  // filtered here. Skipped when the probe wasn't run (legacy scale-catalog path).
   //
-  // Phase 10 #56 — only HARD-reject when the probe actually ran. A probe
-  // outage returns all-zeros, which is NOT "no buzz".
-  //
-  // 2026-07-01 fix — the original `probed !== false` check used `probed = hn.ok
-  // || reddit.ok`, so when HN responded but Reddit was unavailable (no OAuth
-  // creds in CI → www.reddit.com 403s datacenter IPs) the gate STILL hard-rejected
-  // every tool with HN < 30 points, because reddit always scored 0. Result: the
-  // ingest job admitted ~0 tools and exited 1 EVERY day (the reported "automations
-  // failing/timing out"). Reddit is the decisive buzz source for brand-new tools,
-  // so the hard gate may only fire when Reddit was ACTUALLY measured (redditOk).
-  // When Reddit is unavailable we fall through to the soft criteria below — which
-  // run in degraded mode (minCriteria 2) and still insert as DRAFT, so the onboard
-  // SOP gate remains the real publish bar. Adding REDDIT_CLIENT_ID/SECRET restores
-  // the full hard gate automatically (redditOk becomes true).
+  // Only HARD-reject when the probe actually got a read (`probed !== false`).
+  // `probed` is true when at least one RELIABLE source (HN/GitHub/Product Hunt)
+  // responded — the aggregate is an OR-of-many, so a single blocked/flaky source
+  // can't force a false reject (the 2026-07-01 multi-source rework; the earlier
+  // Reddit-only gate froze ingestion for weeks when Reddit went dark). When the
+  // whole probe was inconclusive we fall through to the soft criteria, and every
+  // ingest inserts as a DRAFT so the onboard SOP lane remains the real publish bar.
   const t = input.signals?.tractionHard
-  if (t && t.probed !== false && t.redditOk !== false && !t.hardPass) {
-    reasons.push(`traction-hard:hn=${t.hnPoints}/reddit=${t.redditThreads}/score=${Math.round(t.score)}`)
+  if (t && t.probed !== false && !t.hardPass) {
+    reasons.push(
+      `traction-hard:hn=${t.hnPoints}/gh=${t.githubStars}/ph=${t.phVotes}/reddit=${t.redditThreads}/score=${Math.round(t.score)}`,
+    )
   }
 
   const viabilityProxy = estimateViabilityProxy(input.enriched)
