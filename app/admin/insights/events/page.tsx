@@ -126,8 +126,10 @@ export default async function EventsExplorerPage({
 }) {
   const sp = await searchParams
   const filters = parseAdminFilters(sp)
-  // The global event filter IS the selection (?event=).
-  const selected = filters.event
+  // The global event filter IS the selection (?event=). This drilldown is
+  // single-event by nature, so if a multi-value event filter is present
+  // (?event=a,b) we drill into the first — the rest still narrow other pages.
+  const selected = Array.isArray(filters.event) ? filters.event[0] : filters.event
 
   const propKeys = selected ? schemaPropKeys(selected) : []
   const prop = selected && propKeys.includes(sp.prop ?? '') ? sp.prop! : undefined
