@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort, sortRows } from '@/lib/admin/sort'
 
 // Phase 8.d.5b — full ordered list for one activity-feed type. Linked
 // from Knowledge Room's "view all →" CTA when a panel hits the 20-row cap.
@@ -53,15 +56,20 @@ function ago(iso: string | null | undefined): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
+const ACTIVITY_SORT = { tool: 'name', when: 'when' } as const
+type ActivitySortKey = keyof typeof ACTIVITY_SORT
+
 export default async function ActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; range?: string; from?: string; to?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
   const type: ActivityType = VALID_TYPES.includes(sp.type as ActivityType) ? (sp.type as ActivityType) : 'refreshed'
   const range = sp.range ?? 'today'
   const cutoff = cutoffISO(range, sp.from, sp.to)
+  const q = (sp.q ?? '').trim().toLowerCase()
+  const sort = parseSort<ActivitySortKey>(sp, Object.keys(ACTIVITY_SORT) as ActivitySortKey[], { key: 'when', dir: 'desc' })
   const supabase = await createClient()
 
   let rows: Array<{ slug: string; name: string; when: string; sub?: string }> = []
@@ -107,6 +115,10 @@ export default async function ActivityPage({
     }))
   }
 
+  // Phase 14 — in-memory name search + column sort over the fetched window.
+  if (q) rows = rows.filter((r) => r.name.toLowerCase().includes(q) || r.slug.toLowerCase().includes(q))
+  rows = sortRows(rows, ACTIVITY_SORT[sort.key], sort.dir)
+
   return (
     <div>
       <PageHeader>
@@ -120,9 +132,7 @@ export default async function ActivityPage({
         {VALID_TYPES.map((t) => {
           const qs = new URLSearchParams()
           qs.set('type', t)
-          if (sp.range) qs.set('range', sp.range)
-          if (sp.from) qs.set('from', sp.from)
-          if (sp.to) qs.set('to', sp.to)
+          for (const k of ['range', 'from', 'to', 'q', 'sort', 'dir'] as const) if (sp[k]) qs.set(k, sp[k]!)
           return (
             <Link
               key={t}
@@ -139,18 +149,21 @@ export default async function ActivityPage({
         })}
       </div>
 
-      <p className="mb-4 flex items-center gap-1 text-xs text-zinc-500">
-        <span className="text-zinc-300 font-medium">{TYPE_LABEL[type]}</span>
-        <span>· {rows.length.toLocaleString()} entries · since {new Date(cutoff).toISOString().slice(0, 19)} UTC</span>
-        <MetricInfo docKey="kr_activity_feed" align="left" />
-      </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="flex items-center gap-1 text-xs text-zinc-500">
+          <span className="text-zinc-300 font-medium">{TYPE_LABEL[type]}</span>
+          <span>· {rows.length.toLocaleString()} entries · since {new Date(cutoff).toISOString().slice(0, 19)} UTC</span>
+          <MetricInfo docKey="kr_activity_feed" align="left" />
+        </p>
+        <SearchInput param="q" placeholder="Search tool…" />
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="w-full text-sm">
           <thead className="bg-zinc-900/60 text-xs text-zinc-400">
             <tr>
-              <th className="text-left px-3 py-2 font-medium">Tool</th>
-              <th className="text-right px-3 py-2 font-medium w-32">When</th>
+              <th className="text-left px-3 py-2 font-medium"><SortableHeader label="Tool" sortKey="tool" firstDir="asc" /></th>
+              <th className="text-right px-3 py-2 font-medium w-32"><SortableHeader label="When" sortKey="when" align="right" /></th>
             </tr>
           </thead>
           <tbody>

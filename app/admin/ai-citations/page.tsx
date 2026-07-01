@@ -14,6 +14,10 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { MultiSelectFilter } from '@/components/admin/multi-select-filter'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort } from '@/lib/admin/sort'
 import { addCitation, deleteCitation } from './actions'
 import { loadGeoCitationPanel } from '@/lib/geo/admin-queries'
 
@@ -44,22 +48,55 @@ const ENGINE_LABEL: Record<string, string> = {
   other: 'Other',
 }
 const ENGINE_OPTIONS = Object.keys(ENGINE_LABEL)
+const ENGINE_FILTER_OPTIONS = ENGINE_OPTIONS.map((e) => ({ value: e, label: ENGINE_LABEL[e] }))
+
+// Sort key → ai_citations column (recent log table).
+const CITATION_SORT = {
+  date: 'checked_on',
+  engine: 'engine',
+  query: 'query',
+  pos: 'position_in_answer',
+  cited: 'cited',
+} as const
+type CitationSortKey = keyof typeof CITATION_SORT
+
+function listParam(v: string | undefined): string[] {
+  return (v ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+}
 
 function fmtDate(d: string | null): string {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
 }
 
-export default async function AiCitationsPage() {
+export default async function AiCitationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
   const db = getAdminClient()
 
-  // Recent rows for display + rolling-window KPIs (manual log → low volume).
-  const { data } = await db
+  // Filters + sort for the recent log (KPIs + GEO panel below are unaffected).
+  const engineSel = listParam(sp.engine).filter((e) => ENGINE_OPTIONS.includes(e))
+  const citedSel = sp.cited === 'yes' ? true : sp.cited === 'no' ? false : undefined
+  const brandSel = sp.brand === 'yes' ? true : sp.brand === 'no' ? false : undefined
+  const q = (sp.q ?? '').trim().replace(/[^a-zA-Z0-9 ._-]/g, '').slice(0, 60)
+  const sort = parseSort<CitationSortKey>(sp, Object.keys(CITATION_SORT) as CitationSortKey[], { key: 'date', dir: 'desc' })
+  const logFiltered = engineSel.length > 0 || citedSel !== undefined || brandSel !== undefined || !!q
+
+  // Recent rows for display (manual log → low volume, cap 500), filtered+sorted.
+  let logQuery = db
     .from('ai_citations')
     .select('id, checked_on, engine, query, cited, cited_url, position_in_answer, brand_mention, notes, created_at')
-    .order('checked_on', { ascending: false })
+    .order(CITATION_SORT[sort.key], { ascending: sort.dir === 'asc', nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(500)
+  if (engineSel.length) logQuery = logQuery.in('engine', engineSel)
+  if (citedSel !== undefined) logQuery = logQuery.eq('cited', citedSel)
+  if (brandSel !== undefined) logQuery = logQuery.eq('brand_mention', brandSel)
+  if (q) logQuery = logQuery.ilike('query', `%${q}%`)
+  const { data } = await logQuery
   const rows = ((data ?? []) as Citation[])
 
   // All-time logged count (cheap exact count, no row transfer).
@@ -317,22 +354,31 @@ export default async function AiCitationsPage() {
       {/* Recent entries */}
       <section>
         <h2 className="mb-2 text-sm font-semibold text-zinc-200">
-          Recent <span className="font-normal text-zinc-500">({rows.length})</span>
+          Recent <span className="font-normal text-zinc-500">({rows.length}{logFiltered ? ' filtered' : ''})</span>
         </h2>
+        {/* Phase 14 — filters for the log */}
+        <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <SearchInput param="q" placeholder="Search query…" />
+          <MultiSelectFilter label="Engine" param="engine" options={ENGINE_FILTER_OPTIONS} />
+          <MultiSelectFilter label="Cited" param="cited" options={[{ value: 'yes', label: 'Cited' }, { value: 'no', label: 'Not cited' }]} />
+          <MultiSelectFilter label="Brand" param="brand" options={[{ value: 'yes', label: 'Mention' }, { value: 'no', label: 'No mention' }]} />
+        </div>
         {rows.length === 0 ? (
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 text-sm text-zinc-500">
-            No citations logged yet. Run a few queries through the answer engines and log the hits above.
+            {logFiltered
+              ? 'No citations match these filters — try clearing some.'
+              : 'No citations logged yet. Run a few queries through the answer engines and log the hits above.'}
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full text-sm">
               <thead className="bg-zinc-900/60 text-[11px] uppercase tracking-wider text-zinc-500">
                 <tr>
-                  <th className="px-3 py-2 text-left">Date</th>
-                  <th className="px-3 py-2 text-left">Engine</th>
-                  <th className="px-3 py-2 text-left">Query</th>
+                  <th className="px-3 py-2 text-left"><SortableHeader label="Date" sortKey="date" /></th>
+                  <th className="px-3 py-2 text-left"><SortableHeader label="Engine" sortKey="engine" firstDir="asc" /></th>
+                  <th className="px-3 py-2 text-left"><SortableHeader label="Query" sortKey="query" firstDir="asc" /></th>
                   <th className="px-3 py-2 text-left">Cited URL</th>
-                  <th className="px-3 py-2 text-right">Pos</th>
+                  <th className="px-3 py-2 text-right"><SortableHeader label="Pos" sortKey="pos" align="right" /></th>
                   <th className="px-3 py-2 text-left">Notes</th>
                   <th className="px-3 py-2"></th>
                 </tr>
