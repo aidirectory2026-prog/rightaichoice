@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, BarChart3, ChevronLeft, Filter, Globe2, Layers, Monitor, Users, Wrench } from 'lucide-react'
+import { Activity, BarChart3, ChevronLeft, Compass, Filter, Globe2, Layers, Monitor, Users, Wrench } from 'lucide-react'
 import { LiveTickerBadge } from './_ui/live-ticker-badge'
 
 export const metadata = { title: 'Insights — Admin' }
@@ -19,6 +19,8 @@ const TABS = [
   // save it, run it. This is the "user-by-user / cohort" power the founder
   // said was missing — it existed only in the left sidebar before.
   { href: '/admin/insights/cohorts', label: 'Cohorts', icon: Layers },
+  // Phase 14 Wave 3 — session-level breakdowns + cross-tab pivot (mig 182).
+  { href: '/admin/insights/explore', label: 'Explore', icon: Compass },
 ] as const
 
 export default function InsightsLayout({ children }: { children: React.ReactNode }) {
