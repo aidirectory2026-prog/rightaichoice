@@ -1,17 +1,17 @@
 'use client'
 
-// Phase 10.4.7 (2026-06-12) — global smart filter bar.
+// Phase 10.4.7 → Phase 14 — global smart filter bar (now multi-value).
 //
-// URL-state only (shareable/bookmarkable): every control reads from and
-// writes to searchParams via router.replace, so the server page re-renders
-// with the new filters and back/forward navigation works. Parsing +
-// sanitization live in lib/admin/filters.ts (parseAdminFilters); the bar
-// never interprets values itself.
+// URL-state only (shareable/bookmarkable): every control reads from and writes
+// to searchParams via router.replace, so the server page re-renders with the new
+// filters and back/forward works. Parsing + sanitization live in
+// lib/admin/filters.ts (parseAdminFilters); the bar never interprets values.
 //
-// Composition: the proven RangePicker is REUSED as-is; this bar adds the
-// bots toggle + a collapsible "Filters" disclosure with the optional
-// dimension filters (device / country / auth / event / source / utm_source)
-// and active-filter chips with one-click clear.
+// Phase 14: dimension filters are MULTI-VALUE — each optional param holds a
+// comma list (e.g. ?country=IN,US&device=mobile,tablet). Device is a pill group;
+// country is an "add" dropdown; event/source/utm add on Enter/blur. Every
+// selected value shows as a removable chip. The shared SQL predicate (mig 181)
+// treats a comma list as IN/OR. RangePicker + bots toggle are unchanged.
 
 import { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
@@ -49,29 +49,51 @@ export function FilterBar({
   const pathname = usePathname()
   const params = useSearchParams()
   const [open, setOpen] = useState(
-    // Discoverability (Phase 14): the dimension filters (geo / device / auth /
-    // event / source / utm) used to hide behind a collapsed disclosure, so
-    // "I can't filter by geo" was really "I couldn't find it". Default OPEN
-    // whenever the page offers dimension filters, and always when a
-    // shared/bookmarked URL already carries filters. The toggle still lets the
-    // user collapse it.
-    OPTIONAL_FILTER_PARAMS.some((k) => !!params.get(k)) ||
-      countries.length > 0 ||
-      eventNames.length > 0,
+    // Discoverability: default OPEN when the page offers dimension filters (else
+    // "I can't filter by geo" was really "I couldn't find the collapsed panel").
+    OPTIONAL_FILTER_PARAMS.some((k) => !!params.get(k)) || countries.length > 0 || eventNames.length > 0,
   )
-  const [sourceDraft, setSourceDraft] = useState(params.get('source') ?? '')
-  const [utmDraft, setUtmDraft] = useState(params.get('utm_source') ?? '')
-  const [eventDraft, setEventDraft] = useState(params.get('event') ?? '')
+  const [sourceDraft, setSourceDraft] = useState('')
+  const [utmDraft, setUtmDraft] = useState('')
+  const [eventDraft, setEventDraft] = useState('')
 
   const includeBots = params.get('bots') === '1' || params.get('include_bots') === '1'
-  const active = OPTIONAL_FILTER_PARAMS.filter((k) => !!params.get(k))
+  // total selected values across all optional dimensions (for the badge)
+  const activeCount = OPTIONAL_FILTER_PARAMS.reduce((n, k) => n + listOf(k).length, 0)
 
+  /** Current comma-list values for an optional param. */
+  function listOf(key: string): string[] {
+    return (params.get(key) ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  }
+
+  function navigate(sp: URLSearchParams) {
+    const qs = sp.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname)
+  }
+
+  /** Replace a param with a value list (comma-joined); empty → delete. */
+  function setList(key: string, values: string[]) {
+    const sp = new URLSearchParams(params.toString())
+    const uniq = [...new Set(values.map((v) => v.trim()).filter(Boolean))]
+    if (uniq.length) sp.set(key, uniq.join(','))
+    else sp.delete(key)
+    navigate(sp)
+  }
+  const addValue = (key: string, v: string) => {
+    const cur = listOf(key)
+    if (v && !cur.includes(v)) setList(key, [...cur, v])
+  }
+  const removeValue = (key: string, v: string) => setList(key, listOf(key).filter((x) => x !== v))
+
+  /** Single-value set (auth). */
   function setParam(key: string, value: string | null) {
     const sp = new URLSearchParams(params.toString())
     if (value) sp.set(key, value)
     else sp.delete(key)
-    const qs = sp.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname)
+    navigate(sp)
   }
 
   function clearAll() {
@@ -80,8 +102,7 @@ export function FilterBar({
     setSourceDraft('')
     setUtmDraft('')
     setEventDraft('')
-    const qs = sp.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname)
+    navigate(sp)
   }
 
   function toggleBots() {
@@ -89,9 +110,10 @@ export function FilterBar({
     sp.delete('include_bots') // migrate the legacy param on first toggle
     if (includeBots) sp.delete('bots')
     else sp.set('bots', '1')
-    const qs = sp.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname)
+    navigate(sp)
   }
+
+  const deviceSel = listOf('device')
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -100,9 +122,7 @@ export function FilterBar({
           type="button"
           onClick={toggleBots}
           className={`flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-medium border transition-colors ${
-            includeBots
-              ? 'bg-amber-950/40 text-amber-300 border-amber-800'
-              : 'text-zinc-400 hover:text-zinc-200 border-zinc-800'
+            includeBots ? 'bg-amber-950/40 text-amber-300 border-amber-800' : 'text-zinc-400 hover:text-zinc-200 border-zinc-800'
           }`}
         >
           <Bot className="h-3 w-3" />
@@ -112,7 +132,7 @@ export function FilterBar({
           type="button"
           onClick={() => setOpen((v) => !v)}
           className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium border transition-colors ${
-            active.length > 0
+            activeCount > 0
               ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800'
               : open
                 ? 'text-zinc-200 border-zinc-700 bg-zinc-900'
@@ -122,35 +142,31 @@ export function FilterBar({
         >
           <SlidersHorizontal className="h-3 w-3" />
           Filters
-          {active.length > 0 && (
-            <span className="rounded-full bg-emerald-700 px-1.5 text-[10px] font-semibold text-white">
-              {active.length}
-            </span>
+          {activeCount > 0 && (
+            <span className="rounded-full bg-emerald-700 px-1.5 text-[10px] font-semibold text-white">{activeCount}</span>
           )}
         </button>
         <RangePicker active={activeRange} />
       </div>
 
-      {active.length > 0 && (
+      {/* Active-value chips — one per selected value, removable. */}
+      {activeCount > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
-          {active.map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => {
-                if (k === 'source') setSourceDraft('')
-                if (k === 'utm_source') setUtmDraft('')
-                if (k === 'event') setEventDraft('')
-                setParam(k, null)
-              }}
-              className="group flex items-center gap-1 rounded-full border border-emerald-800/60 bg-emerald-950/30 px-2 py-0.5 text-[10px] text-emerald-300 hover:border-emerald-600"
-              title={`Clear ${PARAM_LABELS[k]}`}
-            >
-              <span className="text-emerald-500/80">{PARAM_LABELS[k]}:</span>
-              <span className="font-medium">{params.get(k)}</span>
-              <X className="h-2.5 w-2.5 text-emerald-500 group-hover:text-emerald-200" />
-            </button>
-          ))}
+          {OPTIONAL_FILTER_PARAMS.flatMap((k) =>
+            listOf(k).map((v) => (
+              <button
+                key={`${k}:${v}`}
+                type="button"
+                onClick={() => removeValue(k, v)}
+                className="group flex items-center gap-1 rounded-full border border-emerald-800/60 bg-emerald-950/30 px-2 py-0.5 text-[10px] text-emerald-300 hover:border-emerald-600"
+                title={`Remove ${PARAM_LABELS[k]}: ${v}`}
+              >
+                <span className="text-emerald-500/80">{PARAM_LABELS[k]}:</span>
+                <span className="font-medium">{v}</span>
+                <X className="h-2.5 w-2.5 text-emerald-500 group-hover:text-emerald-200" />
+              </button>
+            )),
+          )}
           <button
             type="button"
             onClick={clearAll}
@@ -162,35 +178,52 @@ export function FilterBar({
       )}
 
       {open && (
-        <div className="flex items-center gap-2 flex-wrap justify-end rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
-            Device
-            <select
-              value={params.get('device') ?? ''}
-              onChange={(e) => setParam('device', e.target.value || null)}
-              className={selectCls}
-            >
-              <option value="">All</option>
-              {DEVICE_OPTIONS.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-          </label>
+        <div className="flex items-center gap-3 flex-wrap justify-end rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+          {/* Device — multi-select pills (4 options). */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500">Device</span>
+            <div className="flex gap-1">
+              {DEVICE_OPTIONS.map((d) => {
+                const on = deviceSel.includes(d)
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => (on ? removeValue('device', d) : addValue('device', d))}
+                    aria-pressed={on}
+                    className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                      on
+                        ? 'border-emerald-700 bg-emerald-950/50 text-emerald-300'
+                        : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
+          {/* Country — pick to ADD; selected shown as chips above. */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             Country
             <select
-              value={params.get('country') ?? ''}
-              onChange={(e) => setParam('country', e.target.value || null)}
+              value=""
+              onChange={(e) => {
+                if (e.target.value) addValue('country', e.target.value)
+              }}
               className={selectCls}
             >
-              <option value="">All</option>
-              {countries.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+              <option value="">add…</option>
+              {countries
+                .filter((c) => !listOf('country').includes(c))
+                .map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
             </select>
           </label>
 
+          {/* Auth — single value. */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             Auth
             <select
@@ -204,6 +237,7 @@ export function FilterBar({
             </select>
           </label>
 
+          {/* Event — type/pick to ADD (multi). */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             Event
             <input
@@ -211,15 +245,18 @@ export function FilterBar({
               value={eventDraft}
               onChange={(e) => setEventDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') setParam('event', eventDraft.trim() || null)
-              }}
-              onBlur={() => {
-                // Datalist picks commit on blur too (mouse selection).
-                if (eventDraft.trim() !== (params.get('event') ?? '')) {
-                  setParam('event', eventDraft.trim() || null)
+                if (e.key === 'Enter' && eventDraft.trim()) {
+                  addValue('event', eventDraft.trim())
+                  setEventDraft('')
                 }
               }}
-              placeholder="any event"
+              onBlur={() => {
+                if (eventDraft.trim()) {
+                  addValue('event', eventDraft.trim())
+                  setEventDraft('')
+                }
+              }}
+              placeholder="add event ⏎"
               className={inputCls}
             />
             <datalist id="filter-bar-events">
@@ -229,20 +266,22 @@ export function FilterBar({
             </datalist>
           </label>
 
+          {/* Source — add on Enter/blur (multi). */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             Source
             <input
               value={sourceDraft}
               onChange={(e) => setSourceDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') setParam('source', sourceDraft.trim() || null)
+                if (e.key === 'Enter' && sourceDraft.trim()) {
+                  addValue('source', sourceDraft.trim())
+                  setSourceDraft('')
+                }
               }}
               onBlur={() => {
-                // Commit on click-away too — not only on Enter (Phase 14 fix:
-                // typed values were silently dropped when the user clicked
-                // elsewhere without pressing Enter).
-                if (sourceDraft.trim() !== (params.get('source') ?? '')) {
-                  setParam('source', sourceDraft.trim() || null)
+                if (sourceDraft.trim()) {
+                  addValue('source', sourceDraft.trim())
+                  setSourceDraft('')
                 }
               }}
               placeholder="referrer host ⏎"
@@ -250,18 +289,22 @@ export function FilterBar({
             />
           </label>
 
+          {/* UTM source — add on Enter/blur (multi). */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             UTM src
             <input
               value={utmDraft}
               onChange={(e) => setUtmDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') setParam('utm_source', utmDraft.trim() || null)
+                if (e.key === 'Enter' && utmDraft.trim()) {
+                  addValue('utm_source', utmDraft.trim())
+                  setUtmDraft('')
+                }
               }}
               onBlur={() => {
-                // Commit on click-away too — not only on Enter (Phase 14 fix).
-                if (utmDraft.trim() !== (params.get('utm_source') ?? '')) {
-                  setParam('utm_source', utmDraft.trim() || null)
+                if (utmDraft.trim()) {
+                  addValue('utm_source', utmDraft.trim())
+                  setUtmDraft('')
                 }
               }}
               placeholder="utm_source ⏎"
