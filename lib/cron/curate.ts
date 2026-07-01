@@ -19,12 +19,14 @@ export interface CandidateSignals {
   fundingMentioned?: boolean
   /** Traffic trend from Similarweb or similar: "up" | "flat" | "down" | null. */
   trafficTrend?: 'up' | 'flat' | 'down' | null
-  /** Any review-count / rating / user-count / Reddit-thread signal of active usage. */
+  /** Any review-count / rating / user-count / Reddit-thread / PH-vote signal of active usage. */
   usageSignal?: {
     reviewCount?: number
     rating?: number
     redditThreads?: number
     userCountClaim?: string
+    /** Product Hunt launch upvotes — real interest/usage signal. */
+    phVotes?: number
   }
   /**
    * Phase 8 traction-hard gate (2026-05-16). Populated by
@@ -223,6 +225,10 @@ function evalGrowing(signals?: CandidateSignals): CriterionResult {
   if (signals.trafficTrend === 'up') {
     return { name: 'growing', passed: true, detail: 'traffic-up' }
   }
+  // A sizable Product Hunt launch is a growth signal for new tools (2026-07-01).
+  if ((signals.usageSignal?.phVotes ?? 0) >= 300) {
+    return { name: 'growing', passed: true, detail: `ph-votes=${signals.usageSignal?.phVotes}` }
+  }
   return { name: 'growing', passed: false, detail: 'no-growth-signal' }
 }
 
@@ -236,6 +242,10 @@ function evalInUse(signals: CandidateSignals | undefined, enriched: EnrichedTool
   }
   if ((us?.redditThreads ?? 0) >= 3) {
     return { name: 'in-use', passed: true, detail: `reddit=${us?.redditThreads}` }
+  }
+  // A solid Product Hunt launch = real people trying it (2026-07-01).
+  if ((us?.phVotes ?? 0) >= 100) {
+    return { name: 'in-use', passed: true, detail: `ph-votes=${us?.phVotes}` }
   }
   const g2 = enriched.community_links?.g2_rating
   if (g2 != null && g2 >= 4.0) {

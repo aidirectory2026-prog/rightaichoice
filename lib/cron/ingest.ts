@@ -143,8 +143,15 @@ export async function runIngestion(
           enriched,
           signals: {
             recentList: true,
+            // Feed the aggregate probe into the SOFT criteria too, not just the
+            // traction-hard gate — otherwise "growing"/"in-use" starve and even a
+            // 100k-star tool can't reach minCriteria (the 2026-07-01 0-yield cause).
+            githubStars: traction?.github.stars,
             usageSignal: traction
-              ? { redditThreads: traction.reddit.threadCount }
+              ? {
+                  redditThreads: traction.reddit.threadCount,
+                  phVotes: traction.ph.votes,
+                }
               : undefined,
             tractionHard: traction
               ? {
