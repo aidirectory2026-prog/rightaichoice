@@ -2,6 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { MultiSelectFilter } from '@/components/admin/multi-select-filter'
+import { parseSort, sortRows } from '@/lib/admin/sort'
+
+// Oldest-tool table sort key → field (age uses a computed seconds field).
+const OLDEST_SORT = { age: '_ageSec', field: 'field', pricing: 'pricing_type' } as const
+type OldestSortKey = keyof typeof OLDEST_SORT
+const listParam = (v: string | undefined): string[] => (v ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
 // Phase 8.d.8 — heatmap of field freshness across the published catalog.
 // Backed by v_field_freshness materialized view (refreshed nightly by
@@ -54,7 +62,15 @@ function p95Label(p95Days: number | null): string {
   return `${p95Days}d`
 }
 
-export default async function FreshnessPage() {
+export default async function FreshnessPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
+  const fieldSel = listParam(sp.field)
+  const pricingSel = listParam(sp.pricing)
+  const sort = parseSort<OldestSortKey>(sp, Object.keys(OLDEST_SORT) as OldestSortKey[], { key: 'age', dir: 'desc' })
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('v_field_freshness')
@@ -73,7 +89,14 @@ export default async function FreshnessPage() {
     )
   }
 
-  const rows = (data ?? []) as Row[]
+  const allRows = (data ?? []) as Row[]
+  // All fields/pricing tiers for the filter option lists (before narrowing).
+  const allFields = Array.from(new Set(allRows.map((r) => r.field)))
+  const allPricing = Array.from(new Set(allRows.map((r) => r.pricing_type))).sort()
+  // Phase 14 — narrow the whole view (summary + heatmap + oldest table).
+  let rows = allRows
+  if (fieldSel.length) rows = rows.filter((r) => fieldSel.includes(r.field))
+  if (pricingSel.length) rows = rows.filter((r) => pricingSel.includes(r.pricing_type))
   const fields = Array.from(new Set(rows.map((r) => r.field)))
   const pricingTypes = Array.from(new Set(rows.map((r) => r.pricing_type))).sort()
 
@@ -99,6 +122,16 @@ export default async function FreshnessPage() {
         next. Reads the v_field_freshness materialized view (refreshed nightly, not date-ranged — the
         global filter does not apply here).
       </p>
+
+      {/* Phase 14 — focus filters (narrow the summary, heatmap and oldest table) */}
+      <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <MultiSelectFilter
+          label="Field"
+          param="field"
+          options={allFields.map((f) => ({ value: f, label: FIELD_LABEL[f] ?? f }))}
+        />
+        <MultiSelectFilter label="Pricing" param="pricing" options={allPricing.map((p) => ({ value: p }))} />
+      </div>
 
       {/* ── Summary table ───────────────────────────────────────── */}
       <h2 className="mb-3 flex items-center gap-1 text-sm font-semibold text-white">
@@ -194,16 +227,20 @@ export default async function FreshnessPage() {
         <table className="w-full text-xs">
           <thead className="bg-zinc-900/60 text-zinc-400">
             <tr>
-              <th className="text-left px-3 py-2 font-medium">Field</th>
-              <th className="text-left px-3 py-2 font-medium">Pricing</th>
+              <th className="text-left px-3 py-2 font-medium"><SortableHeader label="Field" sortKey="field" firstDir="asc" /></th>
+              <th className="text-left px-3 py-2 font-medium"><SortableHeader label="Pricing" sortKey="pricing" firstDir="asc" /></th>
               <th className="text-left px-3 py-2 font-medium">Oldest tool</th>
-              <th className="text-right px-3 py-2 font-medium">Age</th>
+              <th className="text-right px-3 py-2 font-medium"><SortableHeader label="Age" sortKey="age" align="right" /></th>
             </tr>
           </thead>
           <tbody>
-            {rows
-              .filter((r) => r.oldest_slug)
-              .sort((a, b) => (b.p95_age_sec ?? 0) - (a.p95_age_sec ?? 0))
+            {sortRows(
+              rows
+                .filter((r) => r.oldest_slug)
+                .map((r) => ({ ...r, _ageSec: r.oldest_ts ? Date.now() - new Date(r.oldest_ts).getTime() : -1 })),
+              OLDEST_SORT[sort.key],
+              sort.dir,
+            )
               .slice(0, 24)
               .map((r) => {
                 const ageDays = r.oldest_ts

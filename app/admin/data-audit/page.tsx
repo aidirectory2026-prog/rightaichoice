@@ -1,10 +1,19 @@
 import Link from 'next/link'
 import { Check, X, AlertTriangle, ChevronLeft, ShieldCheck } from 'lucide-react'
 import { runAudit, type AuditResult } from '@/lib/admin/data-audit'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { MultiSelectFilter } from '@/components/admin/multi-select-filter'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort, sortRows } from '@/lib/admin/sort'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Data audit — Admin' }
+
+const AUDIT_SORT = { label: 'label', runtime: 'ms' } as const
+type AuditSortKey = keyof typeof AUDIT_SORT
+const statusOf = (r: AuditResult): 'pass' | 'fail' | 'error' => (r.error ? 'error' : r.pass ? 'pass' : 'fail')
+const listParam = (v: string | undefined): string[] => (v ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
 const CATEGORY_LABEL: Record<AuditResult['category'], string> = {
   catalog: 'Catalog integrity',
@@ -32,20 +41,43 @@ const CATEGORY_HELP: Record<AuditResult['category'], string> = {
   'tracking-dedup': 'Double-fired pageviews / search events inflate every metric. These checks find suspicious rapid-fire bursts of identical events.',
 }
 
-export default async function DataAuditPage() {
+export default async function DataAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
   const t0 = Date.now()
   const results = await runAudit()
   const ms = Date.now() - t0
 
+  // KPIs always reflect the FULL suite; filters only narrow the listing.
   const pass = results.filter((r) => r.pass).length
   const fail = results.filter((r) => !r.pass).length
   const errored = results.filter((r) => r.error).length
 
+  // Phase 14 — filters + sort.
+  const statusSel = listParam(sp.status)
+  const catSel = listParam(sp.category)
+  const q = (sp.q ?? '').trim().toLowerCase()
+  const sortSet = !!sp.sort
+  const sort = parseSort<AuditSortKey>(sp, Object.keys(AUDIT_SORT) as AuditSortKey[], { key: 'runtime', dir: 'desc' })
+
+  let shown = results
+  if (statusSel.length) shown = shown.filter((r) => statusSel.includes(statusOf(r)))
+  if (catSel.length) shown = shown.filter((r) => catSel.includes(r.category))
+  if (q) shown = shown.filter((r) => r.label.toLowerCase().includes(q))
+
   const byCategory: Record<string, AuditResult[]> = {}
-  for (const r of results) {
+  for (const r of shown) {
     if (!byCategory[r.category]) byCategory[r.category] = []
     byCategory[r.category].push(r)
   }
+  if (sortSet) {
+    for (const cat of Object.keys(byCategory)) byCategory[cat] = sortRows(byCategory[cat], AUDIT_SORT[sort.key], sort.dir)
+  }
+  const filtered = statusSel.length > 0 || catSel.length > 0 || !!q
+  const CATEGORY_OPTIONS = (Object.keys(CATEGORY_LABEL) as AuditResult['category'][]).map((c) => ({ value: c, label: CATEGORY_LABEL[c] }))
 
   return (
     <div>
@@ -86,6 +118,28 @@ export default async function DataAuditPage() {
           <div className={`mt-1 text-3xl font-semibold tabular-nums ${errored > 0 ? 'text-amber-300' : 'text-zinc-500'}`}>{errored}</div>
         </div>
       </div>
+
+      {/* Phase 14 — filter to what matters (e.g. only fails), search, sort. */}
+      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <SearchInput param="q" placeholder="Search check…" />
+        <MultiSelectFilter
+          label="Status"
+          param="status"
+          options={[{ value: 'fail', label: 'Fail' }, { value: 'error', label: 'Error' }, { value: 'pass', label: 'Pass' }]}
+        />
+        <MultiSelectFilter label="Category" param="category" options={CATEGORY_OPTIONS} />
+        <div className="flex items-center gap-3 text-xs text-zinc-500">
+          <span className="uppercase tracking-wider">Sort</span>
+          <SortableHeader label="Runtime" sortKey="runtime" />
+          <SortableHeader label="Name" sortKey="label" firstDir="asc" />
+        </div>
+      </div>
+
+      {filtered && Object.keys(byCategory).length === 0 ? (
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 text-sm text-zinc-500">
+          No checks match these filters.
+        </div>
+      ) : null}
 
       <div className="space-y-6">
         {(Object.keys(byCategory) as AuditResult['category'][]).map((cat) => (
