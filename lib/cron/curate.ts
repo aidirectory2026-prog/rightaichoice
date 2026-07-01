@@ -216,7 +216,9 @@ function evalGrowing(signals?: CandidateSignals): CriterionResult {
   if ((signals.githubStarsMoM ?? 0) >= 50) {
     return { name: 'growing', passed: true, detail: `stars-mom=${signals.githubStarsMoM}` }
   }
-  if ((signals.githubStars ?? 0) >= 500) {
+  // ≥150 stars on the name-matched repo = a real, published, adopted tool. Tuned
+  // for the emerging-AI catalog (2026-07-01); the SOP lane is the real publish bar.
+  if ((signals.githubStars ?? 0) >= 150) {
     return { name: 'growing', passed: true, detail: `stars=${signals.githubStars}` }
   }
   if (signals.fundingMentioned) {

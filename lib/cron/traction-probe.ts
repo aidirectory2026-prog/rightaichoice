@@ -66,12 +66,16 @@ const REDDIT_TIMEFRAME = 'year'
 const REDDIT_MAX_POSTS = 10
 const REDDIT_RUN_TIMEOUT_MS = 8 * 60_000
 
-// Hard floors — clearing any ONE of these = "trending", regardless of the rest.
-const HN_HARD_FLOOR = 30          // story ≥30 points in last 30d
-const GH_STAR_FLOOR = 400         // ≥400 GitHub stars on the matched repo
-const PH_VOTE_FLOOR = 150         // ≥150 Product Hunt upvotes
+// Hard floors — clearing any ONE of these = enough traction to admit (as a
+// DRAFT). Calibrated for an EMERGING-AI-tools catalog: a published repo with a
+// few hundred stars, or a real HN/PH/Reddit footprint, is a legitimate draft.
+// The onboard SOP lane is the real publish bar, so we admit generously here and
+// gate only tools with ~zero verifiable signal anywhere.
+const HN_HARD_FLOOR = 20          // story ≥20 points in last 30d
+const GH_STAR_FLOOR = 150         // ≥150 GitHub stars on the name-matched repo
+const PH_VOTE_FLOOR = 80          // ≥80 Product Hunt upvotes
 const REDDIT_THREAD_FLOOR = 3     // ≥3 relevant Reddit threads in the past year
-const SCORE_FLOOR = 70            // composite threshold — catches "moderate on ≥2 sources"
+const SCORE_FLOOR = 40            // composite threshold — catches "moderate on ≥2 sources"
 const WINDOW_DAYS = 30
 
 const PRODUCT_CUES = [
