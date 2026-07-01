@@ -126,6 +126,25 @@ export function AuthProvider({
       })
       analytics.setPlanGroup('free')
 
+      // Clarity findability (2026-07-01) — tag the session replay with OUR
+      // identity so recordings are locatable in the Clarity dashboard by email /
+      // user_id (Filters → Custom tags) and show a human-readable name, instead
+      // of only Clarity's random IDs (1bq7qcr…). Without this, real signups are
+      // impossible to find among bot-bounce recordings. Best-effort: clarity()
+      // is the queue stub set up by ClarityProvider, so calls queue until the
+      // tag script loads; guarded for excluded paths where Clarity isn't loaded.
+      try {
+        const clarity = (window as unknown as { clarity?: (...a: unknown[]) => void }).clarity
+        if (typeof clarity === 'function') {
+          clarity('identify', user.id, undefined, undefined, user.email ?? profile?.username ?? undefined)
+          if (user.email) clarity('set', 'email', user.email)
+          clarity('set', 'user_id', user.id)
+          if (profile?.username) clarity('set', 'username', profile.username)
+        }
+      } catch {
+        /* clarity tagging is best-effort */
+      }
+
       // Phase 9 — anon→known transition. Run once per session per user:
       //   1. Restore any "pending intent" stashed before OAuth round-trip
       //      (modal Skip vs OAuth click stashes typed_goal in sessionStorage),
@@ -170,7 +189,7 @@ export function AuthProvider({
       // anon auth_state flag.
       analytics.registerSuperProperties({ auth_state: 'anon' })
     }
-  }, [user?.id, user?.email, profile?.is_admin])
+  }, [user?.id, user?.email, profile?.is_admin, profile?.username])
 
   return (
     <AuthContext.Provider value={{ user, profile }}>
