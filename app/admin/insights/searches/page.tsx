@@ -10,6 +10,7 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricCard } from '@/components/admin/charts'
 import { parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
+import { withCohort } from '@/lib/admin/cohort-filter'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
 
@@ -55,7 +56,7 @@ export default async function SearchesPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = parseAdminFilters(sp)
+  const filters = await withCohort(parseAdminFilters(sp), sp)
   const [rows, countryOptions] = await Promise.all([getSearchLog(filters), getCountryFilterOptions()])
 
   const total = rows.length

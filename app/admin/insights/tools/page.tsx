@@ -10,6 +10,7 @@ import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { MetricCard, fmt } from '@/components/admin/charts'
 import { parseAdminFilters } from '@/lib/admin/filters'
+import { withCohort } from '@/lib/admin/cohort-filter'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { relativeTime } from '../_ui/primitives'
 import { getCountryFilterOptions, getToolHeatmap } from '../queries'
@@ -42,7 +43,7 @@ export default async function ToolsHeatmapPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = parseAdminFilters(sp)
+  const filters = await withCohort(parseAdminFilters(sp), sp)
   const q = (sp.q ?? '').trim()
 
   const [allRows, countryOptions] = await Promise.all([

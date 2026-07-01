@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Bot, SlidersHorizontal, X } from 'lucide-react'
 import { RangePicker } from '@/components/admin/range-picker'
+import { CohortPicker } from '@/components/admin/cohort-picker'
 import type { RangeKey } from '@/lib/admin/range'
 import { DEVICE_OPTIONS, OPTIONAL_FILTER_PARAMS } from '@/lib/admin/filters'
 
@@ -118,6 +119,7 @@ export function FilterBar({
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2 flex-wrap justify-end">
+        <CohortPicker />
         <button
           type="button"
           onClick={toggleBots}
