@@ -33,6 +33,7 @@ import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { DailyChart, fmt } from '@/components/admin/charts'
 import { parseAdminFilters } from '@/lib/admin/filters'
+import { withCohort } from '@/lib/admin/cohort-filter'
 import {
   EVENT_SCHEMAS,
   SCHEMA_EVENT_NAMES,
@@ -125,7 +126,7 @@ export default async function EventsExplorerPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = parseAdminFilters(sp)
+  const filters = await withCohort(parseAdminFilters(sp), sp)
   // The global event filter IS the selection (?event=). This drilldown is
   // single-event by nature, so if a multi-value event filter is present
   // (?event=a,b) we drill into the first — the rest still narrow other pages.
