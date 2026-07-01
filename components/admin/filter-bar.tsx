@@ -49,8 +49,15 @@ export function FilterBar({
   const pathname = usePathname()
   const params = useSearchParams()
   const [open, setOpen] = useState(
-    // Auto-expand when a shared/bookmarked URL already carries filters.
-    OPTIONAL_FILTER_PARAMS.some((k) => !!params.get(k)),
+    // Discoverability (Phase 14): the dimension filters (geo / device / auth /
+    // event / source / utm) used to hide behind a collapsed disclosure, so
+    // "I can't filter by geo" was really "I couldn't find it". Default OPEN
+    // whenever the page offers dimension filters, and always when a
+    // shared/bookmarked URL already carries filters. The toggle still lets the
+    // user collapse it.
+    OPTIONAL_FILTER_PARAMS.some((k) => !!params.get(k)) ||
+      countries.length > 0 ||
+      eventNames.length > 0,
   )
   const [sourceDraft, setSourceDraft] = useState(params.get('source') ?? '')
   const [utmDraft, setUtmDraft] = useState(params.get('utm_source') ?? '')
@@ -230,6 +237,14 @@ export function FilterBar({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setParam('source', sourceDraft.trim() || null)
               }}
+              onBlur={() => {
+                // Commit on click-away too — not only on Enter (Phase 14 fix:
+                // typed values were silently dropped when the user clicked
+                // elsewhere without pressing Enter).
+                if (sourceDraft.trim() !== (params.get('source') ?? '')) {
+                  setParam('source', sourceDraft.trim() || null)
+                }
+              }}
               placeholder="referrer host ⏎"
               className={inputCls}
             />
@@ -242,6 +257,12 @@ export function FilterBar({
               onChange={(e) => setUtmDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setParam('utm_source', utmDraft.trim() || null)
+              }}
+              onBlur={() => {
+                // Commit on click-away too — not only on Enter (Phase 14 fix).
+                if (utmDraft.trim() !== (params.get('utm_source') ?? '')) {
+                  setParam('utm_source', utmDraft.trim() || null)
+                }
               }}
               placeholder="utm_source ⏎"
               className={inputCls}

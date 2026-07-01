@@ -24,6 +24,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
+import { attemptChunkReload } from '@/lib/chunk-recovery'
 
 const COPY_PASTE_MIN_GAP_MS = 1500
 const CONTEXT_MENU_MIN_GAP_MS = 3000
@@ -324,6 +325,14 @@ export function GlobalInteractionTracker() {
             error_type: 'resource_error',
             source_url: src.slice(0, 300),
           })
+          // Phase 14 — a first-party Next JS chunk that fails to load is the
+          // deploy version-skew signal (a control's lazy chunk 404s after a new
+          // build shipped, so clicking it does nothing). Reload once to fetch
+          // the current build's assets so interactivity self-heals. Guarded
+          // against loops; scoped to script chunks so an image 404 never reloads.
+          if (tag === 'script' && /\/_next\/static\//.test(src)) {
+            attemptChunkReload()
+          }
         }
       }
     }
