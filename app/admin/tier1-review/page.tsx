@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort, sortRows } from '@/lib/admin/sort'
 import { ReviewCard } from './review-card'
 
 // Phase 10.5c.1 (2026-06-12) — re-skinned onto the shared admin kit
@@ -32,12 +35,24 @@ type Rewrite = {
   suggestions: Array<{ title: string; rationale: string }>
 }
 
+const TIER1_SORT = {
+  priority: 'priority',
+  impressions: 'totalImpressions',
+  position: 'weightedPosition',
+  clicks: 'totalClicks',
+} as const
+type Tier1SortKey = keyof typeof TIER1_SORT
+
 export default async function Tier1ReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bucket?: string; constraint?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }) {
-  const { bucket, constraint } = await searchParams
+  const sp = await searchParams
+  const bucket = sp.bucket
+  const constraint = sp.constraint
+  const q = (sp.q ?? '').trim().toLowerCase()
+  const sort = parseSort<Tier1SortKey>(sp, Object.keys(TIER1_SORT) as Tier1SortKey[], { key: 'priority', dir: 'desc' })
   const path = resolve(process.cwd(), 'candidates/tier1-rewrites.json')
 
   if (!existsSync(path)) {
@@ -62,15 +77,23 @@ export default async function Tier1ReviewPage({
     totals?: { totalInOutput?: number; newSucceeded?: number; newFailed?: number }
     generatedAt?: string
   }
-  let rewrites = (file.rewrites ?? [])
-    .slice()
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+  let rewrites = (file.rewrites ?? []).slice()
   if (bucket === '1A' || bucket === '1B' || bucket === '1C') {
     rewrites = rewrites.filter((r) => r.bucket === bucket)
   }
   if (constraint === 'title' || constraint === 'mixed' || constraint === 'rank') {
     rewrites = rewrites.filter((r) => r.bindingConstraint === constraint)
   }
+  if (q) {
+    rewrites = rewrites.filter(
+      (r) =>
+        r.page.toLowerCase().includes(q) ||
+        r.currentTitle.toLowerCase().includes(q) ||
+        (r.topQuery ?? '').toLowerCase().includes(q),
+    )
+  }
+  // Phase 14 — URL-driven sort (default priority desc, as before).
+  rewrites = sortRows(rewrites, TIER1_SORT[sort.key], sort.dir)
   const constraintCounts = {
     title: (file.rewrites ?? []).filter((r) => r.bindingConstraint === 'title').length,
     mixed: (file.rewrites ?? []).filter((r) => r.bindingConstraint === 'mixed').length,
@@ -95,6 +118,16 @@ export default async function Tier1ReviewPage({
     '1C': rewrites.filter((r) => r.bucket === '1C').length,
   }
 
+  // Preset links preserve the active search + sort so they compose.
+  const presetHref = (over: { bucket?: string; constraint?: string }) => {
+    const p = new URLSearchParams()
+    if (over.bucket) p.set('bucket', over.bucket)
+    if (over.constraint) p.set('constraint', over.constraint)
+    for (const k of ['q', 'sort', 'dir'] as const) if (sp[k]) p.set(k, sp[k]!)
+    const s = p.toString()
+    return s ? `/admin/tier1-review?${s}` : '/admin/tier1-review'
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader>
@@ -104,18 +137,29 @@ export default async function Tier1ReviewPage({
           <MetricInfo docKey="tier1_queue" />
         </p>
       </PageHeader>
-      <div className="-mt-4 flex flex-wrap items-end justify-end gap-4">
+      <div className="-mt-4 flex flex-wrap items-end justify-between gap-4">
+        {/* Phase 14 — search + sort (compose with the bucket/constraint presets) */}
+        <div className="flex flex-col gap-2">
+          <SearchInput param="q" placeholder="Search page / title / query…" />
+          <div className="flex items-center gap-3 text-xs text-zinc-500">
+            <span className="uppercase tracking-wider">Sort</span>
+            <SortableHeader label="Priority" sortKey="priority" />
+            <SortableHeader label="Impressions" sortKey="impressions" />
+            <SortableHeader label="Position" sortKey="position" firstDir="asc" />
+            <SortableHeader label="Clicks" sortKey="clicks" />
+          </div>
+        </div>
         <div className="flex flex-col gap-2">
           <nav className="flex flex-wrap gap-2 text-xs">
-            <FilterLink href="/admin/tier1-review" label={`All (${counts['1A'] + counts['1B'] + counts['1C']})`} active={!bucket && !constraint} />
-            <FilterLink href="/admin/tier1-review?constraint=title" label={`🟢 Title-bound (${constraintCounts.title})`} active={constraint === 'title'} />
-            <FilterLink href="/admin/tier1-review?constraint=mixed" label={`🟡 Mixed (${constraintCounts.mixed})`} active={constraint === 'mixed'} />
-            <FilterLink href="/admin/tier1-review?constraint=rank" label={`🔴 Rank-bound (${constraintCounts.rank})`} active={constraint === 'rank'} />
+            <FilterLink href={presetHref({})} label={`All (${counts['1A'] + counts['1B'] + counts['1C']})`} active={!bucket && !constraint} />
+            <FilterLink href={presetHref({ constraint: 'title' })} label={`🟢 Title-bound (${constraintCounts.title})`} active={constraint === 'title'} />
+            <FilterLink href={presetHref({ constraint: 'mixed' })} label={`🟡 Mixed (${constraintCounts.mixed})`} active={constraint === 'mixed'} />
+            <FilterLink href={presetHref({ constraint: 'rank' })} label={`🔴 Rank-bound (${constraintCounts.rank})`} active={constraint === 'rank'} />
           </nav>
           <nav className="flex gap-2 text-xs">
-            <FilterLink href="/admin/tier1-review?bucket=1A" label={`1A pos≤10 (${counts['1A']})`} active={bucket === '1A'} />
-            <FilterLink href="/admin/tier1-review?bucket=1B" label={`1B 11–20 (${counts['1B']})`} active={bucket === '1B'} />
-            <FilterLink href="/admin/tier1-review?bucket=1C" label={`1C 21–30 (${counts['1C']})`} active={bucket === '1C'} />
+            <FilterLink href={presetHref({ bucket: '1A' })} label={`1A pos≤10 (${counts['1A']})`} active={bucket === '1A'} />
+            <FilterLink href={presetHref({ bucket: '1B' })} label={`1B 11–20 (${counts['1B']})`} active={bucket === '1B'} />
+            <FilterLink href={presetHref({ bucket: '1C' })} label={`1C 21–30 (${counts['1C']})`} active={bucket === '1C'} />
           </nav>
         </div>
       </div>
