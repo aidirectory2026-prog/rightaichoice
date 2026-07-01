@@ -40,19 +40,20 @@ export async function runIngestion(
   // curated list — combined with the new traction-hard gate (HN/Reddit
   // probe below), this filters out tools without real-world buzz.
   curateCtx.minCriteria = 3
-  // Fable-5 review (2026-06-12): Reddit's API lockdown (Responsible Builder
-  // Policy, Nov 2025) means the Reddit traction signal is unavailable until
-  // our API application is approved. With it dead, the in-use criterion +
-  // traction score starve and 100/100 candidates gate out (zero tools
-  // admitted Jun 1–12). DEGRADED MODE: when no Reddit creds are configured,
-  // drop the bar to 2-of-4 measurable criteria. Safe because since Phase 10
-  // every ingest inserts as a DRAFT — the onboard SOP gates (refresh,
-  // categorize, viability, sentiment, all-green) remain the real publish
-  // bar. Auto-tightens back to 3 the moment REDDIT_CLIENT_ID/SECRET exist.
-  const redditConfigured = !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET)
-  if (!redditConfigured) {
+  // The traction-hard gate needs a working Reddit buzz signal. Two ways to have
+  // one: the official Reddit OAuth app (REDDIT_CLIENT_ID/SECRET) OR the Apify
+  // Reddit scraper (APIFY_TOKEN) — the latter needs no Reddit account and is the
+  // path here (see traction-probe.ts). When NEITHER is configured the Reddit
+  // signal is dead, so DEGRADED MODE drops the soft bar to 2-of-4 measurable
+  // criteria. Safe: since Phase 10 every ingest inserts as a DRAFT — the onboard
+  // SOP gates (refresh, categorize, viability, sentiment, all-green) remain the
+  // real publish bar. Auto-tightens back to 3 the moment a Reddit source exists.
+  const redditSignalConfigured =
+    !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET) ||
+    !!process.env.APIFY_TOKEN
+  if (!redditSignalConfigured) {
     curateCtx.minCriteria = 2
-    console.warn(`[ingest:${runId}] DEGRADED: no Reddit creds — minCriteria 3→2 (drafts still SOP-gated before publish)`)
+    console.warn(`[ingest:${runId}] DEGRADED: no Reddit signal (no Reddit creds, no APIFY_TOKEN) — minCriteria 3→2 (drafts still SOP-gated before publish)`)
   }
 
   // 1. Discover
