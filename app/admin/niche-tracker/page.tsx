@@ -2,9 +2,24 @@ import Link from 'next/link'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort, sortRows } from '@/lib/admin/sort'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 export const metadata = { title: 'Niche Tracker' }
+
+// Sort key → LatestRow field (small dataset → sorted in-memory).
+const NICHE_SORT = {
+  niche: 'niche',
+  impr: 'impressions',
+  delta: 'impr_delta_vs_prior',
+  pos: 'avg_position',
+  clicks: 'clicks',
+  queries: 'query_count',
+} as const
+type NicheSortKey = keyof typeof NICHE_SORT
 
 // Reads the service-role-only measurement views (niche_page_latest /
 // niche_page_metrics) seeded from lib/data/best-pages.ts + gsc_snapshots.
@@ -39,17 +54,25 @@ function delta(n: number | null): { text: string; cls: string } {
   return { text: `${n}`, cls: 'text-red-400' }
 }
 
-export default async function NicheTrackerPage() {
+export default async function NicheTrackerPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
+  const q = (sp.q ?? '').trim().toLowerCase()
+  const sort = parseSort<NicheSortKey>(sp, Object.keys(NICHE_SORT) as NicheSortKey[], { key: 'impr', dir: 'desc' })
   const supabase = getAdminClient()
 
   const { data: latestData } = await supabase
     .from('niche_page_latest')
     .select('*')
     .order('impressions', { ascending: false })
-  const rows = (latestData ?? []) as unknown as LatestRow[]
+  let rows = (latestData ?? []) as unknown as LatestRow[]
+  if (q) rows = rows.filter((r) => r.niche.toLowerCase().includes(q) || r.slug.toLowerCase().includes(q))
 
   const snapshotDate = rows.find((r) => r.snapshot_date)?.snapshot_date ?? null
-  const withData = rows.filter((r) => r.impressions > 0)
+  const withData = sortRows(rows.filter((r) => r.impressions > 0), NICHE_SORT[sort.key], sort.dir)
   const awaiting = rows.filter((r) => r.impressions === 0)
   const totalImpr = rows.reduce((a, r) => a + r.impressions, 0)
   const totalClicks = rows.reduce((a, r) => a + r.clicks, 0)
@@ -89,19 +112,22 @@ export default async function NicheTrackerPage() {
       </div>
 
       {/* Pages with data */}
-      <h2 className="mt-8 mb-3 text-sm font-semibold text-zinc-300">
-        Pages with impressions ({withData.length})
-      </h2>
+      <div className="mt-8 mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-zinc-300">
+          Pages with impressions ({withData.length})
+        </h2>
+        <SearchInput param="q" placeholder="Search niche…" />
+      </div>
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="w-full text-sm">
           <thead className="bg-zinc-900/60 text-zinc-400">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium">Niche</th>
-              <th className="px-3 py-2 font-medium text-right">Impr.</th>
-              <th className="px-3 py-2 font-medium text-right">Δ vs prior</th>
-              <th className="px-3 py-2 font-medium text-right">Avg pos.</th>
-              <th className="px-3 py-2 font-medium text-right">Clicks</th>
-              <th className="px-3 py-2 font-medium text-right">Queries</th>
+              <th className="px-3 py-2 font-medium"><SortableHeader label="Niche" sortKey="niche" firstDir="asc" /></th>
+              <th className="px-3 py-2 font-medium text-right"><SortableHeader label="Impr." sortKey="impr" align="right" /></th>
+              <th className="px-3 py-2 font-medium text-right"><SortableHeader label="Δ vs prior" sortKey="delta" align="right" /></th>
+              <th className="px-3 py-2 font-medium text-right"><SortableHeader label="Avg pos." sortKey="pos" align="right" firstDir="asc" /></th>
+              <th className="px-3 py-2 font-medium text-right"><SortableHeader label="Clicks" sortKey="clicks" align="right" /></th>
+              <th className="px-3 py-2 font-medium text-right"><SortableHeader label="Queries" sortKey="queries" align="right" /></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/70">
