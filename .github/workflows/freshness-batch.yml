@@ -164,10 +164,13 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Fable-5 review (2026-06-12) — the traction probe's Reddit signal
-          # needs the OAuth app creds (tokenless endpoint 403s from CI IPs);
-          # without these every candidate probes reddit=0 and the gate
-          # rejects the whole batch.
+          # Reddit traction signal (2026-07-01): scraped via the Apify actor
+          # fatihtahta/reddit-scraper-search-fast — no Reddit account needed
+          # (the owner cannot create a Reddit app), works from CI IPs. Without
+          # APIFY_TOKEN the probe can't reach Reddit and the gate runs degraded.
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          # Optional: if a Reddit OAuth app is ever configured the probe uses it
+          # first; otherwise these are empty and Apify is the path.
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           BATCH_SIZE: ${{ github.event.inputs.batch_size }}
