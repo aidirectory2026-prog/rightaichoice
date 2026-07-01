@@ -153,24 +153,38 @@ CREATE TABLE ingestion_logs (
 
 ## Curation & traction gate
 Before insert, each candidate passes a **soft-criteria gate** (≥`minCriteria` of
-trending/growing/in-use/viability) plus a **traction-hard gate** that probes
-Hacker News + Reddit for real-world buzz (`lib/cron/traction-probe.ts`).
+trending/growing/in-use/viability) plus a **traction-hard gate** that measures
+real-world adoption (`lib/cron/traction-probe.ts`).
 
-**Reddit dependency (important):** the traction-hard gate's buzz signal comes
-mainly from Reddit. Reddit 403s its tokenless endpoints from datacenter/CI IPs,
-so the probe needs `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` (a free Reddit
-"script" app) to return data.
-- **With creds:** full-strength gate — only tools with genuine HN/Reddit buzz pass.
-- **Without creds (current GH Actions state):** Reddit is unmeasured. As of the
-  2026-07-01 fix the gate **degrades gracefully** — it does NOT hard-reject for
-  "no buzz" when Reddit couldn't be measured; it falls back to the soft criteria
-  (`minCriteria` drops 3→2). Tools still insert as DRAFT, so the onboard SOP lane
-  remains the real publish bar. Adding the creds auto-restores the full gate.
+**Multi-source aggregate (2026-07-01).** The gate is an **OR-of-many** over
+product-specific sources — a tool passes if it clears the bar on ANY one, so no
+single blocked/flaky source can zero-out ingestion:
 
-> Regression fixed 2026-07-01: previously the gate used `probed = hn.ok || reddit.ok`,
-> so with HN up but Reddit dead it hard-rejected ~100% of candidates → 0 inserted →
-> the `ingest-tools` job exited 1 EVERY day, turning freshness-batch red and tripping
-> the freshness/draft-stuck SLA alarms.
+| Source | Signal | Credential | Status |
+|---|---|---|---|
+| Hacker News | story points/comments | none (keyless) | always on |
+| GitHub | stars on the name-matched repo | auto `GITHUB_TOKEN` in CI | zero-setup, on |
+| Product Hunt | launch upvotes | `PRODUCTHUNT_TOKEN` repo secret | add to enable |
+| Reddit *(bonus)* | relevant threads (via Apify) | `APIFY_TOKEN` | on; noisy, additive only |
+
+- `hardPass` = any single source clears its floor (HN≥30 pts, GitHub≥400★,
+  PH≥150 votes, Reddit≥3 threads) OR the weighted composite score clears `SCORE_FLOOR`.
+- `probed` = at least one **reliable** source (HN/GitHub/PH) responded. **Reddit is
+  excluded** — it can only help a tool pass, never cause a reject (keyword search is
+  noisy for common-word names like "Cursor"/"Granola").
+- The gate hard-rejects (no traction) only when `probed` is true and nothing cleared
+  the bar. If no reliable source responded, it falls through to the soft criteria.
+- Every ingest inserts as a **DRAFT** regardless — the onboard SOP lane is the real
+  publish bar — so the gate errs toward admitting, never toward silence.
+
+**To enable Product Hunt:** add `PRODUCTHUNT_TOKEN` (the value already in Vercel) as
+a GitHub Actions repo secret. GitHub + HN + Reddit already work with no further setup.
+
+> History: the gate was Reddit-only and used `probed = hn.ok || reddit.ok`. When
+> Reddit went dark in CI (403 from datacenter IPs; the owner cannot create a Reddit
+> app) it hard-rejected ~100% of candidates → 0 inserted → the `ingest-tools` job
+> exited 1 EVERY day, turning freshness-batch red and tripping the freshness/
+> draft-stuck SLA alarms. The multi-source aggregate removes that single point of failure.
 
 ## Failure Handling
 - If a discovery source fails, the others still run (`Promise.allSettled`)
