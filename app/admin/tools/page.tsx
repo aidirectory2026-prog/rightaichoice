@@ -2,30 +2,74 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/admin/page-header'
 import { MetricInfo } from '@/components/admin/metric-info'
+import { SortableHeader } from '@/components/admin/sortable-header'
+import { MultiSelectFilter } from '@/components/admin/multi-select-filter'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseSort } from '@/lib/admin/sort'
 import { ToolActions } from './tool-actions'
 
-// Phase 8.d.6 — admin tools page now force-dynamic; no more cached stale lists.
-// Phase 10.5c.2 (2026-06-12) — re-skinned onto the shared admin kit
-// (PageHeader breadcrumb, kit-styled freshness tiles with ⓘ provenance).
-// Data + query semantics unchanged: the stale/aging/draft filter tabs are
-// this page's own sound custom controls (catalog management, not a windowed
-// metric) — kept; the global filter bar does not apply here.
+// Phase 8.d.6 — admin tools page force-dynamic; no cached stale lists.
+// Phase 14 — full catalog filtering + sorting. The stale/aging/draft tabs are
+// kept as quick presets; on top of them: name/slug search, pricing multi-select,
+// featured/sponsored flags, and sortable columns (all URL-state, DB-level so it
+// works across the whole catalog, not just the current page). The global smart
+// filter bar still doesn't apply (this is catalog management, not a time window).
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Manage Tools' }
 
-type SearchParams = Promise<{ filter?: string }>
+const PRICING_OPTIONS = [
+  { value: 'free' },
+  { value: 'freemium' },
+  { value: 'paid' },
+  { value: 'contact' },
+]
+const FLAG_OPTIONS = [
+  { value: 'featured', label: 'Featured' },
+  { value: 'sponsored', label: 'Sponsored' },
+]
+
+// Sort key → tools column. Default: newest first (unchanged behaviour).
+const SORT_COLUMN = {
+  name: 'name',
+  pricing: 'pricing_type',
+  rating: 'avg_rating',
+  reviews: 'review_count',
+  views: 'view_count',
+  verified: 'last_verified_at',
+  created: 'created_at',
+} as const
+type ToolSortKey = keyof typeof SORT_COLUMN
+
+type SearchParams = Promise<Record<string, string | undefined>>
+
+function listParam(v: string | undefined): string[] {
+  return (v ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+}
 
 export default async function AdminToolsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { filter } = await searchParams
+  const sp = await searchParams
+  const filter = sp.filter
+  const pricing = listParam(sp.pricing).filter((p) => PRICING_OPTIONS.some((o) => o.value === p))
+  const flags = listParam(sp.flags)
+  const q = (sp.q ?? '').trim()
+  // Sanitize before it enters a PostgREST .or() string: strip characters that
+  // carry meaning in the filter grammar (comma, parens, ilike wildcards) so a
+  // search term can never break out of the pattern. Plain search text only.
+  const qSafe = q.replace(/[^a-zA-Z0-9 ._-]/g, '').slice(0, 60)
+  const sort = parseSort<ToolSortKey>(sp, Object.keys(SORT_COLUMN) as ToolSortKey[], { key: 'created', dir: 'desc' })
+  // A "narrowing" filter is anything beyond the default view — used to decide
+  // whether the freshness-stats banner (which describes the WHOLE catalog) shows.
+  const narrowed = !!filter || pricing.length > 0 || flags.length > 0 || !!qSafe
+
   const supabase = await createClient()
 
   let query = supabase
     .from('tools')
     .select('id, name, slug, pricing_type, is_published, is_featured, is_sponsored, avg_rating, review_count, view_count, created_at, last_verified_at, submitted_by')
-    .order('created_at', { ascending: false })
+    .order(SORT_COLUMN[sort.key], { ascending: sort.dir === 'asc', nullsFirst: false })
 
-  // Staleness filters
+  // Staleness / status presets (tabs)
   if (filter === 'stale') {
     const cutoff90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
     query = query.eq('is_published', true).or(`last_verified_at.is.null,last_verified_at.lt.${cutoff90}`)
@@ -36,6 +80,12 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
   } else if (filter === 'draft') {
     query = query.eq('is_published', false)
   }
+
+  // Phase 14 filters (AND-ed with the preset above)
+  if (pricing.length) query = query.in('pricing_type', pricing)
+  if (flags.includes('featured')) query = query.eq('is_featured', true)
+  if (flags.includes('sponsored')) query = query.eq('is_sponsored', true)
+  if (qSafe) query = query.or(`name.ilike.%${qSafe}%,slug.ilike.%${qSafe}%`)
 
   const { data: tools, error } = await query
 
@@ -62,7 +112,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
   const d90 = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString()
 
   let freshCount = 0, agingCount = 0, staleCount = 0
-  if (!filter) {
+  if (!narrowed) {
     for (const t of tools ?? []) {
       if (!t.is_published) continue
       if (!t.last_verified_at) { staleCount++; continue }
@@ -70,6 +120,16 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
       else if (t.last_verified_at >= d90) agingCount++
       else staleCount++
     }
+  }
+
+  // Tab hrefs preserve the active search/pricing/flags/sort so switching the
+  // status preset doesn't wipe the rest of the filter state.
+  const tabHref = (key?: string) => {
+    const p = new URLSearchParams()
+    if (key) p.set('filter', key)
+    for (const k of ['pricing', 'flags', 'q', 'sort', 'dir'] as const) if (sp[k]) p.set(k, sp[k]!)
+    const s = p.toString()
+    return s ? `/admin/tools?${s}` : '/admin/tools'
   }
 
   function freshnessLabel(lastVerified: string | null) {
@@ -82,7 +142,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
   return (
     <div>
       <PageHeader>
-        <span className="text-xs text-zinc-500">{total.toLocaleString()} tools{filter ? ` (${filter})` : ' in database'}</span>
+        <span className="text-xs text-zinc-500">{total.toLocaleString()} tools{narrowed ? ' (filtered)' : ' in database'}</span>
         <Link
           href="/admin/tools/new"
           className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
@@ -92,8 +152,8 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
         </Link>
       </PageHeader>
 
-      {/* Freshness stats (only on default view) — kit-styled drill-down tiles */}
-      {!filter && (
+      {/* Freshness stats (only on the unfiltered view) — kit-styled drill-down tiles */}
+      {!narrowed && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <Link href="/admin/tools" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between gap-1">
@@ -136,7 +196,7 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
         ].map((f) => (
           <Link
             key={f.key ?? 'all'}
-            href={f.key ? `/admin/tools?filter=${f.key}` : '/admin/tools'}
+            href={tabHref(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
                 ? 'border-emerald-700 bg-emerald-950 text-emerald-400'
@@ -148,15 +208,22 @@ export default async function AdminToolsPage({ searchParams }: { searchParams: S
         ))}
       </div>
 
+      {/* Phase 14 — search + pricing + flags filters (AND-ed with the tab). */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <SearchInput param="q" placeholder="Search name or slug…" />
+        <MultiSelectFilter label="Pricing" param="pricing" options={PRICING_OPTIONS} />
+        <MultiSelectFilter label="Flags" param="flags" options={FLAG_OPTIONS} />
+      </div>
+
       <div className="overflow-x-auto border border-zinc-800 rounded-lg">
         <table className="w-full">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-900/50">
-              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Name</th>
-              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Pricing</th>
-              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Rating</th>
-              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Views</th>
-              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Freshness</th>
+              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3"><SortableHeader label="Name" sortKey="name" firstDir="asc" /></th>
+              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3"><SortableHeader label="Pricing" sortKey="pricing" firstDir="asc" /></th>
+              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3"><SortableHeader label="Rating" sortKey="rating" /></th>
+              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3"><SortableHeader label="Views" sortKey="views" /></th>
+              <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3"><SortableHeader label="Freshness" sortKey="verified" /></th>
               <th className="text-left text-xs font-medium text-zinc-400 px-4 py-3">Status</th>
               <th className="text-right text-xs font-medium text-zinc-400 px-4 py-3">Actions</th>
             </tr>
