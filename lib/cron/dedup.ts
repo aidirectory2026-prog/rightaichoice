@@ -15,7 +15,7 @@ export function normalizeDomain(url: string): string {
 // domain. Deduping on these would wrongly collapse distinct tools (e.g. every
 // homepage-less GitHub repo → github.com). Domain-dedup is skipped for them;
 // slug + name dedup still applies.
-const MULTI_TENANT_HOSTS = new Set([
+export const MULTI_TENANT_HOSTS = new Set([
   'github.com', 'gitlab.com', 'producthunt.com', 'huggingface.co', 'replit.com',
   'vercel.app', 'netlify.app', 'herokuapp.com', 'notion.site', 'gumroad.com',
   'itch.io', 'streamlit.app', 'gradio.app', 'pages.dev',

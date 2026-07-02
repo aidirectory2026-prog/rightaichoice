@@ -278,6 +278,42 @@ export const EVENT_SCHEMAS = {
     source: 'client',
     props: z.object({ tool_slug: z.string(), question_index: z.number(), question_text: z.string() }).strict(),
   },
+  // ── Phase 14: vendor tool-submission funnel ──────────────────────────
+  tool_submission_started: {
+    description:
+      'First focus on any field of the /submit form (fires once per page view) — analytics.toolSubmissionStarted.',
+    plainEnglish: 'Someone started filling in the tool-submission form.',
+    category: 'tools',
+    source: 'client',
+    props: z.object({ authed: z.boolean() }).strict(),
+  },
+  tool_submission_completed: {
+    description:
+      'Authoritative submission insert — serverAnalytics.toolSubmissionCompleted from actions/submissions.ts after the tool_submissions row is created (server-only, insert_id keyed on submission).',
+    plainEnglish: 'A vendor successfully submitted a tool for editorial review.',
+    category: 'tools',
+    source: 'server',
+    props: z
+      .object({
+        submission_id: z.string(),
+        pricing_type: z.string(),
+        domain: z.string(),
+        has_logo: z.boolean(),
+        source: z.literal('server'),
+      })
+      .strict(),
+  },
+  tool_submission_failed: {
+    description:
+      'Submission attempt that did not create a row. Client shape (analytics.toolSubmissionFailed: validation/duplicate/error) and server shape (serverAnalytics.toolSubmissionFailed: honeypot/cap).',
+    plainEnglish: 'Someone tried to submit a tool but it was blocked or failed.',
+    category: 'tools',
+    source: 'both',
+    props: z.union([
+      z.object({ reason: z.string() }).strict(),
+      z.object({ reason: z.string(), source: z.literal('server') }).strict(),
+    ]),
+  },
   viability_badge_clicked: {
     description: 'Viability badge click on a tool page — analytics.viabilityBadgeClicked.',
     plainEnglish: 'Someone clicked a tool’s "safe bet / at risk / rising" badge.',

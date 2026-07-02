@@ -16,7 +16,7 @@
   "ai_chat_tool_clicked": [
     {
       "file": "components/ai/chat-message.tsx",
-      "line": 56,
+      "line": 57,
       "method": "analytics.aiChatToolClicked"
     }
   ],
@@ -91,14 +91,14 @@
   "context_menu_opened": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 122,
+      "line": 123,
       "method": "analytics.contextMenuOpened"
     }
   ],
   "copy_text_event": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 108,
+      "line": 109,
       "method": "analytics.copyTextEvent"
     }
   ],
@@ -112,7 +112,7 @@
   "dead_click": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 207,
+      "line": 208,
       "method": "analytics.deadClick"
     }
   ],
@@ -125,13 +125,18 @@
   ],
   "error_encountered": [
     {
+      "file": "app/(auth)/error.tsx",
+      "line": 21,
+      "method": "analytics.errorEncountered"
+    },
+    {
       "file": "app/error.tsx",
-      "line": 20,
+      "line": 21,
       "method": "analytics.errorEncountered"
     },
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 273,
+      "line": 288,
       "method": "analytics.errorEncountered"
     },
     {
@@ -143,14 +148,14 @@
   "exit_intent": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 251,
+      "line": 252,
       "method": "analytics.exitIntent"
     }
   ],
   "external_link_clicked": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 225,
+      "line": 226,
       "method": "analytics.externalLinkClicked"
     }
   ],
@@ -204,19 +209,29 @@
   "hero_cta_clicked": [
     {
       "file": "components/home/goal-input.tsx",
-      "line": 93,
+      "line": 88,
       "method": "analytics.heroCtaClicked"
     }
   ],
   "login_completed": [
     {
-      "file": "app/auth/callback/route.ts",
-      "line": 53,
+      "file": "actions/auth.ts",
+      "line": 210,
+      "method": "serverAnalytics.loginCompleted"
+    },
+    {
+      "file": "actions/auth.ts",
+      "line": 258,
       "method": "serverAnalytics.loginCompleted"
     },
     {
       "file": "app/auth/callback/route.ts",
-      "line": 78,
+      "line": 54,
+      "method": "serverAnalytics.loginCompleted"
+    },
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 82,
       "method": "serverAnalytics.loginCompleted"
     }
   ],
@@ -235,14 +250,14 @@
   "navigation_back": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 141,
+      "line": 142,
       "method": "analytics.navigationBack"
     }
   ],
   "newsletter_subscribed": [
     {
       "file": "app/api/newsletter/subscribe/route.ts",
-      "line": 74,
+      "line": 80,
       "method": "serverAnalytics.newsletterSubscribedServer"
     }
   ],
@@ -263,7 +278,7 @@
   "password_reset_completed": [
     {
       "file": "actions/auth.ts",
-      "line": 147,
+      "line": 325,
       "method": "serverAnalytics.passwordResetCompletedServer"
     }
   ],
@@ -277,7 +292,7 @@
   "paste_text_event": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 115,
+      "line": 116,
       "method": "analytics.pasteTextEvent"
     }
   ],
@@ -286,12 +301,17 @@
       "file": "components/ai/intake-modal.tsx",
       "line": 50,
       "method": "analytics.planChipSelected"
+    },
+    {
+      "file": "components/cta/stack-wizard.tsx",
+      "line": 227,
+      "method": "analytics.planChipSelected"
     }
   ],
   "plan_completed": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 318,
+      "line": 338,
       "method": "analytics.planCompleted"
     }
   ],
@@ -308,7 +328,7 @@
     },
     {
       "file": "components/home/goal-input.tsx",
-      "line": 95,
+      "line": 90,
       "method": "analytics.planCtaClicked"
     },
     {
@@ -342,28 +362,33 @@
     },
     {
       "file": "components/home/goal-input.tsx",
-      "line": 71,
+      "line": 66,
       "method": "analytics.planCtaImpression"
     }
   ],
   "plan_existing_tool_added": [
     {
       "file": "components/ai/existing-tools-chip-input.tsx",
-      "line": 67,
+      "line": 96,
       "method": "analytics.planExistingToolAdded"
     }
   ],
   "plan_existing_tool_removed": [
     {
       "file": "components/ai/existing-tools-chip-input.tsx",
-      "line": 82,
+      "line": 111,
       "method": "analytics.planExistingToolRemoved"
     }
   ],
   "plan_goal_typed": [
     {
+      "file": "components/cta/stack-wizard.tsx",
+      "line": 101,
+      "method": "analytics.fieldTextChanged"
+    },
+    {
       "file": "components/home/goal-input.tsx",
-      "line": 64,
+      "line": 59,
       "method": "analytics.fieldTextChanged"
     }
   ],
@@ -371,6 +396,11 @@
     {
       "file": "components/ai/intake-modal.tsx",
       "line": 66,
+      "method": "analytics.planIntakeSubmitted"
+    },
+    {
+      "file": "components/cta/stack-wizard.tsx",
+      "line": 162,
       "method": "analytics.planIntakeSubmitted"
     }
   ],
@@ -391,63 +421,93 @@
   "plan_match_tier": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 328,
+      "line": 348,
       "method": "analytics.planMatchTier"
     }
   ],
   "plan_perf": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 331,
+      "line": 352,
       "method": "analytics.planPerf"
     }
   ],
   "plan_results_displayed": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 322,
+      "line": 342,
       "method": "analytics.planResultsDisplayed"
     }
   ],
   "plan_results_tool_clicked": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 1008,
+      "line": 1049,
       "method": "analytics.planResultsToolClicked"
     }
   ],
   "plan_signup_modal_completed": [
     {
       "file": "components/providers/auth-provider.tsx",
-      "line": 78,
+      "line": 161,
       "method": "analytics.planSignupModalCompleted"
     }
   ],
   "plan_signup_modal_oauth_clicked": [
     {
       "file": "components/cta/plan-signup-modal.tsx",
-      "line": 107,
+      "line": 108,
+      "method": "analytics.planSignupModalOAuthClicked"
+    },
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 138,
+      "method": "analytics.planSignupModalOAuthClicked"
+    },
+    {
+      "file": "components/cta/signup-options.tsx",
+      "line": 59,
+      "method": "analytics.planSignupModalOAuthClicked"
+    },
+    {
+      "file": "components/cta/signup-options.tsx",
+      "line": 78,
       "method": "analytics.planSignupModalOAuthClicked"
     }
   ],
   "plan_signup_modal_shown": [
     {
       "file": "components/cta/plan-signup-modal.tsx",
-      "line": 68,
+      "line": 69,
+      "method": "analytics.planSignupModalShown"
+    },
+    {
+      "file": "components/cta/stack-wizard.tsx",
+      "line": 148,
       "method": "analytics.planSignupModalShown"
     }
   ],
   "plan_signup_modal_skipped": [
     {
       "file": "components/cta/plan-signup-modal.tsx",
-      "line": 132,
+      "line": 152,
+      "method": "analytics.planSignupModalSkipped"
+    },
+    {
+      "file": "components/cta/signup-options.tsx",
+      "line": 124,
       "method": "analytics.planSignupModalSkipped"
     }
   ],
   "plan_started": [
     {
       "file": "components/ai/project-planner.tsx",
-      "line": 205,
+      "line": 215,
+      "method": "analytics.planStarted"
+    },
+    {
+      "file": "components/cta/stack-wizard.tsx",
+      "line": 120,
       "method": "analytics.planStarted"
     }
   ],
@@ -461,7 +521,7 @@
   "rage_click": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 160,
+      "line": 161,
       "method": "analytics.rageClick"
     }
   ],
@@ -510,7 +570,7 @@
   "search_query_submitted": [
     {
       "file": "components/home/goal-input.tsx",
-      "line": 94,
+      "line": 89,
       "method": "analytics.searchQuerySubmitted"
     },
     {
@@ -529,7 +589,7 @@
   "search_result_clicked": [
     {
       "file": "components/layout/search-bar.tsx",
-      "line": 192,
+      "line": 197,
       "method": "analytics.searchResultClickedRich"
     }
   ],
@@ -543,26 +603,31 @@
   "sentiment_card_viewed": [
     {
       "file": "components/tools/sentiment-report-page.tsx",
-      "line": 133,
+      "line": 141,
       "method": "analytics.sentimentCardViewed"
     }
   ],
   "sentiment_pay_clicked": [
     {
       "file": "components/tools/sentiment-report-page.tsx",
-      "line": 180,
+      "line": 194,
       "method": "analytics.sentimentPayClicked"
     },
     {
       "file": "components/tools/sentiment-report-page.tsx",
-      "line": 214,
+      "line": 228,
       "method": "analytics.sentimentPayClicked"
     }
   ],
   "sentiment_payment_failed": [
     {
       "file": "app/api/payments/paypal/capture/route.ts",
-      "line": 45,
+      "line": 49,
+      "method": "serverAnalytics.sentimentEvent"
+    },
+    {
+      "file": "app/api/payments/paypal/capture/route.ts",
+      "line": 58,
       "method": "serverAnalytics.sentimentEvent"
     },
     {
@@ -584,19 +649,19 @@
   "sentiment_payment_initiated": [
     {
       "file": "app/api/payments/paypal/order/route.ts",
-      "line": 46,
+      "line": 49,
       "method": "serverAnalytics.sentimentEvent"
     },
     {
       "file": "app/api/payments/razorpay/order/route.ts",
-      "line": 46,
+      "line": 47,
       "method": "serverAnalytics.sentimentEvent"
     }
   ],
   "sentiment_payment_succeeded": [
     {
       "file": "app/api/payments/paypal/capture/route.ts",
-      "line": 49,
+      "line": 62,
       "method": "serverAnalytics.sentimentEvent"
     },
     {
@@ -608,90 +673,135 @@
   "sentiment_paywall_shown": [
     {
       "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
-      "line": 87,
+      "line": 154,
       "method": "serverAnalytics.sentimentEvent"
     },
     {
       "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
-      "line": 105,
+      "line": 172,
       "method": "serverAnalytics.sentimentEvent"
     }
   ],
   "sentiment_result_viewed": [
     {
       "file": "components/tools/sentiment-report-page.tsx",
-      "line": 165,
+      "line": 172,
       "method": "analytics.sentimentResultViewed"
     }
   ],
   "sentiment_scan_completed": [
     {
       "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
-      "line": 192,
+      "line": 265,
       "method": "serverAnalytics.sentimentEvent"
     }
   ],
   "sentiment_scan_failed": [
     {
       "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
-      "line": 204,
+      "line": 277,
       "method": "serverAnalytics.sentimentEvent"
     }
   ],
   "sentiment_scan_requested": [
     {
       "file": "app/api/tools/[slug]/sentiment-checker/scan/route.ts",
-      "line": 109,
+      "line": 176,
       "method": "serverAnalytics.sentimentEvent"
     }
   ],
   "sentiment_scan_started": [
     {
       "file": "components/tools/sentiment-report-page.tsx",
-      "line": 153,
+      "line": 160,
       "method": "analytics.sentimentScanStarted"
     }
   ],
   "share_clicked": [
     {
       "file": "components/shared/share-button.tsx",
-      "line": 100,
+      "line": 101,
       "method": "analytics.shareClicked"
     },
     {
       "file": "components/shared/share-button.tsx",
-      "line": 106,
+      "line": 107,
       "method": "analytics.shareClicked"
     }
   ],
   "signup_completed": [
     {
-      "file": "app/auth/callback/route.ts",
-      "line": 51,
+      "file": "actions/auth.ts",
+      "line": 115,
+      "method": "serverAnalytics.signupCompleted"
+    },
+    {
+      "file": "actions/auth.ts",
+      "line": 162,
+      "method": "serverAnalytics.signupCompleted"
+    },
+    {
+      "file": "actions/auth.ts",
+      "line": 209,
       "method": "serverAnalytics.signupCompleted"
     },
     {
       "file": "app/auth/callback/route.ts",
-      "line": 76,
+      "line": 52,
+      "method": "serverAnalytics.signupCompleted"
+    },
+    {
+      "file": "app/auth/callback/route.ts",
+      "line": 80,
       "method": "serverAnalytics.signupCompleted"
     }
   ],
   "signup_email_entered": [
     {
       "file": "app/(auth)/signup/page.tsx",
-      "line": 24,
+      "line": 26,
       "method": "analytics.signupEmailEntered"
     }
   ],
   "signup_method_selected": [
     {
       "file": "app/(auth)/signup/page.tsx",
-      "line": 64,
+      "line": 68,
       "method": "analytics.signupMethodSelected"
     },
     {
       "file": "app/(auth)/signup/page.tsx",
-      "line": 82,
+      "line": 73,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "app/(auth)/signup/page.tsx",
+      "line": 94,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "app/(auth)/signup/page.tsx",
+      "line": 170,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 173,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "components/cta/plan-signup-modal.tsx",
+      "line": 189,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "components/cta/signup-options.tsx",
+      "line": 94,
+      "method": "analytics.signupMethodSelected"
+    },
+    {
+      "file": "components/cta/signup-options.tsx",
+      "line": 110,
       "method": "analytics.signupMethodSelected"
     }
   ],
@@ -712,19 +822,19 @@
   "stack_saved": [
     {
       "file": "components/stacks/save-stack-button.tsx",
-      "line": 123,
+      "line": 133,
       "method": "analytics.stackSavedRich"
     }
   ],
   "tab_visibility_changed": [
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 132,
+      "line": 133,
       "method": "analytics.tabVisibilityChanged"
     },
     {
       "file": "components/analytics/global-interaction-tracker.tsx",
-      "line": 136,
+      "line": 137,
       "method": "analytics.tabVisibilityChanged"
     }
   ],
@@ -757,21 +867,52 @@
     },
     {
       "file": "components/tools/save-tool-button.tsx",
-      "line": 45,
+      "line": 64,
       "method": "analytics.toolSaved"
+    }
+  ],
+  "tool_submission_completed": [
+    {
+      "file": "actions/submissions.ts",
+      "line": 185,
+      "method": "serverAnalytics.toolSubmissionCompleted"
+    }
+  ],
+  "tool_submission_failed": [
+    {
+      "file": "actions/submissions.ts",
+      "line": 44,
+      "method": "serverAnalytics.toolSubmissionFailed"
+    },
+    {
+      "file": "actions/submissions.ts",
+      "line": 156,
+      "method": "serverAnalytics.toolSubmissionFailed"
+    },
+    {
+      "file": "components/submit/submit-form.tsx",
+      "line": 28,
+      "method": "analytics.toolSubmissionFailed"
+    }
+  ],
+  "tool_submission_started": [
+    {
+      "file": "components/submit/submit-form.tsx",
+      "line": 34,
+      "method": "analytics.toolSubmissionStarted"
     }
   ],
   "tool_unsaved": [
     {
       "file": "components/tools/save-tool-button.tsx",
-      "line": 46,
+      "line": 65,
       "method": "analytics.toolUnsaved"
     }
   ],
   "tool_visit_clicked": [
     {
       "file": "components/tools/visit-website-button.tsx",
-      "line": 52,
+      "line": 53,
       "method": "analytics.toolVisitClicked"
     }
   ],
@@ -785,7 +926,7 @@
   "viability_badge_clicked": [
     {
       "file": "components/tools/viability-badge.tsx",
-      "line": 90,
+      "line": 91,
       "method": "analytics.viabilityBadgeClicked"
     }
   ],

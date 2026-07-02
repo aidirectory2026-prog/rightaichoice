@@ -304,6 +304,75 @@ export const serverAnalytics = {
     void mirrorServerEvent({ event, distinctId, userId: distinctId, properties, ip })
     return trackServer({ event, distinctId, ip, properties: { ...properties, source_kind: 'server' } })
   },
+
+  // ── Phase 14: vendor tool-submission funnel ─────────────────────────────
+  // Authoritative server-side events (actions/submissions.ts + the admin
+  // review actions). distinctId = the SUBMITTER's user id — review decisions
+  // belong to the vendor's journey, not the admin's. All dual-write to
+  // Mixpanel + the user_events mirror.
+  toolSubmissionCompleted(
+    distinctId: string,
+    submissionId: string,
+    pricingType: string,
+    domain: string,
+    hasLogo: boolean,
+    ip?: string,
+  ) {
+    // One submission row = one event; key the id on the submission.
+    const insertId = deterministicInsertId('tool_submission_completed', distinctId, submissionId)
+    const properties = {
+      submission_id: submissionId,
+      pricing_type: pricingType,
+      domain,
+      has_logo: hasLogo,
+      source: 'server',
+    }
+    void mirrorServerEvent({
+      event: 'tool_submission_completed',
+      distinctId,
+      userId: distinctId,
+      ip,
+      insertId,
+      properties,
+    })
+    return trackServer({ event: 'tool_submission_completed', distinctId, ip, insertId, properties })
+  },
+  toolSubmissionFailed(distinctId: string, reason: string, ip?: string) {
+    const properties = { reason, source: 'server' }
+    void mirrorServerEvent({
+      event: 'tool_submission_failed',
+      distinctId,
+      userId: distinctId,
+      ip,
+      properties,
+    })
+    return trackServer({ event: 'tool_submission_failed', distinctId, ip, properties })
+  },
+  toolSubmissionReviewed(
+    distinctId: string,
+    submissionId: string,
+    decision: 'approved' | 'rejected',
+    reason?: string | null,
+    ip?: string,
+  ) {
+    // One decision per submission; key the id on the submission.
+    const insertId = deterministicInsertId('tool_submission_reviewed', distinctId, submissionId)
+    const properties = {
+      submission_id: submissionId,
+      decision,
+      ...(reason ? { reason } : {}),
+      source: 'server',
+    }
+    void mirrorServerEvent({
+      event: 'tool_submission_reviewed',
+      distinctId,
+      userId: distinctId,
+      ip,
+      insertId,
+      properties,
+    })
+    return trackServer({ event: 'tool_submission_reviewed', distinctId, ip, insertId, properties })
+  },
 }
 
 // ── Internal: deterministic insert_id for client/server de-dup ────
