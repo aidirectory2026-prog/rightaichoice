@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/utils/slugify'
 import type { DiscoveredTool } from './discover'
 
-function normalizeDomain(url: string): string {
+export function normalizeDomain(url: string): string {
   try {
     const parsed = new URL(url)
     return parsed.hostname.replace(/^www\./, '').toLowerCase()
