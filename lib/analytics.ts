@@ -984,6 +984,18 @@ export const analytics = {
   newsletterSubscribed(source: string) {
     capture('newsletter_subscribed', { source })
   },
+  // ── Phase 14: vendor tool-submission funnel (client side) ────────────
+  // The authoritative completed/reviewed events fire server-side
+  // (lib/mixpanel-server.ts); the client covers the journey around them.
+  submitCtaClicked(source: 'navbar' | 'footer' | 'tools_page') {
+    capture('submit_cta_clicked', { source })
+  },
+  toolSubmissionStarted(authed: boolean) {
+    capture('tool_submission_started', { authed })
+  },
+  toolSubmissionFailed(reason: string) {
+    capture('tool_submission_failed', { reason })
+  },
   externalLinkClicked(url: string, entity: string, entityId: string) {
     capture('external_link_clicked', { url, entity, entity_id: entityId })
   },

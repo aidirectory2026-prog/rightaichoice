@@ -21,6 +21,7 @@ const PRODUCT_LINKS: Array<{ href: string; label: string }> = [
   { href: '/recommend', label: 'Find my AI tool' },
   { href: '/ai-chat', label: 'AI chat' },
   { href: '/compare', label: 'Compare' },
+  { href: '/submit', label: 'Submit your tool' },
 ]
 
 const RESOURCES_LINKS: Array<{ href: string; label: string }> = [

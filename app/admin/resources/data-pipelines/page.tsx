@@ -64,6 +64,22 @@ export default function DataPipelinesPage() {
         </p>
       </Section>
 
+      <Section title="How new tools get in — two doors, one quality bar (Phase 14)">
+        <p>
+          Until Phase 14 the only way into the catalog was the nightly <strong className="text-zinc-300">auto-ingest</strong>:
+          discovery (Product Hunt + GitHub) → a traction gate (real HN/GitHub/PH signals) → a <em>draft</em> row that the
+          onboarding pipeline must fully enrich and quality-check before it can publish. Now there is a second door:
+          <strong className="text-zinc-300"> vendor submissions</strong>. Anyone with a full account can submit a tool at{' '}
+          <Code>/submit</Code> (free). Submissions land in a moderated queue — <Code>/admin/submissions</Code> in the
+          sidebar — where <em>you</em> are the traction gate: approve and it becomes a normal draft (marked{' '}
+          <Code>submitted_by</Code> for provenance) that goes through exactly the same enrichment and publish gates as an
+          auto-ingested tool; reject and the submitter gets an email with the reason. Duplicates are blocked at submit
+          time, a hidden honeypot plus a 3-pending-per-person cap keeps spam out, and — the promise we publish on the
+          page itself — <strong className="text-zinc-300">submitting never influences rankings, scores, or
+          recommendations</strong>. Full reference: <Code>docs/admin/submissions-queue.md</Code>.
+        </p>
+      </Section>
+
       <Section title="The Viability Score, in detail">
         <p>It combines four real signals into a single 0–100 number (≥70 safe, 40–69 moderate, &lt;40 at-risk):</p>
         <ul className="mt-2 ml-5 list-disc space-y-1 text-zinc-400">
