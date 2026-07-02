@@ -140,6 +140,20 @@ export async function getOverviewMetrics(f: AdminFilters): Promise<MetricResult[
     ), f, pinned),
   ])
 
+  // Post-merge fix: a FAILED count request must never render as 0 — a giant
+  // cohort pin once blew the PostgREST URL limit and half the tiles silently
+  // zeroed while the RPC tiles showed data ("filters not working nicely").
+  // Fail loudly; the page error boundary is honest, a fake zero is not.
+  for (const [label, res] of [
+    ['page views', pageViews],
+    ['unique visitors', uniqueVisitors],
+    ['known users', uniqueUsers],
+    ['signups', signups],
+    ['newsletter', newsletter],
+  ] as const) {
+    if (res.error) throw new Error(`overview ${label} query failed: ${res.error.message}`)
+  }
+
   return [
     { label: 'Page views', value: pageViews.count ?? 0 },
     { label: 'Unique visitors', value: Number((uniqueVisitors.data as { count?: number } | null)?.count ?? 0) },
@@ -1370,7 +1384,18 @@ export async function getUserDirectory(
 // schema registry (SCHEMA_EVENT_NAMES) instead, so they can never drift
 // from the FIRED set.
 
+// Post-merge fix (2026-07-02): this dropdown-options aggregate (90 days of
+// user_events, GROUP BY country) ran on EVERY request of every admin page —
+// pure overhead per filter click for a list that changes maybe weekly.
+// Cache it in-process for an hour; on a fresh serverless instance it runs
+// once, then every page render reuses it.
+let countryOptionsCache: { at: number; values: string[] } | null = null
+const COUNTRY_OPTIONS_TTL_MS = 60 * 60 * 1000
+
 export async function getCountryFilterOptions(): Promise<string[]> {
+  if (countryOptionsCache && Date.now() - countryOptionsCache.at < COUNTRY_OPTIONS_TTL_MS) {
+    return countryOptionsCache.values
+  }
   // P0 hotfix (2026-06-12): _admin_audit_exec returns a single jsonb value,
   // NOT an array of rows — the old `.map` threw and 500'd every page that
   // renders the filter bar. Aggregate to a real JSON array in SQL, and never
@@ -1386,7 +1411,9 @@ export async function getCountryFilterOptions(): Promise<string[]> {
               ) t`,
     })
     if (!Array.isArray(data)) return []
-    return data.filter((c): c is string => typeof c === 'string' && c.length > 0)
+    const values = data.filter((c): c is string => typeof c === 'string' && c.length > 0)
+    countryOptionsCache = { at: Date.now(), values }
+    return values
   } catch {
     return []
   }

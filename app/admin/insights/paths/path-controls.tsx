@@ -2,7 +2,7 @@
 
 // Phase 14b Wave 4 — path tree controls: anchor event + walk direction.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
 export function PathControls({
@@ -18,6 +18,10 @@ export function PathControls({
   const pathname = usePathname()
   const params = useSearchParams()
   const [draft, setDraft] = useState(anchor ?? '')
+
+  // Re-sync when the anchor changes via a tree-node click / Clear all —
+  // the component doesn't remount, a stale draft would lie.
+  useEffect(() => setDraft(anchor ?? ''), [anchor])
 
   function set(key: string, value: string | null) {
     const sp = new URLSearchParams(params.toString())

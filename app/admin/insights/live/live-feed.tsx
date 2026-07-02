@@ -32,13 +32,19 @@ export function LiveFeed({
     const jsonb = filtersKey === 'null' ? null : JSON.parse(filtersKey)
 
     async function refresh() {
-      const [{ data: s }, { data: f }] = await Promise.all([
+      const [sRes, fRes] = await Promise.all([
         supabase.rpc('insights_live_sessions', { p_active_within_sec: ACTIVE_WITHIN_SEC, p_include_bots: includeBots, p_filters: jsonb }),
         supabase.rpc('insights_activity_feed', { p_limit: 50, p_include_bots: includeBots, p_filters: jsonb }),
       ])
       if (cancelled) return
-      if (Array.isArray(s)) setSessions(s as LiveSession[])
-      if (Array.isArray(f)) setFeed(f as ActivityEvent[])
+      // A failing refresh must not silently freeze the feed at stale data
+      // while the badge claims "Realtime" — surface it as degraded.
+      if (sRes.error || fRes.error) {
+        console.warn('[live-feed] refresh failed', sRes.error?.message ?? fRes.error?.message)
+        setRealtimeStatus('polling')
+      }
+      if (Array.isArray(sRes.data)) setSessions(sRes.data as LiveSession[])
+      if (Array.isArray(fRes.data)) setFeed(fRes.data as ActivityEvent[])
       setLastTick(new Date())
     }
 

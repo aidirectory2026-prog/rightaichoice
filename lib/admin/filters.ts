@@ -436,13 +436,16 @@ export function applyFilters<T extends PostgrestFilterable>(
   // props: keys were allowlisted + charset-checked at parse time — they're
   // the only user input that reaches a column-expression position.
   for (const p of f.props ?? []) q = q.eq(`properties->>${p.k}`, p.v)
-  // ── negations (must stay equivalent to `not insights_filter_match`) ──
+  // ── negations (must stay equivalent to the SQL `not` blocks) ──
   if (f.not) {
     q = notEqOrIn(q, 'country', f.not.country)
     q = notEqOrIn(q, 'utm_source', f.not.utmSource)
     q = notEqOrIn(q, 'utm_medium', f.not.utmMedium)
     q = notEqOrIn(q, 'utm_campaign', f.not.utmCampaign)
-    q = notEqOrIn(q, 'event_name', f.not.event)
+    // dropEvent must gate the NEGATED event too — filtersToJsonb drops it for
+    // event-pinned tiles, and an ungated mirror would compute
+    // `event_name = X AND event_name != X` → hard zero (tile inconsistency).
+    if (!opts?.dropEvent) q = notEqOrIn(q, 'event_name', f.not.event)
     q = notEqOrIn(q, 'city', f.not.city)
     q = notEqOrIn(q, 'region', f.not.region)
     q = notEqOrIn(q, 'browser', f.not.browser)

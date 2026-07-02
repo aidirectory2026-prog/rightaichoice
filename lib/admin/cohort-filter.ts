@@ -11,10 +11,13 @@
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import type { AdminFilters } from '@/lib/admin/filters'
 
-// Cohorts at this scale are hundreds of members; cap the resolved set so a
-// pathological cohort can't blow up the jsonb payload. If a cohort ever exceeds
-// this, it under-constrains (documented) rather than erroring.
-const COHORT_MEMBER_CAP = 5000
+// Cohorts at this scale are hundreds of members. The cap matters for TWO
+// reasons: (1) jsonb payload size on the RPC path, and (2) the PostgREST
+// mirror serializes `.in('distinct_id', ids)` into the request URL — past
+// ~300 ids the URL exceeds gateway limits and the request FAILS (which the
+// count tiles used to swallow as silent zeros). 300 keeps both paths safe
+// and consistent; an over-cap cohort under-constrains (documented).
+const COHORT_MEMBER_CAP = 300
 
 type SavedCohortPayload = { match?: 'and' | 'or'; days?: number; conditions?: unknown[] }
 
@@ -49,7 +52,9 @@ export async function withCohort(
   })
   if (error) return filters // resolution failed → don't silently show a wrong subset
   const ids = ((data ?? []) as { distinct_id: string }[]).map((r) => r.distinct_id).filter(Boolean)
-  // A resolved cohort (even empty) constrains the view; empty → the predicate's
-  // `distinct_id = ANY('{}')` yields no rows, which is the correct honest result.
-  return { ...filters, distinctIds: ids }
+  // A resolved-but-EMPTY cohort must still constrain the view. An empty array
+  // is dropped by filtersToJsonb/applyFilters (indistinguishable from "no
+  // cohort"), which used to silently show ALL data — so pin a sentinel id
+  // that matches nothing instead.
+  return { ...filters, distinctIds: ids.length ? ids : ['__no_cohort_match__'] }
 }

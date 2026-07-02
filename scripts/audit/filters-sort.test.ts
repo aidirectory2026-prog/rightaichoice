@@ -6,6 +6,8 @@ process.env.NEXT_PUBLIC_ADMIN_TZ = 'Asia/Kolkata'
 
 import { parseSort, sortRows, sortParams } from '../../lib/admin/sort'
 import { parseAdminFilters, filtersToJsonb } from '../../lib/admin/filters'
+import { KNOWN_PROP_KEYS } from '../../lib/analytics-schema'
+import { KNOWN_PROP_KEYS_LIST } from '../../lib/known-prop-keys'
 
 let passed = 0
 let failed = 0
@@ -110,6 +112,13 @@ check('jsonb: dropEvent also drops negated event', eq(
   filtersToJsonb(parseAdminFilters({ event_not: 'page_viewed', country: 'IN' }), { dropEvent: true }),
   { country: 'IN' },
 ))
+
+// The zod-free client copy of the prop-key allowlist must never drift from
+// the schema-derived set (lib/known-prop-keys.ts header has the regen cmd).
+check(
+  'known-prop-keys.ts in sync with schema KNOWN_PROP_KEYS',
+  eq([...KNOWN_PROP_KEYS].sort(), [...KNOWN_PROP_KEYS_LIST]),
+)
 
 console.log(`\n${passed} passed, ${failed} failed`)
 if (failed > 0) process.exit(1)

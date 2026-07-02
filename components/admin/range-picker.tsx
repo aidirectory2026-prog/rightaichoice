@@ -23,8 +23,16 @@ export function RangePicker({ active }: { active: RangeKey }) {
   const params = useSearchParams()
   const [customOpen, setCustomOpen] = useState(active === 'custom')
   const [moreOpen, setMoreOpen] = useState(false)
-  const [from, setFrom] = useState(params.get('from') ?? '')
-  const [to, setTo] = useState(params.get('to') ?? '')
+  const urlFrom = params.get('from') ?? ''
+  const urlTo = params.get('to') ?? ''
+  const [from, setFrom] = useState(urlFrom)
+  const [to, setTo] = useState(urlTo)
+
+  // Re-sync the custom-date drafts when the URL changes underneath (preset
+  // clicked, saved report loaded, back/forward) — the component doesn't
+  // remount, and stale drafts made "Custom → Apply" navigate BACK to old dates.
+  useEffect(() => setFrom(urlFrom), [urlFrom])
+  useEffect(() => setTo(urlTo), [urlTo])
 
   // Close the "More" pop-out when clicking outside.
   useEffect(() => {
@@ -37,26 +45,35 @@ export function RangePicker({ active }: { active: RangeKey }) {
     return () => window.removeEventListener('mousedown', handler)
   }, [moreOpen])
 
+  /** Build from the CLICK-TIME URL (router updates window.location eagerly;
+   *  the hook only updates on commit — building from it dropped filters
+   *  chosen moments earlier). replace, not push: consistent with every other
+   *  filter control, so Back leaves the page instead of undoing one chip. */
+  function liveParams(): URLSearchParams {
+    if (typeof window !== 'undefined') return new URLSearchParams(window.location.search)
+    return new URLSearchParams(params.toString())
+  }
+
   function applyPreset(k: Exclude<RangeKey, 'custom'>) {
-    const sp = new URLSearchParams(params.toString())
+    const sp = liveParams()
     sp.set('range', k)
     sp.delete('from')
     sp.delete('to')
     setCustomOpen(false)
     setMoreOpen(false)
-    router.push(`${pathname}?${sp.toString()}`)
+    router.replace(`${pathname}?${sp.toString()}`)
   }
 
   function applyCustom() {
     if (!from && !to) return
-    const sp = new URLSearchParams(params.toString())
+    const sp = liveParams()
     sp.delete('range')
     if (from) sp.set('from', from)
     else sp.delete('from')
     if (to) sp.set('to', to)
     else sp.delete('to')
     setCustomOpen(false)
-    router.push(`${pathname}?${sp.toString()}`)
+    router.replace(`${pathname}?${sp.toString()}`)
   }
 
   function presetButton(k: Exclude<RangeKey, 'custom'>) {

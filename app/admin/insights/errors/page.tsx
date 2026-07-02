@@ -101,6 +101,7 @@ export default async function ErrorsPage({
           activeRange={filters.range.key}
           countries={countryOptions}
           eventNames={[...SCHEMA_EVENT_NAMES]}
+          hideEvent
         />
       </div>
 

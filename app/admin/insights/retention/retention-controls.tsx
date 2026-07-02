@@ -3,7 +3,7 @@
 // Phase 14b Wave 4 — retention grid controls: day/week granularity + optional
 // anchor ("first did …") and return ("came back and did …") events. URL-state.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
 const inputCls =
@@ -25,6 +25,11 @@ export function RetentionControls({
   const params = useSearchParams()
   const [firstDraft, setFirstDraft] = useState(firstEvent ?? '')
   const [returnDraft, setReturnDraft] = useState(returnEvent ?? '')
+
+  // Props re-flow on navigation but state doesn't — re-sync so the inputs
+  // never disagree with the grid (saved reports / Clear all / back-forward).
+  useEffect(() => setFirstDraft(firstEvent ?? ''), [firstEvent])
+  useEffect(() => setReturnDraft(returnEvent ?? ''), [returnEvent])
 
   function set(key: string, value: string | null) {
     const sp = new URLSearchParams(params.toString())

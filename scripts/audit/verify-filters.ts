@@ -67,6 +67,7 @@ type Combo = {
   notDevice?: string
   notPath?: string
   notBrowser?: string
+  notSource?: string | string[]
 }
 
 const arr = (v: string | string[] | undefined): string[] => (v == null ? [] : Array.isArray(v) ? v : [v])
@@ -128,6 +129,9 @@ function rawWhere(c: Combo): string {
   }
   if (c.notPath) parts.push(`not (page_path ilike ${lit('%' + c.notPath + '%')})`)
   if (c.notBrowser) parts.push(`not (browser = ${lit(c.notBrowser)})`)
+  // multi-value not-source: NONE may match, and NULL referrers are excluded
+  // (the 185 predicate diverged here — kept NULLs for arrays; locked by 190)
+  for (const s of arr(c.notSource)) parts.push(`not (referrer ilike ${lit('%' + s + '%')})`)
   return parts.join(' and ')
 }
 
@@ -137,6 +141,7 @@ function toAdminFilters(c: Combo): AdminFilters {
   if (c.notDevice) not.device = c.notDevice
   if (c.notPath) not.pagePath = c.notPath
   if (c.notBrowser) not.browser = c.notBrowser
+  if (c.notSource) not.source = c.notSource
   return {
     range: SEL,
     includeBots: c.includeBots,
@@ -177,6 +182,7 @@ function describe(c: Combo): string {
   if (c.notDevice) parts.push(`device≠${c.notDevice}`)
   if (c.notPath) parts.push(`path≠${c.notPath}`)
   if (c.notBrowser) parts.push(`browser≠${c.notBrowser}`)
+  if (arr(c.notSource).length) parts.push(`source≠${arr(c.notSource).join('|')}`)
   parts.push(`bots=${c.includeBots ? 'incl' : 'excl'}`)
   return parts.join(' ')
 }
@@ -315,6 +321,7 @@ async function main() {
     { name: 'not path', includeBots: false, notPath: '/tools' },
     { name: 'not browser', includeBots: false, notBrowser: topBrowser },
     { name: 'pos+neg stack', includeBots: false, country: [topCountry, 'US'], notBrowser: topBrowser },
+    { name: 'not source[multi]', includeBots: false, notSource: [sourceHost, 'zz-verify-nomatch'] },
     { name: 'kitchen sink', includeBots: false, device: 'desktop', browser: topBrowser, pagePath: '/tools', notCountry: 'CN' },
   ]
 
@@ -954,6 +961,36 @@ async function main() {
       'cohort distinct_ids + device: RPC visitors AND mirror events = raw',
       { v: Number((cohortRpc.data as { count?: number } | null)?.count ?? -1), e: cMirror.count ?? -1 },
       { v: Number(rawCohort?.v ?? -2), e: Number(rawCohort?.e ?? -2) },
+    )
+  }
+
+  // ── Predicate-speed guard (post-merge regression lock, 2026-07-02) ──────
+  // Migration 185 silently un-inlined the predicate → 10s/query → "the whole
+  // admin is broken". Lock the fix (mig 190): a filtered count through
+  // insights_apply_filters must run within 5× of the flat hand-written WHERE
+  // (generous for network noise; the broken state was 500×+).
+  {
+    const timeIt = async (fn: () => Promise<unknown>) => {
+      const t0 = Date.now()
+      await fn()
+      return Date.now() - t0
+    }
+    // warm both paths once, then measure
+    const flatSql = `select count(*)::bigint as n from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and not bot_likely and country = ${lit(topCountry)}`
+    await runSql(flatSql)
+    const flatMs = await timeIt(() => runSql(flatSql))
+    const predSql = `select count(*)::bigint as n from user_events ue
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and not bot_likely and insights_apply_filters(ue, '{"country": ${JSON.stringify(topCountry)}}'::jsonb)`
+    await runSql(predSql)
+    const predMs = await timeIt(() => runSql(predSql))
+    const ok = predMs <= Math.max(flatMs * 5, 1500)
+    addExtra(
+      `predicate speed: apply_filters ≤ 5× flat WHERE (flat=${flatMs}ms, pred=${predMs}ms)`,
+      ok,
+      true,
     )
   }
 

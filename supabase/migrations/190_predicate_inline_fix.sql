@@ -99,30 +99,35 @@ as $$
     and (f->'not'->'region' is null or (f->'not'->'region' ? ue.region) is false)
     and (f->'not'->'browser' is null or (f->'not'->'browser' ? ue.browser) is false)
     and (f->'not'->'os' is null or (f->'not'->'os' ? ue.os) is false)
+    -- negated contains: empty unroll slots must be FALSE (coalesce), not NULL
+    -- — `NULL IS FALSE` would exclude EVERY row for a 2-value ≠source. A NULL
+    -- referrer counts as "matched" so ≠ excludes it (mirror .not semantics).
     and (f->'not'->'source' is null or (
           case jsonb_typeof(f->'not'->'source')
             when 'array' then
-                 (ue.referrer ilike '%' || (f->'not'->'source'->>0) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>1) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>2) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>3) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>4) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>5) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>6) || '%')
-              or (ue.referrer ilike '%' || (f->'not'->'source'->>7) || '%')
+                 coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>0) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>1) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>2) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>3) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>4) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>5) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>6) || '%', false)
+              or coalesce(ue.referrer ilike '%' || (f->'not'->'source'->>7) || '%', false)
+              or ue.referrer is null
             else ue.referrer ilike '%' || (f->'not'->>'source') || '%'
           end) is false)
     and (f->'not'->'page_path' is null or (
           case jsonb_typeof(f->'not'->'page_path')
             when 'array' then
-                 (ue.page_path ilike '%' || (f->'not'->'page_path'->>0) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>1) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>2) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>3) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>4) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>5) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>6) || '%')
-              or (ue.page_path ilike '%' || (f->'not'->'page_path'->>7) || '%')
+                 coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>0) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>1) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>2) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>3) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>4) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>5) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>6) || '%', false)
+              or coalesce(ue.page_path ilike '%' || (f->'not'->'page_path'->>7) || '%', false)
+              or ue.page_path is null
             else ue.page_path ilike '%' || (f->'not'->>'page_path') || '%'
           end) is false)
   )

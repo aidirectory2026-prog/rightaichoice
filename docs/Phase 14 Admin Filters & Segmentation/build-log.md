@@ -189,3 +189,55 @@ filter-matrix.md` regenerated.
    outstanding belt for the Phase 14 version-skew self-heal.
 3. After the deploy: hard-refresh `/admin/insights` and click through
    Funnel → Retention → Paths → the new filter menu; report anything that feels off.
+
+---
+
+## Post-merge fix round (2026-07-02, branch `phase14b-fixes`)
+
+Founder reported "none of the filters on the entire admin panel is working nicely" right
+after the merge. Deep re-verification (live authed smoke of all ~40 admin routes: all 200)
+plus a three-agent adversarial review of the whole phase found the causes:
+
+### The big one — every query was 500× slower (migration 190, LIVE already)
+Migration 185 restructured the shared filter logic into nested functions; Postgres could
+no longer optimize ("inline") it, so EVERY chart query paid a per-row function call:
+measured **10,242ms vs 17ms** for the same 30-day filter. With 5–22 queries per page, every
+insights page crawled or timed out — even with no filters set. Migration 190 rebuilds the
+predicate as one flat expression the database fully inlines (verified in the query plan):
+the same filtered query now runs **19ms**. Applied straight to the database, so the speedup
+was live before this branch even merges. A speed guard is now IN the verifier (predicate
+must stay within 5× of flat SQL) so this class of regression can never ship silently again.
+
+### Real bugs found by the review + the new checks (all fixed)
+- **≠ source with two values excluded everything** (SQL nulls in the negation unroll) —
+  caught by a new verifier combo, fixed in 190.
+- **Clicks looked dead**: every filter change was a silent multi-second round trip with
+  zero feedback. The bar now shows a spinner + dims while applying (useTransition).
+- **Quick clicks cancelled each other**: two chips added fast → the first silently
+  reverted (handlers read a stale URL). All handlers now read the live URL at click time.
+- **Half-typed text became garbage filters**: clicking away from the Event/Source box
+  committed drafts like "page vi" → chip nobody asked for → everything zero. Inputs now
+  commit on Enter only, values are sanitized before writing, and events must be real.
+- **"Clear all" didn't clear a pinned cohort** — numbers stayed segment-scoped with no
+  visible chips. Fixed.
+- **Empty cohorts silently showed ALL data** (zero-member segment = no constraint at all).
+  Now pins an impossible id → honest zero rows.
+- **Large cohorts broke half the tiles to silent zeros** (URL-length limit + swallowed
+  errors). Cohort cap 5000→300 (both paths consistent), and failed count queries now FAIL
+  LOUDLY instead of rendering fake zeros.
+- **Stale inputs lied after loading a saved report / Back**: search boxes, retention/paths
+  pickers and custom dates now re-sync to the URL.
+- **Event chips were a visible no-op on Searches/Plan drop-off/Errors** (their queries are
+  event-pinned) — the event input is hidden there now; the ≠event asymmetry between the
+  two query paths is fixed.
+- **Bundle bloat**: the filter bar pulled the entire 1,400-line event schema + zod into
+  every admin page's JavaScript, delaying the moment buttons become clickable. Replaced
+  with a tiny generated list (a test asserts it can't drift).
+- Country dropdown options were recomputed from 90 days of events on EVERY page view —
+  now cached for an hour. Migration 191 adds an index for the funnel identity-stitch scan.
+  Live feed no longer silently freezes when a refresh fails.
+
+### Verification
+`tsc` 0 · unit tests 37/37 · filter-matrix verifier now **100 checks ALL GREEN**
+(new: multi-value ≠source combo + predicate-speed guard, flat=185ms vs predicate=197ms).
+Migrations 190/191 applied + verified on prod with rollback files.

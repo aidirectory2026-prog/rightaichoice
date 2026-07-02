@@ -5,7 +5,7 @@
 // clears via the ✕. Writes ?<<param>>=<value> and resets any ?page= so paging
 // starts over on a new search. Reused across Group B pages (tools, etc.).
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 
@@ -21,7 +21,16 @@ export function SearchInput({
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
-  const [draft, setDraft] = useState(params.get(param) ?? '')
+  const committed = params.get(param) ?? ''
+  const [draft, setDraft] = useState(committed)
+
+  // Re-sync when the URL changes UNDER the component (saved report loaded,
+  // Clear all, back/forward) — client components don't remount on
+  // router.replace, so a stale draft would lie about the active filter.
+  useEffect(() => {
+    setDraft(committed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [committed])
 
   function commit(value: string) {
     const sp = new URLSearchParams(params.toString())

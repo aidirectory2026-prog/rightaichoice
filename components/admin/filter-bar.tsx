@@ -8,17 +8,25 @@
 // URL-state only (shareable/bookmarkable): every control reads from and writes
 // to searchParams via router.replace, so the server page re-renders with the new
 // filters and back/forward works. Parsing + sanitization live in
-// lib/admin/filters.ts (parseAdminFilters); the bar never interprets values.
+// lib/admin/filters.ts (parseAdminFilters); the bar sanitizes the SAME way
+// before writing so the chip you see is the value the query uses.
 //
 // Dimension filters are MULTI-VALUE — each optional param holds a comma list
 // (e.g. ?country=IN,US). Negations live in parallel `<param>_not` params; the
-// shared SQL predicate (migration 185) applies them per key. Every selected
+// shared SQL predicate (migration 190) applies them per key. Every selected
 // value shows as a removable chip; clicking the =/≠ glyph flips the value
 // between the positive and negated param.
+//
+// Post-merge fixes (2026-07-02): every navigation runs inside useTransition
+// with a visible pending treatment (clicks used to look dead for the whole
+// server round-trip); handlers read window.location.search at CLICK TIME so
+// two quick clicks can't silently revert each other (useSearchParams only
+// updates when a transition commits); text inputs commit on Enter only (blur
+// used to commit half-typed drafts as garbage filters that zeroed the page).
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Bot, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { Bot, Loader2, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { RangePicker } from '@/components/admin/range-picker'
 import { CohortPicker } from '@/components/admin/cohort-picker'
 import { ReportMenu } from '@/components/admin/report-menu'
@@ -32,7 +40,22 @@ import {
   OS_OPTIONS,
   SOURCE_KIND_OPTIONS,
 } from '@/lib/admin/filters'
-import { KNOWN_PROP_KEYS } from '@/lib/analytics-schema'
+import { KNOWN_PROP_KEYS_LIST, KNOWN_PROP_KEYS_SET } from '@/lib/known-prop-keys'
+
+/** Client-side twins of the server sanitizers (lib/admin/filters.ts) so the
+ *  chip ALWAYS shows the value the query actually uses. */
+const CLIENT_CLEAN: Record<string, (v: string) => string> = {
+  event: (v) => v.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 64),
+  source: (v) => v.toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 100),
+  path: (v) => v.toLowerCase().replace(/[^a-z0-9/_.-]/g, '').slice(0, 200),
+  country: (v) => v.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2),
+  browser: (v) => v.trim().toLowerCase().replace(/[^a-z]/g, '').slice(0, 20),
+  os: (v) => v.trim().toLowerCase().replace(/[^a-z]/g, '').slice(0, 20),
+  session: (v) => v.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 64),
+}
+// eslint-disable-next-line no-control-regex
+const cleanGeneric = (v: string) => v.replace(/[\x00-\x1f\x7f%,]/g, '').trim().slice(0, 120)
+const cleanValue = (key: string, v: string) => (CLIENT_CLEAN[key] ?? cleanGeneric)(v)
 
 const PARAM_LABELS: Record<string, string> = {
   device: 'Device',
@@ -83,16 +106,22 @@ export function FilterBar({
   countries,
   eventNames,
   showRange = true,
+  hideEvent = false,
 }: {
   activeRange: RangeKey
   countries: string[]
   eventNames: string[]
   /** Live has a fixed 5-min window — it mounts the bar without the RangePicker. */
   showRange?: boolean
+  /** Pages whose only query is pinned to a fixed event set (searches,
+   *  plan-dropoff, errors) — an event chip there is a visible no-op, so
+   *  don't offer the input. */
+  hideEvent?: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
+  const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(
     // Discoverability: default OPEN when the page offers dimension filters (else
     // "I can't filter by geo" was really "I couldn't find the collapsed panel").
@@ -114,9 +143,26 @@ export function FilterBar({
     OPTIONAL_FILTER_PARAMS.reduce((n, k) => n + listOf(k).length, 0) +
     NOT_FILTER_PARAMS.reduce((n, k) => n + listOf(k).length, 0)
 
-  /** Current comma-list values for an optional param. */
+  /** The params to BUILD FROM on a click. window.location is updated eagerly
+   *  by router.replace, while the useSearchParams hook only updates when the
+   *  server render commits — building from the hook let a second quick click
+   *  silently revert the first one (lost-update race). */
+  function currentParams(): URLSearchParams {
+    if (typeof window !== 'undefined') return new URLSearchParams(window.location.search)
+    return new URLSearchParams(params.toString())
+  }
+
+  /** Current comma-list values for an optional param (committed URL — chips
+   *  and pills render from this and flip when the transition commits). */
   function listOf(key: string): string[] {
     return (params.get(key) ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  }
+  /** Same, but from the click-time URL — handlers mutate THIS. */
+  function liveListOf(sp: URLSearchParams, key: string): string[] {
+    return (sp.get(key) ?? '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
@@ -124,31 +170,35 @@ export function FilterBar({
 
   function navigate(sp: URLSearchParams) {
     const qs = sp.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname)
+    startTransition(() => {
+      router.replace(qs ? `${pathname}?${qs}` : pathname)
+    })
   }
 
   /** Replace a param with a value list (comma-joined); empty → delete. */
   function setList(key: string, values: string[]) {
-    const sp = new URLSearchParams(params.toString())
+    const sp = currentParams()
     const uniq = [...new Set(values.map((v) => v.trim()).filter(Boolean))]
     if (uniq.length) sp.set(key, uniq.join(','))
     else sp.delete(key)
     navigate(sp)
   }
-  const addValue = (key: string, v: string) => {
-    const cur = listOf(key)
-    if (v && !cur.includes(v)) setList(key, [...cur, v])
+  const addValue = (key: string, raw: string) => {
+    const v = cleanValue(key, raw)
+    if (!v) return
+    const cur = liveListOf(currentParams(), key)
+    if (!cur.includes(v)) setList(key, [...cur, v])
   }
-  const removeValue = (key: string, v: string) => setList(key, listOf(key).filter((x) => x !== v))
+  const removeValue = (key: string, v: string) => setList(key, liveListOf(currentParams(), key).filter((x) => x !== v))
 
   /** Flip one value between `key` and `key_not` (the =/≠ chip toggle). */
   function toggleNegate(key: string, v: string) {
     const isNot = key.endsWith('_not')
     const from = key
     const to = isNot ? key.replace(/_not$/, '') : `${key}_not`
-    const sp = new URLSearchParams(params.toString())
-    const fromVals = listOf(from).filter((x) => x !== v)
-    const toVals = [...new Set([...listOf(to), v])]
+    const sp = currentParams()
+    const fromVals = liveListOf(sp, from).filter((x) => x !== v)
+    const toVals = [...new Set([...liveListOf(sp, to), v])]
     if (fromVals.length) sp.set(from, fromVals.join(','))
     else sp.delete(from)
     sp.set(to, toVals.join(','))
@@ -157,16 +207,19 @@ export function FilterBar({
 
   /** Single-value set (auth / person). */
   function setParam(key: string, value: string | null) {
-    const sp = new URLSearchParams(params.toString())
+    const sp = currentParams()
     if (value) sp.set(key, value)
     else sp.delete(key)
     navigate(sp)
   }
 
   function clearAll() {
-    const sp = new URLSearchParams(params.toString())
+    const sp = currentParams()
     for (const k of OPTIONAL_FILTER_PARAMS) sp.delete(k)
     for (const k of NOT_FILTER_PARAMS) sp.delete(k)
+    // "Clear all" must clear the segment pin too — leaving ?cohort= kept the
+    // page scoped to the cohort with no visible chips ("numbers still wrong").
+    sp.delete('cohort')
     setSourceDraft('')
     setEventDraft('')
     setAddDim('')
@@ -176,11 +229,21 @@ export function FilterBar({
   }
 
   function toggleBots() {
-    const sp = new URLSearchParams(params.toString())
+    const sp = currentParams()
     sp.delete('include_bots') // migrate the legacy param on first toggle
     if (includeBots) sp.delete('bots')
     else sp.set('bots', '1')
     navigate(sp)
+  }
+
+  /** Commit the event draft — Enter only, and only a KNOWN event: blur used to
+   *  commit half-typed drafts ("page vi" → pagevi) that zeroed every tile. */
+  function commitEvent() {
+    const v = cleanValue('event', eventDraft)
+    if (v && eventNames.includes(v)) {
+      addValue('event', v)
+      setEventDraft('')
+    }
   }
 
   /** Commit the "+ Add filter" draft for the currently-selected dimension. */
@@ -191,7 +254,8 @@ export function FilterBar({
       if (v) setParam('person', v)
     } else if (addDim === 'prop') {
       const k = propKeyDraft.trim().toLowerCase()
-      if (k && v) addValue('prop', `${k}:${v}`)
+      // schema-known keys only — anything else is dropped by the parser anyway
+      if (k && v && KNOWN_PROP_KEYS_SET.has(k)) addValue('prop', `${k}:${cleanGeneric(v)}`)
       setPropKeyDraft('')
     } else if (v) {
       addValue(addDim, v)
@@ -233,7 +297,7 @@ export function FilterBar({
           }`}
           aria-expanded={open}
         >
-          <SlidersHorizontal className="h-3 w-3" />
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <SlidersHorizontal className="h-3 w-3" />}
           Filters
           {activeCount > 0 && (
             <span className="rounded-full bg-emerald-700 px-1.5 text-[10px] font-semibold text-white">{activeCount}</span>
@@ -242,9 +306,10 @@ export function FilterBar({
         {showRange && <RangePicker active={activeRange} />}
       </div>
 
-      {/* Active-value chips — one per selected value; =/≠ toggle + remove. */}
+      {/* Active-value chips — one per selected value; =/≠ toggle + remove.
+          Dimmed while a filter change is applying (isPending). */}
       {activeCount > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+        <div className={`flex items-center gap-1.5 flex-wrap justify-end transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {chipParams.flatMap((k) => {
             const isNot = k.endsWith('_not')
             const base = isNot ? k.replace(/_not$/, '') : k
@@ -293,7 +358,7 @@ export function FilterBar({
       )}
 
       {open && (
-        <div className="flex items-center gap-3 flex-wrap justify-end rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+        <div className={`flex items-center gap-3 flex-wrap justify-end rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 transition-opacity ${isPending ? 'opacity-60 pointer-events-none' : ''}`}>
           {/* Device — multi-select pills (4 options). */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-zinc-500">Device</span>
@@ -352,36 +417,38 @@ export function FilterBar({
             </select>
           </label>
 
-          {/* Event — type/pick to ADD (multi). */}
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
-            Event
-            <input
-              list="filter-bar-events"
-              value={eventDraft}
-              onChange={(e) => setEventDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && eventDraft.trim()) {
-                  addValue('event', eventDraft.trim())
-                  setEventDraft('')
-                }
-              }}
-              onBlur={() => {
-                if (eventDraft.trim()) {
-                  addValue('event', eventDraft.trim())
-                  setEventDraft('')
-                }
-              }}
-              placeholder="add event ⏎"
-              className={inputCls}
-            />
-            <datalist id="filter-bar-events">
-              {eventNames.map((n) => (
-                <option key={n} value={n} />
-              ))}
-            </datalist>
-          </label>
+          {/* Event — pick from the list, Enter to add (multi). NO blur-commit:
+              it used to turn half-typed drafts into zero-matching filters. */}
+          {!hideEvent && (
+            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
+              Event
+              <input
+                list="filter-bar-events"
+                value={eventDraft}
+                onChange={(e) => {
+                  setEventDraft(e.target.value)
+                  // datalist picks fire change with the full value — commit
+                  // immediately when it's an exact known event.
+                  if (eventNames.includes(e.target.value)) {
+                    addValue('event', e.target.value)
+                    setEventDraft('')
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitEvent()
+                }}
+                placeholder="add event ⏎"
+                className={inputCls}
+              />
+              <datalist id="filter-bar-events">
+                {eventNames.map((n) => (
+                  <option key={n} value={n} />
+                ))}
+              </datalist>
+            </label>
+          )}
 
-          {/* Source — add on Enter/blur (multi). */}
+          {/* Source — Enter to add (multi). No blur-commit. */}
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
             Source
             <input
@@ -389,12 +456,6 @@ export function FilterBar({
               onChange={(e) => setSourceDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && sourceDraft.trim()) {
-                  addValue('source', sourceDraft.trim())
-                  setSourceDraft('')
-                }
-              }}
-              onBlur={() => {
-                if (sourceDraft.trim()) {
                   addValue('source', sourceDraft.trim())
                   setSourceDraft('')
                 }
@@ -449,7 +510,7 @@ export function FilterBar({
                   className={`${inputCls} w-32`}
                 />
                 <datalist id="filter-bar-prop-keys">
-                  {[...KNOWN_PROP_KEYS].sort().map((k) => (
+                  {KNOWN_PROP_KEYS_LIST.map((k) => (
                     <option key={k} value={k} />
                   ))}
                 </datalist>
@@ -471,7 +532,6 @@ export function FilterBar({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') commitAdd()
                 }}
-                onBlur={commitAdd}
                 placeholder={`${ADD_MENU.find((m) => m.key === addDim)?.hint || 'value'} ⏎`}
                 className={`${inputCls} w-48`}
               />
