@@ -111,6 +111,7 @@
     "tracking:watchdog": "tsx --env-file=.env.local scripts/audit/tracking-watchdog.ts",
     "tracking:filters": "tsx --env-file=.env.local scripts/audit/verify-filters.ts",
     "tracking:nightly": "tsx --env-file=.env.local scripts/audit/nightly-verify.ts",
+    "smoke:authed": "tsx --env-file=.env.local scripts/audit/authed-smoke.ts",
     "verify:boards": "tsx --env-file=.env.local scripts/audit/verify-smart-boards.ts",
     "llms:full:dry": "tsx --env-file=.env.local scripts/build-llms-full.ts --dry",
     "llms:full": "tsx --env-file=.env.local scripts/build-llms-full.ts",

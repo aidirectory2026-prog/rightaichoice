@@ -125,3 +125,67 @@ Before any new code: 46-check filter matrix, 13 smart-board checks, 32 unit test
 in-DB invariants pass; live data quality clean (0.1% null geo, 0% schema violations, events flowing);
 migration-182 Explore RPCs smoke-tested live. Also found the local main tree 2 commits behind
 origin/main (PRs #64/#65 were merged remotely) — worktree synced before starting.
+
+## What shipped (all six waves, 2026-07-02, single branch `phase14b-wave1`)
+
+Migrations **183–189** applied + verified on production; every wave proven by the
+filter-matrix verifier, which grew **46 → 97 checks (all green)** through the phase.
+
+### Wave 1 — Every visible filter actually works (mig 183)
+Three pages (Searches, Plan drop-off, Errors) showed the filter bar but their queries
+silently ignored it — fixed. Live got the full filter bar (and its activity feed's
+browser refresh, silently broken by a missing permission, now works). Users directory
+got an email/ID search box; the User 360 journey got a date-range picker + "only
+sessions containing event X"; Members got search + signed-up range.
+
+### Wave 2 — Filter by anything, anywhere (migs 184–185)
+New dimensions on every screen: **City, Region, Page, Browser, OS, Session,
+client/server, any event property** — plus **≠ (exclude)** on every chip and a
+**Person pin** (paste an email or ID → every chart shows just that human; no match →
+honest zero, never silently unfiltered). Browser/OS parsed at ingest; 46,513
+historical rows backfilled with the same parser. Filter bar got a "+ Add filter" menu.
+
+### Wave 3 — Build any funnel + saved reports (mig 186)
+The Funnel page now composes ANY funnel from ANY events (presets keep the classic
+two), breaks each step down by geo/device/browser/…, and lists the actual people who
+converted or dropped at any step (click → their journey). A **Reports** menu in the
+filter bar saves any page + filter state by name, reopenable anywhere.
+
+### Wave 4 — Retention + Paths (mig 187)
+**Retention**: the classic cohort heat grid — "of the people who first came this
+week, how many came back N weeks later", with custom anchor/return events, daily or
+weekly. **Paths**: a clickable tree of what people do before/after any event within
+a session. Both honor every filter.
+
+### Wave 5 — Smarter segments + take-it-with-you CSV (mig 188)
+Cohorts learned "did X **at least N times**", "did X **where property = value**",
+and Location/Device conditions. **Bug found & fixed by the new checks:** a visitor
+with both anonymous and logged-in activity was counted TWICE in every cohort —
+deduplicated. A **CSV** button in the filter bar downloads the raw events behind the
+current view (all filters applied, 50k cap).
+
+### Wave 6 — Verification hardening (mig 189)
+The Explore RPCs (mig 182) and the cohort-as-filter path are now in the automated
+verifier (they were only ever eyeballed). Two new nightly invariants: **I14 geo
+completeness** (0.00% missing today) and **I15 browser parse coverage** (10.75%
+unparsed, under threshold). `npm run smoke:authed` added and wired into nightly CI —
+it now hits every new page WITH filters and fails on any 5xx. `docs/admin/
+filter-matrix.md` regenerated.
+
+## Verification discipline (finished state)
+- `tsc --noEmit` → 0 across all waves
+- `npm run tracking:filters` — **97 checks ALL GREEN** (35 combos × 2 + 27 extended:
+  honesty H1–H6, funnel reconciliation, retention/paths invariants, cohort v2 vs raw
+  SQL, mig-182 partition sums, cohort-ids in the main predicate) + transient-fetch retry
+- `npm run test:filters-sort` 36/36 · `test:range` 9/9 · `tracking:schema` consistent
+- All migrations applied to prod BEFORE merge (all backward-compatible — the live
+  site keeps working on old code); rollback file per migration
+- New in-DB invariants I14/I15 run + pass on live data
+
+## Open items (founder)
+1. **Merge the phase PR** (branch `phase14b-wave1`, one squash merge) — nothing new
+   is visible in the admin until this deploys.
+2. **Enable Vercel Skew Protection** (dashboard → Settings → Advanced) — still the
+   outstanding belt for the Phase 14 version-skew self-heal.
+3. After the deploy: hard-refresh `/admin/insights` and click through
+   Funnel → Retention → Paths → the new filter menu; report anything that feels off.

@@ -878,6 +878,85 @@ async function main() {
     addExtra(`cohort v2: geo country=${topCountry} AND device=desktop = raw intersect`, (c3.data as unknown[]).length, Number(rawC3?.n ?? -1))
   }
 
+  // ── Phase 14b Wave 6 — mig-182 Explore RPCs + cohort distinct_ids ───────
+  // These shipped in Phase 14 Wave 3b "sanity-checked live" only; now pinned.
+  {
+    // X1. session_breakdown: every event lands in exactly one session/key, so
+    // sum(events) across keys must equal the raw filtered event count.
+    const sb = await anyDb.rpc('insights_session_breakdown', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_dimension: 'country', p_gap_min: 30, p_limit: 100000,
+    })
+    if (sb.error) throw new Error(`insights_session_breakdown failed [X1]: ${sb.error.message}`)
+    const sbEvents = ((sb.data ?? []) as Array<{ events: number | string }>).reduce((a, r) => a + Number(r.events), 0)
+    const rawTotal = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely`,
+    )
+    addExtra('mig182 session_breakdown: sum(events) = raw filtered events', sbEvents, Number(rawTotal?.n ?? -1))
+
+    // X2. breakdown_matrix: cells partition all events, so sum(events) must
+    // equal the same raw total (and again under a device filter).
+    for (const [suffix, extraFilters, rawWhereSql] of [
+      ['none', null, ''],
+      ['device=desktop', { device: 'desktop' }, ` and device_type = 'desktop'`],
+    ] as const) {
+      const bm = await anyDb.rpc('insights_breakdown_matrix', {
+        p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: extraFilters,
+        p_dim1: 'country', p_dim2: 'device', p_limit: 100000,
+      })
+      if (bm.error) throw new Error(`insights_breakdown_matrix failed [X2 ${suffix}]: ${bm.error.message}`)
+      const bmEvents = ((bm.data ?? []) as Array<{ events: number | string }>).reduce((a, r) => a + Number(r.events), 0)
+      const rawBm = await runSql(
+        `select count(*)::bigint as n from user_events
+          where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely${rawWhereSql}`,
+      )
+      addExtra(`mig182 breakdown_matrix: sum(events) = raw [${suffix}]`, bmEvents, Number(rawBm?.n ?? -1))
+    }
+
+    // X3. cohort-as-filter in the MAIN predicate: a fixed distinct_ids set
+    // through the RPC path AND the PostgREST mirror vs raw IN-list SQL.
+    const idsRaw = await runSql(
+      `select jsonb_agg(t.distinct_id) as ids from (
+         select distinct_id from user_events
+         where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+         group by 1 order by count(*) desc limit 25
+       ) t`,
+    )
+    const ids = ((idsRaw?.ids ?? []) as string[]).filter(Boolean)
+    const cohortRpc = await withRetry(async () => {
+      const res = await anyDb
+        .rpc('distinct_visitors_in_window', {
+          p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+          p_filters: { distinct_ids: ids, device: 'desktop' },
+        })
+        .maybeSingle()
+      if (res.error) throw new Error(`distinct_visitors [X3]: ${res.error.message}`)
+      return res
+    })
+    let cq = db
+      .from('user_events')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', FROM_ISO)
+      .lt('created_at', TO_ISO)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cq = (cq as any).eq('bot_likely', false)
+    cq = applyFilters(cq, { range: SEL, includeBots: false, device: 'desktop', distinctIds: ids })
+    const cMirror = await cq
+    if (cMirror.error) throw new Error(`mirror [X3]: ${cMirror.error.message}`)
+    const rawCohort = await runSql(
+      `select count(distinct distinct_id)::bigint as v, count(*)::bigint as e from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+          and device_type = 'desktop'
+          and distinct_id in (${ids.map(lit).join(', ')})`,
+    )
+    addExtra(
+      'cohort distinct_ids + device: RPC visitors AND mirror events = raw',
+      { v: Number((cohortRpc.data as { count?: number } | null)?.count ?? -1), e: cMirror.count ?? -1 },
+      { v: Number(rawCohort?.v ?? -2), e: Number(rawCohort?.e ?? -2) },
+    )
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [

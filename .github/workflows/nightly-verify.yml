@@ -78,6 +78,12 @@ jobs:
         # rows have already landed. tracking-watchdog (8AM UTC) then emails.
         run: npx tsx scripts/audit/nightly-verify.ts --base-url=http://localhost:3000
 
+      # Phase 14b Wave 6 — authenticated route smoke: creates a disposable
+      # admin, fetches every admin page (incl. the new Explore/Funnel/Retention/
+      # Paths surfaces WITH filtered query strings), fails on any 5xx.
+      - name: Authenticated admin smoke
+        run: npx tsx scripts/audit/authed-smoke.ts --base-url=http://localhost:3000
+
       - name: Stop server
         if: always()
         run: |
