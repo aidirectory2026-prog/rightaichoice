@@ -33,3 +33,15 @@ _Plain language: before we add a single tool, we snapshot today's numbers so eve
 **Residual risk:** Multiple parallel Phase-14-named streams exist (Admin Filters, Tool submission, 14b) — folder name includes "(Tools 2k-10k)" to disambiguate; staging discipline is own-paths-only.
 _Plain language: the workspace, the plan, and the measuring stick are in place. Next: the five "stop the bleeding" fixes that must land before we mass-produce 8,000 new tool pages._
 **Status: done.**
+
+### 2026-07-02 — Scope amendment: manual-first tool addition (founder directive)
+**What:** Founder directed that NO automation is edited for the tool-addition step. Tools are added exactly as in the past: Apify-sourced seed batches (`candidates/*.json`) → existing `scripts/scale-catalog.ts` unmodified (DeepSeek enrich + category prediction + curation gate ≥3/5) → reviewable SQL migration → `supabase db push` → tools land as drafts → the existing, unmodified onboard SOP crons publish them gate-by-gate.
+**Why:** Founder preference: keep the proven manual pipeline; zero risk of destabilizing running automations mid-scale.
+**How:** Plan Waves 0-4 (automation edits: billing watchdog, dedup hardening, write-path guards, two-lane gate, throughput scaling) are PARKED, not cancelled — revisit when founder green-lights. Candidate prep (sourcing + pre-dedup) happens in standalone new scripts/files that do not touch any existing automation code.
+**Consequences accepted (stated honestly):**
+1. Publish pace is bounded by the existing draft lane (~240/day theoretical; real-world lower) plus manual local `run-onboard-sop.ts` runs — 8k tools ≈ 5-8 weeks of onboarding after drafts land.
+2. The known dedup blind spot (`lib/cron/dedup.ts` 1,000-row cap) is mitigated OUTSIDE automations: seed batches are pre-deduped against a full paginated catalog pull before scale-catalog runs; SQL inserts remain `ON CONFLICT (slug) DO NOTHING`.
+3. Cowork write-path defects (sentinels, speculative model strings) remain in the enrichment path, so some new tools will carry them until those fixes are un-parked; they are self-healing later via re-refresh once fixed.
+**Verification:** Task list re-scoped (tasks 2-6, 8-10 parked; 7, 13, 14 active); shared-tree git state restored after an autostash conflict (other session's newer file version kept from origin/main; nothing lost).
+_Plain language: we're adding the tools the hand-crafted way that built the first 2,000 — no machinery changes. It's slower but zero-risk to running systems. The automation upgrades stay on the shelf, ready when you want them._
+**Status: done.**
