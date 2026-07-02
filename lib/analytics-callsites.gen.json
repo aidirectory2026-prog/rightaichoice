@@ -895,6 +895,18 @@
       "method": "analytics.toolSubmissionFailed"
     }
   ],
+  "tool_submission_reviewed": [
+    {
+      "file": "app/admin/submissions/actions.ts",
+      "line": 110,
+      "method": "serverAnalytics.toolSubmissionReviewed"
+    },
+    {
+      "file": "app/admin/submissions/actions.ts",
+      "line": 158,
+      "method": "serverAnalytics.toolSubmissionReviewed"
+    }
+  ],
   "tool_submission_started": [
     {
       "file": "components/submit/submit-form.tsx",

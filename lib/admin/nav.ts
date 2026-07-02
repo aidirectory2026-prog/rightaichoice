@@ -185,6 +185,12 @@ export const ADMIN_NAV: AdminNavSection[] = [
       },
       { href: '/admin/tools', label: 'Tools catalog', filterCapabilities: [] },
       {
+        href: '/admin/submissions',
+        label: 'Submissions',
+        description: 'Phase 14 — vendor tool-submission queue: approve into the draft pipeline or reject with a reason. Submissions never influence rankings.',
+        filterCapabilities: [],
+      },
+      {
         href: '/admin/freshness',
         label: 'Freshness',
         description: 'Field × pricing-tier freshness heatmap (nightly materialized view).',

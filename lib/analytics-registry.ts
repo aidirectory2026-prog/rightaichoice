@@ -91,10 +91,11 @@ export const PLANNED_EVENTS = new Set<string>([
   // entry (the CI guard enforces both).
   'plan_free_text_typed', 'profile_field_typed', 'newsletter_email_typed',
   'compare_search_typed',
-  // Phase 14 — emitters land with the funnel (step 2) but their call sites
-  // ship in the admin-queue and entry-point steps of the same PR. Wire one →
-  // remove it here + add its EVENT_SCHEMAS entry (CI guard enforces both).
-  'submit_cta_clicked', 'tool_submission_reviewed',
+  // Phase 14 — emitter landed with the funnel (step 2); the entry-point call
+  // sites ship in step 4 of the same PR. Wire it → remove it here + add its
+  // EVENT_SCHEMAS entry (CI guard enforces both). tool_submission_reviewed
+  // was promoted to FIRED when the admin queue (step 3) wired it.
+  'submit_cta_clicked',
 ])
 
 /** Events kept for historical rows but no longer emitted. */

@@ -314,6 +314,21 @@ export const EVENT_SCHEMAS = {
       z.object({ reason: z.string(), source: z.literal('server') }).strict(),
     ]),
   },
+  tool_submission_reviewed: {
+    description:
+      'Editorial decision on a submission — serverAnalytics.toolSubmissionReviewed from app/admin/submissions/actions.ts. distinct_id is the SUBMITTER, not the admin.',
+    plainEnglish: 'Our editorial team approved or rejected a submitted tool.',
+    category: 'tools',
+    source: 'server',
+    props: z
+      .object({
+        submission_id: z.string(),
+        decision: z.enum(['approved', 'rejected']),
+        reason: z.string().optional(),
+        source: z.literal('server'),
+      })
+      .strict(),
+  },
   viability_badge_clicked: {
     description: 'Viability badge click on a tool page — analytics.viabilityBadgeClicked.',
     plainEnglish: 'Someone clicked a tool’s "safe bet / at risk / rising" badge.',
