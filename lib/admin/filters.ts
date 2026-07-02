@@ -202,7 +202,10 @@ function parseMulti(
     .split(',')
     .map((s) => clean(s))
     .filter((v): v is string => !!v)
-  const uniq = [...new Set(vals)]
+  // Cap at 8 values per dimension: the inlined SQL predicate (migration 190)
+  // unrolls the contains-dims (source/page_path) to 8 fixed slots, and 8 is
+  // already past any sane chip count.
+  const uniq = [...new Set(vals)].slice(0, 8)
   if (uniq.length === 0) return undefined
   return uniq.length === 1 ? uniq[0] : uniq
 }
