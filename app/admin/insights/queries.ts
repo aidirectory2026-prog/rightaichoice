@@ -1012,12 +1012,22 @@ export async function getUserSessionsV2(
   distinctId: string,
   limit = 50,
   eventsCap = 500,
+  opts?: {
+    /** Only build the timeline from events in this window (mig 183). */
+    cutoffISO?: string | null
+    endISO?: string | null
+    /** Only keep sessions containing at least one of these events. */
+    events?: string[] | null
+  },
 ): Promise<UserSessionV2[]> {
   const db = getAdminClient()
   const { data, error } = await rpc(db, 'insights_user_sessions_v2', {
     p_distinct_id: distinctId,
     p_limit: limit,
     p_events_cap: eventsCap,
+    p_cutoff: opts?.cutoffISO ?? null,
+    p_end: opts?.endISO ?? null,
+    p_events: opts?.events?.length ? opts.events : null,
   })
   if (error) throw new Error(`insights_user_sessions_v2 failed: ${error.message}`)
   return ((data ?? []) as UserSessionV2[]).map((s) => ({
@@ -1316,11 +1326,13 @@ export interface UserDirectoryRow {
 
 export async function getUserDirectory(
   f: AdminFilters,
-  opts: { sort: UserDirectorySort; page: number; pageSize?: number },
+  opts: { sort: UserDirectorySort; page: number; pageSize?: number; search?: string },
 ): Promise<{ rows: UserDirectoryRow[]; total: number }> {
   const db = getAdminClient()
   const sel = f.range
   const pageSize = opts.pageSize ?? 50
+  // ilike-safe: the RPC wraps the value in %…%; strip user-typed wildcards.
+  const search = (opts.search ?? '').replace(/[%_]/g, '').trim().slice(0, 100) || null
   const { data, error } = await rpc(db, 'insights_user_directory', {
     p_cutoff: sel.cutoffISO,
     p_end: sel.endCutoffISO,
@@ -1329,6 +1341,7 @@ export async function getUserDirectory(
     p_sort: opts.sort,
     p_limit: pageSize,
     p_offset: Math.max(0, opts.page) * pageSize,
+    p_search: search,
   })
   if (error) throw new Error(`insights_user_directory failed: ${error.message}`)
   const rows = ((data as Array<UserDirectoryRow & { total_rows: number | string }>) ?? [])

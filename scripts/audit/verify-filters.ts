@@ -478,6 +478,137 @@ async function main() {
     addExtra('sentiment_card_viewed windowed humans (F13 leg = raw SQL)', mirror.count ?? -1, Number(raw?.n ?? -2))
   }
 
+  // ── Phase 14b Wave 1 extension: filter HONESTY on the formerly-unfiltered
+  // RPCs (migration 183). Same discipline: LIVE path (RPC with p_filters →
+  // shared predicate) vs independent hand-written WHERE clauses.
+
+  // H1. insights_search_log — country filter: row count vs hand SQL over the
+  //     same qualifying-search definition.
+  {
+    const res = await anyDb.rpc('insights_search_log', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_limit: 100000, p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_search_log failed [H1]: ${res.error.message}`)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events ue
+        where ue.created_at >= ${lit(FROM_ISO)} and ue.created_at < ${lit(TO_ISO)}
+          and not ue.bot_likely and ue.country = ${lit(topCountry)}
+          and (ue.event_name in ('search_query_submitted','empty_search')
+               or (ue.event_name = 'search_query_typed' and ue.properties->>'final_blur' = 'true'))
+          and coalesce(nullif(ue.properties->>'query',''), nullif(ue.properties->>'current_text','')) is not null`,
+    )
+    addExtra(`search_log country=${topCountry} (row count = raw)`, (res.data as unknown[]).length, Number(raw?.n ?? -1))
+  }
+
+  // H2. insights_plan_dropoff — country filter: one row per plan_started
+  //     visitor whose (filtered) journey events matched.
+  {
+    const res = await anyDb.rpc('insights_plan_dropoff', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_plan_dropoff failed [H2]: ${res.error.message}`)
+    const raw = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and country = ${lit(topCountry)}
+          and event_name = 'plan_started'`,
+    )
+    addExtra(`plan_dropoff country=${topCountry} (rows = raw plan_started visitors)`, (res.data as unknown[]).length, Number(raw?.n ?? -1))
+  }
+
+  // H3. insights_error_overview — country filter: sum(occurrences) vs raw
+  //     error_encountered count.
+  {
+    const res = await anyDb.rpc('insights_error_overview', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_error_overview failed [H3]: ${res.error.message}`)
+    const total = ((res.data as Array<{ occurrences: number | string }>) ?? []).reduce((a, r) => a + Number(r.occurrences), 0)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and country = ${lit(topCountry)}
+          and event_name = 'error_encountered'`,
+    )
+    addExtra(`error_overview country=${topCountry} (sum occurrences = raw)`, total, Number(raw?.n ?? -1))
+  }
+
+  // H4. insights_user_sessions_v2 — pinned window + event constraint on the
+  //     busiest visitor of the week: total events across sessions = raw count;
+  //     with p_events, every returned session contains that event.
+  {
+    const busy = await runSql(
+      `select distinct_id from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const busyId = String(busy?.distinct_id ?? '')
+    const res = await anyDb.rpc('insights_user_sessions_v2', {
+      p_distinct_id: busyId, p_limit: 10000, p_events_cap: 1,
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_events: null,
+    })
+    if (res.error) throw new Error(`insights_user_sessions_v2 failed [H4]: ${res.error.message}`)
+    const totalEvents = ((res.data as Array<{ event_count: number | string }>) ?? []).reduce((a, s) => a + Number(s.event_count), 0)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events
+        where distinct_id = ${lit(busyId)}
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}`,
+    )
+    addExtra('user_sessions_v2 pinned window (sum event_count = raw)', totalEvents, Number(raw?.n ?? -1))
+
+    const resEv = await anyDb.rpc('insights_user_sessions_v2', {
+      p_distinct_id: busyId, p_limit: 10000, p_events_cap: 10000,
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_events: ['page_viewed'],
+    })
+    if (resEv.error) throw new Error(`insights_user_sessions_v2 failed [H4b]: ${resEv.error.message}`)
+    const sessions = (resEv.data as Array<{ events: Array<{ event_name: string }> }>) ?? []
+    const allContain = sessions.every((s) => (s.events ?? []).some((e) => e.event_name === 'page_viewed'))
+    addExtra('user_sessions_v2 p_events=[page_viewed] (every session contains it)', allContain, true)
+  }
+
+  // H5. insights_user_directory p_search — searching a real visitor id
+  //     substring finds exactly the raw match count.
+  {
+    const busy = await runSql(
+      `select distinct_id from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const needle = String(busy?.distinct_id ?? '').slice(0, 12)
+    const res = await anyDb.rpc('insights_user_directory', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: null, p_sort: 'events', p_limit: 1, p_offset: 0, p_search: needle,
+    })
+    if (res.error) throw new Error(`insights_user_directory failed [H5]: ${res.error.message}`)
+    const total = Number((res.data as Array<{ total_rows?: number }>)[0]?.total_rows ?? 0)
+    const raw = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and distinct_id ilike ${lit('%' + needle + '%')}`,
+    )
+    addExtra(`user_directory p_search=${needle} (total = raw matches)`, total, Number(raw?.n ?? -1))
+  }
+
+  // H6. Live RPCs (now()-anchored, not pinned-week reproducible) — structural:
+  //     with a country filter every returned row honors it, and the calls
+  //     accept p_filters at all (signature guard).
+  {
+    const feed = await anyDb.rpc('insights_activity_feed', {
+      p_limit: 100, p_include_bots: true, p_filters: { country: topCountry },
+    })
+    if (feed.error) throw new Error(`insights_activity_feed failed [H6]: ${feed.error.message}`)
+    const feedOk = ((feed.data as Array<{ country: string | null }>) ?? []).every((r) => r.country === topCountry)
+    const live = await anyDb.rpc('insights_live_sessions', {
+      p_active_within_sec: 3600, p_include_bots: true, p_filters: { country: topCountry },
+    })
+    if (live.error) throw new Error(`insights_live_sessions failed [H6]: ${live.error.message}`)
+    const liveOk = ((live.data as Array<{ country: string | null }>) ?? []).every((r) => r.country === topCountry)
+    addExtra(`activity_feed+live_sessions country=${topCountry} (every row honors filter)`, { feedOk, liveOk }, { feedOk: true, liveOk: true })
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [

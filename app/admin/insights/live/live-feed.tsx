@@ -10,24 +10,31 @@ import type { LiveSession, ActivityEvent } from './page'
 const ACTIVE_WITHIN_SEC = 300 // 5-minute "live" window
 
 export function LiveFeed({
-  initialSessions, initialFeed,
+  initialSessions, initialFeed, includeBots = false, filtersJsonb = null,
 }: {
   initialSessions: LiveSession[]
   initialFeed: ActivityEvent[]
+  includeBots?: boolean
+  /** The page's parsed global filters (mig 181 jsonb) — polling must match SSR. */
+  filtersJsonb?: Record<string, unknown> | null
 }) {
   const [sessions, setSessions] = useState<LiveSession[]>(initialSessions)
   const [feed, setFeed] = useState<ActivityEvent[]>(initialFeed)
   const [lastTick, setLastTick] = useState<Date>(new Date())
   const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'live' | 'polling'>('connecting')
 
+  // Re-subscribe when the filter state changes (props re-flow via router.replace).
+  const filtersKey = JSON.stringify(filtersJsonb)
+
   useEffect(() => {
     const supabase = createClient()
     let cancelled = false
+    const jsonb = filtersKey === 'null' ? null : JSON.parse(filtersKey)
 
     async function refresh() {
       const [{ data: s }, { data: f }] = await Promise.all([
-        supabase.rpc('insights_live_sessions', { p_active_within_sec: ACTIVE_WITHIN_SEC, p_include_bots: false }),
-        supabase.rpc('insights_activity_feed', { p_limit: 50, p_include_bots: false }),
+        supabase.rpc('insights_live_sessions', { p_active_within_sec: ACTIVE_WITHIN_SEC, p_include_bots: includeBots, p_filters: jsonb }),
+        supabase.rpc('insights_activity_feed', { p_limit: 50, p_include_bots: includeBots, p_filters: jsonb }),
       ])
       if (cancelled) return
       if (Array.isArray(s)) setSessions(s as LiveSession[])
@@ -65,7 +72,7 @@ export function LiveFeed({
         try { supabase.removeChannel(channel) } catch { /* noop */ }
       }
     }
-  }, [])
+  }, [filtersKey, includeBots])
 
   // Ticking clock — re-render once per second so the "Xs ago" times stay fresh
   // even when no new events arrive.

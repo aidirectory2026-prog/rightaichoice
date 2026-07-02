@@ -45,6 +45,8 @@ import {
 import { LiveEventsTicker } from '@/components/admin/live-events-ticker'
 import { classifyChannel, hostFromReferrer } from '@/lib/analytics/channels'
 import { eventDisplay, TONE_CLASS } from '@/lib/admin/event-display'
+import { parseAdminFilters } from '@/lib/admin/filters'
+import { JourneyFilter } from './journey-filter'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -611,7 +613,7 @@ export default async function UserTimelinePage({
   searchParams,
 }: {
   params: Promise<{ distinct_id: string }>
-  searchParams: Promise<{ tab?: string; ecap?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }) {
   const { distinct_id } = await params
   const sp = await searchParams
@@ -620,10 +622,23 @@ export default async function UserTimelinePage({
   const ecap = Math.min(Math.max(parseInt(sp.ecap ?? '', 10) || EVENTS_RENDER_CAP, 50), 5000)
   const base = `/admin/insights/user/${encodeURIComponent(distinctId)}`
 
+  // Wave 1 (mig 183) — journey filters. The timeline stays ALL-TIME unless a
+  // range is explicitly picked; ?ev= keeps only sessions containing the event.
+  const hasRange = Boolean(sp.range || sp.from || sp.to)
+  const rangeSel = parseAdminFilters(sp).range
+  const eventFilter = (sp.ev ?? '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => /^[a-z0-9_]{1,64}$/.test(s))
+
   const [profileV2, traits, sessions, painpoints] = await Promise.all([
     getUserProfileV2(distinctId),
     getUserProfile(distinctId),
-    getUserSessionsV2(distinctId, 50),
+    getUserSessionsV2(distinctId, 50, 500, {
+      cutoffISO: hasRange ? rangeSel.cutoffISO : null,
+      endISO: hasRange ? rangeSel.endCutoffISO : null,
+      events: eventFilter,
+    }),
     getUserPainpoints(distinctId),
   ])
   const links = await getUserContentLinks(distinctId, profileV2?.user_id ?? null)
@@ -684,7 +699,7 @@ export default async function UserTimelinePage({
         </>
       ) : (
         <div className="mb-6">
-          <div className="mb-2 flex items-baseline justify-between">
+          <div className="mb-2 flex items-baseline justify-between gap-2 flex-wrap">
             <h2 className="text-sm font-semibold text-zinc-200">
               Sessions
               <span className="ml-2 text-[10px] font-normal text-zinc-500">
@@ -693,9 +708,12 @@ export default async function UserTimelinePage({
             </h2>
             <span className="text-[10px] text-zinc-500">newest first, max 50</span>
           </div>
+          <div className="mb-3">
+            <JourneyFilter activeRange={rangeSel.key} hasRange={hasRange} />
+          </div>
           {sessions.length === 0 ? (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-3 py-6 text-center text-xs text-zinc-500">
-              No sessions yet.
+              {hasRange || eventFilter.length > 0 ? 'No sessions match these filters.' : 'No sessions yet.'}
             </div>
           ) : (
             <div className="space-y-2">

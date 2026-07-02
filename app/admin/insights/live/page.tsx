@@ -1,15 +1,21 @@
 import { LiveFeed } from './live-feed'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { FilterBar } from '@/components/admin/filter-bar'
+import { filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
+import { withCohort } from '@/lib/admin/cohort-filter'
+import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
+import { getCountryFilterOptions } from '../queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata = { title: 'Live · Insights' }
 
-async function getInitialData() {
+async function getInitialData(f: AdminFilters) {
   const db = getAdminClient()
+  const jsonb = filtersToJsonb(f)
   const [{ data: sessions }, { data: feed }] = await Promise.all([
-    db.rpc('insights_live_sessions' as never, { p_active_within_sec: 300, p_include_bots: false } as never),
-    db.rpc('insights_activity_feed' as never, { p_limit: 50, p_include_bots: false } as never),
+    db.rpc('insights_live_sessions' as never, { p_active_within_sec: 300, p_include_bots: f.includeBots, p_filters: jsonb } as never),
+    db.rpc('insights_activity_feed' as never, { p_limit: 50, p_include_bots: f.includeBots, p_filters: jsonb } as never),
   ])
   return {
     sessions: (sessions ?? []) as LiveSession[],
@@ -49,7 +55,26 @@ export type ActivityEvent = {
   source_kind: string
 }
 
-export default async function LivePage() {
-  const initial = await getInitialData()
-  return <LiveFeed initialSessions={initial.sessions} initialFeed={initial.feed} />
+export default async function LivePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
+  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const [initial, countryOptions] = await Promise.all([getInitialData(filters), getCountryFilterOptions()])
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        {/* No RangePicker: Live is a fixed 5-minute window by definition. */}
+        <FilterBar activeRange={filters.range.key} countries={countryOptions} eventNames={[...SCHEMA_EVENT_NAMES]} showRange={false} />
+      </div>
+      <LiveFeed
+        initialSessions={initial.sessions}
+        initialFeed={initial.feed}
+        includeBots={filters.includeBots}
+        filtersJsonb={filtersToJsonb(filters)}
+      />
+    </div>
+  )
 }

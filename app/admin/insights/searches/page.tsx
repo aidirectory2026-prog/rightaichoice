@@ -9,7 +9,7 @@ import { ChevronLeft, Search } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricCard } from '@/components/admin/charts'
-import { parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
+import { filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
 import { withCohort } from '@/lib/admin/cohort-filter'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
@@ -38,6 +38,9 @@ async function getSearchLog(f: AdminFilters): Promise<SearchRow[]> {
     p_end: f.range.endCutoffISO,
     p_include_bots: f.includeBots,
     p_limit: 300,
+    // dropEvent: this log is already pinned to the search events; a global
+    // event chip must not hollow it out, but every other dimension applies.
+    p_filters: filtersToJsonb(f, { dropEvent: true }),
   })
   return (data ?? []) as SearchRow[]
 }

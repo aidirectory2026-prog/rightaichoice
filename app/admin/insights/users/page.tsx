@@ -12,6 +12,7 @@
 import Link from 'next/link'
 import { ArrowDown, ChevronLeft, ChevronRight, UserCheck, Users } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
+import { SearchInput } from '@/components/admin/search-input'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { fmt } from '@/components/admin/charts'
 import { parseAdminFilters } from '@/lib/admin/filters'
@@ -84,9 +85,10 @@ export default async function UsersDirectoryPage({
   const filters = await withCohort(parseAdminFilters(sp), sp)
   const sort = parseSort(sp.sort)
   const page = parsePage(sp.page)
+  const search = sp.q?.trim() || undefined
 
   const [{ rows, total }, countryOptions] = await Promise.all([
-    getUserDirectory(filters, { sort, page: page - 1, pageSize: PAGE_SIZE }),
+    getUserDirectory(filters, { sort, page: page - 1, pageSize: PAGE_SIZE, search }),
     getCountryFilterOptions(),
   ])
   // 10.7a — first-touch channel per visitor on this page: one cheap
@@ -134,11 +136,14 @@ export default async function UsersDirectoryPage({
             <MetricInfo docKey="users_directory" align="left" />
           </h1>
         </div>
-        <FilterBar
-          activeRange={filters.range.key}
-          countries={countryOptions}
-          eventNames={[...SCHEMA_EVENT_NAMES]}
-        />
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <SearchInput param="q" placeholder="Email or visitor ID…" />
+          <FilterBar
+            activeRange={filters.range.key}
+            countries={countryOptions}
+            eventNames={[...SCHEMA_EVENT_NAMES]}
+          />
+        </div>
       </div>
 
       <p className="mb-3 text-xs text-zinc-500">

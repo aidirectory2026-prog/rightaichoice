@@ -7,6 +7,9 @@ import Link from 'next/link'
 import { ChevronLeft, UserCheck, Sparkles } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { MetricCard } from '@/components/admin/charts'
+import { SearchInput } from '@/components/admin/search-input'
+import { parseAdminFilters } from '@/lib/admin/filters'
+import { RangePicker } from '@/components/admin/range-picker'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -47,22 +50,53 @@ const PROVIDER_CLASS: Record<string, string> = {
   email: 'border-zinc-700 bg-zinc-900 text-zinc-400',
 }
 
-export default async function MembersPage() {
-  const members = await getMembers()
+export default async function MembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
+  const sp = await searchParams
+  // Wave 1 — search + signed-up range, applied in TS (this list reads
+  // auth.users, not user_events, so the event-dimension bar can't honestly
+  // apply here; every-account is small enough to filter after fetch).
+  const q = (sp.q ?? '').trim().toLowerCase()
+  const hasRange = Boolean(sp.range || sp.from || sp.to)
+  const rangeSel = parseAdminFilters(sp).range
+
+  const all = await getMembers()
+  const members = all.filter((m) => {
+    if (q) {
+      const hay = `${m.email ?? ''} ${m.full_name ?? ''} ${m.username ?? ''}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    if (hasRange) {
+      const t = new Date(m.signed_up).getTime()
+      if (t < new Date(rangeSel.cutoffISO).getTime()) return false
+      if (rangeSel.endCutoffISO && t >= new Date(rangeSel.endCutoffISO).getTime()) return false
+    }
+    return true
+  })
   const total = members.length
   const new7 = members.filter((m) => isNew(m.signed_up)).length
   const google = members.filter((m) => m.provider === 'google').length
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
-        <Link href="/admin" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
-          <ChevronLeft className="h-3 w-3" />Admin
-        </Link>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <UserCheck className="h-5 w-5 text-emerald-500" />
-          Members
-        </h1>
+      <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Link href="/admin" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+            <ChevronLeft className="h-3 w-3" />Admin
+          </Link>
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-white">
+            <UserCheck className="h-5 w-5 text-emerald-500" />
+            Members
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <SearchInput param="q" placeholder="Email, name or username…" />
+          {/* No highlight when unset — the list is all-time by default. */}
+          <RangePicker active={hasRange ? rangeSel.key : ('none' as never)} />
+        </div>
       </div>
       <p className="mb-4 max-w-3xl text-xs text-zinc-500">
         Every registered account, newest first — read straight from the auth system, so a signup shows here the
@@ -89,7 +123,7 @@ export default async function MembersPage() {
           </thead>
           <tbody className="divide-y divide-zinc-900/80">
             {members.length === 0 ? (
-              <tr><td colSpan={6} className="px-3 py-8 text-center text-zinc-500">No registered members yet.</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-zinc-500">{q || hasRange ? 'No members match these filters.' : 'No registered members yet.'}</td></tr>
             ) : (
               members.map((m) => (
                 <tr key={m.user_id} className={`hover:bg-zinc-900/40 ${isNew(m.signed_up) ? 'bg-emerald-950/20' : ''}`}>

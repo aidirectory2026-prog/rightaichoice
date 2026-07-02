@@ -41,10 +41,13 @@ export function FilterBar({
   activeRange,
   countries,
   eventNames,
+  showRange = true,
 }: {
   activeRange: RangeKey
   countries: string[]
   eventNames: string[]
+  /** Live has a fixed 5-min window — it mounts the bar without the RangePicker. */
+  showRange?: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -148,7 +151,7 @@ export function FilterBar({
             <span className="rounded-full bg-emerald-700 px-1.5 text-[10px] font-semibold text-white">{activeCount}</span>
           )}
         </button>
-        <RangePicker active={activeRange} />
+        {showRange && <RangePicker active={activeRange} />}
       </div>
 
       {/* Active-value chips — one per selected value, removable. */}

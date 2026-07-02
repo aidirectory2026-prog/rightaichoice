@@ -8,7 +8,7 @@ import { ChevronLeft, UserMinus } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricCard, fmt } from '@/components/admin/charts'
-import { parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
+import { filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
 import { withCohort } from '@/lib/admin/cohort-filter'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
@@ -37,6 +37,9 @@ async function getPlanDropoff(f: AdminFilters): Promise<DropoffRow[]> {
     p_cutoff: f.range.cutoffISO,
     p_end: f.range.endCutoffISO,
     p_include_bots: f.includeBots,
+    // dropEvent: the journey is a fixed plan_* event set; an event pin must
+    // not hollow it out, but geo/device/source/cohort dimensions apply.
+    p_filters: filtersToJsonb(f, { dropEvent: true }),
   })
   return ((data ?? []) as DropoffRow[]).map((r) => ({ ...r, events_in_journey: Number(r.events_in_journey) }))
 }
