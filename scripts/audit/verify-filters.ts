@@ -56,6 +56,17 @@ type Combo = {
   utmSource?: string | string[]
   auth?: 'known' | 'anon'
   event?: string | string[]
+  // Phase 14b Wave 2 — dimensions v2 + negation
+  pagePath?: string | string[]
+  city?: string | string[]
+  browser?: string | string[]
+  os?: string | string[]
+  sourceKind?: string | string[]
+  prop?: { k: string; v: string }
+  notCountry?: string
+  notDevice?: string
+  notPath?: string
+  notBrowser?: string
 }
 
 const arr = (v: string | string[] | undefined): string[] => (v == null ? [] : Array.isArray(v) ? v : [v])
@@ -100,10 +111,32 @@ function rawWhere(c: Combo): string {
   if (c.auth === 'known') parts.push('user_id is not null')
   if (c.auth === 'anon') parts.push('user_id is null')
   if (arr(c.event).length) parts.push(`event_name in (${arr(c.event).map(lit).join(', ')})`)
+  // Wave 2 dimensions — independent hand-written forms
+  if (arr(c.pagePath).length) {
+    const ps = arr(c.pagePath).map((p) => `page_path ilike ${lit('%' + p + '%')}`)
+    parts.push(ps.length > 1 ? `(${ps.join(' or ')})` : ps[0])
+  }
+  if (arr(c.city).length) parts.push(`city in (${arr(c.city).map(lit).join(', ')})`)
+  if (arr(c.browser).length) parts.push(`browser in (${arr(c.browser).map(lit).join(', ')})`)
+  if (arr(c.os).length) parts.push(`os in (${arr(c.os).map(lit).join(', ')})`)
+  if (arr(c.sourceKind).length) parts.push(`source_kind in (${arr(c.sourceKind).map(lit).join(', ')})`)
+  if (c.prop) parts.push(`properties->>${lit(c.prop.k)} = ${lit(c.prop.v)}`)
+  // Negations — SQL three-valued logic (NULL dimension rows are excluded)
+  if (c.notCountry) parts.push(`not (country = ${lit(c.notCountry)})`)
+  if (c.notDevice) {
+    parts.push(c.notDevice === 'unknown' ? 'device_type is not null' : `not (device_type = ${lit(c.notDevice)})`)
+  }
+  if (c.notPath) parts.push(`not (page_path ilike ${lit('%' + c.notPath + '%')})`)
+  if (c.notBrowser) parts.push(`not (browser = ${lit(c.notBrowser)})`)
   return parts.join(' and ')
 }
 
 function toAdminFilters(c: Combo): AdminFilters {
+  const not: AdminFilters['not'] = {}
+  if (c.notCountry) not.country = c.notCountry
+  if (c.notDevice) not.device = c.notDevice
+  if (c.notPath) not.pagePath = c.notPath
+  if (c.notBrowser) not.browser = c.notBrowser
   return {
     range: SEL,
     includeBots: c.includeBots,
@@ -113,6 +146,13 @@ function toAdminFilters(c: Combo): AdminFilters {
     utmSource: c.utmSource,
     auth: c.auth,
     event: c.event,
+    pagePath: c.pagePath,
+    city: c.city,
+    browser: c.browser,
+    os: c.os,
+    sourceKind: c.sourceKind,
+    props: c.prop ? [c.prop] : undefined,
+    not: Object.keys(not).length ? not : undefined,
   }
 }
 
@@ -127,6 +167,16 @@ function describe(c: Combo): string {
   show('utm_source', c.utmSource)
   if (c.auth) parts.push(`auth=${c.auth}`)
   show('event', c.event)
+  show('path', c.pagePath)
+  show('city', c.city)
+  show('browser', c.browser)
+  show('os', c.os)
+  show('kind', c.sourceKind)
+  if (c.prop) parts.push(`prop ${c.prop.k}=${c.prop.v}`)
+  if (c.notCountry) parts.push(`country≠${c.notCountry}`)
+  if (c.notDevice) parts.push(`device≠${c.notDevice}`)
+  if (c.notPath) parts.push(`path≠${c.notPath}`)
+  if (c.notBrowser) parts.push(`browser≠${c.notBrowser}`)
   parts.push(`bots=${c.includeBots ? 'incl' : 'excl'}`)
   return parts.join(' ')
 }
@@ -177,6 +227,37 @@ async function main() {
   )
   const sourceHost = sourceRow?.host ? String(sourceRow.host) : 'google'
 
+  // Wave 2 fixtures — top city / browser / os / page_viewed path in the window
+  // (browser/os exist for the pinned week via the 2026-07-02 backfill).
+  const cityRow = await runSql(
+    `select city from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and city is not null and city <> ''
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topCity = cityRow?.city ? String(cityRow.city) : 'Mumbai'
+  const browserRow = await runSql(
+    `select browser from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and browser is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topBrowser = browserRow?.browser ? String(browserRow.browser) : 'chrome'
+  const osRow = await runSql(
+    `select os from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and os is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topOs = osRow?.os ? String(osRow.os) : 'windows'
+  const pathRow = await runSql(
+    `select properties->>'path' as p from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and event_name = 'page_viewed' and properties->>'path' is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topPath = pathRow?.p ? String(pathRow.p) : '/'
+
   const combos: Combo[] = [
     { name: 'none', includeBots: false },
     { name: 'none+bots', includeBots: true },
@@ -200,6 +281,23 @@ async function main() {
     { name: 'device[mobile,tablet]', includeBots: false, device: ['mobile', 'tablet'] },
     { name: 'event[multi]', includeBots: false, event: ['page_viewed', 'tool_page_viewed'] },
     { name: 'multi+stack', includeBots: false, device: ['desktop', 'mobile'], country: [topCountry, 'US'] },
+    // Phase 14b Wave 2 — dimensions v2. Same discipline: shared predicate +
+    // TS mirror vs independent hand-written SQL.
+    { name: 'page', includeBots: false, pagePath: '/tools' },
+    { name: 'page[multi]', includeBots: false, pagePath: ['/tools', '/compare'] },
+    { name: 'city', includeBots: false, city: topCity },
+    { name: 'browser', includeBots: false, browser: topBrowser },
+    { name: 'browser[multi]', includeBots: false, browser: [topBrowser, 'safari'] },
+    { name: 'os', includeBots: false, os: topOs },
+    { name: 'source_kind=server', includeBots: false, sourceKind: 'server' },
+    { name: 'prop path', includeBots: false, prop: { k: 'path', v: topPath } },
+    { name: 'not country', includeBots: false, notCountry: topCountry },
+    { name: 'not device', includeBots: false, notDevice: 'desktop' },
+    { name: 'not device=unknown', includeBots: false, notDevice: 'unknown' },
+    { name: 'not path', includeBots: false, notPath: '/tools' },
+    { name: 'not browser', includeBots: false, notBrowser: topBrowser },
+    { name: 'pos+neg stack', includeBots: false, country: [topCountry, 'US'], notBrowser: topBrowser },
+    { name: 'kitchen sink', includeBots: false, device: 'desktop', browser: topBrowser, pagePath: '/tools', notCountry: 'CN' },
   ]
 
   const rows: Row[] = []

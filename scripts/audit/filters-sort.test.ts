@@ -68,5 +68,48 @@ check('jsonb: distinct_ids emitted', eq(
   { distinct_ids: ['a', 'b'] },
 ))
 
+// ── Phase 14b Wave 2 — dimensions v2 + negation ──────────────────────────────
+const w2 = parseAdminFilters({
+  path: '/Tools/Notion',
+  city: 'New Delhi',
+  browser: 'Chrome',
+  os: 'ios,android',
+  source_kind: 'server,bogus',
+  session: 'ABC-123',
+})
+check('parse: path sanitized to path charset', w2.pagePath === '/tools/notion')
+check('parse: city keeps spaces', w2.city === 'New Delhi')
+check('parse: browser lowercased', w2.browser === 'chrome')
+check('parse: os multi', eq(w2.os, ['ios', 'android']))
+check('parse: source_kind drops invalid', w2.sourceKind === 'server')
+check('parse: session lowercased id charset', w2.sessionId === 'abc-123')
+
+const props = parseAdminFilters({ prop: 'tool_slug:notion,BAD KEY:x,not_a_known_key_zz:1' })
+check('parse: prop keeps schema-known key only', eq(props.props, [{ k: 'tool_slug', v: 'notion' }]))
+check('parse: prop absent → undefined', parseAdminFilters({}).props === undefined)
+
+const neg = parseAdminFilters({ country_not: 'CN', device_not: 'desktop', path_not: '/blog' })
+check('parse: not object built', eq(neg.not, { device: 'desktop', country: 'CN', pagePath: '/blog' }))
+check('jsonb: not object emitted with jsonb keys', eq(
+  filtersToJsonb(neg),
+  { not: { device: 'desktop', country: 'CN', page_path: '/blog' } },
+))
+check('jsonb: wave-2 keys emitted', eq(
+  filtersToJsonb(w2),
+  {
+    page_path: '/tools/notion',
+    city: 'New Delhi',
+    browser: 'chrome',
+    os: ['ios', 'android'],
+    source_kind: 'server',
+    session_id: 'abc-123',
+  },
+))
+check('jsonb: props emitted', eq(filtersToJsonb(props), { props: [{ k: 'tool_slug', v: 'notion' }] }))
+check('jsonb: dropEvent also drops negated event', eq(
+  filtersToJsonb(parseAdminFilters({ event_not: 'page_viewed', country: 'IN' }), { dropEvent: true }),
+  { country: 'IN' },
+))
+
 console.log(`\n${passed} passed, ${failed} failed`)
 if (failed > 0) process.exit(1)

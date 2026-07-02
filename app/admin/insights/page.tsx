@@ -15,8 +15,7 @@ import {
   SectionHeading,
   fmt,
 } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import {
   getBotShare,
@@ -72,7 +71,7 @@ export default async function InsightsPage({
   const sp = await searchParams
   // Global smart filters (Phase 10.4.7): range + bots + the optional
   // dimension filters, all URL-state. Legacy ?include_bots=1 still parses.
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
   const sel = filters.range
   const days = sel.days
   const includeBots = filters.includeBots

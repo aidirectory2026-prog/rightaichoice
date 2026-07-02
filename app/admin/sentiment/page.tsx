@@ -13,8 +13,7 @@ import { IndianRupee } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { FunnelStrip } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '@/app/admin/insights/queries'
 import {
@@ -47,7 +46,7 @@ export default async function SentimentAdminPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
   const isAllTime = sp.from === MIRROR_EPOCH && !sp.to
 
   const [funnel, scans, payments, revenue, countryOptions] = await Promise.all([

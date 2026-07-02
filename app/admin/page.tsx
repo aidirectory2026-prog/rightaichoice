@@ -18,8 +18,7 @@ import {
   MetricCard,
   fmt,
 } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import {
   getCountryFilterOptions,
@@ -65,7 +64,7 @@ export default async function AdminDashboardPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
   const sel = filters.range
   const days = sel.days
   const includeBots = filters.includeBots

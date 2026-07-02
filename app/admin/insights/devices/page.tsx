@@ -11,8 +11,8 @@ import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { BarList, MetricCard, fmt } from '@/components/admin/charts'
-import { applyFilters, filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { applyFilters, filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
 
@@ -113,7 +113,7 @@ export default async function DevicesPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
 
   const [devices, { browsers, oses }, countryOptions] = await Promise.all([
     getDevices(filters),

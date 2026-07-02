@@ -12,8 +12,7 @@ import { ArrowRight, Filter } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { FunnelStrip, MetricCard, type FunnelStepDatum } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getFunnelUsers, ACQUISITION_STEPS, COMPLETION_STEPS, type FunnelUserStep } from '@/lib/admin/plan-conversion'
 import { getCountryFilterOptions } from '../queries'
@@ -28,7 +27,7 @@ export default async function FunnelsPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
 
   const [acquisition, journey, countryOptions] = await Promise.all([
     getFunnelUsers(ACQUISITION_STEPS, filters),

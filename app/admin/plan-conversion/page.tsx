@@ -11,8 +11,7 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { FunnelStrip, MetricCard, type FunnelStepDatum } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '@/app/admin/insights/queries'
 import { getFunnelUsers, ACQUISITION_STEPS, type FunnelUserStep, getSurfaceBreakdown, getIntentStream, getLinkRate } from '@/lib/admin/plan-conversion'
@@ -52,7 +51,7 @@ export default async function PlanConversionPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
 
   const [funnel, surfaces, intents, linkRate, countryOptions] = await Promise.all([
     getFunnelUsers(ACQUISITION_STEPS, filters),

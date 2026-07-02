@@ -9,8 +9,7 @@ import { ChevronLeft } from 'lucide-react'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricInfo } from '@/components/admin/metric-info'
 import { BarList, MetricCard } from '@/components/admin/charts'
-import { parseAdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions, getToolAudienceDetail } from '../../queries'
 
@@ -27,7 +26,7 @@ export default async function ToolAudiencePage({
 }) {
   const { slug } = await params
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
 
   const [detail, countryOptions] = await Promise.all([
     getToolAudienceDetail(slug, filters),

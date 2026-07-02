@@ -9,8 +9,8 @@ import { BarChart3, ChevronLeft, Compass } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { fmt } from '@/components/admin/charts'
-import { parseAdminFilters, filtersToJsonb } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { filtersToJsonb } from '@/lib/admin/filters'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
 
@@ -41,7 +41,7 @@ export default async function ExplorePage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
   const sel = filters.range
   const fj = filtersToJsonb(filters)
 

@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { isLikelyBotUA } from '@/lib/bot-detection'
+import { parseBrowser, parseOs } from '@/lib/ua-parse'
 import { validateEvent } from '@/lib/analytics-schema'
 import { rateLimit } from '@/lib/rate-limit'
 import { captureException } from '@/lib/observability/capture'
@@ -303,6 +304,10 @@ export async function POST(req: NextRequest) {
   const country = req.headers.get('x-vercel-ip-country') ?? null
   const city = req.headers.get('x-vercel-ip-city') ? decodeURIComponent(req.headers.get('x-vercel-ip-city')!) : null
   const region = req.headers.get('x-vercel-ip-country-region') ?? null
+  // Phase 14b Wave 2 — family-level browser/os columns (filter dimensions).
+  // Pure regex, once per request; backfill shares the same lib/ua-parse.ts.
+  const browser = parseBrowser(ua)
+  const os = parseOs(ua)
 
   // ── Insert all events in one shot ────────────────────────────
   const rows = events.map((e) => {
@@ -357,6 +362,8 @@ export async function POST(req: NextRequest) {
       country,
       city,
       region,
+      browser,
+      os,
       clarity_session_id: claritySid,
       insert_id: e.insert_id ?? null,
       bot_likely: rowBotLikely,

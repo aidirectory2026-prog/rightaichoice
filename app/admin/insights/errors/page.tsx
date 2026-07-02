@@ -11,8 +11,8 @@ import { ChevronLeft, Bug } from 'lucide-react'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { FilterBar } from '@/components/admin/filter-bar'
 import { MetricCard, fmt } from '@/components/admin/charts'
-import { filtersToJsonb, parseAdminFilters, type AdminFilters } from '@/lib/admin/filters'
-import { withCohort } from '@/lib/admin/cohort-filter'
+import { filtersToJsonb, type AdminFilters } from '@/lib/admin/filters'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 import { SCHEMA_EVENT_NAMES } from '@/lib/analytics-schema'
 import { getCountryFilterOptions } from '../queries'
 
@@ -71,7 +71,7 @@ export default async function ErrorsPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const sp = await searchParams
-  const filters = await withCohort(parseAdminFilters(sp), sp)
+  const filters = await resolveServerFilters(sp)
 
   const [rows, countryOptions] = await Promise.all([
     getErrorOverview(filters),
