@@ -189,13 +189,31 @@ async function main() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyDb = db as any
 
+  // The verifier makes ~150 sequential network calls; a single transient
+  // "fetch failed" must not abort a 2-minute run. Read-only calls → safe to
+  // retry blindly.
+  async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+    let lastErr: unknown
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn()
+      } catch (err) {
+        lastErr = err
+        if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+      }
+    }
+    throw lastErr
+  }
+
   // _admin_audit_exec wraps the query as `select to_jsonb(t) ... limit 1`,
   // so it returns ONE row as a jsonb object (or null). All verifier queries
   // are single-row aggregates / limit-1 lookups, which fits exactly.
   async function runSql(sql: string): Promise<Record<string, unknown> | null> {
-    const { data, error } = await anyDb.rpc('_admin_audit_exec', { p_sql: sql })
-    if (error) throw new Error(`_admin_audit_exec failed: ${error.message}\nSQL: ${sql}`)
-    return (data ?? null) as Record<string, unknown> | null
+    return withRetry(async () => {
+      const { data, error } = await anyDb.rpc('_admin_audit_exec', { p_sql: sql })
+      if (error) throw new Error(`_admin_audit_exec failed: ${error.message}\nSQL: ${sql}`)
+      return (data ?? null) as Record<string, unknown> | null
+    })
   }
 
   // Discover real fixture values from the pinned window so every combo
@@ -306,15 +324,18 @@ async function main() {
     const where = rawWhere(c)
 
     // A. RPC path — shared SQL predicate via p_filters.
-    const rpcRes = await anyDb
-      .rpc('distinct_visitors_in_window', {
-        p_cutoff: FROM_ISO,
-        p_end: TO_ISO,
-        p_include_bots: c.includeBots,
-        p_filters: filtersToJsonb(f),
-      })
-      .maybeSingle()
-    if (rpcRes.error) throw new Error(`RPC failed [${c.name}]: ${rpcRes.error.message}`)
+    const rpcRes = await withRetry(async () => {
+      const res = await anyDb
+        .rpc('distinct_visitors_in_window', {
+          p_cutoff: FROM_ISO,
+          p_end: TO_ISO,
+          p_include_bots: c.includeBots,
+          p_filters: filtersToJsonb(f),
+        })
+        .maybeSingle()
+      if (res.error) throw new Error(`RPC failed [${c.name}]: ${res.error.message}`)
+      return res
+    })
     const rpcVisitors = Number((rpcRes.data as { count?: number } | null)?.count ?? 0)
 
     // A'. Independent raw SQL for the same number.
@@ -334,8 +355,11 @@ async function main() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!c.includeBots) q = (q as any).eq('bot_likely', false)
     q = applyFilters(q, f) // no dropEvent: an event filter must agree with the raw SQL
-    const mirrorRes = await q
-    if (mirrorRes.error) throw new Error(`mirror select failed [${c.name}]: ${mirrorRes.error.message}`)
+    const mirrorRes = await withRetry(async () => {
+      const res = await q
+      if (res.error) throw new Error(`mirror select failed [${c.name}]: ${res.error.message}`)
+      return res
+    })
     const mirrorPageViews = mirrorRes.count ?? 0
 
     // B'. Independent raw SQL for the page_viewed count. NOTE the pin AND
@@ -749,6 +773,49 @@ async function main() {
         { conv: stripByIdx.get(2) ?? -1, total: stripByIdx.get(1) ?? -1 },
       )
     }
+  }
+
+  // ── Phase 14b Wave 4 — retention + paths structural invariants (mig 187) ─
+  {
+    type RetRow = { cohort_start: string; cohort_size: number | string; period_index: number | string; retained: number | string }
+    const ret = await anyDb.rpc('insights_retention', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_first_event: null, p_return_event: null, p_period: 'day',
+    })
+    if (ret.error) throw new Error(`insights_retention failed [W4]: ${ret.error.message}`)
+    const retRows = ((ret.data ?? []) as RetRow[]).map((r) => ({
+      c: r.cohort_start, size: Number(r.cohort_size), p: Number(r.period_index), n: Number(r.retained),
+    }))
+    const p0Full = retRows.filter((r) => r.p === 0).every((r) => r.n === r.size)
+    const monotone = retRows.every((r) => r.n <= r.size)
+    addExtra('retention: D0 = cohort size AND retained ≤ size (pinned week, daily)', { p0Full, monotone, rows: retRows.length > 0 }, { p0Full: true, monotone: true, rows: true })
+
+    // Filters strictly shrink or hold every cohort size.
+    const retIN = await anyDb.rpc('insights_retention', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: { country: topCountry },
+      p_first_event: null, p_return_event: null, p_period: 'day',
+    })
+    if (retIN.error) throw new Error(`insights_retention failed [W4b]: ${retIN.error.message}`)
+    const sizesAll = new Map(retRows.map((r) => [r.c, r.size]))
+    const shrunk = ((retIN.data ?? []) as RetRow[]).every((r) => Number(r.cohort_size) <= (sizesAll.get(r.cohort_start) ?? 0))
+    addExtra(`retention: country=${topCountry} cohorts ⊆ unfiltered`, shrunk, true)
+
+    type PathRow = { depth: number | string; transitions: number | string }
+    const paths = await anyDb.rpc('insights_event_paths', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_anchor: 'page_viewed', p_direction: 'after', p_depth: 3, p_limit: 10000,
+    })
+    if (paths.error) throw new Error(`insights_event_paths failed [W4]: ${paths.error.message}`)
+    const d1 = ((paths.data ?? []) as PathRow[]).filter((r) => Number(r.depth) === 1)
+      .reduce((a, r) => a + Number(r.transitions), 0)
+    const anchorCount = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and event_name = 'page_viewed'`,
+    )
+    // Each session contributes at most ONE first-transition after its first
+    // anchor, so depth-1 transitions can never exceed raw anchor events.
+    addExtra('paths: depth-1 transitions ≤ raw anchor events', d1 <= Number(anchorCount?.n ?? 0), true)
   }
 
   // ── Render the matrix ──────────────────────────────────────────────────
