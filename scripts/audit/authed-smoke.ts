@@ -48,6 +48,16 @@ const EXTRA_ROUTES = [
   '/admin/insights/journey/phase10-smoke-unknown-visitor',
   '/admin/insights/journey',
   '/admin/insights/health',
+  // Phase 14b — every new surface, each hit WITH a filtered query string so a
+  // filter-parsing regression can't hide behind an unfiltered render.
+  '/admin/insights/explore?country=IN',
+  '/admin/insights/funnel?steps=page_viewed,tool_page_viewed,tool_visit_clicked&fdim=device',
+  '/admin/insights/retention?period=day&country=IN',
+  '/admin/insights/paths?anchor=tool_page_viewed&device=desktop',
+  '/admin/insights/live?device=desktop',
+  '/admin/insights/searches?country=IN&browser=chrome',
+  '/admin/insights/users?q=phase10-smoke&country_not=CN',
+  '/admin/insights?person=phase10-smoke-unknown-visitor',
 ]
 
 function adminDb() {

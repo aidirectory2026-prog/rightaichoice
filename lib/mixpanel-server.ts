@@ -12,6 +12,7 @@
 
 import crypto from 'node:crypto'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
+import { parseBrowser, parseOs } from '@/lib/ua-parse'
 import { validateEvent } from '@/lib/analytics-schema'
 
 const TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
@@ -49,6 +50,9 @@ async function mirrorServerEvent(args: {
         source_kind: 'server',
         ip: args.ip ?? null,
         user_agent: args.userAgent ? args.userAgent.slice(0, 300) : null,
+        // Wave 2 — same family-level parse as the client ingest path.
+        browser: parseBrowser(args.userAgent),
+        os: parseOs(args.userAgent),
         bot_likely: args.botLikely ?? false,
         insert_id: args.insertId ?? crypto.randomUUID(),
         created_at: new Date().toISOString(),

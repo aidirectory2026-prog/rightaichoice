@@ -8,8 +8,20 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Plus, X, Play, Save, Users, Loader2, Trash2, Download } from 'lucide-react'
 
-type CondType = 'did_event' | 'not_event' | 'sequence' | 'property'
-type Condition = { type: CondType; event?: string; first?: string; then?: string; field?: string; op?: string; value?: string }
+type CondType = 'did_event' | 'not_event' | 'sequence' | 'property' | 'geo' | 'device'
+type Condition = {
+  type: CondType
+  event?: string
+  first?: string
+  then?: string
+  field?: string
+  op?: string
+  value?: string
+  // Wave 5 (mig 188): did_event extras
+  minCount?: string
+  whereKey?: string
+  whereValue?: string
+}
 type Result = { distinct_id: string; email: string | null; full_name: string | null; events: number; last_seen: string }
 type SavedView = { id: string; name: string; payload: { match: string; days: number; conditions: Condition[] } }
 
@@ -19,7 +31,10 @@ const PROPERTY_FIELDS = [
 ]
 const TYPE_LABEL: Record<CondType, string> = {
   did_event: 'Did event', not_event: "Didn't do event", sequence: 'Did A then B', property: 'User property',
+  geo: 'Location', device: 'Device',
 }
+const GEO_FIELDS = ['country', 'city', 'region'] as const
+const DEVICE_VALUES = ['desktop', 'mobile', 'tablet', 'unknown'] as const
 
 export function CohortBuilder({ eventNames }: { eventNames: string[] }) {
   const [match, setMatch] = useState<'and' | 'or'>('and')
@@ -45,9 +60,22 @@ export function CohortBuilder({ eventNames }: { eventNames: string[] }) {
     // strip empties to the shape insights_cohort expects
     const cleaned = conditions
       .map((c) => {
-        if (c.type === 'did_event' || c.type === 'not_event') return c.event ? { type: c.type, event: c.event } : null
+        if (c.type === 'did_event') {
+          if (!c.event) return null
+          const out: Record<string, unknown> = { type: 'did_event', event: c.event }
+          const n = parseInt(c.minCount ?? '', 10)
+          if (Number.isInteger(n) && n > 1) out.min_count = n
+          const k = (c.whereKey ?? '').trim().toLowerCase()
+          if (k && /^[a-z0-9_]{1,64}$/.test(k) && (c.whereValue ?? '').trim()) {
+            out.where = { k, v: c.whereValue!.trim() }
+          }
+          return out
+        }
+        if (c.type === 'not_event') return c.event ? { type: c.type, event: c.event } : null
         if (c.type === 'sequence') return c.first && c.then ? { type: 'sequence', first: c.first, then: c.then } : null
         if (c.type === 'property') return c.field && c.value ? { type: 'property', field: c.field, op: c.op ?? 'eq', value: c.value } : null
+        if (c.type === 'geo') return c.field && c.value ? { type: 'geo', field: c.field, value: c.value } : null
+        if (c.type === 'device') return c.value ? { type: 'device', value: c.value } : null
         return null
       })
       .filter(Boolean)
@@ -122,6 +150,38 @@ export function CohortBuilder({ eventNames }: { eventNames: string[] }) {
                   <input list={`ev-${i}`} value={c.event ?? ''} onChange={(e) => set(i, { event: e.target.value })} placeholder="event name" className="min-w-[180px] flex-1 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200" />
                   {evList(`ev-${i}`)}
                 </>
+              )}
+              {c.type === 'did_event' && (
+                <>
+                  <span className="text-zinc-500">at least</span>
+                  <input
+                    type="number" min={1} value={c.minCount ?? '1'}
+                    onChange={(e) => set(i, { minCount: e.target.value })}
+                    className="w-14 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200"
+                    title="Minimum number of times"
+                  />
+                  <span className="text-zinc-500">×</span>
+                  <span className="text-zinc-600">where</span>
+                  <input value={c.whereKey ?? ''} onChange={(e) => set(i, { whereKey: e.target.value })} placeholder="property (optional)" className="w-36 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200" />
+                  <span className="text-zinc-600">=</span>
+                  <input value={c.whereValue ?? ''} onChange={(e) => set(i, { whereValue: e.target.value })} placeholder="value" className="w-32 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200" />
+                </>
+              )}
+              {c.type === 'geo' && (
+                <>
+                  <select value={c.field ?? ''} onChange={(e) => set(i, { field: e.target.value })} className="rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200">
+                    <option value="">where…</option>
+                    {GEO_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <span className="text-zinc-600">=</span>
+                  <input value={c.value ?? ''} onChange={(e) => set(i, { value: e.target.value })} placeholder={c.field === 'country' ? 'IN' : 'e.g. Mumbai'} className="w-32 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200" />
+                </>
+              )}
+              {c.type === 'device' && (
+                <select value={c.value ?? ''} onChange={(e) => set(i, { value: e.target.value })} className="rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-200">
+                  <option value="">device…</option>
+                  {DEVICE_VALUES.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
               )}
               {c.type === 'sequence' && (
                 <>

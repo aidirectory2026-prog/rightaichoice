@@ -1370,6 +1370,25 @@ export type KnownEventName = keyof typeof EVENT_SCHEMAS
 export const SCHEMA_EVENT_NAMES: readonly string[] = Object.keys(EVENT_SCHEMAS)
 
 /**
+ * Phase 14b Wave 2 — every property key any schema'd event can carry
+ * (payload keys from EVENT_SCHEMAS unions/objects + the envelope keys).
+ * This is the allowlist for the `prop` filter dimension: the PostgREST
+ * mirror builds a `properties->>key` column expression, so keys must be
+ * schema-known AND charset-checked (lib/admin/filters.ts) before use.
+ */
+export const KNOWN_PROP_KEYS: ReadonlySet<string> = (() => {
+  const keys = new Set<string>(BASE_CONTEXT_PROP_KEYS)
+  const collect = (schema: unknown) => {
+    const s = schema as { shape?: Record<string, unknown>; options?: unknown[] } | null
+    if (!s || typeof s !== 'object') return
+    if (s.shape && typeof s.shape === 'object') for (const k of Object.keys(s.shape)) keys.add(k)
+    if (Array.isArray(s.options)) for (const o of s.options) collect(o)
+  }
+  for (const entry of Object.values(EVENT_SCHEMAS)) collect((entry as EventSchemaEntry).props)
+  return keys
+})()
+
+/**
  * Events that exist ONLY in lib/mixpanel-server.ts (no client method with a
  * call site). The CI guard exempts these from the "schema must map to a
  * client FIRED event" check.

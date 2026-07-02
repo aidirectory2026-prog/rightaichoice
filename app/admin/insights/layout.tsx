@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, BarChart3, ChevronLeft, Compass, Filter, Globe2, Layers, Monitor, Users, Wrench } from 'lucide-react'
+import { Activity, BarChart3, ChevronLeft, Compass, Filter, Globe2, Layers, Monitor, Repeat, Route, Users, Wrench } from 'lucide-react'
 import { LiveTickerBadge } from './_ui/live-ticker-badge'
 
 export const metadata = { title: 'Insights — Admin' }
@@ -21,6 +21,9 @@ const TABS = [
   { href: '/admin/insights/cohorts', label: 'Cohorts', icon: Layers },
   // Phase 14 Wave 3 — session-level breakdowns + cross-tab pivot (mig 182).
   { href: '/admin/insights/explore', label: 'Explore', icon: Compass },
+  // Phase 14b Wave 4 — cohort retention grid + session path tree (mig 187).
+  { href: '/admin/insights/retention', label: 'Retention', icon: Repeat },
+  { href: '/admin/insights/paths', label: 'Paths', icon: Route },
 ] as const
 
 export default function InsightsLayout({ children }: { children: React.ReactNode }) {

@@ -7,6 +7,27 @@ import { checkAdmin } from '@/lib/admin/require-admin'
 
 export const dynamic = 'force-dynamic'
 
+// Wave 5 (mig 188) — validate condition shapes before they reach the RPC.
+// The RPC is defensive too (charset checks, field allowlists); this keeps
+// garbage payloads out of saved views and returns a clear 400 instead.
+const COND_TYPES = new Set(['did_event', 'not_event', 'sequence', 'property', 'geo', 'device'])
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validConditions(payload: any): boolean {
+  const list = payload?.conditions
+  if (!Array.isArray(list) || list.length > 12) return false
+  return list.every((c) => {
+    if (!c || typeof c !== 'object' || !COND_TYPES.has(c.type)) return false
+    if (c.min_count !== undefined && !(Number.isInteger(c.min_count) && c.min_count >= 1 && c.min_count <= 1000)) return false
+    if (c.where !== undefined) {
+      if (typeof c.where?.k !== 'string' || !/^[a-z0-9_]{1,64}$/.test(c.where.k)) return false
+      if (typeof c.where?.v !== 'string' || c.where.v.length > 200) return false
+    }
+    if (c.type === 'geo' && !['country', 'city', 'region'].includes(c.field)) return false
+    if (c.type === 'device' && !['desktop', 'mobile', 'tablet', 'unknown'].includes(c.value)) return false
+    return true
+  })
+}
+
 // GET — list saved cohorts.
 export async function GET() {
   if (!(await checkAdmin()).ok) return NextResponse.json({ views: [] }, { status: 403 })
@@ -38,6 +59,9 @@ export async function POST(req: NextRequest) {
   }
 
   // run
+  if (body.conditions && !validConditions(body.conditions)) {
+    return NextResponse.json({ results: [], error: 'invalid condition shape' }, { status: 400 })
+  }
   const days = Math.min(Math.max(Number(body.days ?? 30), 1), 365)
   const cutoff = new Date(Date.now() - days * 86_400_000).toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

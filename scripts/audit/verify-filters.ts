@@ -56,6 +56,17 @@ type Combo = {
   utmSource?: string | string[]
   auth?: 'known' | 'anon'
   event?: string | string[]
+  // Phase 14b Wave 2 — dimensions v2 + negation
+  pagePath?: string | string[]
+  city?: string | string[]
+  browser?: string | string[]
+  os?: string | string[]
+  sourceKind?: string | string[]
+  prop?: { k: string; v: string }
+  notCountry?: string
+  notDevice?: string
+  notPath?: string
+  notBrowser?: string
 }
 
 const arr = (v: string | string[] | undefined): string[] => (v == null ? [] : Array.isArray(v) ? v : [v])
@@ -100,10 +111,32 @@ function rawWhere(c: Combo): string {
   if (c.auth === 'known') parts.push('user_id is not null')
   if (c.auth === 'anon') parts.push('user_id is null')
   if (arr(c.event).length) parts.push(`event_name in (${arr(c.event).map(lit).join(', ')})`)
+  // Wave 2 dimensions — independent hand-written forms
+  if (arr(c.pagePath).length) {
+    const ps = arr(c.pagePath).map((p) => `page_path ilike ${lit('%' + p + '%')}`)
+    parts.push(ps.length > 1 ? `(${ps.join(' or ')})` : ps[0])
+  }
+  if (arr(c.city).length) parts.push(`city in (${arr(c.city).map(lit).join(', ')})`)
+  if (arr(c.browser).length) parts.push(`browser in (${arr(c.browser).map(lit).join(', ')})`)
+  if (arr(c.os).length) parts.push(`os in (${arr(c.os).map(lit).join(', ')})`)
+  if (arr(c.sourceKind).length) parts.push(`source_kind in (${arr(c.sourceKind).map(lit).join(', ')})`)
+  if (c.prop) parts.push(`properties->>${lit(c.prop.k)} = ${lit(c.prop.v)}`)
+  // Negations — SQL three-valued logic (NULL dimension rows are excluded)
+  if (c.notCountry) parts.push(`not (country = ${lit(c.notCountry)})`)
+  if (c.notDevice) {
+    parts.push(c.notDevice === 'unknown' ? 'device_type is not null' : `not (device_type = ${lit(c.notDevice)})`)
+  }
+  if (c.notPath) parts.push(`not (page_path ilike ${lit('%' + c.notPath + '%')})`)
+  if (c.notBrowser) parts.push(`not (browser = ${lit(c.notBrowser)})`)
   return parts.join(' and ')
 }
 
 function toAdminFilters(c: Combo): AdminFilters {
+  const not: AdminFilters['not'] = {}
+  if (c.notCountry) not.country = c.notCountry
+  if (c.notDevice) not.device = c.notDevice
+  if (c.notPath) not.pagePath = c.notPath
+  if (c.notBrowser) not.browser = c.notBrowser
   return {
     range: SEL,
     includeBots: c.includeBots,
@@ -113,6 +146,13 @@ function toAdminFilters(c: Combo): AdminFilters {
     utmSource: c.utmSource,
     auth: c.auth,
     event: c.event,
+    pagePath: c.pagePath,
+    city: c.city,
+    browser: c.browser,
+    os: c.os,
+    sourceKind: c.sourceKind,
+    props: c.prop ? [c.prop] : undefined,
+    not: Object.keys(not).length ? not : undefined,
   }
 }
 
@@ -127,6 +167,16 @@ function describe(c: Combo): string {
   show('utm_source', c.utmSource)
   if (c.auth) parts.push(`auth=${c.auth}`)
   show('event', c.event)
+  show('path', c.pagePath)
+  show('city', c.city)
+  show('browser', c.browser)
+  show('os', c.os)
+  show('kind', c.sourceKind)
+  if (c.prop) parts.push(`prop ${c.prop.k}=${c.prop.v}`)
+  if (c.notCountry) parts.push(`country≠${c.notCountry}`)
+  if (c.notDevice) parts.push(`device≠${c.notDevice}`)
+  if (c.notPath) parts.push(`path≠${c.notPath}`)
+  if (c.notBrowser) parts.push(`browser≠${c.notBrowser}`)
   parts.push(`bots=${c.includeBots ? 'incl' : 'excl'}`)
   return parts.join(' ')
 }
@@ -139,13 +189,31 @@ async function main() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyDb = db as any
 
+  // The verifier makes ~150 sequential network calls; a single transient
+  // "fetch failed" must not abort a 2-minute run. Read-only calls → safe to
+  // retry blindly.
+  async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+    let lastErr: unknown
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn()
+      } catch (err) {
+        lastErr = err
+        if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+      }
+    }
+    throw lastErr
+  }
+
   // _admin_audit_exec wraps the query as `select to_jsonb(t) ... limit 1`,
   // so it returns ONE row as a jsonb object (or null). All verifier queries
   // are single-row aggregates / limit-1 lookups, which fits exactly.
   async function runSql(sql: string): Promise<Record<string, unknown> | null> {
-    const { data, error } = await anyDb.rpc('_admin_audit_exec', { p_sql: sql })
-    if (error) throw new Error(`_admin_audit_exec failed: ${error.message}\nSQL: ${sql}`)
-    return (data ?? null) as Record<string, unknown> | null
+    return withRetry(async () => {
+      const { data, error } = await anyDb.rpc('_admin_audit_exec', { p_sql: sql })
+      if (error) throw new Error(`_admin_audit_exec failed: ${error.message}\nSQL: ${sql}`)
+      return (data ?? null) as Record<string, unknown> | null
+    })
   }
 
   // Discover real fixture values from the pinned window so every combo
@@ -177,6 +245,37 @@ async function main() {
   )
   const sourceHost = sourceRow?.host ? String(sourceRow.host) : 'google'
 
+  // Wave 2 fixtures — top city / browser / os / page_viewed path in the window
+  // (browser/os exist for the pinned week via the 2026-07-02 backfill).
+  const cityRow = await runSql(
+    `select city from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and city is not null and city <> ''
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topCity = cityRow?.city ? String(cityRow.city) : 'Mumbai'
+  const browserRow = await runSql(
+    `select browser from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and browser is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topBrowser = browserRow?.browser ? String(browserRow.browser) : 'chrome'
+  const osRow = await runSql(
+    `select os from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and os is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topOs = osRow?.os ? String(osRow.os) : 'windows'
+  const pathRow = await runSql(
+    `select properties->>'path' as p from user_events
+      where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+        and event_name = 'page_viewed' and properties->>'path' is not null
+      group by 1 order by count(*) desc limit 1`,
+  )
+  const topPath = pathRow?.p ? String(pathRow.p) : '/'
+
   const combos: Combo[] = [
     { name: 'none', includeBots: false },
     { name: 'none+bots', includeBots: true },
@@ -200,6 +299,23 @@ async function main() {
     { name: 'device[mobile,tablet]', includeBots: false, device: ['mobile', 'tablet'] },
     { name: 'event[multi]', includeBots: false, event: ['page_viewed', 'tool_page_viewed'] },
     { name: 'multi+stack', includeBots: false, device: ['desktop', 'mobile'], country: [topCountry, 'US'] },
+    // Phase 14b Wave 2 — dimensions v2. Same discipline: shared predicate +
+    // TS mirror vs independent hand-written SQL.
+    { name: 'page', includeBots: false, pagePath: '/tools' },
+    { name: 'page[multi]', includeBots: false, pagePath: ['/tools', '/compare'] },
+    { name: 'city', includeBots: false, city: topCity },
+    { name: 'browser', includeBots: false, browser: topBrowser },
+    { name: 'browser[multi]', includeBots: false, browser: [topBrowser, 'safari'] },
+    { name: 'os', includeBots: false, os: topOs },
+    { name: 'source_kind=server', includeBots: false, sourceKind: 'server' },
+    { name: 'prop path', includeBots: false, prop: { k: 'path', v: topPath } },
+    { name: 'not country', includeBots: false, notCountry: topCountry },
+    { name: 'not device', includeBots: false, notDevice: 'desktop' },
+    { name: 'not device=unknown', includeBots: false, notDevice: 'unknown' },
+    { name: 'not path', includeBots: false, notPath: '/tools' },
+    { name: 'not browser', includeBots: false, notBrowser: topBrowser },
+    { name: 'pos+neg stack', includeBots: false, country: [topCountry, 'US'], notBrowser: topBrowser },
+    { name: 'kitchen sink', includeBots: false, device: 'desktop', browser: topBrowser, pagePath: '/tools', notCountry: 'CN' },
   ]
 
   const rows: Row[] = []
@@ -208,15 +324,18 @@ async function main() {
     const where = rawWhere(c)
 
     // A. RPC path — shared SQL predicate via p_filters.
-    const rpcRes = await anyDb
-      .rpc('distinct_visitors_in_window', {
-        p_cutoff: FROM_ISO,
-        p_end: TO_ISO,
-        p_include_bots: c.includeBots,
-        p_filters: filtersToJsonb(f),
-      })
-      .maybeSingle()
-    if (rpcRes.error) throw new Error(`RPC failed [${c.name}]: ${rpcRes.error.message}`)
+    const rpcRes = await withRetry(async () => {
+      const res = await anyDb
+        .rpc('distinct_visitors_in_window', {
+          p_cutoff: FROM_ISO,
+          p_end: TO_ISO,
+          p_include_bots: c.includeBots,
+          p_filters: filtersToJsonb(f),
+        })
+        .maybeSingle()
+      if (res.error) throw new Error(`RPC failed [${c.name}]: ${res.error.message}`)
+      return res
+    })
     const rpcVisitors = Number((rpcRes.data as { count?: number } | null)?.count ?? 0)
 
     // A'. Independent raw SQL for the same number.
@@ -236,8 +355,11 @@ async function main() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!c.includeBots) q = (q as any).eq('bot_likely', false)
     q = applyFilters(q, f) // no dropEvent: an event filter must agree with the raw SQL
-    const mirrorRes = await q
-    if (mirrorRes.error) throw new Error(`mirror select failed [${c.name}]: ${mirrorRes.error.message}`)
+    const mirrorRes = await withRetry(async () => {
+      const res = await q
+      if (res.error) throw new Error(`mirror select failed [${c.name}]: ${res.error.message}`)
+      return res
+    })
     const mirrorPageViews = mirrorRes.count ?? 0
 
     // B'. Independent raw SQL for the page_viewed count. NOTE the pin AND
@@ -476,6 +598,363 @@ async function main() {
           and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}`,
     )
     addExtra('sentiment_card_viewed windowed humans (F13 leg = raw SQL)', mirror.count ?? -1, Number(raw?.n ?? -2))
+  }
+
+  // ── Phase 14b Wave 1 extension: filter HONESTY on the formerly-unfiltered
+  // RPCs (migration 183). Same discipline: LIVE path (RPC with p_filters →
+  // shared predicate) vs independent hand-written WHERE clauses.
+
+  // H1. insights_search_log — country filter: row count vs hand SQL over the
+  //     same qualifying-search definition.
+  {
+    const res = await anyDb.rpc('insights_search_log', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_limit: 100000, p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_search_log failed [H1]: ${res.error.message}`)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events ue
+        where ue.created_at >= ${lit(FROM_ISO)} and ue.created_at < ${lit(TO_ISO)}
+          and not ue.bot_likely and ue.country = ${lit(topCountry)}
+          and (ue.event_name in ('search_query_submitted','empty_search')
+               or (ue.event_name = 'search_query_typed' and ue.properties->>'final_blur' = 'true'))
+          and coalesce(nullif(ue.properties->>'query',''), nullif(ue.properties->>'current_text','')) is not null`,
+    )
+    addExtra(`search_log country=${topCountry} (row count = raw)`, (res.data as unknown[]).length, Number(raw?.n ?? -1))
+  }
+
+  // H2. insights_plan_dropoff — country filter: one row per plan_started
+  //     visitor whose (filtered) journey events matched.
+  {
+    const res = await anyDb.rpc('insights_plan_dropoff', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_plan_dropoff failed [H2]: ${res.error.message}`)
+    const raw = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and country = ${lit(topCountry)}
+          and event_name = 'plan_started'`,
+    )
+    addExtra(`plan_dropoff country=${topCountry} (rows = raw plan_started visitors)`, (res.data as unknown[]).length, Number(raw?.n ?? -1))
+  }
+
+  // H3. insights_error_overview — country filter: sum(occurrences) vs raw
+  //     error_encountered count.
+  {
+    const res = await anyDb.rpc('insights_error_overview', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: { country: topCountry },
+    })
+    if (res.error) throw new Error(`insights_error_overview failed [H3]: ${res.error.message}`)
+    const total = ((res.data as Array<{ occurrences: number | string }>) ?? []).reduce((a, r) => a + Number(r.occurrences), 0)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and country = ${lit(topCountry)}
+          and event_name = 'error_encountered'`,
+    )
+    addExtra(`error_overview country=${topCountry} (sum occurrences = raw)`, total, Number(raw?.n ?? -1))
+  }
+
+  // H4. insights_user_sessions_v2 — pinned window + event constraint on the
+  //     busiest visitor of the week: total events across sessions = raw count;
+  //     with p_events, every returned session contains that event.
+  {
+    const busy = await runSql(
+      `select distinct_id from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const busyId = String(busy?.distinct_id ?? '')
+    const res = await anyDb.rpc('insights_user_sessions_v2', {
+      p_distinct_id: busyId, p_limit: 10000, p_events_cap: 1,
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_events: null,
+    })
+    if (res.error) throw new Error(`insights_user_sessions_v2 failed [H4]: ${res.error.message}`)
+    const totalEvents = ((res.data as Array<{ event_count: number | string }>) ?? []).reduce((a, s) => a + Number(s.event_count), 0)
+    const raw = await runSql(
+      `select count(*)::bigint as n from user_events
+        where distinct_id = ${lit(busyId)}
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}`,
+    )
+    addExtra('user_sessions_v2 pinned window (sum event_count = raw)', totalEvents, Number(raw?.n ?? -1))
+
+    const resEv = await anyDb.rpc('insights_user_sessions_v2', {
+      p_distinct_id: busyId, p_limit: 10000, p_events_cap: 10000,
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_events: ['page_viewed'],
+    })
+    if (resEv.error) throw new Error(`insights_user_sessions_v2 failed [H4b]: ${resEv.error.message}`)
+    const sessions = (resEv.data as Array<{ events: Array<{ event_name: string }> }>) ?? []
+    const allContain = sessions.every((s) => (s.events ?? []).some((e) => e.event_name === 'page_viewed'))
+    addExtra('user_sessions_v2 p_events=[page_viewed] (every session contains it)', allContain, true)
+  }
+
+  // H5. insights_user_directory p_search — searching a real visitor id
+  //     substring finds exactly the raw match count.
+  {
+    const busy = await runSql(
+      `select distinct_id from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const needle = String(busy?.distinct_id ?? '').slice(0, 12)
+    const res = await anyDb.rpc('insights_user_directory', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+      p_filters: null, p_sort: 'events', p_limit: 1, p_offset: 0, p_search: needle,
+    })
+    if (res.error) throw new Error(`insights_user_directory failed [H5]: ${res.error.message}`)
+    const total = Number((res.data as Array<{ total_rows?: number }>)[0]?.total_rows ?? 0)
+    const raw = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and distinct_id ilike ${lit('%' + needle + '%')}`,
+    )
+    addExtra(`user_directory p_search=${needle} (total = raw matches)`, total, Number(raw?.n ?? -1))
+  }
+
+  // H6. Live RPCs (now()-anchored, not pinned-week reproducible) — structural:
+  //     with a country filter every returned row honors it, and the calls
+  //     accept p_filters at all (signature guard).
+  {
+    const feed = await anyDb.rpc('insights_activity_feed', {
+      p_limit: 100, p_include_bots: true, p_filters: { country: topCountry },
+    })
+    if (feed.error) throw new Error(`insights_activity_feed failed [H6]: ${feed.error.message}`)
+    const feedOk = ((feed.data as Array<{ country: string | null }>) ?? []).every((r) => r.country === topCountry)
+    const live = await anyDb.rpc('insights_live_sessions', {
+      p_active_within_sec: 3600, p_include_bots: true, p_filters: { country: topCountry },
+    })
+    if (live.error) throw new Error(`insights_live_sessions failed [H6]: ${live.error.message}`)
+    const liveOk = ((live.data as Array<{ country: string | null }>) ?? []).every((r) => r.country === topCountry)
+    addExtra(`activity_feed+live_sessions country=${topCountry} (every row honors filter)`, { feedOk, liveOk }, { feedOk: true, liveOk: true })
+  }
+
+  // ── Phase 14b Wave 3 — funnel drill-down consistency (migration 186) ───
+  // The breakdown and people RPCs must reconcile EXACTLY with the funnel
+  // strip (insights_funnel_users) on the same steps + filters.
+  {
+    const FUNNEL_STEPS = ['page_viewed', 'tool_page_viewed', 'tool_visit_clicked']
+    const funnelArgs = {
+      p_steps: FUNNEL_STEPS, p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+    }
+    for (const [suffix, extraFilters] of [
+      ['none', null],
+      [`country=${topCountry}`, { country: topCountry }],
+    ] as const) {
+      const strip = await anyDb.rpc('insights_funnel_users', { ...funnelArgs, p_filters: extraFilters })
+      if (strip.error) throw new Error(`insights_funnel_users failed [W3 ${suffix}]: ${strip.error.message}`)
+      const stripByIdx = new Map(
+        ((strip.data ?? []) as Array<{ step_index: number; users: number | string }>).map((r) => [Number(r.step_index), Number(r.users)]),
+      )
+      const bd = await anyDb.rpc('insights_funnel_breakdown', {
+        ...funnelArgs, p_filters: extraFilters, p_dimension: 'country', p_limit: 10000,
+      })
+      if (bd.error) throw new Error(`insights_funnel_breakdown failed [W3 ${suffix}]: ${bd.error.message}`)
+      const bdRows = (bd.data ?? []) as Array<{ step_index: number; users: number | string }>
+      const bdStep1 = bdRows.filter((r) => Number(r.step_index) === 1).reduce((a, r) => a + Number(r.users), 0)
+      // Breakdown keys attribute a person to their first step-1 event; every
+      // step-1 person has one, so the step-1 column must sum to the strip.
+      addExtra(`funnel_breakdown step-1 sum = strip step-1 [${suffix}]`, bdStep1, stripByIdx.get(1) ?? -1)
+
+      const conv = await anyDb.rpc('insights_funnel_people', {
+        ...funnelArgs, p_filters: extraFilters, p_step: 2, p_converted: true, p_limit: 100000,
+      })
+      if (conv.error) throw new Error(`insights_funnel_people failed [W3 ${suffix}]: ${conv.error.message}`)
+      const drop = await anyDb.rpc('insights_funnel_people', {
+        ...funnelArgs, p_filters: extraFilters, p_step: 2, p_converted: false, p_limit: 100000,
+      })
+      if (drop.error) throw new Error(`insights_funnel_people failed [W3b ${suffix}]: ${drop.error.message}`)
+      // people(step2, converted) = strip step-2; converted+dropped = strip step-1.
+      addExtra(
+        `funnel_people conv@2 = strip step-2; conv+drop = step-1 [${suffix}]`,
+        { conv: (conv.data as unknown[]).length, total: (conv.data as unknown[]).length + (drop.data as unknown[]).length },
+        { conv: stripByIdx.get(2) ?? -1, total: stripByIdx.get(1) ?? -1 },
+      )
+    }
+  }
+
+  // ── Phase 14b Wave 4 — retention + paths structural invariants (mig 187) ─
+  {
+    type RetRow = { cohort_start: string; cohort_size: number | string; period_index: number | string; retained: number | string }
+    const ret = await anyDb.rpc('insights_retention', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_first_event: null, p_return_event: null, p_period: 'day',
+    })
+    if (ret.error) throw new Error(`insights_retention failed [W4]: ${ret.error.message}`)
+    const retRows = ((ret.data ?? []) as RetRow[]).map((r) => ({
+      c: r.cohort_start, size: Number(r.cohort_size), p: Number(r.period_index), n: Number(r.retained),
+    }))
+    const p0Full = retRows.filter((r) => r.p === 0).every((r) => r.n === r.size)
+    const monotone = retRows.every((r) => r.n <= r.size)
+    addExtra('retention: D0 = cohort size AND retained ≤ size (pinned week, daily)', { p0Full, monotone, rows: retRows.length > 0 }, { p0Full: true, monotone: true, rows: true })
+
+    // Filters strictly shrink or hold every cohort size.
+    const retIN = await anyDb.rpc('insights_retention', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: { country: topCountry },
+      p_first_event: null, p_return_event: null, p_period: 'day',
+    })
+    if (retIN.error) throw new Error(`insights_retention failed [W4b]: ${retIN.error.message}`)
+    const sizesAll = new Map(retRows.map((r) => [r.c, r.size]))
+    const shrunk = ((retIN.data ?? []) as RetRow[]).every((r) => Number(r.cohort_size) <= (sizesAll.get(r.cohort_start) ?? 0))
+    addExtra(`retention: country=${topCountry} cohorts ⊆ unfiltered`, shrunk, true)
+
+    type PathRow = { depth: number | string; transitions: number | string }
+    const paths = await anyDb.rpc('insights_event_paths', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_anchor: 'page_viewed', p_direction: 'after', p_depth: 3, p_limit: 10000,
+    })
+    if (paths.error) throw new Error(`insights_event_paths failed [W4]: ${paths.error.message}`)
+    const d1 = ((paths.data ?? []) as PathRow[]).filter((r) => Number(r.depth) === 1)
+      .reduce((a, r) => a + Number(r.transitions), 0)
+    const anchorCount = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and not bot_likely and event_name = 'page_viewed'`,
+    )
+    // Each session contributes at most ONE first-transition after its first
+    // anchor, so depth-1 transitions can never exceed raw anchor events.
+    addExtra('paths: depth-1 transitions ≤ raw anchor events', d1 <= Number(anchorCount?.n ?? 0), true)
+  }
+
+  // ── Phase 14b Wave 5 — cohort v2 vs hand-written SQL (migration 188) ────
+  {
+    // C1. min_count: "did page_viewed ≥ 3×" over the pinned week.
+    const c1 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'did_event', event: 'page_viewed', min_count: 3 }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c1.error) throw new Error(`insights_cohort failed [C1]: ${c1.error.message}`)
+    const rawC1 = await runSql(
+      `select count(*)::bigint as n from (
+         select distinct_id from user_events
+         where event_name = 'page_viewed' and not bot_likely
+           and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+         group by 1 having count(*) >= 3
+       ) t`,
+    )
+    addExtra('cohort v2: did page_viewed ≥3× = raw grouped-having', (c1.data as unknown[]).length, Number(rawC1?.n ?? -1))
+
+    // C2. per-event property where: tool_page_viewed where tool_slug = <top>.
+    const slugRow = await runSql(
+      `select properties->>'tool_slug' as s from user_events
+        where event_name = 'tool_page_viewed' and not bot_likely
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and properties->>'tool_slug' is not null
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const topSlug = String(slugRow?.s ?? 'notion')
+    const c2 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'did_event', event: 'tool_page_viewed', where: { k: 'tool_slug', v: topSlug } }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c2.error) throw new Error(`insights_cohort failed [C2]: ${c2.error.message}`)
+    const rawC2 = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where event_name = 'tool_page_viewed' and not bot_likely
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and properties->>'tool_slug' = ${lit(topSlug)}`,
+    )
+    addExtra(`cohort v2: tool_page_viewed where tool_slug=${topSlug} = raw`, (c2.data as unknown[]).length, Number(rawC2?.n ?? -1))
+
+    // C3. geo + device conditions ANDed.
+    const c3 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'geo', field: 'country', value: topCountry }, { type: 'device', value: 'desktop' }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c3.error) throw new Error(`insights_cohort failed [C3]: ${c3.error.message}`)
+    const rawC3 = await runSql(
+      `select count(*)::bigint as n from (
+         (select distinct distinct_id from user_events
+           where country = ${lit(topCountry)} and not bot_likely
+             and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)})
+         intersect
+         (select distinct distinct_id from user_events
+           where device_type = 'desktop' and not bot_likely
+             and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)})
+       ) t`,
+    )
+    addExtra(`cohort v2: geo country=${topCountry} AND device=desktop = raw intersect`, (c3.data as unknown[]).length, Number(rawC3?.n ?? -1))
+  }
+
+  // ── Phase 14b Wave 6 — mig-182 Explore RPCs + cohort distinct_ids ───────
+  // These shipped in Phase 14 Wave 3b "sanity-checked live" only; now pinned.
+  {
+    // X1. session_breakdown: every event lands in exactly one session/key, so
+    // sum(events) across keys must equal the raw filtered event count.
+    const sb = await anyDb.rpc('insights_session_breakdown', {
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: null,
+      p_dimension: 'country', p_gap_min: 30, p_limit: 100000,
+    })
+    if (sb.error) throw new Error(`insights_session_breakdown failed [X1]: ${sb.error.message}`)
+    const sbEvents = ((sb.data ?? []) as Array<{ events: number | string }>).reduce((a, r) => a + Number(r.events), 0)
+    const rawTotal = await runSql(
+      `select count(*)::bigint as n from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely`,
+    )
+    addExtra('mig182 session_breakdown: sum(events) = raw filtered events', sbEvents, Number(rawTotal?.n ?? -1))
+
+    // X2. breakdown_matrix: cells partition all events, so sum(events) must
+    // equal the same raw total (and again under a device filter).
+    for (const [suffix, extraFilters, rawWhereSql] of [
+      ['none', null, ''],
+      ['device=desktop', { device: 'desktop' }, ` and device_type = 'desktop'`],
+    ] as const) {
+      const bm = await anyDb.rpc('insights_breakdown_matrix', {
+        p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_filters: extraFilters,
+        p_dim1: 'country', p_dim2: 'device', p_limit: 100000,
+      })
+      if (bm.error) throw new Error(`insights_breakdown_matrix failed [X2 ${suffix}]: ${bm.error.message}`)
+      const bmEvents = ((bm.data ?? []) as Array<{ events: number | string }>).reduce((a, r) => a + Number(r.events), 0)
+      const rawBm = await runSql(
+        `select count(*)::bigint as n from user_events
+          where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely${rawWhereSql}`,
+      )
+      addExtra(`mig182 breakdown_matrix: sum(events) = raw [${suffix}]`, bmEvents, Number(rawBm?.n ?? -1))
+    }
+
+    // X3. cohort-as-filter in the MAIN predicate: a fixed distinct_ids set
+    // through the RPC path AND the PostgREST mirror vs raw IN-list SQL.
+    const idsRaw = await runSql(
+      `select jsonb_agg(t.distinct_id) as ids from (
+         select distinct_id from user_events
+         where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+         group by 1 order by count(*) desc limit 25
+       ) t`,
+    )
+    const ids = ((idsRaw?.ids ?? []) as string[]).filter(Boolean)
+    const cohortRpc = await withRetry(async () => {
+      const res = await anyDb
+        .rpc('distinct_visitors_in_window', {
+          p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+          p_filters: { distinct_ids: ids, device: 'desktop' },
+        })
+        .maybeSingle()
+      if (res.error) throw new Error(`distinct_visitors [X3]: ${res.error.message}`)
+      return res
+    })
+    let cq = db
+      .from('user_events')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', FROM_ISO)
+      .lt('created_at', TO_ISO)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cq = (cq as any).eq('bot_likely', false)
+    cq = applyFilters(cq, { range: SEL, includeBots: false, device: 'desktop', distinctIds: ids })
+    const cMirror = await cq
+    if (cMirror.error) throw new Error(`mirror [X3]: ${cMirror.error.message}`)
+    const rawCohort = await runSql(
+      `select count(distinct distinct_id)::bigint as v, count(*)::bigint as e from user_events
+        where created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)} and not bot_likely
+          and device_type = 'desktop'
+          and distinct_id in (${ids.map(lit).join(', ')})`,
+    )
+    addExtra(
+      'cohort distinct_ids + device: RPC visitors AND mirror events = raw',
+      { v: Number((cohortRpc.data as { count?: number } | null)?.count ?? -1), e: cMirror.count ?? -1 },
+      { v: Number(rawCohort?.v ?? -2), e: Number(rawCohort?.e ?? -2) },
+    )
   }
 
   // ── Render the matrix ──────────────────────────────────────────────────
