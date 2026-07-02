@@ -69,3 +69,20 @@ _Plain language: we found ~2,200 real, live, not-already-listed AI tools, with t
 **Residual risk:** generated-then-flipped publish flag is manual toil per batch — acceptable at batch cadence; parked fix would set it at the generator.
 _Plain language: 20 candidates went in, the machine's own quality gate cut one, human review cut two more (a duplicate of Notion in disguise and a shady API reseller) and fixed three ugly names. 17 clean tools are now sitting invisibly in the database waiting for the quality pipeline to finish their pages._
 **Status: done.**
+
+### 2026-07-02 — Pilot batch 40 PUBLISHED: 17/17 through the unmodified 10-step SOP, live on production
+**What:** All 17 pilot drafts ran the full gated onboard SOP (2 via a smoke test, 15 via a detached `run-onboard-sop.ts` run) and are live: every tool published all-green with 6 alternatives, 3 editorial comparisons, 11-12 long-tail FAQs, categories+tags, viability score, latest-updates, sentiment, and logo (14 real logos, 3 favicon soft-passes — allowed by the SOP).
+**Why:** Definition-of-done for the manual path: new tools must be indistinguishable from existing ones and auto-enrolled in every automation, with zero automation edits.
+**How:** `scripts/run-onboard-sop.ts` (existing manual driver, unmodified). Notable observation: the existing draft-lane cron (`17,47 * * * *`) independently picked up and published 2 of the 17 (`getsolved-ai`, `emporia-research`) while the manual run was mid-flight — the manual runner reported `published=false` for those because its final flip found them already published. Verified in DB: both published by the cron through the identical SOP. This confirms bulk drafts WILL flow out through the existing cron on their own (batch 5 / 30 min ≈ 240/day ceiling).
+**Verification (SQL over all 17):** published=17, onboarded=17, desc≥250=17, FAQs≥9=17, editorial fields=17, refresh-stamped=17 (→ enrolled in the lite-refresh SLA rotation), viability=17, `INSUFFICIENT_DATA` sentinel leaks=0, editorial comparisons created=51. Live spot-checks (5 pages incl. redirects): HTTP 200, standard "{Name}: Pricing, Features & Alternatives in 2026" titles, full ~290-355KB rendered HTML. Catalog: 2,060 → **2,077 published**.
+**Cost:** ≈ $1.5-2 total (enrich ×2 runs + SOP for 17 tools; DeepSeek + small Anthropic sentiment calls).
+**Residual risk:** none for the pilot; the known parked write-path defects (speculative model strings etc.) didn't surface in this sample (0 sentinels) but remain possible at bulk scale until un-parked.
+_Plain language: the whole assembly line works end-to-end without touching any machinery — 17 hot tools went from a directory listing to fully-built, live pages that look exactly like your existing 2,060, and they're already inside every refresh loop the site runs nightly._
+**Status: done.**
+
+### 2026-07-02 — Sourcing round 2 (partial): ProductHunt archive, hottest 10 months captured
+**What:** Standalone PH GraphQL archive sweep (`scripts/phase14/fetch-ph-archive.ts`): 2,105 AI-topic launches with ≥100 votes covering 2025-09 → 2026-07 captured; deeper archive (2023-01 → 2025-08) resumed in background after the first run died on PH rate limits (fix: 15-min backoff + resume-from-checkpoint + incremental append).
+**Verification:** `raw-ph-archive.json` count + date-range check; resume run confirmed skipping completed windows.
+**Residual risk:** PH complexity budget makes the deep sweep slow (hours); acceptable — bulk enrichment is blocked on the DeepSeek top-up anyway.
+_Plain language: we pulled every AI product launch that got real love on Product Hunt in the last 10 months — 2,105 of them — and the older archive is downloading slowly in the background._
+**Status: done (recent window) / running (deep archive).**
