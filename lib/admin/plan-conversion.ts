@@ -150,6 +150,70 @@ export async function getFunnelUsers(
   })
 }
 
+// ── Phase 14b Wave 3 — ad-hoc funnel drill-down (migration 186) ──────────
+
+export type FunnelBreakdownRow = { step_index: number; key: string; users: number }
+
+/** Per-step funnel counts split by a dimension (person attributed to their
+ *  first step-1 event's value; identity-stitched like insights_funnel_users). */
+export async function getFunnelBreakdown(
+  steps: readonly string[],
+  f: AdminFilters,
+  dimension: string,
+  limit = 12,
+): Promise<FunnelBreakdownRow[]> {
+  const db = getAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db as any).rpc('insights_funnel_breakdown', {
+    p_steps: [...steps],
+    p_cutoff: f.range.cutoffISO,
+    p_end: f.range.endCutoffISO,
+    p_include_bots: f.includeBots,
+    p_filters: filtersToJsonb(f),
+    p_dimension: dimension,
+    p_limit: limit,
+  })
+  if (error) throw new Error(`insights_funnel_breakdown failed: ${error.message}`)
+  return ((data ?? []) as FunnelBreakdownRow[]).map((r) => ({
+    step_index: Number(r.step_index),
+    key: r.key,
+    users: Number(r.users),
+  }))
+}
+
+export type FunnelPerson = {
+  person: string
+  email: string | null
+  is_user: boolean
+  furthest: number
+  last_seen: string
+}
+
+/** The actual people at a step: converted=true → reached it; false → dropped
+ *  right before it (furthest = step - 1). */
+export async function getFunnelPeople(
+  steps: readonly string[],
+  f: AdminFilters,
+  step: number,
+  converted: boolean,
+  limit = 200,
+): Promise<FunnelPerson[]> {
+  const db = getAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db as any).rpc('insights_funnel_people', {
+    p_steps: [...steps],
+    p_step: step,
+    p_converted: converted,
+    p_cutoff: f.range.cutoffISO,
+    p_end: f.range.endCutoffISO,
+    p_include_bots: f.includeBots,
+    p_filters: filtersToJsonb(f),
+    p_limit: limit,
+  })
+  if (error) throw new Error(`insights_funnel_people failed: ${error.message}`)
+  return ((data ?? []) as FunnelPerson[]).map((r) => ({ ...r, furthest: Number(r.furthest) }))
+}
+
 /** Per-surface impressions vs clicks vs signups (computed from event props). */
 export async function getSurfaceBreakdown(f: AdminFilters): Promise<SurfaceStat[]> {
   const db = getAdminClient()

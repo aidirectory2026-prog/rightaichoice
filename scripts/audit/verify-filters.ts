@@ -707,6 +707,50 @@ async function main() {
     addExtra(`activity_feed+live_sessions country=${topCountry} (every row honors filter)`, { feedOk, liveOk }, { feedOk: true, liveOk: true })
   }
 
+  // ── Phase 14b Wave 3 — funnel drill-down consistency (migration 186) ───
+  // The breakdown and people RPCs must reconcile EXACTLY with the funnel
+  // strip (insights_funnel_users) on the same steps + filters.
+  {
+    const FUNNEL_STEPS = ['page_viewed', 'tool_page_viewed', 'tool_visit_clicked']
+    const funnelArgs = {
+      p_steps: FUNNEL_STEPS, p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false,
+    }
+    for (const [suffix, extraFilters] of [
+      ['none', null],
+      [`country=${topCountry}`, { country: topCountry }],
+    ] as const) {
+      const strip = await anyDb.rpc('insights_funnel_users', { ...funnelArgs, p_filters: extraFilters })
+      if (strip.error) throw new Error(`insights_funnel_users failed [W3 ${suffix}]: ${strip.error.message}`)
+      const stripByIdx = new Map(
+        ((strip.data ?? []) as Array<{ step_index: number; users: number | string }>).map((r) => [Number(r.step_index), Number(r.users)]),
+      )
+      const bd = await anyDb.rpc('insights_funnel_breakdown', {
+        ...funnelArgs, p_filters: extraFilters, p_dimension: 'country', p_limit: 10000,
+      })
+      if (bd.error) throw new Error(`insights_funnel_breakdown failed [W3 ${suffix}]: ${bd.error.message}`)
+      const bdRows = (bd.data ?? []) as Array<{ step_index: number; users: number | string }>
+      const bdStep1 = bdRows.filter((r) => Number(r.step_index) === 1).reduce((a, r) => a + Number(r.users), 0)
+      // Breakdown keys attribute a person to their first step-1 event; every
+      // step-1 person has one, so the step-1 column must sum to the strip.
+      addExtra(`funnel_breakdown step-1 sum = strip step-1 [${suffix}]`, bdStep1, stripByIdx.get(1) ?? -1)
+
+      const conv = await anyDb.rpc('insights_funnel_people', {
+        ...funnelArgs, p_filters: extraFilters, p_step: 2, p_converted: true, p_limit: 100000,
+      })
+      if (conv.error) throw new Error(`insights_funnel_people failed [W3 ${suffix}]: ${conv.error.message}`)
+      const drop = await anyDb.rpc('insights_funnel_people', {
+        ...funnelArgs, p_filters: extraFilters, p_step: 2, p_converted: false, p_limit: 100000,
+      })
+      if (drop.error) throw new Error(`insights_funnel_people failed [W3b ${suffix}]: ${drop.error.message}`)
+      // people(step2, converted) = strip step-2; converted+dropped = strip step-1.
+      addExtra(
+        `funnel_people conv@2 = strip step-2; conv+drop = step-1 [${suffix}]`,
+        { conv: (conv.data as unknown[]).length, total: (conv.data as unknown[]).length + (drop.data as unknown[]).length },
+        { conv: stripByIdx.get(2) ?? -1, total: stripByIdx.get(1) ?? -1 },
+      )
+    }
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [
