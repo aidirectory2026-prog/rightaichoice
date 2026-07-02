@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen, Bookmark, Layers } from 'lucide-react'
+import { Menu, X, LayoutDashboard, LogIn, UserPlus, Sparkles, GitCompareArrows, Award, FolderOpen, Briefcase, BookOpen, Bookmark, Layers, UploadCloud } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 
 export function Navbar() {
@@ -88,6 +88,15 @@ export function Navbar() {
             >
               <BookOpen className="h-3.5 w-3.5" />
               Blog
+            </Link>
+            {/* Phase 14 — vendor funnel entry point (secondary styling). */}
+            <Link
+              href="/submit"
+              onClick={() => analytics.submitCtaClicked('navbar')}
+              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              Submit a Tool
             </Link>
           </div>
         </div>
@@ -216,6 +225,17 @@ export function Navbar() {
           >
             <BookOpen className="h-3.5 w-3.5" />
             Blog
+          </Link>
+          <Link
+            href="/submit"
+            onClick={() => {
+              analytics.submitCtaClicked('navbar')
+              setMobileOpen(false)
+            }}
+            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white py-2"
+          >
+            <UploadCloud className="h-3.5 w-3.5" />
+            Submit a Tool
           </Link>
           <div className="border-t border-zinc-800 pt-3 space-y-2">
             {user ? (

@@ -10,6 +10,7 @@ import { ToolCard } from '@/components/tools/tool-card'
 import { ToolFilters } from '@/components/tools/tool-filters'
 import { ToolPagination } from '@/components/tools/tool-pagination'
 import { RecentlyViewed } from '@/components/home/recently-viewed'
+import { SubmitCtaLink } from '@/components/submit/submit-cta-link'
 import Link from 'next/link'
 import { getTools, logSearch } from '@/lib/data/tools'
 import { getCategories } from '@/lib/data/categories'
@@ -107,6 +108,10 @@ export default async function ToolsPage({
             </p>
             <div className="mt-4 max-w-xl">
               <SearchBar size="sm" />
+            </div>
+            {/* Phase 14 — vendor funnel entry point */}
+            <div className="mt-3">
+              <SubmitCtaLink source="tools_page" />
             </div>
           </div>
 

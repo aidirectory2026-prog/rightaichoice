@@ -279,6 +279,14 @@ export const EVENT_SCHEMAS = {
     props: z.object({ tool_slug: z.string(), question_index: z.number(), question_text: z.string() }).strict(),
   },
   // ── Phase 14: vendor tool-submission funnel ──────────────────────────
+  submit_cta_clicked: {
+    description:
+      '"Submit a tool" entry-point click — analytics.submitCtaClicked from the navbar (desktop + mobile) or the /tools catalog CTA (components/submit/submit-cta-link.tsx). Footer link is untracked (server component, house convention).',
+    plainEnglish: 'Someone clicked a "Submit a tool" link.',
+    category: 'navigation',
+    source: 'client',
+    props: z.object({ source: z.enum(['navbar', 'footer', 'tools_page']) }).strict(),
+  },
   tool_submission_started: {
     description:
       'First focus on any field of the /submit form (fires once per page view) — analytics.toolSubmissionStarted.',

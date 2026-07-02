@@ -130,7 +130,7 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 |-----|----------------|---------|
 | `refresh-tools` | `0 2 * * *` **and** `0 14 * * *` | **Lite refresh** — 9 core editorial fields, tier-aware, **batch 500, twice daily** → daily-tier ≤24h, standard ≤3 days. **(Phase 11 B1/B1.2: now feeds fresh `latest_updates` news into the prompt + regenerates scrape-blocked tools from profile+news instead of freezing. Logs to `pipeline_runs` with real $ + a `scrapeBlocked` metric.)** |
 | `refresh-latest-updates` | `0 3 * * *` | "Latest from" per-tool news (change-detector). **(Phase 11 B5: GH script now logs to `pipeline_runs`.)** Feeds the freshness used by refresh-tools + full-refresh + viability. |
-| `ingest-tools` | `0 4 * * *` | Discover + ingest new tools (insert as **draft**, traction-gated). |
+| `ingest-tools` | `0 4 * * *` | Discover + ingest new tools (insert as **draft**, traction-gated). **(Phase 14: no longer the only entry path — see "Vendor submissions" below.)** |
 | `cascade-editorials` | `0 5 * * *` | Regenerate stale compare editorials. **(Phase 11 B1: news-grounded.)** |
 | `backfill-logos` | `40 5 * * *` | Fetch/rehost missing logos (missing-only). |
 | `full-refresh` | `0 6 * * *` | **(Phase 11 B2; Phase 12 Bug-2 SHARDED) Deep 22-field SOP** — `backfill-tool-data.ts --cohort=300 --shard=i --shards=3`, the N stalest by `last_full_refresh_at`, run as a **3-shard matrix** (hash-partitioned by slug). Refreshes ALL fields (FAQs, workflow scenarios, pricing-tier guides, migrations, hidden costs) **and judges `is_wrapper`** → whole catalog every field current within ~7 days. **Phase 12 Bug-2:** un-sharded `--cohort=300` took ~64s/tool (19-URL scrape) → ~5.3h > the 300-min timeout, so it was killed every night and froze 71% of the catalog ~27 days. Now scrape trimmed 19→5 URLs (~30s/tool) + 3 shards (~100 each, ~50 min) → reliably completes; logs a `running` row at START so a timeout is visible. DeepSeek-only; `pipeline_key=refresh-tool-data-full` with real $. Per-shard concurrency group. |
@@ -143,6 +143,13 @@ Every HTTP cron is wrapped by `withPipelineLogging`/`cronRoute` → one row per 
 throttles `*/10`/`*/30` schedules) and moved to Vercel crons above; their jobs remain for
 manual `workflow_dispatch`.
 Other workflows: `sync-mentions.yml`, `retry-failed-tools.yml`, `tracking-watchdog.yml`.
+
+### Vendor submissions — the second entry path into the draft pipeline (Phase 14, 2026-07-02)
+
+Tools now enter the catalog two ways, both converging on the same onboard SOP:
+
+1. **Auto-ingest** (`ingest-tools`, above) — discovery + **traction gate** (`curateCandidate`/`probeTractionBatch`) → draft insert.
+2. **Vendor submission** (`/submit`, sign-in required) — writes to `tool_submissions` (moderated queue, NEVER directly to `tools`) → **human approval at `/admin/submissions` replaces the traction gate** → minimal draft insert (`is_published=false`, `submitted_by=<vendor uuid>`, freshness columns NULL so the SOP grabs it first) → onboard SOP enriches + hard-gates + publishes exactly like any auto-ingested draft. Reject emails the submitter a reason (Resend). Dedupe at submit time (domain vs whole catalog incl. drafts + pending queue). Approved ≠ published — the SOP hard gates remain the only publish path, and submissions never influence rankings/recommendations. Env: `ADMIN_NOTIFY_EMAIL` (operator new-submission alert; warns + skips if unset).
 
 **On-demand audits (run manually / periodically, not crons):** `npm run stacks:audit`
 (`scripts/audit-stacks.ts`, **Phase 12 Bug-4.9**) — resolves every curated stack's tool slugs against live

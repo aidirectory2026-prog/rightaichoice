@@ -20,6 +20,7 @@ Quick reference for manually testing every page.
 | [http://localhost:3000/u/nobody999](http://localhost:3000/u/nobody999) | 404 — user not found |
 | [http://localhost:3000/questions](http://localhost:3000/questions) | Global Q&A feed — all questions across tools |
 | [http://localhost:3000/questions/{id}](http://localhost:3000/questions/{id}) | Question detail — full question + answers (SEO page) |
+| [http://localhost:3000/submit](http://localhost:3000/submit) | Phase 14 — vendor tool submission (sign-in required; integrity statement; own-submissions status list) |
 
 ## Auth Pages
 
@@ -43,6 +44,7 @@ Quick reference for manually testing every page.
 | [http://localhost:3000/admin](http://localhost:3000/admin) | Admin dashboard |
 | [http://localhost:3000/admin/tools](http://localhost:3000/admin/tools) | Manage tools |
 | [http://localhost:3000/admin/tools/new](http://localhost:3000/admin/tools/new) | Add new tool |
+| [http://localhost:3000/admin/submissions](http://localhost:3000/admin/submissions) | Phase 14 — vendor submission review queue (approve → draft pipeline / reject with reason) |
 
 ## Auth Callbacks (system routes, don't visit directly)
 

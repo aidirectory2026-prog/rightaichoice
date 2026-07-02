@@ -243,7 +243,7 @@
     },
     {
       "file": "components/layout/navbar.tsx",
-      "line": 155,
+      "line": 164,
       "method": "analytics.navCtaClicked"
     }
   ],
@@ -338,7 +338,7 @@
     },
     {
       "file": "components/layout/navbar.tsx",
-      "line": 157,
+      "line": 166,
       "method": "analytics.planCtaClicked"
     }
   ],
@@ -808,7 +808,7 @@
   "signup_started": [
     {
       "file": "components/layout/navbar.tsx",
-      "line": 129,
+      "line": 138,
       "method": "analytics.signupStarted"
     }
   ],
@@ -824,6 +824,23 @@
       "file": "components/stacks/save-stack-button.tsx",
       "line": 133,
       "method": "analytics.stackSavedRich"
+    }
+  ],
+  "submit_cta_clicked": [
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 95,
+      "method": "analytics.submitCtaClicked"
+    },
+    {
+      "file": "components/layout/navbar.tsx",
+      "line": 232,
+      "method": "analytics.submitCtaClicked"
+    },
+    {
+      "file": "components/submit/submit-cta-link.tsx",
+      "line": 13,
+      "method": "analytics.submitCtaClicked"
     }
   ],
   "tab_visibility_changed": [
