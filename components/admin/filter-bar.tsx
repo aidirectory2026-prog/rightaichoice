@@ -22,6 +22,7 @@ import { Bot, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { RangePicker } from '@/components/admin/range-picker'
 import { CohortPicker } from '@/components/admin/cohort-picker'
 import { ReportMenu } from '@/components/admin/report-menu'
+import { ExportCsvButton } from '@/components/admin/export-csv-button'
 import type { RangeKey } from '@/lib/admin/range'
 import {
   BROWSER_OPTIONS,
@@ -207,6 +208,7 @@ export function FilterBar({
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2 flex-wrap justify-end">
+        <ExportCsvButton />
         <ReportMenu />
         <CohortPicker />
         <button

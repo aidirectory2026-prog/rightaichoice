@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/cron/supabase-admin'
 import { checkAdmin } from '@/lib/admin/require-admin'
+import { applyFilters } from '@/lib/admin/filters'
+import { resolveServerFilters } from '@/lib/admin/resolve-filters'
 
 function toCsv(rows: Array<Record<string, unknown>>): string {
   if (rows.length === 0) return ''
@@ -126,6 +128,30 @@ export async function GET(req: NextRequest) {
       const { data } = await (db as any).rpc('insights_user_directory', { p_cutoff: cutoff, p_end: null, p_include_bots: false, p_filters: null, p_sort: 'events', p_limit: 5000, p_offset: 0 })
       const rows = ((data ?? []) as Array<Record<string, unknown>>).map(({ total_rows, ...rest }) => { void total_rows; return rest })
       return csvResponse(rows, `users_${days}d_${today}.csv`)
+    }
+    // Phase 14b Wave 5 — "download exactly what I'm looking at": the raw
+    // events behind the CURRENT filter state of any page. The button passes
+    // the page's full query string through, so range/bots/every dimension/
+    // cohort/person pins all apply — same parse + mirror as the pages.
+    case 'filtered_events': {
+      const sp: Record<string, string | undefined> = {}
+      url.searchParams.forEach((v, k) => {
+        sp[k] = v
+      })
+      const filters = await resolveServerFilters(sp)
+      let q = db
+        .from('user_events')
+        .select('created_at, event_name, distinct_id, user_id, auth_state, page_path, referrer, device_type, browser, os, country, city, region, source_kind, utm_source, utm_medium, utm_campaign, properties')
+        .gte('created_at', filters.range.cutoffISO)
+        .order('created_at', { ascending: false })
+        .limit(50000)
+      if (filters.range.endCutoffISO) q = q.lt('created_at', filters.range.endCutoffISO)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!filters.includeBots) q = (q as any).eq('bot_likely', false)
+      q = applyFilters(q, filters)
+      const { data, error } = await q
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return csvResponse((data ?? []) as Array<Record<string, unknown>>, `filtered_events_${today}.csv`)
     }
     default:
       return NextResponse.json({ error: `Unknown export type: ${type}` }, { status: 400 })

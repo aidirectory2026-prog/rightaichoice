@@ -818,6 +818,66 @@ async function main() {
     addExtra('paths: depth-1 transitions ≤ raw anchor events', d1 <= Number(anchorCount?.n ?? 0), true)
   }
 
+  // ── Phase 14b Wave 5 — cohort v2 vs hand-written SQL (migration 188) ────
+  {
+    // C1. min_count: "did page_viewed ≥ 3×" over the pinned week.
+    const c1 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'did_event', event: 'page_viewed', min_count: 3 }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c1.error) throw new Error(`insights_cohort failed [C1]: ${c1.error.message}`)
+    const rawC1 = await runSql(
+      `select count(*)::bigint as n from (
+         select distinct_id from user_events
+         where event_name = 'page_viewed' and not bot_likely
+           and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+         group by 1 having count(*) >= 3
+       ) t`,
+    )
+    addExtra('cohort v2: did page_viewed ≥3× = raw grouped-having', (c1.data as unknown[]).length, Number(rawC1?.n ?? -1))
+
+    // C2. per-event property where: tool_page_viewed where tool_slug = <top>.
+    const slugRow = await runSql(
+      `select properties->>'tool_slug' as s from user_events
+        where event_name = 'tool_page_viewed' and not bot_likely
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and properties->>'tool_slug' is not null
+        group by 1 order by count(*) desc limit 1`,
+    )
+    const topSlug = String(slugRow?.s ?? 'notion')
+    const c2 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'did_event', event: 'tool_page_viewed', where: { k: 'tool_slug', v: topSlug } }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c2.error) throw new Error(`insights_cohort failed [C2]: ${c2.error.message}`)
+    const rawC2 = await runSql(
+      `select count(distinct distinct_id)::bigint as n from user_events
+        where event_name = 'tool_page_viewed' and not bot_likely
+          and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)}
+          and properties->>'tool_slug' = ${lit(topSlug)}`,
+    )
+    addExtra(`cohort v2: tool_page_viewed where tool_slug=${topSlug} = raw`, (c2.data as unknown[]).length, Number(rawC2?.n ?? -1))
+
+    // C3. geo + device conditions ANDed.
+    const c3 = await anyDb.rpc('insights_cohort', {
+      p_conditions: { op: 'and', conditions: [{ type: 'geo', field: 'country', value: topCountry }, { type: 'device', value: 'desktop' }] },
+      p_cutoff: FROM_ISO, p_end: TO_ISO, p_include_bots: false, p_limit: 100000,
+    })
+    if (c3.error) throw new Error(`insights_cohort failed [C3]: ${c3.error.message}`)
+    const rawC3 = await runSql(
+      `select count(*)::bigint as n from (
+         (select distinct distinct_id from user_events
+           where country = ${lit(topCountry)} and not bot_likely
+             and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)})
+         intersect
+         (select distinct distinct_id from user_events
+           where device_type = 'desktop' and not bot_likely
+             and created_at >= ${lit(FROM_ISO)} and created_at < ${lit(TO_ISO)})
+       ) t`,
+    )
+    addExtra(`cohort v2: geo country=${topCountry} AND device=desktop = raw intersect`, (c3.data as unknown[]).length, Number(rawC3?.n ?? -1))
+  }
+
   // ── Render the matrix ──────────────────────────────────────────────────
   const header = ['combo', 'filters', 'visitors rpc', 'visitors raw', '=', 'page_views mirror', 'page_views raw', '=']
   const table = rows.map((r) => [
