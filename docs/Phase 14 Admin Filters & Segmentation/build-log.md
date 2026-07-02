@@ -112,3 +112,16 @@ Each page got relevant filters + sortable columns using the shared primitives (a
 - `components/admin/{filter-bar, sortable-header, multi-select-filter, search-input, cohort-picker}.tsx`
 - `app/admin/insights/explore/page.tsx`; `app/admin/insights/layout.tsx` (Cohorts + Explore tabs)
 - `scripts/audit/{verify-filters.ts (extended), filters-sort.test.ts (new)}`
+
+---
+
+# Phase 14b — Mixpanel-deep · Build log
+
+Model: Fable 5. Same worktree/branch/integration protocol as Phase 14.
+Plan: `Plan_phase-14b-mixpanel-deep.md` (same folder). Migrations planned: 183–188.
+
+## Pre-work re-verification (2026-07-02) — ALL GREEN
+Before any new code: 46-check filter matrix, 13 smart-board checks, 32 unit tests, all 14 nightly
+in-DB invariants pass; live data quality clean (0.1% null geo, 0% schema violations, events flowing);
+migration-182 Explore RPCs smoke-tested live. Also found the local main tree 2 commits behind
+origin/main (PRs #64/#65 were merged remotely) — worktree synced before starting.
